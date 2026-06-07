@@ -1,0 +1,92 @@
+// Minimal reset. We don't pull a CSS lib (rule 7), so we own this.
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--mc-bg-base);
+  color: var(--mc-fg-primary);
+  font-family: var(--mc-font-sans);
+  font-size: var(--mc-font-size-md);
+  line-height: var(--mc-line-base);
+  // why: smoother text on retina + standardize across SOs
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+figure,
+blockquote,
+dl,
+dd {
+  margin: 0;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+a {
+  color: var(--mc-accent-primary);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+img,
+picture,
+video,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+// Accessible focus ring (rule 29).
+:focus-visible {
+  outline: 2px solid var(--mc-accent-primary);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--mc-focus-ring);
+  border-radius: var(--mc-radius-sm);
+}
+
+::selection {
+  background: var(--mc-accent-primary);
+  color: var(--mc-accent-fg);
+}

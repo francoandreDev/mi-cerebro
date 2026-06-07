@@ -1,0 +1,31 @@
+// Type scale helpers. Components stay declarative via tokens.
+
+.mc-text-xs {
+  font-size: var(--mc-font-size-xs);
+}
+.mc-text-sm {
+  font-size: var(--mc-font-size-sm);
+}
+.mc-text-md {
+  font-size: var(--mc-font-size-md);
+}
+.mc-text-lg {
+  font-size: var(--mc-font-size-lg);
+}
+.mc-text-xl {
+  font-size: var(--mc-font-size-xl);
+}
+.mc-text-2xl {
+  font-size: var(--mc-font-size-2xl);
+}
+
+.mc-text-muted {
+  color: var(--mc-fg-muted);
+}
+.mc-text-dim {
+  color: var(--mc-fg-dim);
+}
+
+.mc-mono {
+  font-family: var(--mc-font-mono);
+}

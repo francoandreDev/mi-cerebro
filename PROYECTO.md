@@ -557,9 +557,114 @@ Los objetivos no compiten por atención con el resto: aparecen en momentos espec
 
 ## 17. Temas
 
-- Claro y oscuro por defecto.
-- Editor de tema custom: el usuario define su propia paleta. Se guarda en **IndexedDB**. Validación WCAG AA con advertencia (no bloquea).
-- Tema activo guardado en **localStorage**.
+### Política
+
+- **Default al primer arranque:** sigue `prefers-color-scheme` del SO. El usuario puede fijar `light` o `dark` desde settings; la preferencia se guarda en `localStorage` y, si la quita, vuelve a `auto`.
+- **Switch técnico:** atributo `data-theme="light"` o `data-theme="dark"` en `<html>`. En modo `auto` no se setea el atributo y manda el `@media (prefers-color-scheme: dark)` de las variables.
+- **CSS variables, nada hardcoded.** Todos los colores, radios, spacing, tipografía y elevaciones viven en tokens. Los componentes consumen tokens, nunca literales.
+- **Tema custom** del usuario: override de tokens guardado en IndexedDB. Validación WCAG AA con advertencia (no bloquea), no se rompe la app si la combinación es ilegible.
+
+### Tipografía base
+
+System stack — cero peso de fuente, look nativo en cada SO:
+
+```
+-apple-system, BlinkMacSystemFont, 'Segoe UI Variable', 'Segoe UI',
+Inter, Roboto, 'Helvetica Neue', Arial, sans-serif
+```
+
+Mono (para código en editor y códigos de error): `ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace`. Serif (si en el futuro queremos un modo lectura para escritos largos) queda fuera del paso 2.
+
+### Tokens base (paso 2)
+
+Naming: `--mc-<grupo>-<rol>`. Grupos: `bg`, `fg`, `border`, `accent`, `state`, `focus`, `space`, `radius`, `font`, `shadow`.
+
+#### Color — dark (default cuando SO está oscuro)
+
+Tono: **neutro frío, grises azulados**. Acento: **naranja cálido**.
+
+| Token                 | Valor                     | Uso                                 |
+| --------------------- | ------------------------- | ----------------------------------- |
+| `--mc-bg-base`        | `#0d1117`                 | Fondo de la app                     |
+| `--mc-bg-surface`     | `#161b22`                 | Cards, paneles, sidebar             |
+| `--mc-bg-elevated`    | `#1c232c`                 | Modales, popovers, menús            |
+| `--mc-bg-hover`       | `#21262d`                 | Hover de filas/items                |
+| `--mc-bg-selected`    | `#2a3340`                 | Item activo                         |
+| `--mc-fg-primary`     | `#e6edf3`                 | Texto principal                     |
+| `--mc-fg-muted`       | `#9aa4af`                 | Texto secundario                    |
+| `--mc-fg-dim`         | `#7d8590`                 | Texto deshabilitado / hints         |
+| `--mc-border-default` | `#30363d`                 | Bordes y separadores                |
+| `--mc-border-strong`  | `#484f58`                 | Bordes de input enfocado            |
+| `--mc-accent-primary` | `#ff7a45`                 | Botones primarios, links, selección |
+| `--mc-accent-hover`   | `#ff8f60`                 | Hover                               |
+| `--mc-accent-active`  | `#f06a35`                 | Active / pressed                    |
+| `--mc-accent-fg`      | `#1a0f08`                 | Texto sobre superficie de acento    |
+| `--mc-state-danger`   | `#f85149`                 | Error                               |
+| `--mc-state-warning`  | `#d29922`                 | Advertencia                         |
+| `--mc-state-success`  | `#3fb950`                 | OK                                  |
+| `--mc-state-info`     | `#58a6ff`                 | Info neutral                        |
+| `--mc-focus-ring`     | `#ff7a45` con `alpha 0.6` | Anillo de foco visible (regla 29)   |
+
+#### Color — light
+
+Tono: **neutro frío sobre blanco**. Acento naranja recalibrado para AA sobre fondo claro.
+
+| Token                 | Valor                     | Uso                                             |
+| --------------------- | ------------------------- | ----------------------------------------------- |
+| `--mc-bg-base`        | `#ffffff`                 | Fondo de la app                                 |
+| `--mc-bg-surface`     | `#f6f8fa`                 | Cards, paneles, sidebar                         |
+| `--mc-bg-elevated`    | `#ffffff`                 | Modales, popovers                               |
+| `--mc-bg-hover`       | `#eef1f4`                 | Hover                                           |
+| `--mc-bg-selected`    | `#ffe8dc`                 | Item activo (tinte cálido del acento)           |
+| `--mc-fg-primary`     | `#1f2328`                 | Texto principal                                 |
+| `--mc-fg-muted`       | `#59636e`                 | Texto secundario                                |
+| `--mc-fg-dim`         | `#818b97`                 | Texto deshabilitado                             |
+| `--mc-border-default` | `#d0d7de`                 | Bordes                                          |
+| `--mc-border-strong`  | `#8c959f`                 | Bordes de input enfocado                        |
+| `--mc-accent-primary` | `#c44616`                 | Versión oscurecida del naranja, AA sobre blanco |
+| `--mc-accent-hover`   | `#a83a0f`                 | Hover                                           |
+| `--mc-accent-active`  | `#922f0a`                 | Active                                          |
+| `--mc-accent-fg`      | `#ffffff`                 | Texto sobre superficie de acento                |
+| `--mc-state-danger`   | `#cf222e`                 | Error                                           |
+| `--mc-state-warning`  | `#9a6700`                 | Advertencia                                     |
+| `--mc-state-success`  | `#1a7f37`                 | OK                                              |
+| `--mc-state-info`     | `#0969da`                 | Info                                            |
+| `--mc-focus-ring`     | `#c44616` con `alpha 0.4` | Anillo de foco                                  |
+
+#### Spacing, radius, fuentes, sombras
+
+| Token                | Valor                                                       |
+| -------------------- | ----------------------------------------------------------- |
+| `--mc-space-1`       | `4px`                                                       |
+| `--mc-space-2`       | `8px`                                                       |
+| `--mc-space-3`       | `12px`                                                      |
+| `--mc-space-4`       | `16px`                                                      |
+| `--mc-space-5`       | `24px`                                                      |
+| `--mc-space-6`       | `32px`                                                      |
+| `--mc-space-7`       | `48px`                                                      |
+| `--mc-radius-sm`     | `4px`                                                       |
+| `--mc-radius-md`     | `8px`                                                       |
+| `--mc-radius-lg`     | `12px`                                                      |
+| `--mc-radius-pill`   | `9999px`                                                    |
+| `--mc-font-sans`     | system stack (ver arriba)                                   |
+| `--mc-font-mono`     | mono stack (ver arriba)                                     |
+| `--mc-font-size-xs`  | `12px`                                                      |
+| `--mc-font-size-sm`  | `13px`                                                      |
+| `--mc-font-size-md`  | `14px` (base UI)                                            |
+| `--mc-font-size-lg`  | `16px`                                                      |
+| `--mc-font-size-xl`  | `20px`                                                      |
+| `--mc-font-size-2xl` | `28px`                                                      |
+| `--mc-line-tight`    | `1.2`                                                       |
+| `--mc-line-base`     | `1.5`                                                       |
+| `--mc-line-loose`    | `1.75`                                                      |
+| `--mc-shadow-sm`     | `0 1px 2px rgb(0 0 0 / 0.20)` (dark) / `... / 0.06` (light) |
+| `--mc-shadow-md`     | `0 4px 12px rgb(0 0 0 / 0.30)` / `... / 0.10`               |
+| `--mc-shadow-lg`     | `0 12px 32px rgb(0 0 0 / 0.40)` / `... / 0.14`              |
+
+### Storage
+
+- Preferencia del tema (`'light' | 'dark' | 'auto'`) en `localStorage` bajo `mc.theme`.
+- Tema custom del usuario en IndexedDB (paso futuro). Si hay tema custom activo, override los tokens vía `<style id="mc-custom-theme">` inyectado al `<head>`.
 
 ---
 
