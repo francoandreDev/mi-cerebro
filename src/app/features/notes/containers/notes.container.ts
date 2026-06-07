@@ -3,7 +3,10 @@ import { Router } from '@angular/router';
 import type { JSONContent } from '@tiptap/core';
 
 import { AutosaveService } from '@core/autosave/autosave.service';
+import { AppError } from '@core/errors/app-error';
+import { ERROR_CODES } from '@core/errors/error.codes';
 import { ErrorService } from '@core/errors/error.service';
+import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 
@@ -60,6 +63,7 @@ export class NotesContainer {
 
   private readonly notesService = inject(NotesService);
   private readonly autosave = inject(AutosaveService);
+  private readonly workspace = inject(WorkspaceService);
   private readonly router = inject(Router);
   private readonly errors = inject(ErrorService);
   private readonly i18n = inject(I18nService);
@@ -93,10 +97,14 @@ export class NotesContainer {
 
   protected async onCreate(): Promise<void> {
     try {
+      // why: click is a user gesture, so requestPermission can actually
+      //      prompt if the browser silently dropped readwrite between visits.
+      //      Doing this before create avoids the first write blowing up.
+      await this.workspace.ensureWritable();
       const note = await this.notesService.create('');
       await this.router.navigate(['/notes', note.id]);
     } catch (e) {
-      this.errors.report(e);
+      this.errors.report(this.withReauthIfNeeded(e));
     }
   }
 
@@ -157,10 +165,32 @@ export class NotesContainer {
           await this.autosave.clear(payload.id);
           this.status.set('saved');
         } catch (e) {
-          this.errors.report(e);
+          this.errors.report(this.withReauthIfNeeded(e, () => this.scheduleSave(payload)));
           this.status.set('unsaved');
         }
       },
+    });
+  }
+
+  // why: when the FS layer reports a dropped write permission (FS-004), wrap
+  //      the error with a "Reautorizar" action that prompts via a real user
+  //      gesture (modal button click) and then re-runs the failed work.
+  private withReauthIfNeeded(error: unknown, retry?: () => void): unknown {
+    if (!(error instanceof AppError) || error.code !== ERROR_CODES.FS_004) return error;
+    return new AppError(ERROR_CODES.FS_004, {
+      severity: 'warning',
+      recoverable: true,
+      cause: error.cause,
+      ...(error.context !== undefined ? { context: error.context } : {}),
+      actions: [
+        {
+          labelKey: 'common.reauthorize',
+          run: async () => {
+            await this.workspace.reauthorize();
+            retry?.();
+          },
+        },
+      ],
     });
   }
 }

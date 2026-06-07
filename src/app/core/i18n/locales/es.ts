@@ -15,6 +15,7 @@ export const es = {
   'common.chooseFolder': 'Elegir carpeta',
   'common.chooseAnother': 'Elegir otra carpeta',
   'common.continue': 'Continuar',
+  'common.reauthorize': 'Reautorizar',
 
   'onboarding.welcome.title': 'Bienvenido a mi cerebro',
   'onboarding.welcome.line1': 'Es tu segundo cerebro local: notas, tareas, objetivos y más.',
