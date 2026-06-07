@@ -124,6 +124,7 @@ export const es = {
   'tags.empty': 'Sin etiquetas.',
 
   'palette.label': 'Búsqueda global',
+  'palette.openButton': 'Abrir búsqueda global',
   'palette.placeholder': 'Buscar... (probá tag:trabajo)',
   'palette.empty': 'Escribí para buscar entre tus notas.',
   'palette.unknownTag': 'No existe la etiqueta',
