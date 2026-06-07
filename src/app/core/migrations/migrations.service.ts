@@ -77,7 +77,10 @@ export class MigrationsService {
   }
 
   private isContiguous(steps: readonly MigrationStep[], latest: number): boolean {
-    if (steps.length === 0) return latest === 0;
+    // why: empty steps with latest > 0 means "all current data is at latest;
+    //      no migrations were ever needed". A bump that introduces v2 will
+    //      add the 1->2 step.
+    if (steps.length === 0) return latest >= 0;
     const sorted = [...steps].sort((a, b) => a.from - b.from);
     for (let i = 0; i < sorted.length; i++) {
       const step = sorted[i]!;

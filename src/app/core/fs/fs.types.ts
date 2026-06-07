@@ -16,6 +16,10 @@ export interface FsDirectoryHandle extends FileSystemDirectoryHandle {
 export interface FsFileHandle extends FileSystemFileHandle {
   queryPermission(descriptor?: FsPermissionDescriptor): Promise<PermissionState>;
   requestPermission(descriptor?: FsPermissionDescriptor): Promise<PermissionState>;
+  // why: Chromium ships FileSystemHandle.move (FS Access API) since v110;
+  //      we require Chromium so this is safe to rely on for atomic rename.
+  move(newName: string): Promise<void>;
+  move(parent: FileSystemDirectoryHandle, newName?: string): Promise<void>;
 }
 
 export interface ShowDirectoryPickerOptions {

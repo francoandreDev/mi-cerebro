@@ -89,6 +89,27 @@ export const es = {
   'errors.mig.002.message':
     'Este archivo viene de una versión más nueva de mi-cerebro. Actualizá la app o abrí el archivo desde la versión que lo creó.',
 
+  'errors.ent.001.title': 'Archivo dañado o ilegible',
+  'errors.ent.001.message':
+    'El JSON de esta entidad no pudo parsearse. Suele pasar si un editor externo lo cortó a mitad o guardó en otro encoding. Hay un backup del último guardado correcto.',
+
+  'errors.ent.002.title': 'Hay otra entidad con el mismo ID',
+  'errors.ent.002.message':
+    'Encontré dos archivos distintos compartiendo el mismo ID interno. Renombrá o eliminá una de las copias antes de seguir.',
+
+  'notes.title': 'Notas',
+  'notes.new': 'Nueva nota',
+  'notes.untitledTitle': 'Sin título',
+  'notes.empty': 'Sin notas todavía. Empezá con "Nueva nota".',
+  'notes.placeholderTitle': 'Título...',
+  'notes.placeholderBody': 'Escribí algo...',
+  'notes.deleteConfirm': '¿Mover "{title}" a la papelera?',
+  'notes.delete': 'Eliminar',
+  'notes.status.saved': 'Guardado',
+  'notes.status.saving': 'Guardando...',
+  'notes.status.unsaved': 'Sin guardar',
+  'notes.selectOne': 'Elegí una nota o creá una nueva.',
+
   'errors.aut.005.title': 'Esta entidad está abierta en otra pestaña',
   'errors.aut.005.message':
     'Otra pestaña la está editando. Podés abrirla en solo lectura o tomar control desde acá.',
