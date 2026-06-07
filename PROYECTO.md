@@ -109,7 +109,7 @@ Reglas que rigen todo el desarrollo. Cualquier excepción se justifica en el com
   <name>.routes.ts
   <name>.config.ts   # solo si hace falta
   ```
-- **`core/`** por dominio: `fs/`, `index/`, `theme/`, `continuity/`, `reminders/`, `versioning/`, `autosave/`, `errors/`, `migrations/`, `tags/`, `i18n/`.
+- **`core/`** por dominio: `fs/`, `idb/`, `index/`, `theme/`, `continuity/`, `reminders/`, `versioning/`, `autosave/`, `errors/`, `migrations/`, `tags/`, `i18n/`.
 - **`shared/`** por tipo: `components/`, `directives/`, `pipes/`, `utils/`.
 - **Regla de oro:** subcarpeta con un solo archivo no existe; se inlinea un nivel arriba. Nace cuando hay 2+ archivos relacionados.
 
