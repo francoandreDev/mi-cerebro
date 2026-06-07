@@ -12,6 +12,30 @@ export const es = {
   'common.retry': 'Reintentar',
   'common.details': 'Ver detalles',
   'common.code': 'Código',
+  'common.chooseFolder': 'Elegir carpeta',
+  'common.chooseAnother': 'Elegir otra carpeta',
+  'common.continue': 'Continuar',
+
+  'onboarding.welcome.title': 'Bienvenido a mi cerebro',
+  'onboarding.welcome.line1': 'Es tu segundo cerebro local: notas, tareas, objetivos y más.',
+  'onboarding.welcome.line2':
+    'Todo vive en una carpeta tuya. Nada va a la nube. Vos seguís siendo el dueño.',
+  'onboarding.welcome.line3':
+    'Elegí dónde guardarlo. Si la carpeta está vacía, te armo la estructura.',
+  'onboarding.unsupported.title': 'Navegador no compatible',
+  'onboarding.unsupported.message':
+    'mi-cerebro usa una API que sólo está en Chrome, Edge, Vivaldi o Brave. Abrila desde uno de esos.',
+  'onboarding.foreign.title': 'Esta carpeta tiene contenido',
+  'onboarding.foreign.message':
+    'Encontré archivos que no son de mi-cerebro. Puedo inicializar acá sin tocarlos, o elegir otra carpeta.',
+  'onboarding.foreign.initHere': 'Inicializar acá',
+  'onboarding.initializing': 'Preparando tu carpeta...',
+  'onboarding.welcomeBack': 'Bienvenido de nuevo a {name}',
+
+  'permission.banner.title': 'Permisos a la carpeta revocados',
+  'permission.banner.message':
+    'El navegador olvidó el acceso a {name}. Otorgalo de nuevo para seguir guardando.',
+  'permission.banner.action': 'Otorgar acceso',
 
   'errors.unknown.title': 'Algo no salió como esperaba',
   'errors.unknown.message':
@@ -28,6 +52,10 @@ export const es = {
   'errors.fs.001.title': 'Permiso denegado al guardar',
   'errors.fs.001.message':
     'El navegador revocó el permiso a tu carpeta, o el archivo está bloqueado por otro programa.',
+
+  'errors.fs.002.title': 'No se pudo inicializar la carpeta',
+  'errors.fs.002.message':
+    'La carpeta elegida no es escribible o el sistema rechazó crear su contenido inicial. Probá con otra carpeta.',
 
   'errors.fs.003.title': 'Carpeta del workspace no encontrada',
   'errors.fs.003.message':

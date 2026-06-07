@@ -49,18 +49,6 @@ module.exports = defineConfig([
       ],
 
       'import/no-cycle': ['error', { maxDepth: 10 }],
-      'no-restricted-imports': [
-        'error',
-        {
-          patterns: [
-            {
-              group: ['@features/*/*', '../features/*'],
-              message:
-                'Features must not import from other features. Go through core/ instead (rule 10).',
-            },
-          ],
-        },
-      ],
 
       'no-restricted-syntax': [
         'error',
@@ -87,6 +75,25 @@ module.exports = defineConfig([
       '@angular-eslint/template/interactive-supports-focus': 'error',
       '@angular-eslint/template/elements-content': 'error',
       '@angular-eslint/template/no-positive-tabindex': 'error',
+    },
+  },
+  {
+    // why: feature-to-feature imports are banned by rule 10; layout/ is the
+    // composition root and is allowed to import features.
+    files: ['src/app/features/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@features/*/*', '../features/*'],
+              message:
+                'Features must not import from other features. Go through core/ instead (rule 10).',
+            },
+          ],
+        },
+      ],
     },
   },
   {
