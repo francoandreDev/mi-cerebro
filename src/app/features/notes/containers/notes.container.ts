@@ -3,12 +3,12 @@ import { Router } from '@angular/router';
 import type { JSONContent } from '@tiptap/core';
 
 import { AutosaveService } from '@core/autosave/autosave.service';
-import { AppError } from '@core/errors/app-error';
-import { ERROR_CODES } from '@core/errors/error.codes';
 import { ErrorService } from '@core/errors/error.service';
+import { withReauthIfNeeded } from '@core/errors/with-reauth';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { TagsService } from '@core/tags/tags.service';
 
 import { NoteEditorPaneComponent, type SaveStatus } from '../components/note-editor-pane.component';
 import { NOTE_KIND, type Note } from '../models/note.types';
@@ -23,6 +23,7 @@ import { NoteSidebarComponent } from './note-sidebar.component';
     <div class="layout">
       <mc-note-sidebar
         [notes]="notes()"
+        [tags]="tags()"
         [selectedId]="active()?.id ?? null"
         (chooseNote)="onSelect($event)"
         (create)="onCreate()"
@@ -31,9 +32,12 @@ import { NoteSidebarComponent } from './note-sidebar.component';
         <mc-note-editor-pane
           [note]="note"
           [status]="status()"
+          [availableTags]="tags()"
           (titleChange)="onTitleChange($event)"
           (bodyChange)="onBodyChange($event)"
           (removeNote)="onDelete()"
+          (addTag)="onAddTag($event)"
+          (removeTag)="onRemoveTag($event)"
         />
       } @else {
         <div class="empty">{{ t('notes.selectOne') }}</div>
@@ -64,16 +68,19 @@ export class NotesContainer {
   private readonly notesService = inject(NotesService);
   private readonly autosave = inject(AutosaveService);
   private readonly workspace = inject(WorkspaceService);
+  private readonly tagsService = inject(TagsService);
   private readonly router = inject(Router);
   private readonly errors = inject(ErrorService);
   private readonly i18n = inject(I18nService);
 
   protected readonly notes = this.notesService.summaries;
+  protected readonly tags = this.tagsService.tags;
   protected readonly active = signal<Note | null>(null);
   protected readonly status = signal<SaveStatus>('saved');
 
   constructor() {
     void this.notesService.refresh().catch((e: unknown) => this.errors.report(e));
+    void this.tagsService.refresh().catch((e: unknown) => this.errors.report(e));
 
     effect(() => {
       const wanted = this.id();
@@ -120,6 +127,30 @@ export class NotesContainer {
     const current = this.active();
     if (!current) return;
     const next = { ...current, body };
+    this.active.set(next);
+    this.scheduleSave(next);
+  }
+
+  protected async onAddTag(label: string): Promise<void> {
+    const current = this.active();
+    if (!current) return;
+    try {
+      await this.workspace.ensureWritable();
+      const tag = await this.tagsService.touch(label);
+      if (current.tags.includes(tag.id)) return;
+      const next = { ...current, tags: [...current.tags, tag.id] };
+      this.active.set(next);
+      this.scheduleSave(next);
+    } catch (e) {
+      this.errors.report(this.withReauthIfNeeded(e));
+    }
+  }
+
+  protected onRemoveTag(id: string): void {
+    const current = this.active();
+    if (!current) return;
+    if (!current.tags.includes(id)) return;
+    const next = { ...current, tags: current.tags.filter((t) => t !== id) };
     this.active.set(next);
     this.scheduleSave(next);
   }
@@ -172,25 +203,7 @@ export class NotesContainer {
     });
   }
 
-  // why: when the FS layer reports a dropped write permission (FS-004), wrap
-  //      the error with a "Reautorizar" action that prompts via a real user
-  //      gesture (modal button click) and then re-runs the failed work.
   private withReauthIfNeeded(error: unknown, retry?: () => void): unknown {
-    if (!(error instanceof AppError) || error.code !== ERROR_CODES.FS_004) return error;
-    return new AppError(ERROR_CODES.FS_004, {
-      severity: 'warning',
-      recoverable: true,
-      cause: error.cause,
-      ...(error.context !== undefined ? { context: error.context } : {}),
-      actions: [
-        {
-          labelKey: 'common.reauthorize',
-          run: async () => {
-            await this.workspace.reauthorize();
-            retry?.();
-          },
-        },
-      ],
-    });
+    return withReauthIfNeeded(error, () => this.workspace.reauthorize(), retry);
   }
 }

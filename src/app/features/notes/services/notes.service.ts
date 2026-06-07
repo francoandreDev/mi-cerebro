@@ -47,7 +47,12 @@ export class NotesService {
         const raw = await this.fs.readJson<Note>(dir, name);
         const note = await this.migrations.migrate<Note>(NOTE_KIND, raw);
         this.idToFile.set(note.id, name);
-        summaries.push({ id: note.id, title: note.title, updatedAt: note.updatedAt });
+        summaries.push({
+          id: note.id,
+          title: note.title,
+          updatedAt: note.updatedAt,
+          tags: note.tags,
+        });
       } catch (cause) {
         // why: a single corrupt file shouldn't blank the whole list.
         console.warn('[notes] skipped unreadable file', name, cause);
@@ -158,6 +163,6 @@ export class NotesService {
   }
 
   private toSummary(note: Note): NoteSummary {
-    return { id: note.id, title: note.title, updatedAt: note.updatedAt };
+    return { id: note.id, title: note.title, updatedAt: note.updatedAt, tags: note.tags };
   }
 }

@@ -1,11 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 
+import { BgColorDirective } from '@shared/directives/bg-color.directive';
+
 import { TreeStateService } from './tree-state.service';
 import type { TreeNode } from './tree.types';
 
 @Component({
   selector: 'mc-tree-node',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [BgColorDirective],
   template: `
     @if (visible().has(node().id)) {
       <li
@@ -32,6 +35,13 @@ import type { TreeNode } from './tree.types';
           <span class="chevron-spacer"></span>
         }
         <span class="label">{{ node().label }}</span>
+        @if (node().badges?.length) {
+          <span class="badges">
+            @for (b of node().badges ?? []; track b.id) {
+              <span class="badge" [mcBgColor]="b.color" [title]="b.label"></span>
+            }
+          </span>
+        }
       </li>
       @if (hasChildren() && expanded()) {
         @for (child of node().children; track child.id) {
@@ -118,6 +128,18 @@ import type { TreeNode } from './tree.types';
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+    .badges {
+      display: inline-flex;
+      gap: 3px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .badge {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
     }
   `,
 })

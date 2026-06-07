@@ -1,0 +1,57 @@
+:host {
+  display: block;
+  position: relative;
+}
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mc-space-1);
+  align-items: center;
+  padding: var(--mc-space-1);
+  border: 1px solid var(--mc-border-default);
+  border-radius: var(--mc-radius-md);
+  background: var(--mc-bg-elevated);
+  min-height: 32px;
+}
+.row:focus-within {
+  outline: 2px solid var(--mc-accent-primary);
+}
+.input {
+  flex: 1;
+  min-width: 120px;
+  background: transparent;
+  border: 0;
+  color: var(--mc-fg-primary);
+  padding: 2px 4px;
+}
+.input:focus {
+  outline: none;
+}
+.menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 2px;
+  background: var(--mc-bg-elevated);
+  border: 1px solid var(--mc-border-default);
+  border-radius: var(--mc-radius-md);
+  box-shadow: var(--mc-shadow-md);
+  list-style: none;
+  padding: var(--mc-space-1) 0;
+  max-height: 240px;
+  overflow-y: auto;
+  z-index: 100;
+}
+.item {
+  padding: var(--mc-space-1) var(--mc-space-3);
+  cursor: pointer;
+}
+.item.highlight,
+.item:hover {
+  background: var(--mc-bg-surface);
+}
+.item.create {
+  color: var(--mc-fg-muted);
+  font-size: var(--mc-font-size-sm);
+}
