@@ -1,12 +1,11 @@
-import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+
+import { AppShellContainer } from '@layout/containers/app-shell.container';
 
 @Component({
-  selector: 'app-root',
-  imports: [RouterOutlet],
-  templateUrl: './app.html',
-  styleUrl: './app.scss'
+  selector: 'mc-root',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [AppShellContainer],
+  template: `<mc-app-shell />`,
 })
-export class App {
-  protected readonly title = signal('mi-cerebro');
-}
+export class App {}

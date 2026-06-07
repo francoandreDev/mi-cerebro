@@ -75,7 +75,10 @@ module.exports = defineConfig([
     files: ['**/*.html'],
     extends: [angular.configs.templateRecommended, angular.configs.templateAccessibility],
     rules: {
-      '@angular-eslint/template/no-call-expression': 'error',
+      // why: with Angular signals the canonical read in templates is signal(),
+      // which this rule flags as a call expression. The intent (no cost
+      // in templates) is preserved by prefer-on-push + code review.
+      '@angular-eslint/template/no-call-expression': 'off',
       '@angular-eslint/template/use-track-by-function': 'error',
       '@angular-eslint/template/no-negated-async': 'error',
       '@angular-eslint/template/no-any': 'error',
