@@ -65,6 +65,30 @@ export const es = {
   'errors.fs.004.message':
     'El navegador olvidó los permisos a tu carpeta. Otorgalos de nuevo desde el banner.',
 
+  'errors.aut.001.title': 'No se pudo guardar el borrador',
+  'errors.aut.001.message':
+    'No pude escribir el borrador local de tu trabajo. Tus cambios siguen en memoria, pero podrían perderse si cerrás la pestaña.',
+
+  'errors.aut.002.title': 'No se pudo recuperar el borrador',
+  'errors.aut.002.message':
+    'Encontré un borrador pendiente pero no pude leerlo. Continuá editando para sobrescribirlo.',
+
+  'errors.idb.001.title': 'No se pudo abrir el almacén local',
+  'errors.idb.001.message':
+    'IndexedDB rechazó la apertura. Suele pasar en modo incógnito con bloqueo estricto o cuando otra pestaña tiene una versión vieja abierta.',
+
+  'errors.idb.002.title': 'Falló una operación de almacenamiento local',
+  'errors.idb.002.message':
+    'Una lectura o escritura en IndexedDB falló. Si se repite, anotá el código y mirá docs/errors.md.',
+
+  'errors.mig.001.title': 'Falló una migración de schema',
+  'errors.mig.001.message':
+    'La migración a la versión nueva falló a mitad de camino. Tenés un backup completo en .mi-cerebro/pre-migration/.',
+
+  'errors.mig.002.title': 'Versión de schema desconocida',
+  'errors.mig.002.message':
+    'Este archivo viene de una versión más nueva de mi-cerebro. Actualizá la app o abrí el archivo desde la versión que lo creó.',
+
   'errors.aut.005.title': 'Esta entidad está abierta en otra pestaña',
   'errors.aut.005.message':
     'Otra pestaña la está editando. Podés abrirla en solo lectura o tomar control desde acá.',

@@ -12,8 +12,14 @@ export const ERROR_CODES = {
   FS_002: 'MCB-FS-002',
   FS_003: 'MCB-FS-003',
   FS_004: 'MCB-FS-004',
+  AUT_001: 'MCB-AUT-001',
+  AUT_002: 'MCB-AUT-002',
   AUT_005: 'MCB-AUT-005',
   AUT_006: 'MCB-AUT-006',
+  IDB_001: 'MCB-IDB-001',
+  IDB_002: 'MCB-IDB-002',
+  MIG_001: 'MCB-MIG-001',
+  MIG_002: 'MCB-MIG-002',
 } as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
@@ -30,6 +36,12 @@ export const ERROR_CODE_META: Record<ErrorCode, CodeMeta> = {
   'MCB-FS-002': { titleKey: 'errors.fs.002.title', messageKey: 'errors.fs.002.message' },
   'MCB-FS-003': { titleKey: 'errors.fs.003.title', messageKey: 'errors.fs.003.message' },
   'MCB-FS-004': { titleKey: 'errors.fs.004.title', messageKey: 'errors.fs.004.message' },
+  'MCB-AUT-001': { titleKey: 'errors.aut.001.title', messageKey: 'errors.aut.001.message' },
+  'MCB-AUT-002': { titleKey: 'errors.aut.002.title', messageKey: 'errors.aut.002.message' },
   'MCB-AUT-005': { titleKey: 'errors.aut.005.title', messageKey: 'errors.aut.005.message' },
   'MCB-AUT-006': { titleKey: 'errors.aut.006.title', messageKey: 'errors.aut.006.message' },
+  'MCB-IDB-001': { titleKey: 'errors.idb.001.title', messageKey: 'errors.idb.001.message' },
+  'MCB-IDB-002': { titleKey: 'errors.idb.002.title', messageKey: 'errors.idb.002.message' },
+  'MCB-MIG-001': { titleKey: 'errors.mig.001.title', messageKey: 'errors.mig.001.message' },
+  'MCB-MIG-002': { titleKey: 'errors.mig.002.title', messageKey: 'errors.mig.002.message' },
 };

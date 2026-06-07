@@ -74,6 +74,22 @@ Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `P
 
 ## AUT — Autosave / concurrencia
 
+### MCB-AUT-001 — Falla al escribir borrador
+
+- **Severidad:** warning
+- **Cuándo:** `AutosaveService.flush` no pudo persistir un borrador en IndexedDB.
+- **Causa típica:** cuota de IDB agotada, modo incógnito con bloqueo estricto, transacción cancelada.
+- **Cómo resolver:** liberar espacio, evitar incógnito, o reintentar el guardado manual. El payload sigue en memoria mientras la pestaña esté abierta.
+- **Recuperable:** sí — el cambio no se perdió en memoria, sólo no quedó persistido.
+
+### MCB-AUT-002 — Falla al recuperar borrador
+
+- **Severidad:** warning
+- **Cuándo:** `AutosaveService.recover` falla leyendo un borrador previo.
+- **Causa típica:** IDB corrupto o transacción abortada.
+- **Cómo resolver:** descartar el borrador (sobrescribir editando) o limpiar la entrada manualmente desde DevTools.
+- **Recuperable:** sí — el archivo en FS sigue siendo la fuente de verdad.
+
 ### MCB-AUT-005 — Intento de escritura sobre lock ajeno
 
 - **Severidad:** error
@@ -89,3 +105,43 @@ Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `P
 - **Causa típica:** abriste la misma entidad en otra ventana y elegiste "tomar control".
 - **Cómo resolver:** la vista actual cae a modo lectura; cerrar esta pestaña o seguir leyendo.
 - **Recuperable:** sí — el último estado guardado quedó en disco/IndexedDB.
+
+---
+
+## IDB — IndexedDB
+
+### MCB-IDB-001 — No se pudo abrir el almacén local
+
+- **Severidad:** error
+- **Cuándo:** la apertura de la base IndexedDB `mc-app` falla o queda bloqueada.
+- **Causa típica:** modo incógnito con bloqueo estricto, otra pestaña con una versión de schema más vieja abierta, cuota agotada.
+- **Cómo resolver:** cerrar otras pestañas de mi-cerebro, evitar incógnito, liberar espacio. Si persiste, exportar (cuando esté implementado) y borrar el sitio.
+- **Recuperable:** no de inmediato — la app no puede persistir borradores hasta resolver.
+
+### MCB-IDB-002 — Falla en operación de IndexedDB
+
+- **Severidad:** error
+- **Cuándo:** un `get`/`set`/`delete`/`clear` falla en mitad de la transacción.
+- **Causa típica:** transacción abortada por timeout, cuota excedida durante la escritura, race condition.
+- **Cómo resolver:** reintentar la acción. Si se repite, reportar con el `context` que viene en el error (`store`, `mode`).
+- **Recuperable:** sí — el dato origen no se pierde; sólo no quedó persistido.
+
+---
+
+## MIG — Migraciones
+
+### MCB-MIG-001 — Falla durante una migración
+
+- **Severidad:** fatal
+- **Cuándo:** una función de migración registrada lanzó, o la registración misma es incoherente (steps no contiguos), o el backup pre-migración falló.
+- **Causa típica:** bug en la migración, archivo corrupto, fallo de FS al hacer el snapshot previo.
+- **Cómo resolver:** la app dejó un backup completo en `.mi-cerebro/pre-migration/<fecha>/` antes de tocar nada. Restaurar desde ahí y reportar el bug con el `context` del error.
+- **Recuperable:** sí — el backup garantiza no perder data.
+
+### MCB-MIG-002 — Versión de schema desconocida
+
+- **Severidad:** fatal
+- **Cuándo:** un archivo viene con `schemaVersion` mayor al `latest` que esta app conoce.
+- **Causa típica:** la carpeta se usó desde una versión más nueva de mi-cerebro.
+- **Cómo resolver:** actualizar mi-cerebro a la última versión, o abrir el archivo desde la versión que lo creó.
+- **Recuperable:** sí — el archivo no se modifica; sólo no se lo abre.
