@@ -8,11 +8,17 @@ import { ERROR_CODES } from '@core/errors/error.codes';
 import { IdbService } from '@core/idb/idb.service';
 import type { DraftRecord } from '@core/idb/idb.types';
 
-import { DEFAULT_DEBOUNCE_MS, type DraftPayloadFactory } from './autosave.types';
+import {
+  DEFAULT_DEBOUNCE_MS,
+  type AutosaveOptions,
+  type DraftPayloadFactory,
+  type OnFlushFn,
+} from './autosave.types';
 
 interface PendingEntry<P> {
   readonly kind: string;
   readonly factory: DraftPayloadFactory<P>;
+  readonly onFlush: OnFlushFn<P> | undefined;
   timer: ReturnType<typeof setTimeout> | null;
 }
 
@@ -50,14 +56,19 @@ export class AutosaveService {
     id: string,
     kind: string,
     factory: DraftPayloadFactory<P>,
-    debounceMs: number = DEFAULT_DEBOUNCE_MS,
+    optionsOrDebounce: AutosaveOptions<P> | number = DEFAULT_DEBOUNCE_MS,
   ): void {
+    const options: AutosaveOptions<P> =
+      typeof optionsOrDebounce === 'number' ? { debounceMs: optionsOrDebounce } : optionsOrDebounce;
+    const debounceMs = options.debounceMs ?? DEFAULT_DEBOUNCE_MS;
+
     const existing = this.pending.get(id);
     if (existing?.timer) clearTimeout(existing.timer);
 
     const entry: PendingEntry<P> = {
       kind,
       factory,
+      onFlush: options.onFlush,
       timer: setTimeout(() => void this.flush(id), debounceMs),
     };
     this.pending.set(id, entry as PendingEntry<unknown>);
@@ -69,10 +80,11 @@ export class AutosaveService {
     if (entry.timer) clearTimeout(entry.timer);
     this.pending.delete(id);
 
+    const payload = entry.factory();
     const record: DraftRecord = {
       id,
       kind: entry.kind,
-      payload: entry.factory(),
+      payload,
       updatedAt: new Date().toISOString(),
     };
 
@@ -86,6 +98,8 @@ export class AutosaveService {
         recoverable: true,
       });
     }
+
+    if (entry.onFlush) await entry.onFlush(payload);
   }
 
   async flushAll(): Promise<void> {
