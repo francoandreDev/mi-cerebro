@@ -97,10 +97,13 @@ module.exports = defineConfig([
     },
   },
   {
+    // why: specs use `throw new Error('should have thrown')` as a guard for
+    //      tests that must reject; AppError isn't appropriate there.
     files: ['**/*.spec.ts'],
     rules: {
       'max-lines': 'off',
       'max-lines-per-function': 'off',
+      'no-restricted-syntax': 'off',
     },
   },
 ]);

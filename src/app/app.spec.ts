@@ -5,6 +5,8 @@ import { App } from './app';
 
 describe('App', () => {
   beforeEach(async () => {
+    indexedDB.deleteDatabase('mc-fs');
+    indexedDB.deleteDatabase('mc-app');
     await TestBed.configureTestingModule({
       imports: [App],
       providers: [provideRouter([])],
