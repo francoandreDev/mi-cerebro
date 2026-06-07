@@ -1,7 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  HostListener,
+  DestroyRef,
   computed,
   effect,
   inject,
@@ -108,6 +108,7 @@ export class CommandPaletteContainer {
 
   constructor() {
     void this.searchIndex.load();
+    this.registerGlobalShortcut();
     effect(() => {
       if (this.open()) {
         this.cursor.set(0);
@@ -146,18 +147,26 @@ export class CommandPaletteContainer {
     this.navigate(hit);
   }
 
-  @HostListener('window:keydown', ['$event'])
-  protected onGlobalKey(event: KeyboardEvent): void {
-    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
-      // why: Chrome's default Ctrl+K focuses the omnibox in search mode.
-      //      preventDefault + stopPropagation before the browser sees the
-      //      event keeps the shortcut owned by the app.
-      event.preventDefault();
-      event.stopPropagation();
-      this.paletteState.toggle();
-    } else if (event.key === 'Escape' && this.open()) {
-      this.close();
-    }
+  private registerGlobalShortcut(): void {
+    // why: Angular's @HostListener attaches in bubbling phase, and on some
+    //      Chrome versions the omnibox shortcut (Ctrl+K) wins the race. We
+    //      register at capture phase on window so the page intercepts first.
+    const handler = (event: KeyboardEvent): void => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        event.stopPropagation();
+        this.paletteState.toggle();
+        return;
+      }
+      if (event.key === 'Escape' && this.open()) {
+        event.preventDefault();
+        this.close();
+      }
+    };
+    window.addEventListener('keydown', handler, { capture: true });
+    inject(DestroyRef).onDestroy(() => {
+      window.removeEventListener('keydown', handler, { capture: true });
+    });
   }
 
   private readonly handlers: Record<string, (event: KeyboardEvent) => void> = {
