@@ -1,12 +1,18 @@
 {
   "printWidth": 100,
   "singleQuote": true,
+  "trailingComma": "all",
+  "semi": true,
+  "arrowParens": "always",
+  "endOfLine": "lf",
   "overrides": [
     {
       "files": "*.html",
-      "options": {
-        "parser": "angular"
-      }
+      "options": { "parser": "angular" }
+    },
+    {
+      "files": "*.json",
+      "options": { "trailingComma": "none" }
     }
   ]
 }
