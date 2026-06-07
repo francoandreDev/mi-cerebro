@@ -20,6 +20,7 @@ export interface NoteSummary {
   readonly id: string;
   readonly title: string;
   readonly updatedAt: string;
+  readonly tags: readonly string[];
 }
 
 export const emptyDoc = (): JSONContent => ({

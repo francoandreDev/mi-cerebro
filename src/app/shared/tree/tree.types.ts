@@ -4,11 +4,18 @@
 
 export type TreeNodeKind = string;
 
+export interface TreeNodeBadge {
+  readonly id: string;
+  readonly label: string;
+  readonly color: string;
+}
+
 export interface TreeNode {
   readonly id: string;
   readonly label: string;
   readonly kind: TreeNodeKind;
   readonly children?: readonly TreeNode[];
+  readonly badges?: readonly TreeNodeBadge[];
 }
 
 export type FilterDirection = 'general' | 'up' | 'down';

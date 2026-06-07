@@ -119,6 +119,10 @@ export const es = {
   'tree.direction.up': 'Hacia arriba',
   'tree.direction.down': 'Hacia abajo',
 
+  'tags.placeholder': 'Agregar etiqueta...',
+  'tags.createPrefix': 'Crear',
+  'tags.empty': 'Sin etiquetas.',
+
   'errors.aut.005.title': 'Esta entidad está abierta en otra pestaña',
   'errors.aut.005.message':
     'Otra pestaña la está editando. Podés abrirla en solo lectura o tomar control desde acá.',

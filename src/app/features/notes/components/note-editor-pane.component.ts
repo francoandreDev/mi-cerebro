@@ -3,7 +3,9 @@ import type { JSONContent } from '@tiptap/core';
 
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import type { Tag } from '@core/tags/tag.types';
 import { EditorComponent } from '@shared/editor/editor.component';
+import { TagPickerComponent } from '@shared/tags/tag-picker.component';
 
 import type { Note } from '../models/note.types';
 
@@ -12,7 +14,7 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
 @Component({
   selector: 'mc-note-editor-pane',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [EditorComponent],
+  imports: [EditorComponent, TagPickerComponent],
   template: `
     <header class="bar">
       <input
@@ -28,6 +30,12 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
         {{ t('notes.delete') }}
       </button>
     </header>
+    <mc-tag-picker
+      [availableTags]="availableTags()"
+      [selectedIds]="note().tags"
+      (addTag)="addTag.emit($event)"
+      (removeTag)="removeTag.emit($event)"
+    />
     <mc-editor
       class="editor"
       [value]="note().body"
@@ -90,9 +98,12 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
 export class NoteEditorPaneComponent {
   readonly note = input.required<Note>();
   readonly status = input<SaveStatus>('saved');
+  readonly availableTags = input.required<readonly Tag[]>();
   readonly titleChange = output<string>();
   readonly bodyChange = output<JSONContent>();
   readonly removeNote = output<void>();
+  readonly addTag = output<string>();
+  readonly removeTag = output<string>();
 
   private readonly i18n = inject(I18nService);
   protected t(key: TranslationKey): string {

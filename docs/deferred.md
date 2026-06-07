@@ -58,3 +58,31 @@ Formato por entrada:
 - **Qué**: arrastrar nodos del árbol para reorganizar.
 - **Por qué**: el árbol actual sólo lista; no hay concepto de orden custom todavía.
 - **Target**: sin asignar — pulido (§19.16).
+
+---
+
+## Tags (origen: paso 7a)
+
+### UI dedicada de gestión de tags
+
+- **Qué**: pantalla para listar todos los tags, renombrar masivo, hacer merge entre dos, ver cuántas entidades usa cada uno, eliminar limpiando referencias.
+- **Por qué**: hoy se crean en línea desde el picker y se quedan ahí. No hay vista global; renombrar requiere editar `tags.json` a mano.
+- **Target**: sin asignar — probablemente §19.16 (pulido) o mini-fase cuando aparezca la segunda entidad que use tags.
+
+### Color picker custom para tag
+
+- **Qué**: dejar al usuario elegir el color de un tag desde la UI.
+- **Por qué**: hoy el color se deriva determinísticamente del id (hash → paleta). Funciona, pero no es customizable.
+- **Target**: §19.15 (temas custom + WCAG) o §19.16 (pulido).
+
+### Limpieza de referencias rotas
+
+- **Qué**: cuando se elimina un tag de `tags.json`, dejar de mostrarlo en notas que lo referencian (hoy `byId` devuelve undefined y el chip se filtra silenciosamente, pero el id queda guardado en el body de la nota).
+- **Por qué**: queríamos paso 7a chico. La limpieza necesita iterar todas las entidades o hacerla lazy en el siguiente save de cada una.
+- **Target**: §19.7b (búsqueda global indexada — ya tendremos que iterar todas las entidades para construir el índice, podemos limpiar en ese paso).
+
+### Autocompletado por tag desde búsqueda global
+
+- **Qué**: en la paleta global poder filtrar "tag:trabajo" y ver todas las entidades con ese tag.
+- **Por qué**: necesita el índice de búsqueda global.
+- **Target**: §19.7b.
