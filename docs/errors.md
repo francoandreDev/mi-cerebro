@@ -145,3 +145,23 @@ Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `P
 - **Causa típica:** la carpeta se usó desde una versión más nueva de mi-cerebro.
 - **Cómo resolver:** actualizar mi-cerebro a la última versión, o abrir el archivo desde la versión que lo creó.
 - **Recuperable:** sí — el archivo no se modifica; sólo no se lo abre.
+
+---
+
+## ENT — Entidades
+
+### MCB-ENT-001 — Archivo dañado o ilegible
+
+- **Severidad:** error
+- **Cuándo:** el JSON de una entidad no parsea, o le faltan campos requeridos.
+- **Causa típica:** un editor externo cortó el archivo a mitad, encoding inconsistente, o corrupción en disco.
+- **Cómo resolver:** revisar `.mi-cerebro/pre-migration/` o el repo git si está versionado; restaurar desde la última copia buena.
+- **Recuperable:** sí — la app omite el archivo y deja el resto del workspace usable.
+
+### MCB-ENT-002 — IDs duplicados
+
+- **Severidad:** error
+- **Cuándo:** dos archivos distintos comparten el mismo `id` UUID interno.
+- **Causa típica:** duplicación manual de un archivo `.json` sin regenerar el ID.
+- **Cómo resolver:** renombrar/eliminar uno de los dos. Si querés conservar ambos, abrí el JSON y reemplazá uno de los IDs por un UUID nuevo.
+- **Recuperable:** sí — los links que apuntaban al ID original quedan intactos.
