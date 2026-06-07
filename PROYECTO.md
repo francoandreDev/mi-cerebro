@@ -164,6 +164,7 @@ Reglas que rigen todo el desarrollo. Cualquier excepción se justifica en el com
 23. **Documentar el porqué, no el qué.** Si para entender un fragmento de código necesitás abrir un `.md`, falló el código o la doc.
 24. **Doc desactualizada miente.** Si vemos un `.md` desactualizado se actualiza o se borra, no se deja pudrir.
 25. **El commit que cambia una decisión arquitectónica también actualiza `PROYECTO.md`** (o agrega un ADR). En el mismo commit, no después.
+    25b. **Todo lo que se posterga queda registrado en `docs/deferred.md`** en el mismo commit que toma la decisión. Sin entrada en deferred, la decisión no es válida: el siguiente paso no puede saber qué heredó como "para después". Cada ítem incluye: qué se difirió, por qué, y a qué fase apunta (o "sin asignar"). Al cerrar la fase target, los ítems se eliminan del archivo.
 
 ### 4.12 Errores
 
