@@ -110,7 +110,7 @@ Reglas que rigen todo el desarrollo. Cualquier excepción se justifica en el com
   <name>.config.ts   # solo si hace falta
   ```
 - **`core/`** por dominio: `fs/`, `idb/`, `index/`, `theme/`, `continuity/`, `reminders/`, `versioning/`, `autosave/`, `errors/`, `migrations/`, `tags/`, `i18n/`.
-- **`shared/`** por tipo: `components/`, `directives/`, `pipes/`, `utils/`, `editor/` (wrapper TipTap propio, ver §11).
+- **`shared/`** por tipo: `components/`, `directives/`, `pipes/`, `utils/`, `editor/` (wrapper TipTap propio, ver §11), `tree/` (árbol con filtro inteligente, ver §10).
 - **Regla de oro:** subcarpeta con un solo archivo no existe; se inlinea un nivel arriba. Nace cuando hay 2+ archivos relacionados.
 
 ### 4.4 Tamaño y responsabilidad de archivos

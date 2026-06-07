@@ -11,17 +11,17 @@ import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 
 import { NoteEditorPaneComponent, type SaveStatus } from '../components/note-editor-pane.component';
-import { NoteListComponent } from '../components/note-list.component';
 import { NOTE_KIND, type Note } from '../models/note.types';
 import { NotesService } from '../services/notes.service';
+import { NoteSidebarComponent } from './note-sidebar.component';
 
 @Component({
   selector: 'mc-notes',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NoteListComponent, NoteEditorPaneComponent],
+  imports: [NoteSidebarComponent, NoteEditorPaneComponent],
   template: `
     <div class="layout">
-      <mc-note-list
+      <mc-note-sidebar
         [notes]="notes()"
         [selectedId]="active()?.id ?? null"
         (chooseNote)="onSelect($event)"

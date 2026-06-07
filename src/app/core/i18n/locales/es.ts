@@ -111,6 +111,14 @@ export const es = {
   'notes.status.unsaved': 'Sin guardar',
   'notes.selectOne': 'Elegí una nota o creá una nueva.',
 
+  'tree.filter.placeholder': 'Filtrar...',
+  'tree.noMatches': 'Sin coincidencias.',
+  'tree.matches.count': '{n} coincidencias',
+  'tree.direction.label': 'Dirección de búsqueda',
+  'tree.direction.general': 'General (más cerca)',
+  'tree.direction.up': 'Hacia arriba',
+  'tree.direction.down': 'Hacia abajo',
+
   'errors.aut.005.title': 'Esta entidad está abierta en otra pestaña',
   'errors.aut.005.message':
     'Otra pestaña la está editando. Podés abrirla en solo lectura o tomar control desde acá.',
