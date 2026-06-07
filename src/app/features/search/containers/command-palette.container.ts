@@ -146,10 +146,14 @@ export class CommandPaletteContainer {
     this.navigate(hit);
   }
 
-  @HostListener('document:keydown', ['$event'])
+  @HostListener('window:keydown', ['$event'])
   protected onGlobalKey(event: KeyboardEvent): void {
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+      // why: Chrome's default Ctrl+K focuses the omnibox in search mode.
+      //      preventDefault + stopPropagation before the browser sees the
+      //      event keeps the shortcut owned by the app.
       event.preventDefault();
+      event.stopPropagation();
       this.paletteState.toggle();
     } else if (event.key === 'Escape' && this.open()) {
       this.close();
