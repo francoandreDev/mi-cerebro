@@ -87,6 +87,24 @@ export class WorkspaceService {
     const perm = await this.fs.requestPermission(handle);
     if (perm === 'granted') {
       this.stateSignal.set('ready');
+      return;
+    }
+    throw new AppError(ERROR_CODES.FS_004, { severity: 'warning', recoverable: true });
+  }
+
+  // why: call this right before any disk write that runs inside a user
+  //      gesture (button click). queryPermission can return 'granted'
+  //      optimistically but the actual write still trips NotAllowedError if
+  //      the browser silently downgraded the perm — requestPermission inside
+  //      a gesture is the only reliable way to (re)prompt the user.
+  async ensureWritable(): Promise<void> {
+    const handle = this.rootSignal();
+    if (!handle) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
+    const current = await this.fs.queryPermission(handle);
+    if (current === 'granted') return;
+    const requested = await this.fs.requestPermission(handle);
+    if (requested !== 'granted') {
+      throw new AppError(ERROR_CODES.FS_004, { severity: 'warning', recoverable: true });
     }
   }
 

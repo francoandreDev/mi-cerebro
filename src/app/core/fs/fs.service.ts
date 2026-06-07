@@ -85,11 +85,7 @@ export class FsService {
       } catch {
         /* noop */
       }
-      throw new AppError(ERROR_CODES.FS_001, {
-        severity: 'error',
-        cause,
-        context: { name },
-      });
+      throw this.classifyFsError(cause, { name, op: 'write' });
     }
   }
 
@@ -100,12 +96,28 @@ export class FsService {
       const text = await file.text();
       return JSON.parse(text) as T;
     } catch (cause) {
-      throw new AppError(ERROR_CODES.FS_001, {
-        severity: 'error',
+      throw this.classifyFsError(cause, { name, op: 'read' });
+    }
+  }
+
+  // why: NotAllowedError means the browser dropped readwrite permission
+  //      between this call and the last successful queryPermission. Routing
+  //      it to FS-004 lets the UI surface a reauthorize action instead of
+  //      the generic write-failure message.
+  private classifyFsError(cause: unknown, context: Record<string, unknown>): AppError {
+    if (cause instanceof DOMException && cause.name === 'NotAllowedError') {
+      return new AppError(ERROR_CODES.FS_004, {
+        severity: 'warning',
         cause,
-        context: { name, op: 'read' },
+        context,
+        recoverable: true,
       });
     }
+    return new AppError(ERROR_CODES.FS_001, {
+      severity: 'error',
+      cause,
+      context,
+    });
   }
 
   async *listFiles(parent: FsDirectoryHandle, suffix?: string): AsyncIterable<string> {

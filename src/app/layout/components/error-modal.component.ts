@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 
 import type { AppError } from '@core/errors/app-error';
+import type { ErrorAction } from '@core/errors/error.types';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 
@@ -19,7 +20,12 @@ import type { TranslationKey } from '@core/i18n/i18n.types';
       <p class="message">{{ t(error().messageKey) }}</p>
       <p class="code mc-mono">{{ t('common.code') }}: {{ error().code }}</p>
       <div class="actions">
-        <button type="button" class="primary" (click)="dismiss.emit()">
+        @for (action of error().actions; track action.labelKey) {
+          <button type="button" class="primary" (click)="runAction(action)">
+            {{ t(action.labelKey) }}
+          </button>
+        }
+        <button type="button" [class]="secondaryOrPrimary()" (click)="dismiss.emit()">
           {{ t('common.close') }}
         </button>
       </div>
@@ -74,6 +80,16 @@ import type { TranslationKey } from '@core/i18n/i18n.types';
     .primary:hover {
       background: var(--mc-accent-hover);
     }
+    .secondary {
+      background: transparent;
+      color: var(--mc-fg-primary);
+      border: 1px solid var(--mc-border-default);
+      padding: var(--mc-space-2) var(--mc-space-4);
+      border-radius: var(--mc-radius-md);
+    }
+    .secondary:hover {
+      background: var(--mc-bg-surface);
+    }
     [data-severity='fatal'] {
       border-top: 3px solid var(--mc-state-danger);
     }
@@ -87,5 +103,14 @@ export class ErrorModalComponent {
 
   protected t(key: string): string {
     return this.i18n.t(key as TranslationKey);
+  }
+
+  protected secondaryOrPrimary(): string {
+    return this.error().actions.length > 0 ? 'secondary' : 'primary';
+  }
+
+  protected async runAction(action: ErrorAction): Promise<void> {
+    await action.run();
+    this.dismiss.emit();
   }
 }
