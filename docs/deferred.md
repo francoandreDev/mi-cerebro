@@ -29,23 +29,17 @@ Formato por entrada:
 
 ## Árbol con filtro (origen: paso 6)
 
-### Filtros por tipo de entidad y por tag
+### Filtros por tipo de entidad
 
-- **Qué**: combinaciones de filtros (notas+tasks, tag X, etc.) descritos en §10 y §15.
-- **Por qué**: sólo existe la entidad Note hoy; los tags transversales no existen.
-- **Target**: §19.7 (tags + búsqueda global).
+- **Qué**: combinaciones de filtros por tipo (notas+tasks+goals, etc.) descritos en §10.
+- **Por qué**: sólo existe la entidad Note hoy. El filtro por tag ya está cubierto en 7b.
+- **Target**: §19.9 (resto de entidades) — cuando exista la segunda entidad, las pestañas/filtros por tipo cobran sentido.
 
-### Búsqueda en contenido (full-text)
+### Lista de coincidencias visible dentro del árbol
 
-- **Qué**: indexar el body de cada nota (no sólo el título) con MiniSearch o Lunr, persistido en IndexedDB.
-- **Por qué**: §10 lo describe como pieza independiente del árbol navegacional.
-- **Target**: §19.7.
-
-### Lista de coincidencias navegable visible
-
-- **Qué**: hoy el filtro muestra sólo "N coincidencias" y permite saltar entre ellas con ↑/↓ desde el input. §10 menciona "Lista de coincidencias navegable con teclado".
-- **Por qué**: con una sola entidad el contador alcanza. La lista cobra sentido cuando hay matches en varios tipos y se necesita preview por match.
-- **Target**: §19.7 junto con la búsqueda global.
+- **Qué**: hoy el árbol muestra un contador "N coincidencias" y se navega con ↑/↓ desde el input. §10 menciona "Lista de coincidencias navegable con teclado" desplegada.
+- **Por qué**: el paso 7b incorporó la paleta global que cumple el rol cuando hay muchos matches. El listado dentro del árbol es UX complementario y menos urgente.
+- **Target**: sin asignar — pulido (§19.16) salvo que aparezca una necesidad concreta.
 
 ### Scroll automático al match activo
 
@@ -75,14 +69,30 @@ Formato por entrada:
 - **Por qué**: hoy el color se deriva determinísticamente del id (hash → paleta). Funciona, pero no es customizable.
 - **Target**: §19.15 (temas custom + WCAG) o §19.16 (pulido).
 
-### Limpieza de referencias rotas
+---
 
-- **Qué**: cuando se elimina un tag de `tags.json`, dejar de mostrarlo en notas que lo referencian (hoy `byId` devuelve undefined y el chip se filtra silenciosamente, pero el id queda guardado en el body de la nota).
-- **Por qué**: queríamos paso 7a chico. La limpieza necesita iterar todas las entidades o hacerla lazy en el siguiente save de cada una.
-- **Target**: §19.7b (búsqueda global indexada — ya tendremos que iterar todas las entidades para construir el índice, podemos limpiar en ese paso).
+## Búsqueda (origen: paso 7b)
 
-### Autocompletado por tag desde búsqueda global
+### Botón / atajo de "reindexar" manual
 
-- **Qué**: en la paleta global poder filtrar "tag:trabajo" y ver todas las entidades con ese tag.
-- **Por qué**: necesita el índice de búsqueda global.
-- **Target**: §19.7b.
+- **Qué**: §10 menciona "botón reindexar para rebuild manual si se corrompe". Hoy el rebuild ocurre solo en cada `refresh()` (apertura del workspace o paneo); no hay UI explícita.
+- **Por qué**: con sólo notas el rebuild automático cubre el caso. La pieza UI tiene sentido cuando haya más entidades y el índice sea grande, o cuando exista una pantalla de "ajustes".
+- **Target**: §19.16 (pulido), o anticipado si aparece un escenario de corrupción.
+
+### Snippet centrado en la coincidencia (con highlight)
+
+- **Qué**: en lugar de mostrar los primeros 160 caracteres del body, mostrar un fragmento alrededor del término encontrado y resaltarlo.
+- **Por qué**: requiere índice posicional o un re-scan por hit. La paleta ya muestra preview, pero no contextualizado.
+- **Target**: §19.16 (pulido).
+
+### Historial de últimas búsquedas / accesos recientes
+
+- **Qué**: al abrir la paleta sin escribir nada, mostrar las últimas entidades visitadas o búsquedas recientes.
+- **Por qué**: requiere persistir un log; no es crítico para la primera versión.
+- **Target**: §19.16 (pulido).
+
+### Continuidad: última ruta + scroll al abrir
+
+- **Qué**: §10 menciona "vuelve a la última ruta + última entidad abierta + scroll". Hoy se abre en `/notes` sin recordar nada.
+- **Por qué**: requiere infra de `localStorage` y un listener de route changes. Fuera del scope estricto de búsqueda.
+- **Target**: §19.16 (pulido — "continuidad de sesión").

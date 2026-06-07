@@ -687,7 +687,9 @@ Tono: **neutro frío sobre blanco**. Acento naranja recalibrado para AA sobre fo
 4. **Migrations base + AutosaveService + IndexedDB drafts** (toda la red de seguridad antes de la primera entidad).
 5. **Notes** como primer tipo end-to-end: crear, listar en árbol, editar (editor básico TipTap), guardar a disco con escritura atómica.
 6. **Árbol con filtro inteligente** (la búsqueda navegacional).
-7. **Tags transversales** + búsqueda global indexada.
+7. **Tags transversales y búsqueda global** (dividido en dos sub-pasos):
+   - **7a.** Tags transversales (`tags.json`, picker, badges en el árbol, color determinístico). _Cerrado._
+   - **7b.** Búsqueda global indexada con MiniSearch persistido en IndexedDB; paleta `Ctrl+K`; filtro del árbol también busca tags; limpieza lazy de tag-refs muertos.
 8. **Concurrencia entre pestañas** (BroadcastChannel + locks).
 9. **Resto de entidades**: tasks, goals, lists, writings, images, files.
 10. **Calendar.**

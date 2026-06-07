@@ -123,6 +123,13 @@ export const es = {
   'tags.createPrefix': 'Crear',
   'tags.empty': 'Sin etiquetas.',
 
+  'palette.label': 'Búsqueda global',
+  'palette.placeholder': 'Buscar... (probá tag:trabajo)',
+  'palette.empty': 'Escribí para buscar entre tus notas.',
+  'palette.unknownTag': 'No existe la etiqueta',
+  'palette.hint': '↑↓ navegar · enter abrir · esc cerrar',
+  'palette.kindUnknown': 'Otro',
+
   'errors.aut.005.title': 'Esta entidad está abierta en otra pestaña',
   'errors.aut.005.message':
     'Otra pestaña la está editando. Podés abrirla en solo lectura o tomar control desde acá.',

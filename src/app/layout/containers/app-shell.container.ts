@@ -6,18 +6,20 @@ import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import { ThemeService } from '@core/theme/theme.service';
 import { OnboardingContainer } from '@features/onboarding/containers/onboarding.container';
+import { CommandPaletteContainer } from '@features/search/containers/command-palette.container';
 
 import { ErrorDisplayContainer } from './error-display.container';
 
 @Component({
   selector: 'mc-app-shell',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, ErrorDisplayContainer, OnboardingContainer],
+  imports: [RouterOutlet, ErrorDisplayContainer, OnboardingContainer, CommandPaletteContainer],
   template: `
     @if (workspace.isReady()) {
       <main class="content">
         <router-outlet />
       </main>
+      <mc-command-palette />
     } @else {
       <mc-onboarding />
     }

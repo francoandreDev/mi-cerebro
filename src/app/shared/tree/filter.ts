@@ -2,6 +2,15 @@ import type { FilterDirection, FilterResult, TreeMatch, TreeNode } from './tree.
 
 const norm = (s: string): string => s.normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase();
 
+// why: tags appear as badges on a node; the filter should hit them too so a
+//      query like "trabajo" surfaces every note tagged trabajo even if the
+//      title doesn't mention it.
+const matchesNode = (node: TreeNode, needle: string): boolean => {
+  if (norm(node.label).includes(needle)) return true;
+  for (const b of node.badges ?? []) if (norm(b.label).includes(needle)) return true;
+  return false;
+};
+
 interface IndexedNode {
   readonly node: TreeNode;
   readonly path: readonly string[];
@@ -48,7 +57,7 @@ export const filterTree = (
   const needle = norm(query.trim());
   const active = activeId ? index.find((n) => n.node.id === activeId) : undefined;
 
-  const hits = index.filter((n) => norm(n.node.label).includes(needle));
+  const hits = index.filter((n) => matchesNode(n.node, needle));
   const visible = new Set<string>();
   const autoExpand = new Set<string>();
   for (const hit of hits) {

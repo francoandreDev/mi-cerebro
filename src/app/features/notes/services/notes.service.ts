@@ -6,6 +6,10 @@ import { FsService } from '@core/fs/fs.service';
 import type { FsDirectoryHandle } from '@core/fs/fs.types';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { MigrationsService } from '@core/migrations/migrations.service';
+import { SearchIndexService } from '@core/search/search-index.service';
+import type { SearchDoc } from '@core/search/search.types';
+import { extractPlainText } from '@core/search/tiptap-text';
+import { TagsService } from '@core/tags/tags.service';
 import { toSlug, withSuffix } from '@shared/utils/slug';
 
 import {
@@ -26,6 +30,8 @@ export class NotesService {
   private readonly fs = inject(FsService);
   private readonly workspace = inject(WorkspaceService);
   private readonly migrations = inject(MigrationsService);
+  private readonly search = inject(SearchIndexService);
+  private readonly tags = inject(TagsService);
 
   // why: read(id) and save(note) both need the on-disk filename; we cache
   //      it on first list/load so callers don't pay an O(N) scan each time.
@@ -42,6 +48,7 @@ export class NotesService {
     const dir = await this.notesDir();
     this.idToFile.clear();
     const summaries: NoteSummary[] = [];
+    const indexDocs: SearchDoc[] = [];
     for await (const name of this.fs.listFiles(dir, NOTE_FILE_SUFFIX)) {
       try {
         const raw = await this.fs.readJson<Note>(dir, name);
@@ -53,6 +60,7 @@ export class NotesService {
           updatedAt: note.updatedAt,
           tags: note.tags,
         });
+        indexDocs.push(this.toSearchDoc(note));
       } catch (cause) {
         // why: a single corrupt file shouldn't blank the whole list.
         console.warn('[notes] skipped unreadable file', name, cause);
@@ -60,6 +68,7 @@ export class NotesService {
     }
     summaries.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
     this.summariesSignal.set(summaries);
+    await this.search.rebuild(indexDocs);
     return summaries;
   }
 
@@ -79,6 +88,7 @@ export class NotesService {
     await this.fs.writeFileAtomic(dir, filename, JSON.stringify(note, null, 2));
     this.idToFile.set(note.id, filename);
     this.summariesSignal.update((list) => [this.toSummary(note), ...list]);
+    await this.search.upsert(this.toSearchDoc(note));
     return note;
   }
 
@@ -91,12 +101,17 @@ export class NotesService {
 
   async save(note: Note): Promise<Note> {
     const dir = await this.notesDir();
-    const updated: Note = { ...note, updatedAt: new Date().toISOString() };
+    // why: drop tag refs to ids that no longer exist in tags.json (lazy
+    //      cleanup). The index already filters them out via toSearchDoc;
+    //      doing it here too means disk converges to clean state on save.
+    const cleanTags = this.dropStaleTags(note.tags);
+    const updated: Note = { ...note, tags: cleanTags, updatedAt: new Date().toISOString() };
     const current = await this.findFilename(dir, note.id);
     await this.fs.writeFileAtomic(dir, current, JSON.stringify(updated, null, 2));
     this.summariesSignal.update((list) =>
       list.map((s) => (s.id === note.id ? this.toSummary(updated) : s)),
     );
+    await this.search.upsert(this.toSearchDoc(updated));
     return updated;
   }
 
@@ -109,6 +124,7 @@ export class NotesService {
     await this.fs.moveFile(dir, name, trashDir, dest);
     this.idToFile.delete(id);
     this.summariesSignal.update((list) => list.filter((s) => s.id !== id));
+    await this.search.remove(id);
   }
 
   private requireRoot(): FsDirectoryHandle {
@@ -164,5 +180,20 @@ export class NotesService {
 
   private toSummary(note: Note): NoteSummary {
     return { id: note.id, title: note.title, updatedAt: note.updatedAt, tags: note.tags };
+  }
+
+  private toSearchDoc(note: Note): SearchDoc {
+    return {
+      id: note.id,
+      kind: NOTE_KIND,
+      title: note.title,
+      body: extractPlainText(note.body),
+      tagIds: this.dropStaleTags(note.tags),
+    };
+  }
+
+  private dropStaleTags(tagIds: readonly string[]): readonly string[] {
+    if (tagIds.length === 0) return tagIds;
+    return tagIds.filter((id) => this.tags.byId(id) !== undefined);
   }
 }
