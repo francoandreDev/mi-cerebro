@@ -68,23 +68,18 @@ export class FsService {
     return true;
   }
 
-  // why: write to <name>.tmp then atomic-rename over <name>. If JSON.stringify
-  //      or the write fails mid-flight, the original file is untouched.
+  // why: createWritable() in the FS Access API is itself atomic — it writes
+  //      to an internal swap file and only commits on close(). No need for
+  //      our own .tmp + move() dance, which was breaking on save() because
+  //      move() over an existing destination is flaky across Chromium
+  //      versions.
   async writeFileAtomic(parent: FsDirectoryHandle, name: string, contents: string): Promise<void> {
-    const tmpName = `${name}.tmp`;
     try {
-      const tmp = (await parent.getFileHandle(tmpName, { create: true })) as FsFileHandle;
-      const writable = await tmp.createWritable({ keepExistingData: false });
+      const handle = await parent.getFileHandle(name, { create: true });
+      const writable = await handle.createWritable({ keepExistingData: false });
       await writable.write(contents);
       await writable.close();
-      await tmp.move(name);
     } catch (cause) {
-      // best-effort cleanup of the leftover .tmp; ignore secondary failures.
-      try {
-        await parent.removeEntry(tmpName);
-      } catch {
-        /* noop */
-      }
       throw this.classifyFsError(cause, { name, op: 'write' });
     }
   }
@@ -103,15 +98,20 @@ export class FsService {
   // why: NotAllowedError means the browser dropped readwrite permission
   //      between this call and the last successful queryPermission. Routing
   //      it to FS-004 lets the UI surface a reauthorize action instead of
-  //      the generic write-failure message.
+  //      the generic write-failure message. SecurityError shows up the same
+  //      way on some Chromium versions when the user closed the FS picker
+  //      mid-request, so we treat it as a permission case too.
   private classifyFsError(cause: unknown, context: Record<string, unknown>): AppError {
-    if (cause instanceof DOMException && cause.name === 'NotAllowedError') {
-      return new AppError(ERROR_CODES.FS_004, {
-        severity: 'warning',
-        cause,
-        context,
-        recoverable: true,
-      });
+    if (cause instanceof DOMException) {
+      const name = cause.name;
+      if (name === 'NotAllowedError' || name === 'SecurityError') {
+        return new AppError(ERROR_CODES.FS_004, {
+          severity: 'warning',
+          cause,
+          context,
+          recoverable: true,
+        });
+      }
     }
     return new AppError(ERROR_CODES.FS_001, {
       severity: 'error',
