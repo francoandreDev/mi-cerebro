@@ -463,6 +463,7 @@ Raíz elegida por el usuario al abrir la app la primera vez (sugerencia: `Docume
 ### Errores típicos del arranque
 
 - `MCB-SYS-001`: navegador sin soporte para File System Access API (Firefox/Safari).
+- `MCB-FS-002`: la carpeta elegida no es escribible, no se pueden crear las subcarpetas iniciales.
 - `MCB-FS-003`: carpeta raíz movida o eliminada desde el último uso.
 - `MCB-FS-004`: permisos revocados, requiere re-autorización.
 

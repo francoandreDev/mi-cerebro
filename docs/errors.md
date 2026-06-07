@@ -46,6 +46,14 @@ Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `P
 - **Cómo resolver:** otorgar permiso desde el banner que aparece, verificar que ningún programa externo tenga el archivo abierto. Si persiste, hacer export ZIP por las dudas y reportar.
 - **Recuperable:** sí — el borrador queda en IndexedDB hasta restablecer el permiso.
 
+### MCB-FS-002 — No se pudo inicializar la carpeta
+
+- **Severidad:** error
+- **Cuándo:** al elegir una carpeta raíz, la creación de las subcarpetas iniciales (`.mi-cerebro/`, `notes/`, etc.) falla.
+- **Causa típica:** la carpeta es de sólo lectura, vive en un volumen montado sin permisos de escritura, o el SO rechazó la operación.
+- **Cómo resolver:** elegir otra carpeta en una ubicación con permisos de escritura (típicamente dentro de `Documentos`).
+- **Recuperable:** sí — no se persiste ningún handle hasta que la inicialización termine bien.
+
 ### MCB-FS-003 — Carpeta raíz movida o eliminada
 
 - **Severidad:** error
