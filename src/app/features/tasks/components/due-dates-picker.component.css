@@ -1,0 +1,37 @@
+.wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mc-space-2);
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mc-space-1);
+  padding: 2px var(--mc-space-2);
+  background: var(--mc-bg-elevated);
+  border: 1px solid var(--mc-border-default);
+  border-radius: var(--mc-radius-pill);
+  font-size: var(--mc-font-size-sm);
+}
+.chip.overdue {
+  border-color: var(--mc-fg-warning, #d97706);
+  color: var(--mc-fg-warning, #d97706);
+}
+.chip .x {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  font-size: var(--mc-font-size-md);
+  line-height: 1;
+  padding: 0 2px;
+}
+.input {
+  background: transparent;
+  border: 1px dashed var(--mc-border-default);
+  color: var(--mc-fg-primary);
+  padding: 2px var(--mc-space-2);
+  border-radius: var(--mc-radius-md);
+  font-size: var(--mc-font-size-sm);
+}

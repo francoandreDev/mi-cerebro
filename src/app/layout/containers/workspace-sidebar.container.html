@@ -1,0 +1,58 @@
+@if (isReady()) {
+  <header class="bar">
+    <h2 class="title">mi-cerebro</h2>
+    <div class="newgroup">
+      <button type="button" class="primary" (click)="createNote()">+ {{ t('notes.new') }}</button>
+      <button type="button" class="primary" (click)="createTask()">+ {{ t('tasks.new') }}</button>
+    </div>
+  </header>
+  <nav class="chips" role="tablist" [attr.aria-label]="t('tree.type.all')">
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="typeFilter() === 'all'"
+      [class.active]="typeFilter() === 'all'"
+      (click)="setType('all')"
+    >
+      {{ t('tree.type.all') }}
+    </button>
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="typeFilter() === 'notes'"
+      [class.active]="typeFilter() === 'notes'"
+      (click)="setType('notes')"
+    >
+      {{ t('tree.type.notes') }}
+    </button>
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="typeFilter() === 'tasks'"
+      [class.active]="typeFilter() === 'tasks'"
+      (click)="setType('tasks')"
+    >
+      {{ t('tree.type.tasks') }}
+    </button>
+  </nav>
+  <mc-tree-filter
+    [query]="query()"
+    [direction]="direction()"
+    [matchCount]="result().matches.length"
+    (queryChange)="onQuery($event)"
+    (directionChange)="onDirection($event)"
+    (next)="onNext()"
+    (prev)="onPrev()"
+    (activateFirst)="onActivateFirst()"
+    (clear)="onClear()"
+  />
+  <mc-tree
+    [nodes]="treeRoots()"
+    [visible]="result().visible"
+    [matchedIds]="matchedIds()"
+    [autoExpand]="result().autoExpand"
+    [selectedId]="selectedNodeId()"
+    [emptyKey]="emptyKey()"
+    (chooseNode)="choose($event)"
+  />
+}

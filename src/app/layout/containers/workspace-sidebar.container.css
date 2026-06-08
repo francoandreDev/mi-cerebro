@@ -1,0 +1,52 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+  border-right: 1px solid var(--mc-border-default);
+  background: var(--mc-bg-surface);
+  height: 100vh;
+}
+.bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-2);
+  padding: var(--mc-space-3);
+  border-bottom: 1px solid var(--mc-border-default);
+}
+.title {
+  font-size: var(--mc-font-size-lg);
+  margin: 0;
+}
+.newgroup {
+  display: flex;
+  gap: var(--mc-space-2);
+  flex-wrap: wrap;
+}
+.primary {
+  background: var(--mc-accent-primary);
+  color: var(--mc-accent-fg);
+  padding: var(--mc-space-1) var(--mc-space-3);
+  border-radius: var(--mc-radius-md);
+  font-weight: 600;
+  font-size: var(--mc-font-size-sm);
+  text-decoration: none;
+}
+.chips {
+  display: flex;
+  gap: var(--mc-space-1);
+  padding: var(--mc-space-2) var(--mc-space-3) 0;
+}
+.chips button {
+  background: transparent;
+  color: var(--mc-fg-muted);
+  border: 1px solid var(--mc-border-default);
+  padding: 2px var(--mc-space-3);
+  border-radius: var(--mc-radius-pill);
+  font-size: var(--mc-font-size-sm);
+  cursor: pointer;
+}
+.chips button.active {
+  background: var(--mc-accent-primary);
+  color: var(--mc-accent-fg);
+  border-color: var(--mc-accent-primary);
+}

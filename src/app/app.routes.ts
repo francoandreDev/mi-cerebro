@@ -6,4 +6,8 @@ export const routes: Routes = [
     path: 'notes',
     loadChildren: () => import('./features/notes/notes.routes').then((m) => m.notesRoutes),
   },
+  {
+    path: 'tasks',
+    loadChildren: () => import('./features/tasks/tasks.routes').then((m) => m.tasksRoutes),
+  },
 ];
