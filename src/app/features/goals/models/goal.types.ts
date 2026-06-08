@@ -27,6 +27,7 @@ export interface GoalSummary {
   readonly completed: boolean;
   readonly updatedAt: string;
   readonly tags: readonly string[];
+  readonly folder: string;
 }
 
 export const emptyDoc = (): JSONContent => ({

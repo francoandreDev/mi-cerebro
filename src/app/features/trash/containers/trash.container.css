@@ -1,0 +1,99 @@
+:host {
+  display: block;
+  padding: var(--mc-space-4);
+}
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--mc-space-4);
+}
+.bar h1 {
+  margin: 0;
+  font-size: var(--mc-font-size-xl);
+}
+.danger {
+  background: transparent;
+  color: var(--mc-fg-muted);
+  border: 1px solid var(--mc-border-default);
+  padding: var(--mc-space-1) var(--mc-space-3);
+  border-radius: var(--mc-radius-md);
+}
+.danger:hover {
+  color: var(--mc-fg-warning, #d97706);
+  border-color: var(--mc-fg-warning, #d97706);
+}
+.empty {
+  color: var(--mc-fg-muted);
+  padding: var(--mc-space-5);
+  text-align: center;
+}
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-2);
+}
+.row {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: var(--mc-space-3);
+  padding: var(--mc-space-2) var(--mc-space-3);
+  background: var(--mc-bg-elevated);
+  border: 1px solid var(--mc-border-default);
+  border-radius: var(--mc-radius-md);
+}
+.kind {
+  font-size: var(--mc-font-size-xs, 0.75rem);
+  padding: 2px var(--mc-space-2);
+  border-radius: var(--mc-radius-pill);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--mc-bg-base);
+  color: var(--mc-fg-muted);
+}
+.kind[data-kind='note'] {
+  color: var(--mc-accent-primary);
+}
+.kind[data-kind='task'] {
+  color: var(--mc-state-warning, #9a6700);
+}
+.kind[data-kind='goal'] {
+  color: var(--mc-fg-success, #2da44e);
+}
+.title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.date {
+  color: var(--mc-fg-muted);
+  font-size: var(--mc-font-size-sm);
+}
+.actions {
+  display: flex;
+  gap: var(--mc-space-2);
+}
+.primary {
+  background: var(--mc-accent-primary);
+  color: var(--mc-bg-base);
+  border: none;
+  padding: var(--mc-space-1) var(--mc-space-3);
+  border-radius: var(--mc-radius-md);
+  cursor: pointer;
+}
+.ghost {
+  background: transparent;
+  color: var(--mc-fg-muted);
+  border: 1px solid var(--mc-border-default);
+  padding: var(--mc-space-1) var(--mc-space-3);
+  border-radius: var(--mc-radius-md);
+  cursor: pointer;
+}
+.ghost:hover {
+  color: var(--mc-fg-warning, #d97706);
+}

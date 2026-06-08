@@ -1,9 +1,17 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
 import { FsService } from '@core/fs/fs.service';
 import type { FsDirectoryHandle } from '@core/fs/fs.types';
+import {
+  getDirByPath,
+  getOrCreateDirByPath,
+  joinPath,
+  listFolders,
+  splitRelativePath,
+  walkEntities,
+} from '@core/fs/walk';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { MigrationsService } from '@core/migrations/migrations.service';
 import { SearchIndexService } from '@core/search/search-index.service';
@@ -33,47 +41,47 @@ export class NotesService {
   private readonly search = inject(SearchIndexService);
   private readonly tags = inject(TagsService);
 
-  // why: read(id) and save(note) both need the on-disk filename; we cache
-  //      it on first list/load so callers don't pay an O(N) scan each time.
-  private readonly idToFile = new Map<string, string>();
+  // why: caches relative path like 'inbox/idea.json' so save/read/delete
+  //      reach the right subdirectory without re-walking the tree.
+  private readonly idToPath = new Map<string, string>();
   private readonly summariesSignal = signal<readonly NoteSummary[]>([]);
   readonly summaries = this.summariesSignal.asReadonly();
+  private readonly foldersSignal = signal<readonly string[]>([]);
+  readonly folders = this.foldersSignal.asReadonly();
+
+  readonly foldersSet = computed(() => new Set(this.foldersSignal()));
 
   constructor() {
-    // why: no steps yet — first bump comes when the Note shape changes.
     this.migrations.register({ kind: NOTE_KIND, latest: NOTE_SCHEMA_VERSION, steps: [] });
   }
 
   async refresh(): Promise<readonly NoteSummary[]> {
     const dir = await this.notesDir();
-    this.idToFile.clear();
+    this.idToPath.clear();
     const summaries: NoteSummary[] = [];
     const indexDocs: SearchDoc[] = [];
-    for await (const name of this.fs.listFiles(dir, NOTE_FILE_SUFFIX)) {
+    for await (const entry of walkEntities(this.fs, dir, NOTE_FILE_SUFFIX)) {
       try {
-        const raw = await this.fs.readJson<Note>(dir, name);
+        const raw = await this.fs.readJson<Note>(entry.dirHandle, entry.filename);
         const note = await this.migrations.migrate<Note>(NOTE_KIND, raw);
-        this.idToFile.set(note.id, name);
-        summaries.push({
-          id: note.id,
-          title: note.title,
-          updatedAt: note.updatedAt,
-          tags: note.tags,
-        });
+        this.idToPath.set(note.id, entry.relativePath);
+        summaries.push(this.toSummary(note, entry.folder));
         indexDocs.push(this.toSearchDoc(note));
       } catch (cause) {
-        // why: a single corrupt file shouldn't blank the whole list.
-        console.warn('[notes] skipped unreadable file', name, cause);
+        console.warn('[notes] skipped unreadable file', entry.relativePath, cause);
       }
     }
     summaries.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
     this.summariesSignal.set(summaries);
+    const folders = await listFolders(this.fs, dir);
+    this.foldersSignal.set(folders.map((f) => f.path));
     await this.search.rebuild(indexDocs);
     return summaries;
   }
 
-  async create(title = ''): Promise<Note> {
-    const dir = await this.notesDir();
+  async create(title = '', folder = ''): Promise<Note> {
+    const root = await this.notesDir();
+    const targetDir = await getOrCreateDirByPath(this.fs, root, folder);
     const now = new Date().toISOString();
     const note: Note = {
       id: crypto.randomUUID(),
@@ -84,32 +92,37 @@ export class NotesService {
       updatedAt: now,
       schemaVersion: NOTE_SCHEMA_VERSION,
     };
-    const filename = await this.allocFilename(dir, title);
-    await this.fs.writeFileAtomic(dir, filename, JSON.stringify(note, null, 2));
-    this.idToFile.set(note.id, filename);
-    this.summariesSignal.update((list) => [this.toSummary(note), ...list]);
+    const filename = await this.allocFilename(targetDir, title);
+    await this.fs.writeFileAtomic(targetDir, filename, JSON.stringify(note, null, 2));
+    const relativePath = joinPath(folder, filename);
+    this.idToPath.set(note.id, relativePath);
+    this.summariesSignal.update((list) => [this.toSummary(note, folder), ...list]);
+    if (folder !== '' && !this.foldersSet().has(folder)) {
+      this.foldersSignal.update((list) => [...list, folder]);
+    }
     await this.search.upsert(this.toSearchDoc(note));
     return note;
   }
 
   async read(id: string): Promise<Note> {
     const dir = await this.notesDir();
-    const name = await this.findFilename(dir, id);
-    const raw = await this.fs.readJson<Note>(dir, name);
+    const { folder, filename } = splitRelativePath(await this.findPath(dir, id));
+    const subdir = await getDirByPath(this.fs, dir, folder);
+    if (!subdir) throw new AppError(ERROR_CODES.FS_003, { severity: 'error', context: { id } });
+    const raw = await this.fs.readJson<Note>(subdir, filename);
     return this.migrations.migrate<Note>(NOTE_KIND, raw);
   }
 
   async save(note: Note): Promise<Note> {
     const dir = await this.notesDir();
-    // why: drop tag refs to ids that no longer exist in tags.json (lazy
-    //      cleanup). The index already filters them out via toSearchDoc;
-    //      doing it here too means disk converges to clean state on save.
     const cleanTags = this.dropStaleTags(note.tags);
     const updated: Note = { ...note, tags: cleanTags, updatedAt: new Date().toISOString() };
-    const current = await this.findFilename(dir, note.id);
-    await this.fs.writeFileAtomic(dir, current, JSON.stringify(updated, null, 2));
+    const { folder, filename } = splitRelativePath(await this.findPath(dir, note.id));
+    const subdir = await getDirByPath(this.fs, dir, folder);
+    if (!subdir) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
+    await this.fs.writeFileAtomic(subdir, filename, JSON.stringify(updated, null, 2));
     this.summariesSignal.update((list) =>
-      list.map((s) => (s.id === note.id ? this.toSummary(updated) : s)),
+      list.map((s) => (s.id === note.id ? this.toSummary(updated, folder) : s)),
     );
     await this.search.upsert(this.toSearchDoc(updated));
     return updated;
@@ -118,13 +131,38 @@ export class NotesService {
   async deleteToTrash(id: string): Promise<void> {
     const root = this.requireRoot();
     const dir = await this.notesDir();
-    const name = await this.findFilename(dir, id);
+    const { folder, filename } = splitRelativePath(await this.findPath(dir, id));
+    const subdir = await getDirByPath(this.fs, dir, folder);
+    if (!subdir) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
     const trashDir = await this.trashDir(root);
-    const dest = `${id}__${name}`;
-    await this.fs.moveFile(dir, name, trashDir, dest);
-    this.idToFile.delete(id);
+    const dest = `${NOTE_KIND}__${id}__${filename}`;
+    await this.fs.moveFile(subdir, filename, trashDir, dest);
+    this.idToPath.delete(id);
     this.summariesSignal.update((list) => list.filter((s) => s.id !== id));
     await this.search.remove(id);
+  }
+
+  async moveToFolder(id: string, newFolder: string): Promise<void> {
+    const dir = await this.notesDir();
+    const currentPath = await this.findPath(dir, id);
+    const { folder: oldFolder, filename } = splitRelativePath(currentPath);
+    if (oldFolder === newFolder) return;
+    const src = await getDirByPath(this.fs, dir, oldFolder);
+    if (!src) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
+    const dest = await getOrCreateDirByPath(this.fs, dir, newFolder);
+    const destName = await this.allocAvailable(dest, filename);
+    await this.fs.moveFile(src, filename, dest, destName);
+    this.idToPath.set(id, joinPath(newFolder, destName));
+    this.summariesSignal.update((list) =>
+      list.map((s) => (s.id === id ? { ...s, folder: newFolder } : s)),
+    );
+    if (newFolder !== '' && !this.foldersSet().has(newFolder)) {
+      this.foldersSignal.update((list) => [...list, newFolder]);
+    }
+  }
+
+  setKnownPath(id: string, relativePath: string): void {
+    this.idToPath.set(id, relativePath);
   }
 
   private requireRoot(): FsDirectoryHandle {
@@ -148,15 +186,15 @@ export class NotesService {
     return cursor;
   }
 
-  private async findFilename(dir: FsDirectoryHandle, id: string): Promise<string> {
-    const cached = this.idToFile.get(id);
+  private async findPath(dir: FsDirectoryHandle, id: string): Promise<string> {
+    const cached = this.idToPath.get(id);
     if (cached) return cached;
-    for await (const name of this.fs.listFiles(dir, NOTE_FILE_SUFFIX)) {
+    for await (const entry of walkEntities(this.fs, dir, NOTE_FILE_SUFFIX)) {
       try {
-        const raw = await this.fs.readJson<Note>(dir, name);
+        const raw = await this.fs.readJson<Note>(entry.dirHandle, entry.filename);
         if (raw.id === id) {
-          this.idToFile.set(id, name);
-          return name;
+          this.idToPath.set(id, entry.relativePath);
+          return entry.relativePath;
         }
       } catch {
         /* skip corrupt */
@@ -178,15 +216,30 @@ export class NotesService {
     });
   }
 
-  private toSummary(note: Note): NoteSummary {
-    return { id: note.id, title: note.title, updatedAt: note.updatedAt, tags: note.tags };
+  private async allocAvailable(dir: FsDirectoryHandle, name: string): Promise<string> {
+    if (!(await this.fs.hasEntry(dir, name))) return name;
+    const dot = name.lastIndexOf('.');
+    const stem = dot >= 0 ? name.slice(0, dot) : name;
+    const ext = dot >= 0 ? name.slice(dot) : '';
+    for (let n = 1; n < 1000; n++) {
+      const candidate = `${stem}-${n}${ext}`;
+      if (!(await this.fs.hasEntry(dir, candidate))) return candidate;
+    }
+    throw new AppError(ERROR_CODES.FS_001, { severity: 'error' });
+  }
+
+  private toSummary(note: Note, folder: string): NoteSummary {
+    return {
+      id: note.id,
+      title: note.title,
+      updatedAt: note.updatedAt,
+      tags: note.tags,
+      folder,
+    };
   }
 
   private toSearchDoc(note: Note): SearchDoc {
     const tagIds = this.dropStaleTags(note.tags);
-    // why: appending tag labels into body so a free-text query like "trabajo"
-    //      surfaces notes tagged with "Trabajo" without the user having to
-    //      remember the tag:label syntax.
     const tagLabels = tagIds
       .map((id) => this.tags.byId(id)?.label ?? '')
       .filter((l) => l !== '')

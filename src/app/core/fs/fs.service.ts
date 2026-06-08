@@ -128,8 +128,27 @@ export class FsService {
     }
   }
 
-  async removeEntry(parent: FsDirectoryHandle, name: string): Promise<void> {
-    await parent.removeEntry(name);
+  async removeEntry(
+    parent: FsDirectoryHandle,
+    name: string,
+    options: { recursive?: boolean } = {},
+  ): Promise<void> {
+    await parent.removeEntry(name, options);
+  }
+
+  async *listSubdirs(parent: FsDirectoryHandle): AsyncIterable<string> {
+    for await (const [name, entry] of parent.entries()) {
+      if (entry.kind !== 'directory') continue;
+      yield name;
+    }
+  }
+
+  async getDir(parent: FsDirectoryHandle, name: string): Promise<FsDirectoryHandle | null> {
+    try {
+      return (await parent.getDirectoryHandle(name)) as FsDirectoryHandle;
+    } catch {
+      return null;
+    }
   }
 
   async moveFile(

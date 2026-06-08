@@ -6,6 +6,17 @@
       <button type="button" class="primary" (click)="createTask()">+ {{ t('tasks.new') }}</button>
       <button type="button" class="primary" (click)="createGoal()">+ {{ t('goals.new') }}</button>
     </div>
+    <div class="newgroup">
+      <button type="button" class="ghost" (click)="createFolder('note')">
+        + {{ t('folders.newIn').replace('{kind}', t('tree.type.notes')) }}
+      </button>
+      <button type="button" class="ghost" (click)="createFolder('task')">
+        + {{ t('folders.newIn').replace('{kind}', t('tree.type.tasks')) }}
+      </button>
+      <button type="button" class="ghost" (click)="createFolder('goal')">
+        + {{ t('folders.newIn').replace('{kind}', t('tree.type.goals')) }}
+      </button>
+    </div>
   </header>
   <nav class="chips" role="tablist" [attr.aria-label]="t('tree.type.all')">
     <button
@@ -64,5 +75,11 @@
     [selectedId]="selectedNodeId()"
     [emptyKey]="emptyKey()"
     (chooseNode)="choose($event)"
+    (nodeAction)="onNodeAction($event)"
   />
+  <footer class="footer">
+    <button type="button" class="trash-link" [class.active]="isTrashRoute()" (click)="goToTrash()">
+      {{ t('trash.title') }}
+    </button>
+  </footer>
 }

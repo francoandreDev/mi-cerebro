@@ -12,10 +12,14 @@ import { filterTree } from '@shared/tree/filter';
 import { TreeFilterComponent } from '@shared/tree/tree-filter.component';
 import { TreeComponent } from '@shared/tree/tree.component';
 import type { FilterDirection, TreeNode } from '@shared/tree/tree.types';
+import { FoldersService } from '@core/folders/folders.service';
+import type { FolderKind } from '@core/folders/folders.types';
 import { GoalsService } from '@features/goals/services/goals.service';
 import { NotesService } from '@features/notes/services/notes.service';
 import { TasksService } from '@features/tasks/services/tasks.service';
 
+import { handleCreateFolder, handleEntityAction, handleFolderAction } from './folder-actions';
+import { buildFolderTree } from './folder-tree';
 import { goalBadges, tagBadges, taskBadges } from './tree-badges';
 
 type TypeFilter = 'all' | 'notes' | 'tasks' | 'goals';
@@ -31,6 +35,7 @@ export class WorkspaceSidebarContainer {
   private readonly notesService = inject(NotesService);
   private readonly tasksService = inject(TasksService);
   private readonly goalsService = inject(GoalsService);
+  private readonly foldersService = inject(FoldersService);
   private readonly tagsService = inject(TagsService);
   private readonly workspace = inject(WorkspaceService);
   private readonly router = inject(Router);
@@ -70,45 +75,57 @@ export class WorkspaceSidebarContainer {
     const filter = this.typeFilter();
     const lookup = this.tagsById();
     if (filter === 'all' || filter === 'notes') {
-      const children: TreeNode[] = this.notesService.summaries().map((n) => ({
-        id: `note:${n.id}`,
+      const entities = this.notesService.summaries().map((n) => ({
+        id: n.id,
+        folder: n.folder,
         label: n.title || this.i18n.t('notes.untitledTitle'),
-        kind: 'note',
         badges: tagBadges(n.tags, lookup),
       }));
       roots.push({
         id: 'group:notes',
         label: this.i18n.t('notes.title'),
         kind: 'group',
-        children,
+        children: buildFolderTree({
+          idPrefix: 'note',
+          entities,
+          folders: this.notesService.folders(),
+        }),
       });
     }
     if (filter === 'all' || filter === 'tasks') {
-      const children: TreeNode[] = this.tasksService.summaries().map((t) => ({
-        id: `task:${t.id}`,
+      const entities = this.tasksService.summaries().map((t) => ({
+        id: t.id,
+        folder: t.folder,
         label: t.title || this.i18n.t('tasks.untitledTitle'),
-        kind: 'task',
         badges: taskBadges(t, lookup, this.i18n),
       }));
       roots.push({
         id: 'group:tasks',
         label: this.i18n.t('tasks.title'),
         kind: 'group',
-        children,
+        children: buildFolderTree({
+          idPrefix: 'task',
+          entities,
+          folders: this.tasksService.folders(),
+        }),
       });
     }
     if (filter === 'all' || filter === 'goals') {
-      const children: TreeNode[] = this.goalsService.summaries().map((g) => ({
-        id: `goal:${g.id}`,
+      const entities = this.goalsService.summaries().map((g) => ({
+        id: g.id,
+        folder: g.folder,
         label: g.title || this.i18n.t('goals.untitledTitle'),
-        kind: 'goal',
         badges: goalBadges(g, lookup, this.i18n),
       }));
       roots.push({
         id: 'group:goals',
         label: this.i18n.t('goals.title'),
         kind: 'group',
-        children,
+        children: buildFolderTree({
+          idPrefix: 'goal',
+          entities,
+          folders: this.goalsService.folders(),
+        }),
       });
     }
     return roots;
@@ -121,6 +138,12 @@ export class WorkspaceSidebarContainer {
     const kind = match[1] === 'notes' ? 'note' : match[1] === 'tasks' ? 'task' : 'goal';
     return `${kind}:${match[2]}`;
   });
+
+  protected readonly isTrashRoute = computed(() => this.router.url.startsWith('/trash'));
+
+  protected goToTrash(): void {
+    void this.router.navigate(['/trash']);
+  }
 
   protected readonly result = computed(() =>
     filterTree(this.treeRoots(), this.query(), this.selectedNodeId(), this.direction()),
@@ -217,5 +240,31 @@ export class WorkspaceSidebarContainer {
   private jumpToCursor(): void {
     const match = this.result().matches[this.cursor()];
     if (match) this.choose(match.id);
+  }
+
+  protected async createFolder(kind: FolderKind): Promise<void> {
+    try {
+      await this.workspace.ensureWritable();
+      await handleCreateFolder(kind, this.foldersService, this.i18n);
+    } catch (e) {
+      this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize()));
+    }
+  }
+
+  protected async onNodeAction(nodeId: string): Promise<void> {
+    try {
+      await this.workspace.ensureWritable();
+      if (nodeId.startsWith('folder:')) {
+        await handleFolderAction(nodeId.slice('folder:'.length), this.foldersService, this.i18n);
+      } else {
+        await handleEntityAction(
+          nodeId,
+          { notes: this.notesService, tasks: this.tasksService, goals: this.goalsService },
+          this.i18n,
+        );
+      }
+    } catch (e) {
+      this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize()));
+    }
   }
 }

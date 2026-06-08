@@ -1,0 +1,29 @@
+<header class="bar">
+  <h1>{{ t('trash.title') }}</h1>
+  @if (!isEmpty()) {
+    <button type="button" class="danger" (click)="empty()">
+      {{ t('trash.empty') }}
+    </button>
+  }
+</header>
+@if (isEmpty()) {
+  <div class="empty">{{ t('trash.emptyState') }}</div>
+} @else {
+  <ul class="list">
+    @for (entry of entries(); track entry.filename) {
+      <li class="row">
+        <span class="kind" [attr.data-kind]="entry.kind">{{ kindLabel(entry) }}</span>
+        <span class="title">{{ entry.title || t('trash.untitledTitle') }}</span>
+        <span class="date">{{ entry.deletedAt }}</span>
+        <div class="actions">
+          <button type="button" class="primary" (click)="restore(entry)">
+            {{ t('trash.restore') }}
+          </button>
+          <button type="button" class="ghost" (click)="purge(entry)">
+            {{ t('trash.purge') }}
+          </button>
+        </div>
+      </li>
+    }
+  </ul>
+}

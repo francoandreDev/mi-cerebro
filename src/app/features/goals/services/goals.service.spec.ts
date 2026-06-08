@@ -2,79 +2,11 @@ import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { FsService } from '@core/fs/fs.service';
-import type { FsDirectoryHandle } from '@core/fs/fs.types';
+import { FsStub, WorkspaceStub } from '@core/fs/fs.stub';
 import { WorkspaceService } from '@core/fs/workspace.service';
 
 import { GOAL_KIND } from '../models/goal.types';
 import { GoalsService } from './goals.service';
-
-interface InMemoryDir {
-  readonly name: string;
-  readonly files: Map<string, string>;
-  readonly dirs: Map<string, InMemoryDir>;
-}
-
-const dir = (name: string): InMemoryDir => ({
-  name,
-  files: new Map(),
-  dirs: new Map(),
-});
-
-class FsStub {
-  readonly root = dir('mc');
-  private resolve(handle: unknown): InMemoryDir {
-    return handle as unknown as InMemoryDir;
-  }
-  isSupported(): boolean {
-    return true;
-  }
-  async getOrCreateDir(parent: unknown, name: string): Promise<unknown> {
-    const p = this.resolve(parent);
-    if (!p.dirs.has(name)) p.dirs.set(name, dir(name));
-    return p.dirs.get(name) as unknown;
-  }
-  async getOrCreateFile(): Promise<unknown> {
-    throw new Error('not used');
-  }
-  async writeFileAtomic(parent: unknown, name: string, contents: string): Promise<void> {
-    this.resolve(parent).files.set(name, contents);
-  }
-  async readJson<T>(parent: unknown, name: string): Promise<T> {
-    const text = this.resolve(parent).files.get(name);
-    if (!text) throw new Error(`missing ${name}`);
-    return JSON.parse(text) as T;
-  }
-  async *listFiles(parent: unknown, suffix?: string): AsyncIterable<string> {
-    for (const name of this.resolve(parent).files.keys()) {
-      if (suffix && !name.endsWith(suffix)) continue;
-      yield name;
-    }
-  }
-  async hasEntry(parent: unknown, name: string): Promise<boolean> {
-    const p = this.resolve(parent);
-    return p.files.has(name) || p.dirs.has(name);
-  }
-  async moveFile(
-    parent: unknown,
-    name: string,
-    destParent: unknown,
-    destName?: string,
-  ): Promise<void> {
-    const src = this.resolve(parent);
-    const dst = this.resolve(destParent);
-    const contents = src.files.get(name);
-    if (contents === undefined) throw new Error(`missing ${name}`);
-    src.files.delete(name);
-    dst.files.set(destName ?? name, contents);
-  }
-}
-
-class WorkspaceStub {
-  constructor(private readonly handle: unknown) {}
-  root(): FsDirectoryHandle {
-    return this.handle as FsDirectoryHandle;
-  }
-}
 
 describe('GoalsService', () => {
   let svc: GoalsService;
