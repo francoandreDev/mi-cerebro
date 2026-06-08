@@ -1,0 +1,35 @@
+<div class="layout">
+  <mc-note-sidebar
+    [notes]="notes()"
+    [tags]="tags()"
+    [selectedId]="active()?.id ?? null"
+    (chooseNote)="onSelect($event)"
+    (create)="onCreate()"
+  />
+  <div class="pane">
+    @if (active(); as note) {
+      @if (lock.showForeign()) {
+        <mc-note-lock-banner
+          kind="foreign"
+          (readonly)="lock.acceptReadonly()"
+          (takeover)="lock.takeover()"
+        />
+      } @else if (lock.showEvicted()) {
+        <mc-note-lock-banner kind="evicted" (dismiss)="lock.dismissEvicted()" />
+      }
+      <mc-note-editor-pane
+        [note]="note"
+        [status]="status()"
+        [availableTags]="tags()"
+        [editable]="lock.editable()"
+        (titleChange)="onTitleChange($event)"
+        (bodyChange)="onBodyChange($event)"
+        (removeNote)="onDelete()"
+        (addTag)="onAddTag($event)"
+        (removeTag)="onRemoveTag($event)"
+      />
+    } @else {
+      <div class="empty">{{ t('notes.selectOne') }}</div>
+    }
+  </div>
+</div>
