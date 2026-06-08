@@ -28,6 +28,7 @@ export interface TaskSummary {
   readonly dueDates: readonly string[];
   readonly updatedAt: string;
   readonly tags: readonly string[];
+  readonly folder: string;
 }
 
 export const emptyDoc = (): JSONContent => ({

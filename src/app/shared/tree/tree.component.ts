@@ -32,6 +32,7 @@ import type { TreeNode } from './tree.types';
             [matchedIds]="matchedIds()"
             [selectedId]="selectedId()"
             (chooseNode)="chooseNode.emit($event)"
+            (nodeAction)="nodeAction.emit($event)"
           />
         }
       </ul>
@@ -62,6 +63,7 @@ export class TreeComponent {
   readonly selectedId = input<string | null>(null);
   readonly emptyKey = input<TranslationKey>('notes.empty');
   readonly chooseNode = output<string>();
+  readonly nodeAction = output<string>();
 
   private readonly state = inject(TreeStateService);
   private readonly i18n = inject(I18nService);

@@ -42,6 +42,16 @@ import type { TreeNode } from './tree.types';
             }
           </span>
         }
+        @if (hasActions()) {
+          <button
+            type="button"
+            class="actions"
+            [attr.aria-label]="'actions'"
+            (click)="onActions($event)"
+          >
+            ⋯
+          </button>
+        }
       </li>
       @if (hasChildren() && expanded()) {
         @for (child of node().children; track child.id) {
@@ -52,6 +62,7 @@ import type { TreeNode } from './tree.types';
             [matchedIds]="matchedIds()"
             [selectedId]="selectedId()"
             (chooseNode)="chooseNode.emit($event)"
+            (nodeAction)="nodeAction.emit($event)"
           />
         }
       }
@@ -141,6 +152,23 @@ import type { TreeNode } from './tree.types';
       height: 8px;
       border-radius: 50%;
     }
+    .actions {
+      background: transparent;
+      border: 0;
+      color: var(--mc-fg-muted);
+      cursor: pointer;
+      padding: 0 var(--mc-space-1);
+      visibility: hidden;
+      font-size: var(--mc-font-size-md);
+      line-height: 1;
+    }
+    .row:hover .actions,
+    .row.selected .actions {
+      visibility: visible;
+    }
+    .actions:hover {
+      color: var(--mc-fg-primary);
+    }
   `,
 })
 export class TreeNodeComponent {
@@ -150,10 +178,20 @@ export class TreeNodeComponent {
   readonly matchedIds = input.required<ReadonlySet<string>>();
   readonly selectedId = input<string | null>(null);
   readonly chooseNode = output<string>();
+  readonly nodeAction = output<string>();
 
   private readonly state = inject(TreeStateService);
 
   protected readonly hasChildren = computed(() => (this.node().children?.length ?? 0) > 0);
+  protected readonly hasActions = computed(() => {
+    const kind = this.node().kind;
+    return kind === 'folder' || kind === 'note' || kind === 'task' || kind === 'goal';
+  });
+
+  protected onActions(event: Event): void {
+    event.stopPropagation();
+    this.nodeAction.emit(this.node().id);
+  }
   protected readonly expanded = computed(() => this.state.expanded().has(this.node().id));
   protected readonly rowClass = computed(() => {
     const parts = ['row', `d-${Math.min(this.depth(), 9)}`];

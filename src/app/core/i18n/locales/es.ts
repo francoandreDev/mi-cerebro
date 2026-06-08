@@ -214,6 +214,17 @@ export const es = {
   'goals.reminder.overdue': 'Plazo vencido',
   'goals.reminder.dueSoon': 'Vence pronto',
 
+  'folders.newIn': 'Carpeta en {kind}',
+  'folders.createPrompt': 'Nombre de la carpeta:',
+  'folders.actionPrompt': '¿Qué querés hacer con esta carpeta?',
+  'folders.rename': 'Renombrar',
+  'folders.move': 'Mover',
+  'folders.delete': 'Eliminar',
+  'folders.renamePrompt': 'Nuevo nombre:',
+  'folders.movePrompt': 'Nueva carpeta padre (ruta relativa; vacío = raíz):',
+  'folders.deleteConfirm': '¿Eliminar la carpeta "{path}" y mover todo su contenido a la papelera?',
+  'folders.entityMovePrompt': 'Mover a carpeta (ruta relativa; vacío = raíz):',
+
   'trash.title': 'Papelera',
   'trash.empty': 'Vaciar papelera',
   'trash.emptyState': 'La papelera está vacía.',

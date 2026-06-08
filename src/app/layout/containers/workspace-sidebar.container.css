@@ -31,6 +31,19 @@
   font-size: var(--mc-font-size-sm);
   text-decoration: none;
 }
+.ghost {
+  background: transparent;
+  color: var(--mc-fg-muted);
+  border: 1px dashed var(--mc-border-default);
+  padding: var(--mc-space-1) var(--mc-space-3);
+  border-radius: var(--mc-radius-md);
+  font-size: var(--mc-font-size-sm);
+  cursor: pointer;
+}
+.ghost:hover {
+  color: var(--mc-fg-primary);
+  border-color: var(--mc-accent-primary);
+}
 .chips {
   display: flex;
   gap: var(--mc-space-1);
