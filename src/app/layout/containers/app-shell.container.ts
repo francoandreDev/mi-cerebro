@@ -10,16 +10,26 @@ import { OnboardingContainer } from '@features/onboarding/containers/onboarding.
 import { CommandPaletteContainer } from '@features/search/containers/command-palette.container';
 
 import { ErrorDisplayContainer } from './error-display.container';
+import { WorkspaceSidebarContainer } from './workspace-sidebar.container';
 
 @Component({
   selector: 'mc-app-shell',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, ErrorDisplayContainer, OnboardingContainer, CommandPaletteContainer],
+  imports: [
+    RouterOutlet,
+    ErrorDisplayContainer,
+    OnboardingContainer,
+    CommandPaletteContainer,
+    WorkspaceSidebarContainer,
+  ],
   template: `
     @if (workspace.isReady()) {
-      <main class="content">
-        <router-outlet />
-      </main>
+      <div class="shell">
+        <mc-workspace-sidebar />
+        <main class="content">
+          <router-outlet />
+        </main>
+      </div>
       <button
         type="button"
         class="search-fab"
@@ -42,8 +52,14 @@ import { ErrorDisplayContainer } from './error-display.container';
       background: var(--mc-bg-base);
       color: var(--mc-fg-primary);
     }
+    .shell {
+      display: flex;
+      height: 100vh;
+    }
     .content {
-      padding: var(--mc-space-5);
+      flex: 1;
+      min-width: 0;
+      overflow: auto;
     }
     .search-fab {
       position: fixed;

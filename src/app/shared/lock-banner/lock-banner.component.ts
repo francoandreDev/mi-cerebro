@@ -1,30 +1,28 @@
-import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
-
-import { I18nService } from '@core/i18n/i18n.service';
-import type { TranslationKey } from '@core/i18n/i18n.types';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 
 export type LockBannerKind = 'foreign' | 'evicted';
 
+// why: dumb component, kept entity-agnostic so notes/tasks/lists can all
+//      reuse it. Callers pass already-translated strings — the component
+//      doesn't talk to I18nService.
 @Component({
-  selector: 'mc-note-lock-banner',
+  selector: 'mc-lock-banner',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="banner" role="alert">
       <div class="banner-body">
-        <strong>{{ t(titleKey()) }}</strong>
-        <span>{{ t(messageKey()) }}</span>
+        <strong>{{ title() }}</strong>
+        <span>{{ message() }}</span>
       </div>
       <div class="banner-actions">
         @if (kind() === 'foreign') {
-          <button type="button" (click)="readonly.emit()">
-            {{ t('notes.lock.foreign.readonly') }}
-          </button>
+          <button type="button" (click)="readonly.emit()">{{ readonlyLabel() }}</button>
           <button type="button" class="primary" (click)="takeover.emit()">
-            {{ t('notes.lock.foreign.takeover') }}
+            {{ takeoverLabel() }}
           </button>
         } @else {
           <button type="button" class="primary" (click)="dismiss.emit()">
-            {{ t('notes.lock.evicted.dismiss') }}
+            {{ dismissLabel() }}
           </button>
         }
       </div>
@@ -65,23 +63,14 @@ export type LockBannerKind = 'foreign' | 'evicted';
     }
   `,
 })
-export class NoteLockBannerComponent {
+export class LockBannerComponent {
   readonly kind = input.required<LockBannerKind>();
+  readonly title = input.required<string>();
+  readonly message = input.required<string>();
+  readonly readonlyLabel = input<string>('');
+  readonly takeoverLabel = input<string>('');
+  readonly dismissLabel = input<string>('');
   readonly readonly = output<void>();
   readonly takeover = output<void>();
   readonly dismiss = output<void>();
-
-  private readonly i18n = inject(I18nService);
-
-  protected titleKey(): TranslationKey {
-    return this.kind() === 'foreign' ? 'notes.lock.foreign.title' : 'notes.lock.evicted.title';
-  }
-
-  protected messageKey(): TranslationKey {
-    return this.kind() === 'foreign' ? 'notes.lock.foreign.message' : 'notes.lock.evicted.message';
-  }
-
-  protected t(key: TranslationKey): string {
-    return this.i18n.t(key);
-  }
 }

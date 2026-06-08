@@ -149,6 +149,40 @@ export const es = {
     'Otra pestaña empezó a editar esta nota. Tu vista quedó en modo lectura.',
   'notes.lock.evicted.dismiss': 'Entendido',
   'notes.lock.readonly': 'Solo lectura',
+
+  'tasks.title': 'Tareas',
+  'tasks.new': 'Nueva tarea',
+  'tasks.untitledTitle': 'Sin título',
+  'tasks.empty': 'Sin tareas todavía. Empezá con "Nueva tarea".',
+  'tasks.placeholderTitle': 'Título...',
+  'tasks.placeholderBody': 'Notas, contexto, sub-pasos...',
+  'tasks.deleteConfirm': '¿Mover "{title}" a la papelera?',
+  'tasks.delete': 'Eliminar',
+  'tasks.status.saved': 'Guardado',
+  'tasks.status.saving': 'Guardando...',
+  'tasks.status.unsaved': 'Sin guardar',
+  'tasks.selectOne': 'Elegí una tarea o creá una nueva.',
+  'tasks.done.label': 'Hecha',
+  'tasks.due.label': 'Fechas',
+  'tasks.due.add': 'Agregar fecha',
+  'tasks.due.remove': 'Quitar',
+  'tasks.due.placeholder': 'AAAA-MM-DD',
+  'tasks.due.overdue': 'Vencida',
+  'tasks.due.today': 'Hoy',
+  'tasks.due.tomorrow': 'Mañana',
+  'tasks.lock.foreign.title': 'Esta tarea está abierta en otra pestaña',
+  'tasks.lock.foreign.message':
+    'Para evitar pisar cambios, esta tarea está en modo lectura. Podés tomar control para empezar a editar acá.',
+  'tasks.lock.foreign.readonly': 'Abrir solo lectura',
+  'tasks.lock.foreign.takeover': 'Tomar control',
+  'tasks.lock.evicted.title': 'Otra ventana tomó el control',
+  'tasks.lock.evicted.message':
+    'Otra pestaña empezó a editar esta tarea. Tu vista quedó en modo lectura.',
+  'tasks.lock.evicted.dismiss': 'Entendido',
+
+  'tree.type.all': 'Todo',
+  'tree.type.notes': 'Notas',
+  'tree.type.tasks': 'Tareas',
 } as const;
 
 export type EsDictionary = typeof es;

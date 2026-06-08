@@ -1,0 +1,50 @@
+<header class="bar">
+  <label class="done">
+    <input
+      type="checkbox"
+      [checked]="task().done"
+      [disabled]="!editable()"
+      (change)="onDoneToggle($event)"
+    />
+    <span class="sr-only">{{ t('tasks.done.label') }}</span>
+  </label>
+  <input
+    type="text"
+    class="title-input"
+    [class.done]="task().done"
+    [value]="task().title"
+    [placeholder]="t('tasks.placeholderTitle')"
+    [attr.aria-label]="t('tasks.placeholderTitle')"
+    [readOnly]="!editable()"
+    (input)="onTitleInput($event)"
+  />
+  <span class="status" [attr.data-status]="status()">{{ statusLabel() }}</span>
+  @if (editable()) {
+    <button type="button" class="danger" (click)="removeTask.emit()">
+      {{ t('tasks.delete') }}
+    </button>
+  }
+</header>
+<section class="meta">
+  <span class="label">{{ t('tasks.due.label') }}:</span>
+  <mc-due-dates-picker
+    [dates]="task().dueDates"
+    [editable]="editable()"
+    (add)="addDueDate.emit($event)"
+    (remove)="removeDueDate.emit($event)"
+  />
+</section>
+<mc-tag-picker
+  [availableTags]="availableTags()"
+  [selectedIds]="task().tags"
+  [editable]="editable()"
+  (addTag)="addTag.emit($event)"
+  (removeTag)="removeTag.emit($event)"
+/>
+<mc-editor
+  class="editor"
+  [value]="task().body"
+  [placeholder]="t('tasks.placeholderBody')"
+  [editable]="editable()"
+  (valueChange)="bodyChange.emit($event)"
+/>
