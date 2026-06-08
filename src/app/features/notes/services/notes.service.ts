@@ -183,12 +183,21 @@ export class NotesService {
   }
 
   private toSearchDoc(note: Note): SearchDoc {
+    const tagIds = this.dropStaleTags(note.tags);
+    // why: appending tag labels into body so a free-text query like "trabajo"
+    //      surfaces notes tagged with "Trabajo" without the user having to
+    //      remember the tag:label syntax.
+    const tagLabels = tagIds
+      .map((id) => this.tags.byId(id)?.label ?? '')
+      .filter((l) => l !== '')
+      .join(' ');
+    const body = extractPlainText(note.body);
     return {
       id: note.id,
       kind: NOTE_KIND,
       title: note.title,
-      body: extractPlainText(note.body),
-      tagIds: this.dropStaleTags(note.tags),
+      body: tagLabels === '' ? body : `${body} ${tagLabels}`,
+      tagIds,
     };
   }
 
