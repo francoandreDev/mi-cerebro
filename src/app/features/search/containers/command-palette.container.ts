@@ -148,13 +148,12 @@ export class CommandPaletteContainer {
   }
 
   private registerGlobalShortcut(): void {
-    // why: Angular's @HostListener attaches in bubbling phase, and on some
-    //      Chrome versions the omnibox shortcut (Ctrl+K) wins the race. We
-    //      register at capture phase on window so the page intercepts first.
+    // why: document-level listener (bubble phase). Previous attempts with
+    //      window + capture didn't beat Chrome's omnibox in some versions;
+    //      switching to document matches the snippet the user verified.
     const handler = (event: KeyboardEvent): void => {
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+      if ((event.ctrlKey || event.metaKey) && (event.key === 'k' || event.key === 'K')) {
         event.preventDefault();
-        event.stopPropagation();
         this.paletteState.toggle();
         return;
       }
@@ -163,9 +162,9 @@ export class CommandPaletteContainer {
         this.close();
       }
     };
-    window.addEventListener('keydown', handler, { capture: true });
+    document.addEventListener('keydown', handler);
     inject(DestroyRef).onDestroy(() => {
-      window.removeEventListener('keydown', handler, { capture: true });
+      document.removeEventListener('keydown', handler);
     });
   }
 
