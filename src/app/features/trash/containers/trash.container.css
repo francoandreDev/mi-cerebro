@@ -64,6 +64,9 @@
 .kind[data-kind='goal'] {
   color: var(--mc-fg-success, #2da44e);
 }
+.kind[data-kind='list'] {
+  color: var(--mc-state-info, #58a6ff);
+}
 .title {
   min-width: 0;
   overflow: hidden;

@@ -15,6 +15,7 @@ import type { FilterDirection, TreeNode } from '@shared/tree/tree.types';
 import { FoldersService } from '@core/folders/folders.service';
 import type { FolderKind } from '@core/folders/folders.types';
 import { GoalsService } from '@features/goals/services/goals.service';
+import { ListsService } from '@features/lists/services/lists.service';
 import { NotesService } from '@features/notes/services/notes.service';
 import { TasksService } from '@features/tasks/services/tasks.service';
 
@@ -22,7 +23,7 @@ import { handleCreateFolder, handleEntityAction, handleFolderAction } from './fo
 import { buildFolderTree } from './folder-tree';
 import { goalBadges, tagBadges, taskBadges } from './tree-badges';
 
-type TypeFilter = 'all' | 'notes' | 'tasks' | 'goals';
+type TypeFilter = 'all' | 'notes' | 'tasks' | 'goals' | 'lists';
 
 @Component({
   selector: 'mc-workspace-sidebar',
@@ -35,6 +36,7 @@ export class WorkspaceSidebarContainer {
   private readonly notesService = inject(NotesService);
   private readonly tasksService = inject(TasksService);
   private readonly goalsService = inject(GoalsService);
+  private readonly listsService = inject(ListsService);
   private readonly foldersService = inject(FoldersService);
   private readonly tagsService = inject(TagsService);
   private readonly workspace = inject(WorkspaceService);
@@ -54,6 +56,7 @@ export class WorkspaceSidebarContainer {
         await this.notesService.refresh();
         await this.tasksService.refresh();
         await this.goalsService.refresh();
+        await this.listsService.refresh();
       } catch (e: unknown) {
         this.errors.report(e);
       }
@@ -128,14 +131,39 @@ export class WorkspaceSidebarContainer {
         }),
       });
     }
+    if (filter === 'all' || filter === 'lists') {
+      const entities = this.listsService.summaries().map((l) => ({
+        id: l.id,
+        folder: l.folder,
+        label: l.title || this.i18n.t('lists.untitledTitle'),
+        badges: tagBadges(l.tags, lookup),
+      }));
+      roots.push({
+        id: 'group:lists',
+        label: this.i18n.t('lists.title'),
+        kind: 'group',
+        children: buildFolderTree({
+          idPrefix: 'list',
+          entities,
+          folders: this.listsService.folders(),
+        }),
+      });
+    }
     return roots;
   });
 
   protected readonly selectedNodeId = computed<string | null>(() => {
     const url = this.router.url;
-    const match = /^\/(notes|tasks|goals)\/([^/?]+)/.exec(url);
+    const match = /^\/(notes|tasks|goals|lists)\/([^/?]+)/.exec(url);
     if (!match) return null;
-    const kind = match[1] === 'notes' ? 'note' : match[1] === 'tasks' ? 'task' : 'goal';
+    const kind =
+      match[1] === 'notes'
+        ? 'note'
+        : match[1] === 'tasks'
+          ? 'task'
+          : match[1] === 'goals'
+            ? 'goal'
+            : 'list';
     return `${kind}:${match[2]}`;
   });
 
@@ -227,6 +255,16 @@ export class WorkspaceSidebarContainer {
     }
   }
 
+  protected async createList(): Promise<void> {
+    try {
+      await this.workspace.ensureWritable();
+      const list = await this.listsService.create('');
+      await this.router.navigate(['/lists', list.id]);
+    } catch (e) {
+      this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize()));
+    }
+  }
+
   protected choose(nodeId: string): void {
     if (nodeId.startsWith('note:')) {
       void this.router.navigate(['/notes', nodeId.slice('note:'.length)]);
@@ -234,6 +272,8 @@ export class WorkspaceSidebarContainer {
       void this.router.navigate(['/tasks', nodeId.slice('task:'.length)]);
     } else if (nodeId.startsWith('goal:')) {
       void this.router.navigate(['/goals', nodeId.slice('goal:'.length)]);
+    } else if (nodeId.startsWith('list:')) {
+      void this.router.navigate(['/lists', nodeId.slice('list:'.length)]);
     }
   }
 
@@ -259,7 +299,12 @@ export class WorkspaceSidebarContainer {
       } else {
         await handleEntityAction(
           nodeId,
-          { notes: this.notesService, tasks: this.tasksService, goals: this.goalsService },
+          {
+            notes: this.notesService,
+            tasks: this.tasksService,
+            goals: this.goalsService,
+            lists: this.listsService,
+          },
           this.i18n,
         );
       }

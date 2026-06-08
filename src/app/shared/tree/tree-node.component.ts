@@ -185,7 +185,9 @@ export class TreeNodeComponent {
   protected readonly hasChildren = computed(() => (this.node().children?.length ?? 0) > 0);
   protected readonly hasActions = computed(() => {
     const kind = this.node().kind;
-    return kind === 'folder' || kind === 'note' || kind === 'task' || kind === 'goal';
+    return (
+      kind === 'folder' || kind === 'note' || kind === 'task' || kind === 'goal' || kind === 'list'
+    );
   });
 
   protected onActions(event: Event): void {

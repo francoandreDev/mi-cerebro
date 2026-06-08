@@ -1,0 +1,36 @@
+<div class="pane">
+  @if (active(); as list) {
+    @if (lock.showForeign()) {
+      <mc-lock-banner
+        kind="foreign"
+        [title]="t('lists.lock.foreign.title')"
+        [message]="t('lists.lock.foreign.message')"
+        [readonlyLabel]="t('lists.lock.foreign.readonly')"
+        [takeoverLabel]="t('lists.lock.foreign.takeover')"
+        (readonly)="lock.acceptReadonly()"
+        (takeover)="lock.takeover()"
+      />
+    } @else if (lock.showEvicted()) {
+      <mc-lock-banner
+        kind="evicted"
+        [title]="t('lists.lock.evicted.title')"
+        [message]="t('lists.lock.evicted.message')"
+        [dismissLabel]="t('lists.lock.evicted.dismiss')"
+        (dismiss)="lock.dismissEvicted()"
+      />
+    }
+    <mc-list-editor-pane
+      [list]="list"
+      [status]="status()"
+      [availableTags]="tags()"
+      [editable]="lock.editable()"
+      (titleChange)="onTitleChange($event)"
+      (bodyChange)="onBodyChange($event)"
+      (removeList)="onDelete()"
+      (addTag)="onAddTag($event)"
+      (removeTag)="onRemoveTag($event)"
+    />
+  } @else {
+    <div class="empty">{{ t('lists.selectOne') }}</div>
+  }
+</div>

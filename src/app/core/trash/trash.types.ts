@@ -1,4 +1,4 @@
-export type TrashKind = 'note' | 'task' | 'goal';
+export type TrashKind = 'note' | 'task' | 'goal' | 'list';
 
 export interface TrashEntry {
   readonly filename: string;
@@ -17,4 +17,5 @@ export const KIND_DIRS: Record<TrashKind, string> = {
   note: 'notes',
   task: 'tasks',
   goal: 'goals',
+  list: 'lists',
 };

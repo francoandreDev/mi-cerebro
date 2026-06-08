@@ -3,6 +3,7 @@ import type { FolderKind } from '@core/folders/folders.types';
 import type { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import type { GoalsService } from '@features/goals/services/goals.service';
+import type { ListsService } from '@features/lists/services/lists.service';
 import type { NotesService } from '@features/notes/services/notes.service';
 import type { TasksService } from '@features/tasks/services/tasks.service';
 
@@ -10,6 +11,7 @@ export interface EntityServices {
   readonly notes: NotesService;
   readonly tasks: TasksService;
   readonly goals: GoalsService;
+  readonly lists: ListsService;
 }
 
 const t = (i18n: I18nService, key: TranslationKey): string => i18n.t(key);
@@ -57,6 +59,7 @@ export const handleEntityAction = async (
   if (kind === 'note') await services.notes.moveToFolder(id, folder);
   else if (kind === 'task') await services.tasks.moveToFolder(id, folder);
   else if (kind === 'goal') await services.goals.moveToFolder(id, folder);
+  else if (kind === 'list') await services.lists.moveToFolder(id, folder);
 };
 
 export const handleCreateFolder = async (

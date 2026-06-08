@@ -14,6 +14,7 @@ import {
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { KIND_DIRS } from '@core/trash/trash.types';
 import { GoalsService } from '@features/goals/services/goals.service';
+import { ListsService } from '@features/lists/services/lists.service';
 import { NotesService } from '@features/notes/services/notes.service';
 import { TasksService } from '@features/tasks/services/tasks.service';
 import { toSlug } from '@shared/utils/slug';
@@ -29,6 +30,7 @@ export class FoldersService {
   private readonly notes = inject(NotesService);
   private readonly tasks = inject(TasksService);
   private readonly goals = inject(GoalsService);
+  private readonly lists = inject(ListsService);
 
   async createFolder(kind: FolderKind, parentPath: string, name: string): Promise<string> {
     const slug = toSlug(name);
@@ -120,19 +122,22 @@ export class FoldersService {
   private summariesFor(kind: FolderKind): readonly { id: string; folder: string }[] {
     if (kind === 'note') return this.notes.summaries();
     if (kind === 'task') return this.tasks.summaries();
-    return this.goals.summaries();
+    if (kind === 'goal') return this.goals.summaries();
+    return this.lists.summaries();
   }
 
   private async softDeleteEntity(kind: FolderKind, id: string): Promise<void> {
     if (kind === 'note') await this.notes.deleteToTrash(id);
     else if (kind === 'task') await this.tasks.deleteToTrash(id);
-    else await this.goals.deleteToTrash(id);
+    else if (kind === 'goal') await this.goals.deleteToTrash(id);
+    else await this.lists.deleteToTrash(id);
   }
 
   private async refreshKind(kind: FolderKind): Promise<void> {
     if (kind === 'note') await this.notes.refresh();
     else if (kind === 'task') await this.tasks.refresh();
-    else await this.goals.refresh();
+    else if (kind === 'goal') await this.goals.refresh();
+    else await this.lists.refresh();
   }
 
   private async kindRoot(kind: FolderKind): Promise<FsDirectoryHandle> {

@@ -5,6 +5,7 @@
       <button type="button" class="primary" (click)="createNote()">+ {{ t('notes.new') }}</button>
       <button type="button" class="primary" (click)="createTask()">+ {{ t('tasks.new') }}</button>
       <button type="button" class="primary" (click)="createGoal()">+ {{ t('goals.new') }}</button>
+      <button type="button" class="primary" (click)="createList()">+ {{ t('lists.new') }}</button>
     </div>
     <div class="newgroup">
       <button type="button" class="ghost" (click)="createFolder('note')">
@@ -15,6 +16,9 @@
       </button>
       <button type="button" class="ghost" (click)="createFolder('goal')">
         + {{ t('folders.newIn').replace('{kind}', t('tree.type.goals')) }}
+      </button>
+      <button type="button" class="ghost" (click)="createFolder('list')">
+        + {{ t('folders.newIn').replace('{kind}', t('tree.type.lists')) }}
       </button>
     </div>
   </header>
@@ -54,6 +58,15 @@
       (click)="setType('goals')"
     >
       {{ t('tree.type.goals') }}
+    </button>
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="typeFilter() === 'lists'"
+      [class.active]="typeFilter() === 'lists'"
+      (click)="setType('lists')"
+    >
+      {{ t('tree.type.lists') }}
     </button>
   </nav>
   <mc-tree-filter

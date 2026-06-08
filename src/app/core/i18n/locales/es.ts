@@ -214,6 +214,28 @@ export const es = {
   'goals.reminder.overdue': 'Plazo vencido',
   'goals.reminder.dueSoon': 'Vence pronto',
 
+  'lists.title': 'Listas',
+  'lists.new': 'Nueva lista',
+  'lists.untitledTitle': 'Sin título',
+  'lists.empty': 'Sin listas todavía. Empezá con "Nueva lista".',
+  'lists.placeholderTitle': 'Título...',
+  'lists.placeholderBody': 'Ítems, ideas, lo que sea...',
+  'lists.deleteConfirm': '¿Mover "{title}" a la papelera?',
+  'lists.delete': 'Eliminar',
+  'lists.status.saved': 'Guardado',
+  'lists.status.saving': 'Guardando...',
+  'lists.status.unsaved': 'Sin guardar',
+  'lists.selectOne': 'Elegí una lista o creá una nueva.',
+  'lists.lock.foreign.title': 'Esta lista está abierta en otra pestaña',
+  'lists.lock.foreign.message':
+    'Para evitar pisar cambios, esta lista está en modo lectura. Podés tomar control para empezar a editar acá.',
+  'lists.lock.foreign.readonly': 'Abrir solo lectura',
+  'lists.lock.foreign.takeover': 'Tomar control',
+  'lists.lock.evicted.title': 'Otra ventana tomó el control',
+  'lists.lock.evicted.message':
+    'Otra pestaña empezó a editar esta lista. Tu vista quedó en modo lectura.',
+  'lists.lock.evicted.dismiss': 'Entendido',
+
   'folders.newIn': 'Carpeta en {kind}',
   'folders.createPrompt': 'Nombre de la carpeta:',
   'folders.actionPrompt': '¿Qué querés hacer con esta carpeta?',
@@ -236,11 +258,13 @@ export const es = {
   'trash.kind.note': 'Nota',
   'trash.kind.task': 'Tarea',
   'trash.kind.goal': 'Meta',
+  'trash.kind.list': 'Lista',
 
   'tree.type.all': 'Todo',
   'tree.type.notes': 'Notas',
   'tree.type.tasks': 'Tareas',
   'tree.type.goals': 'Metas',
+  'tree.type.lists': 'Listas',
 } as const;
 
 export type EsDictionary = typeof es;

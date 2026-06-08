@@ -6,6 +6,7 @@ import { FsService } from '@core/fs/fs.service';
 import type { FsDirectoryHandle } from '@core/fs/fs.types';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { GoalsService } from '@features/goals/services/goals.service';
+import { ListsService } from '@features/lists/services/lists.service';
 import { NotesService } from '@features/notes/services/notes.service';
 import { TasksService } from '@features/tasks/services/tasks.service';
 
@@ -25,6 +26,7 @@ export class TrashService {
   private readonly notes = inject(NotesService);
   private readonly tasks = inject(TasksService);
   private readonly goals = inject(GoalsService);
+  private readonly lists = inject(ListsService);
 
   private readonly entriesSignal = signal<readonly TrashEntry[]>([]);
   readonly entries = this.entriesSignal.asReadonly();
@@ -89,7 +91,8 @@ export class TrashService {
   private async refreshKind(kind: TrashKind): Promise<void> {
     if (kind === 'note') await this.notes.refresh();
     else if (kind === 'task') await this.tasks.refresh();
-    else await this.goals.refresh();
+    else if (kind === 'goal') await this.goals.refresh();
+    else await this.lists.refresh();
   }
 
   private async parseEntry(
@@ -103,7 +106,7 @@ export class TrashService {
     const sep = stem.indexOf('__');
     if (sep < 0) return null;
     const kind = stem.slice(0, sep);
-    if (kind !== 'note' && kind !== 'task' && kind !== 'goal') return null;
+    if (kind !== 'note' && kind !== 'task' && kind !== 'goal' && kind !== 'list') return null;
     const rest = stem.slice(sep + 2);
     const sep2 = rest.indexOf('__');
     if (sep2 < 0) return null;

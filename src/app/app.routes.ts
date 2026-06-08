@@ -15,6 +15,10 @@ export const routes: Routes = [
     loadChildren: () => import('./features/goals/goals.routes').then((m) => m.goalsRoutes),
   },
   {
+    path: 'lists',
+    loadChildren: () => import('./features/lists/lists.routes').then((m) => m.listsRoutes),
+  },
+  {
     path: 'trash',
     loadChildren: () => import('./features/trash/trash.routes').then((m) => m.trashRoutes),
   },
