@@ -691,11 +691,17 @@ Tono: **neutro frío sobre blanco**. Acento naranja recalibrado para AA sobre fo
    - **7a.** Tags transversales (`tags.json`, picker, badges en el árbol, color determinístico). _Cerrado._
    - **7b.** Búsqueda global indexada con MiniSearch persistido en IndexedDB; paleta `Ctrl+K`; filtro del árbol también busca tags; limpieza lazy de tag-refs muertos.
 8. **Concurrencia entre pestañas** (BroadcastChannel + locks).
-9. **Resto de entidades**: tasks, goals, lists, writings, images, files.
+9. **Resto de entidades**: tasks, goals, lists, writings, images, files. Incluye filtros por tipo en el árbol (combinaciones notas+tasks+goals descritas en §10), que sólo cobran sentido cuando existe la segunda entidad.
+   - **9bis.** Papelera + carpetas: UI transversal de papelera (listar, restaurar, vaciar lo que hoy queda en `.mi-cerebro/trash/`) + jerarquía real de carpetas dentro de cada entidad (el árbol ya soporta hijos arbitrarios; falta UI de crear/renombrar/mover y persistencia). Se separa de §19.9 porque la papelera requiere transversalidad y las carpetas pueden necesitar decisión de UX dedicada.
 10. **Calendar.**
 11. **Reminders.**
 12. **Music player.**
 13. **Versionado** (isomorphic-git).
 14. **Export ZIP.**
-15. **Temas custom + validación WCAG.**
-16. **Pulido**: continuidad de sesión, highlighting personalizable del editor, banners de objetivos en cambio de ruta, atajos completos.
+15. **Temas custom + validación WCAG.** Incluye color picker custom para tags (hoy el color sale determinístico de un hash).
+16. **Pulido** — partido en sub-fases temáticas para mantener scope acotado:
+    - **16a.** Continuidad de sesión + atajos: última ruta + entidad abierta + scroll al reabrir, historial de búsquedas en la paleta, set completo de atajos de teclado.
+    - **16b.** Pulido visual del árbol: scroll automático al match activo, lista de coincidencias desplegada navegable con teclado, drag & drop para reordenar nodos.
+    - **16c.** Gestión avanzada de tags: pantalla dedicada para listar/renombrar/mergear/eliminar tags con conteo de uso por entidad.
+    - **16d.** Pulido de búsqueda: botón "reindexar" manual, snippet centrado en la coincidencia con highlight (en lugar de los primeros 160 chars del body).
+    - **16e.** Pulido del editor: highlighting personalizable, banners de objetivos en cambio de ruta.
