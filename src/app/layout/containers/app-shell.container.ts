@@ -6,6 +6,7 @@ import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import { CommandPaletteService } from '@core/search/command-palette.service';
 import { ThemeService } from '@core/theme/theme.service';
+import { GoalReminderContainer } from '@features/goals/containers/goal-reminder.container';
 import { OnboardingContainer } from '@features/onboarding/containers/onboarding.container';
 import { CommandPaletteContainer } from '@features/search/containers/command-palette.container';
 
@@ -21,6 +22,7 @@ import { WorkspaceSidebarContainer } from './workspace-sidebar.container';
     OnboardingContainer,
     CommandPaletteContainer,
     WorkspaceSidebarContainer,
+    GoalReminderContainer,
   ],
   template: `
     @if (workspace.isReady()) {
@@ -40,6 +42,7 @@ import { WorkspaceSidebarContainer } from './workspace-sidebar.container';
         🔍
       </button>
       <mc-command-palette />
+      <mc-goal-reminder />
     } @else {
       <mc-onboarding />
     }

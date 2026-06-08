@@ -4,6 +4,7 @@
     <div class="newgroup">
       <button type="button" class="primary" (click)="createNote()">+ {{ t('notes.new') }}</button>
       <button type="button" class="primary" (click)="createTask()">+ {{ t('tasks.new') }}</button>
+      <button type="button" class="primary" (click)="createGoal()">+ {{ t('goals.new') }}</button>
     </div>
   </header>
   <nav class="chips" role="tablist" [attr.aria-label]="t('tree.type.all')">
@@ -33,6 +34,15 @@
       (click)="setType('tasks')"
     >
       {{ t('tree.type.tasks') }}
+    </button>
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="typeFilter() === 'goals'"
+      [class.active]="typeFilter() === 'goals'"
+      (click)="setType('goals')"
+    >
+      {{ t('tree.type.goals') }}
     </button>
   </nav>
   <mc-tree-filter

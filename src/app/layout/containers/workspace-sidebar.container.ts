@@ -12,12 +12,13 @@ import { filterTree } from '@shared/tree/filter';
 import { TreeFilterComponent } from '@shared/tree/tree-filter.component';
 import { TreeComponent } from '@shared/tree/tree.component';
 import type { FilterDirection, TreeNode } from '@shared/tree/tree.types';
+import { GoalsService } from '@features/goals/services/goals.service';
 import { NotesService } from '@features/notes/services/notes.service';
 import { TasksService } from '@features/tasks/services/tasks.service';
 
-import { tagBadges, taskBadges } from './tree-badges';
+import { goalBadges, tagBadges, taskBadges } from './tree-badges';
 
-type TypeFilter = 'all' | 'notes' | 'tasks';
+type TypeFilter = 'all' | 'notes' | 'tasks' | 'goals';
 
 @Component({
   selector: 'mc-workspace-sidebar',
@@ -29,6 +30,7 @@ type TypeFilter = 'all' | 'notes' | 'tasks';
 export class WorkspaceSidebarContainer {
   private readonly notesService = inject(NotesService);
   private readonly tasksService = inject(TasksService);
+  private readonly goalsService = inject(GoalsService);
   private readonly tagsService = inject(TagsService);
   private readonly workspace = inject(WorkspaceService);
   private readonly router = inject(Router);
@@ -46,6 +48,7 @@ export class WorkspaceSidebarContainer {
         await this.tagsService.refresh();
         await this.notesService.refresh();
         await this.tasksService.refresh();
+        await this.goalsService.refresh();
       } catch (e: unknown) {
         this.errors.report(e);
       }
@@ -66,7 +69,7 @@ export class WorkspaceSidebarContainer {
     const roots: TreeNode[] = [];
     const filter = this.typeFilter();
     const lookup = this.tagsById();
-    if (filter !== 'tasks') {
+    if (filter === 'all' || filter === 'notes') {
       const children: TreeNode[] = this.notesService.summaries().map((n) => ({
         id: `note:${n.id}`,
         label: n.title || this.i18n.t('notes.untitledTitle'),
@@ -80,7 +83,7 @@ export class WorkspaceSidebarContainer {
         children,
       });
     }
-    if (filter !== 'notes') {
+    if (filter === 'all' || filter === 'tasks') {
       const children: TreeNode[] = this.tasksService.summaries().map((t) => ({
         id: `task:${t.id}`,
         label: t.title || this.i18n.t('tasks.untitledTitle'),
@@ -94,14 +97,29 @@ export class WorkspaceSidebarContainer {
         children,
       });
     }
+    if (filter === 'all' || filter === 'goals') {
+      const children: TreeNode[] = this.goalsService.summaries().map((g) => ({
+        id: `goal:${g.id}`,
+        label: g.title || this.i18n.t('goals.untitledTitle'),
+        kind: 'goal',
+        badges: goalBadges(g, lookup, this.i18n),
+      }));
+      roots.push({
+        id: 'group:goals',
+        label: this.i18n.t('goals.title'),
+        kind: 'group',
+        children,
+      });
+    }
     return roots;
   });
 
   protected readonly selectedNodeId = computed<string | null>(() => {
     const url = this.router.url;
-    const match = /^\/(notes|tasks)\/([^/?]+)/.exec(url);
+    const match = /^\/(notes|tasks|goals)\/([^/?]+)/.exec(url);
     if (!match) return null;
-    return `${match[1] === 'notes' ? 'note' : 'task'}:${match[2]}`;
+    const kind = match[1] === 'notes' ? 'note' : match[1] === 'tasks' ? 'task' : 'goal';
+    return `${kind}:${match[2]}`;
   });
 
   protected readonly result = computed(() =>
@@ -176,11 +194,23 @@ export class WorkspaceSidebarContainer {
     }
   }
 
+  protected async createGoal(): Promise<void> {
+    try {
+      await this.workspace.ensureWritable();
+      const goal = await this.goalsService.create('');
+      await this.router.navigate(['/goals', goal.id]);
+    } catch (e) {
+      this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize()));
+    }
+  }
+
   protected choose(nodeId: string): void {
     if (nodeId.startsWith('note:')) {
       void this.router.navigate(['/notes', nodeId.slice('note:'.length)]);
     } else if (nodeId.startsWith('task:')) {
       void this.router.navigate(['/tasks', nodeId.slice('task:'.length)]);
+    } else if (nodeId.startsWith('goal:')) {
+      void this.router.navigate(['/goals', nodeId.slice('goal:'.length)]);
     }
   }
 
