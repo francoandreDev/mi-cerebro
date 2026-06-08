@@ -26,22 +26,24 @@ const norm = (s: string): string => s.normalize('NFKD').replace(/\p{M}/gu, '').t
   template: `
     <div class="row">
       @for (tag of selectedTags(); track tag.id) {
-        <mc-tag-chip [tag]="tag" [removable]="true" (remove)="removeTag.emit(tag.id)" />
+        <mc-tag-chip [tag]="tag" [removable]="editable()" (remove)="removeTag.emit(tag.id)" />
       }
-      <input
-        #input
-        type="text"
-        class="input"
-        [value]="query()"
-        [placeholder]="selectedIds().length === 0 ? t('tags.placeholder') : ''"
-        [attr.aria-label]="t('tags.placeholder')"
-        (input)="onInput($event)"
-        (keydown)="onKey($event)"
-        (focus)="open.set(true)"
-        (blur)="onBlur()"
-      />
+      @if (editable()) {
+        <input
+          #input
+          type="text"
+          class="input"
+          [value]="query()"
+          [placeholder]="selectedIds().length === 0 ? t('tags.placeholder') : ''"
+          [attr.aria-label]="t('tags.placeholder')"
+          (input)="onInput($event)"
+          (keydown)="onKey($event)"
+          (focus)="open.set(true)"
+          (blur)="onBlur()"
+        />
+      }
     </div>
-    @if (open() && suggestions().length + (canCreate() ? 1 : 0) > 0) {
+    @if (editable() && open() && suggestions().length + (canCreate() ? 1 : 0) > 0) {
       <ul class="menu" role="listbox">
         @for (s of suggestions(); track s.id; let i = $index) {
           <li
@@ -73,6 +75,7 @@ const norm = (s: string): string => s.normalize('NFKD').replace(/\p{M}/gu, '').t
 export class TagPickerComponent {
   readonly availableTags = input.required<readonly Tag[]>();
   readonly selectedIds = input.required<readonly string[]>();
+  readonly editable = input<boolean>(true);
   readonly addTag = output<string>(); // label (existing or new — service decides)
   readonly removeTag = output<string>(); // id
 
@@ -80,7 +83,7 @@ export class TagPickerComponent {
   protected readonly open = signal(false);
   protected readonly cursor = signal(0);
 
-  private readonly inputEl = viewChild.required<ElementRef<HTMLInputElement>>('input');
+  private readonly inputEl = viewChild<ElementRef<HTMLInputElement>>('input');
   private readonly i18n = inject(I18nService);
 
   protected readonly selectedTags = computed(() => {
@@ -190,6 +193,6 @@ export class TagPickerComponent {
   private reset(): void {
     this.query.set('');
     this.cursor.set(0);
-    this.inputEl().nativeElement.focus();
+    this.inputEl()?.nativeElement.focus();
   }
 }

@@ -11,56 +11,18 @@ import type { TranslationKey } from '@core/i18n/i18n.types';
 import { TagsService } from '@core/tags/tags.service';
 
 import { NoteEditorPaneComponent, type SaveStatus } from '../components/note-editor-pane.component';
+import { NoteLockBannerComponent } from '../components/note-lock-banner.component';
 import { NOTE_KIND, type Note } from '../models/note.types';
 import { NotesService } from '../services/notes.service';
+import { NoteLockController } from './note-lock.controller';
 import { NoteSidebarComponent } from './note-sidebar.component';
 
 @Component({
   selector: 'mc-notes',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NoteSidebarComponent, NoteEditorPaneComponent],
-  template: `
-    <div class="layout">
-      <mc-note-sidebar
-        [notes]="notes()"
-        [tags]="tags()"
-        [selectedId]="active()?.id ?? null"
-        (chooseNote)="onSelect($event)"
-        (create)="onCreate()"
-      />
-      @if (active(); as note) {
-        <mc-note-editor-pane
-          [note]="note"
-          [status]="status()"
-          [availableTags]="tags()"
-          (titleChange)="onTitleChange($event)"
-          (bodyChange)="onBodyChange($event)"
-          (removeNote)="onDelete()"
-          (addTag)="onAddTag($event)"
-          (removeTag)="onRemoveTag($event)"
-        />
-      } @else {
-        <div class="empty">{{ t('notes.selectOne') }}</div>
-      }
-    </div>
-  `,
-  styles: `
-    :host {
-      display: block;
-      height: 100%;
-    }
-    .layout {
-      display: flex;
-      height: 100vh;
-    }
-    .empty {
-      flex: 1;
-      display: grid;
-      place-items: center;
-      color: var(--mc-fg-muted);
-      padding: var(--mc-space-5);
-    }
-  `,
+  imports: [NoteSidebarComponent, NoteEditorPaneComponent, NoteLockBannerComponent],
+  templateUrl: './notes.container.html',
+  styleUrl: './notes.container.css',
 })
 export class NotesContainer {
   readonly id = input<string | undefined>(undefined);
@@ -77,6 +39,7 @@ export class NotesContainer {
   protected readonly tags = this.tagsService.tags;
   protected readonly active = signal<Note | null>(null);
   protected readonly status = signal<SaveStatus>('saved');
+  protected readonly lock = new NoteLockController(this.active);
 
   constructor() {
     // why: tags must load before notes so the lazy stale-tag-ref cleanup
@@ -126,7 +89,7 @@ export class NotesContainer {
 
   protected onTitleChange(title: string): void {
     const current = this.active();
-    if (!current) return;
+    if (!current || !this.lock.guardWrite()) return;
     const next = { ...current, title };
     this.active.set(next);
     this.scheduleSave(next);
@@ -134,7 +97,7 @@ export class NotesContainer {
 
   protected onBodyChange(body: JSONContent): void {
     const current = this.active();
-    if (!current) return;
+    if (!current || !this.lock.guardWrite()) return;
     const next = { ...current, body };
     this.active.set(next);
     this.scheduleSave(next);
@@ -142,7 +105,7 @@ export class NotesContainer {
 
   protected async onAddTag(label: string): Promise<void> {
     const current = this.active();
-    if (!current) return;
+    if (!current || !this.lock.guardWrite()) return;
     try {
       await this.workspace.ensureWritable();
       const tag = await this.tagsService.touch(label);
@@ -157,7 +120,7 @@ export class NotesContainer {
 
   protected onRemoveTag(id: string): void {
     const current = this.active();
-    if (!current) return;
+    if (!current || !this.lock.guardWrite()) return;
     if (!current.tags.includes(id)) return;
     const next = { ...current, tags: current.tags.filter((t) => t !== id) };
     this.active.set(next);
@@ -166,7 +129,7 @@ export class NotesContainer {
 
   protected async onDelete(): Promise<void> {
     const current = this.active();
-    if (!current) return;
+    if (!current || !this.lock.guardWrite()) return;
     const ok = confirm(
       this.t('notes.deleteConfirm').replace(
         '{title}',

@@ -51,6 +51,7 @@ import StarterKit from '@tiptap/starter-kit';
 export class EditorComponent {
   readonly value = input.required<JSONContent>();
   readonly placeholder = input<string>('');
+  readonly editable = input<boolean>(true);
   readonly valueChange = output<JSONContent>();
 
   private readonly host = viewChild.required<ElementRef<HTMLElement>>('host');
@@ -71,11 +72,21 @@ export class EditorComponent {
       element: this.host().nativeElement,
       extensions: [StarterKit],
       content: this.value(),
+      editable: this.editable(),
       onUpdate: ({ editor }) => {
         if (this.suppressEmit) return;
         this.valueChange.emit(editor.getJSON());
       },
     });
+
+    effect(
+      () => {
+        const ed = this.editor;
+        if (!ed) return;
+        ed.setEditable(this.editable());
+      },
+      { injector: this.injector },
+    );
 
     // why: keep external value in sync without forcing a remount on every
     //      keystroke; only reset when the incoming JSON actually differs.

@@ -138,6 +138,17 @@ export const es = {
   'errors.aut.006.title': 'Se tomó control desde otra ventana',
   'errors.aut.006.message':
     'Otra pestaña tomó el control de esta entidad. Tu vista quedó en modo lectura.',
+
+  'notes.lock.foreign.title': 'Esta nota está abierta en otra pestaña',
+  'notes.lock.foreign.message':
+    'Para evitar pisar cambios, esta nota está en modo lectura. Podés tomar control para empezar a editar acá.',
+  'notes.lock.foreign.readonly': 'Abrir solo lectura',
+  'notes.lock.foreign.takeover': 'Tomar control',
+  'notes.lock.evicted.title': 'Otra ventana tomó el control',
+  'notes.lock.evicted.message':
+    'Otra pestaña empezó a editar esta nota. Tu vista quedó en modo lectura.',
+  'notes.lock.evicted.dismiss': 'Entendido',
+  'notes.lock.readonly': 'Solo lectura',
 } as const;
 
 export type EsDictionary = typeof es;

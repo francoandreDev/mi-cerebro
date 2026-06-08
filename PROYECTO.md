@@ -690,7 +690,9 @@ Tono: **neutro frío sobre blanco**. Acento naranja recalibrado para AA sobre fo
 7. **Tags transversales y búsqueda global** (dividido en dos sub-pasos):
    - **7a.** Tags transversales (`tags.json`, picker, badges en el árbol, color determinístico). _Cerrado._
    - **7b.** Búsqueda global indexada con MiniSearch persistido en IndexedDB; paleta `Ctrl+K`; filtro del árbol también busca tags; limpieza lazy de tag-refs muertos.
-8. **Concurrencia entre pestañas** (BroadcastChannel + locks).
+8. **Concurrencia entre pestañas** (BroadcastChannel + locks). Dividido en sub-pasos:
+   - **8a.** `LockService` genérico + canal `mc-locks`: claim/pong/release/takeover por `(kind, id)`, estado `idle | owned | foreign | evicted` como signal, takeover optimista, release best-effort en `beforeunload`. _Cerrado._
+   - **8b.** Integración en `NotesContainer`: `NoteLockController` orquesta acquire al abrir / release al cerrar o cambiar de ruta. Editor, título y tag-picker pasan a solo-lectura cuando el estado es `foreign`/`evicted`. Banner inline con _Abrir solo lectura_ / _Tomar control_ para `foreign` y _Entendido_ para `evicted`. `guardWrite()` reporta AUT-005 si llega un write programático en solo-lectura; un effect dispara AUT-006 una sola vez por desalojo. _Cerrado._
 9. **Resto de entidades**: tasks, goals, lists, writings, images, files. Incluye filtros por tipo en el árbol (combinaciones notas+tasks+goals descritas en §10), que sólo cobran sentido cuando existe la segunda entidad.
    - **9bis.** Papelera + carpetas: UI transversal de papelera (listar, restaurar, vaciar lo que hoy queda en `.mi-cerebro/trash/`) + jerarquía real de carpetas dentro de cada entidad (el árbol ya soporta hijos arbitrarios; falta UI de crear/renombrar/mover y persistencia). Se separa de §19.9 porque la papelera requiere transversalidad y las carpetas pueden necesitar decisión de UX dedicada.
 10. **Calendar.**

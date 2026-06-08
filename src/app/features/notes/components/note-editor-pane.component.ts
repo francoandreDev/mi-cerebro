@@ -23,16 +23,20 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
         [value]="note().title"
         [placeholder]="t('notes.placeholderTitle')"
         [attr.aria-label]="t('notes.placeholderTitle')"
+        [readOnly]="!editable()"
         (input)="onTitleInput($event)"
       />
       <span class="status" [attr.data-status]="status()">{{ statusLabel() }}</span>
-      <button type="button" class="danger" (click)="removeNote.emit()">
-        {{ t('notes.delete') }}
-      </button>
+      @if (editable()) {
+        <button type="button" class="danger" (click)="removeNote.emit()">
+          {{ t('notes.delete') }}
+        </button>
+      }
     </header>
     <mc-tag-picker
       [availableTags]="availableTags()"
       [selectedIds]="note().tags"
+      [editable]="editable()"
       (addTag)="addTag.emit($event)"
       (removeTag)="removeTag.emit($event)"
     />
@@ -40,6 +44,7 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
       class="editor"
       [value]="note().body"
       [placeholder]="t('notes.placeholderBody')"
+      [editable]="editable()"
       (valueChange)="bodyChange.emit($event)"
     />
   `,
@@ -99,6 +104,7 @@ export class NoteEditorPaneComponent {
   readonly note = input.required<Note>();
   readonly status = input<SaveStatus>('saved');
   readonly availableTags = input.required<readonly Tag[]>();
+  readonly editable = input<boolean>(true);
   readonly titleChange = output<string>();
   readonly bodyChange = output<JSONContent>();
   readonly removeNote = output<void>();

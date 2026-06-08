@@ -1,0 +1,21 @@
+:host {
+  display: block;
+  height: 100%;
+}
+.layout {
+  display: flex;
+  height: 100vh;
+}
+.pane {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+.empty {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  color: var(--mc-fg-muted);
+  padding: var(--mc-space-5);
+}
