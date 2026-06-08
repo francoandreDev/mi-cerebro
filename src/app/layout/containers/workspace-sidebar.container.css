@@ -50,3 +50,24 @@
   color: var(--mc-accent-fg);
   border-color: var(--mc-accent-primary);
 }
+.footer {
+  margin-top: auto;
+  padding: var(--mc-space-3);
+  border-top: 1px solid var(--mc-border-default);
+}
+.trash-link {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: var(--mc-fg-muted);
+  font-size: var(--mc-font-size-sm);
+  text-decoration: none;
+  cursor: pointer;
+  padding: 0;
+}
+.trash-link:hover,
+.trash-link.active {
+  color: var(--mc-fg-primary);
+}

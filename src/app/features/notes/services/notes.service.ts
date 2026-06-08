@@ -120,7 +120,7 @@ export class NotesService {
     const dir = await this.notesDir();
     const name = await this.findFilename(dir, id);
     const trashDir = await this.trashDir(root);
-    const dest = `${id}__${name}`;
+    const dest = `${NOTE_KIND}__${id}__${name}`;
     await this.fs.moveFile(dir, name, trashDir, dest);
     this.idToFile.delete(id);
     this.summariesSignal.update((list) => list.filter((s) => s.id !== id));

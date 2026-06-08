@@ -65,4 +65,9 @@
     [emptyKey]="emptyKey()"
     (chooseNode)="choose($event)"
   />
+  <footer class="footer">
+    <button type="button" class="trash-link" [class.active]="isTrashRoute()" (click)="goToTrash()">
+      {{ t('trash.title') }}
+    </button>
+  </footer>
 }

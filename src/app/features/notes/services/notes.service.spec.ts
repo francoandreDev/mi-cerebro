@@ -141,7 +141,7 @@ describe('NotesService', () => {
     let cursor = trashRoot;
     while (cursor.dirs.size === 1) cursor = [...cursor.dirs.values()][0]!;
     expect(cursor.files.size).toBe(1);
-    expect([...cursor.files.keys()][0]).toMatch(new RegExp(`^${note.id}__hola.json$`));
+    expect([...cursor.files.keys()][0]).toMatch(new RegExp(`^note__${note.id}__hola.json$`));
   });
 
   it('registers a note kind in the MigrationsService at construct', async () => {

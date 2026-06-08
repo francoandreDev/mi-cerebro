@@ -214,6 +214,18 @@ export const es = {
   'goals.reminder.overdue': 'Plazo vencido',
   'goals.reminder.dueSoon': 'Vence pronto',
 
+  'trash.title': 'Papelera',
+  'trash.empty': 'Vaciar papelera',
+  'trash.emptyState': 'La papelera está vacía.',
+  'trash.restore': 'Restaurar',
+  'trash.purge': 'Borrar',
+  'trash.purgeConfirm': '¿Borrar "{title}" definitivamente? Esta acción es irreversible.',
+  'trash.emptyConfirm': '¿Vaciar la papelera? Todo el contenido se borrará definitivamente.',
+  'trash.untitledTitle': 'Sin título',
+  'trash.kind.note': 'Nota',
+  'trash.kind.task': 'Tarea',
+  'trash.kind.goal': 'Meta',
+
   'tree.type.all': 'Todo',
   'tree.type.notes': 'Notas',
   'tree.type.tasks': 'Tareas',

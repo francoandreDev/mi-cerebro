@@ -116,7 +116,7 @@ export class TasksService {
     const dir = await this.tasksDir();
     const name = await this.findFilename(dir, id);
     const trashDir = await this.trashDir(root);
-    const dest = `${id}__${name}`;
+    const dest = `${TASK_KIND}__${id}__${name}`;
     await this.fs.moveFile(dir, name, trashDir, dest);
     this.idToFile.delete(id);
     this.summariesSignal.update((list) => list.filter((s) => s.id !== id));

@@ -122,6 +122,12 @@ export class WorkspaceSidebarContainer {
     return `${kind}:${match[2]}`;
   });
 
+  protected readonly isTrashRoute = computed(() => this.router.url.startsWith('/trash'));
+
+  protected goToTrash(): void {
+    void this.router.navigate(['/trash']);
+  }
+
   protected readonly result = computed(() =>
     filterTree(this.treeRoots(), this.query(), this.selectedNodeId(), this.direction()),
   );
