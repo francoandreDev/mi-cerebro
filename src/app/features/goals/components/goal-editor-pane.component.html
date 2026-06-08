@@ -1,0 +1,49 @@
+<header class="bar">
+  <label class="done">
+    <input
+      type="checkbox"
+      [checked]="goal().completed"
+      [disabled]="!editable()"
+      (change)="onCompletedToggle($event)"
+    />
+    <span class="sr-only">{{ t('goals.completed.label') }}</span>
+  </label>
+  <input
+    type="text"
+    class="title-input"
+    [class.done]="goal().completed"
+    [value]="goal().title"
+    [placeholder]="t('goals.placeholderTitle')"
+    [attr.aria-label]="t('goals.placeholderTitle')"
+    [readOnly]="!editable()"
+    (input)="onTitleInput($event)"
+  />
+  <span class="status" [attr.data-status]="status()">{{ statusLabel() }}</span>
+  @if (editable()) {
+    <button type="button" class="danger" (click)="removeGoal.emit()">
+      {{ t('goals.delete') }}
+    </button>
+  }
+</header>
+<section class="meta">
+  <span class="label">{{ t('goals.deadline.label') }}:</span>
+  <mc-deadline-picker
+    [deadline]="goal().deadline"
+    [editable]="editable()"
+    (deadlineChange)="deadlineChange.emit($event)"
+  />
+</section>
+<mc-tag-picker
+  [availableTags]="availableTags()"
+  [selectedIds]="goal().tags"
+  [editable]="editable()"
+  (addTag)="addTag.emit($event)"
+  (removeTag)="removeTag.emit($event)"
+/>
+<mc-editor
+  class="editor"
+  [value]="goal().body"
+  [placeholder]="t('goals.placeholderBody')"
+  [editable]="editable()"
+  (valueChange)="bodyChange.emit($event)"
+/>
