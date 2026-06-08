@@ -79,8 +79,17 @@ export class NotesContainer {
   protected readonly status = signal<SaveStatus>('saved');
 
   constructor() {
-    void this.notesService.refresh().catch((e: unknown) => this.errors.report(e));
-    void this.tagsService.refresh().catch((e: unknown) => this.errors.report(e));
+    // why: tags must load before notes so the lazy stale-tag-ref cleanup
+    //      (and the search index) sees the real tag set instead of dropping
+    //      every reference as "unknown".
+    void (async () => {
+      try {
+        await this.tagsService.refresh();
+        await this.notesService.refresh();
+      } catch (e: unknown) {
+        this.errors.report(e);
+      }
+    })();
 
     effect(() => {
       const wanted = this.id();

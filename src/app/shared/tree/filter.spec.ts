@@ -58,4 +58,25 @@ describe('filterTree', () => {
     const r = filterTree(tree, 'tarta', 'c', 'up');
     expect(r.matches.map((m) => m.id)).toEqual(['a']);
   });
+
+  it('matches a node when one of its badges matches', () => {
+    const withBadges: readonly TreeNode[] = [
+      {
+        id: 'g',
+        label: 'Notas',
+        kind: 'group',
+        children: [
+          {
+            id: 'a',
+            label: 'Algo sin pistas',
+            kind: 'note',
+            badges: [{ id: 't1', label: 'Trabajo', color: '#aaa' }],
+          },
+          { id: 'b', label: 'Otro', kind: 'note' },
+        ],
+      },
+    ];
+    const r = filterTree(withBadges, 'trabajo', null, 'general');
+    expect(r.matches.map((m) => m.id)).toEqual(['a']);
+  });
 });
