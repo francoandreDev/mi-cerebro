@@ -186,7 +186,12 @@ export class TreeNodeComponent {
   protected readonly hasActions = computed(() => {
     const kind = this.node().kind;
     return (
-      kind === 'folder' || kind === 'note' || kind === 'task' || kind === 'goal' || kind === 'list'
+      kind === 'folder' ||
+      kind === 'note' ||
+      kind === 'task' ||
+      kind === 'goal' ||
+      kind === 'list' ||
+      kind === 'writing'
     );
   });
 

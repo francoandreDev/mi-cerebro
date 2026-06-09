@@ -18,12 +18,13 @@ import { GoalsService } from '@features/goals/services/goals.service';
 import { ListsService } from '@features/lists/services/lists.service';
 import { NotesService } from '@features/notes/services/notes.service';
 import { TasksService } from '@features/tasks/services/tasks.service';
+import { WritingsService } from '@features/writings/services/writings.service';
 
 import { handleCreateFolder, handleEntityAction, handleFolderAction } from './folder-actions';
 import { buildFolderTree } from './folder-tree';
 import { goalBadges, tagBadges, taskBadges } from './tree-badges';
 
-type TypeFilter = 'all' | 'notes' | 'tasks' | 'goals' | 'lists';
+type TypeFilter = 'all' | 'notes' | 'tasks' | 'goals' | 'lists' | 'writings';
 
 @Component({
   selector: 'mc-workspace-sidebar',
@@ -37,6 +38,7 @@ export class WorkspaceSidebarContainer {
   private readonly tasksService = inject(TasksService);
   private readonly goalsService = inject(GoalsService);
   private readonly listsService = inject(ListsService);
+  private readonly writingsService = inject(WritingsService);
   private readonly foldersService = inject(FoldersService);
   private readonly tagsService = inject(TagsService);
   private readonly workspace = inject(WorkspaceService);
@@ -57,6 +59,7 @@ export class WorkspaceSidebarContainer {
         await this.tasksService.refresh();
         await this.goalsService.refresh();
         await this.listsService.refresh();
+        await this.writingsService.refresh();
       } catch (e: unknown) {
         this.errors.report(e);
       }
@@ -149,12 +152,30 @@ export class WorkspaceSidebarContainer {
         }),
       });
     }
+    if (filter === 'all' || filter === 'writings') {
+      const entities = this.writingsService.summaries().map((w) => ({
+        id: w.id,
+        folder: w.folder,
+        label: w.title || this.i18n.t('writings.untitledTitle'),
+        badges: tagBadges(w.tags, lookup),
+      }));
+      roots.push({
+        id: 'group:writings',
+        label: this.i18n.t('writings.title'),
+        kind: 'group',
+        children: buildFolderTree({
+          idPrefix: 'writing',
+          entities,
+          folders: this.writingsService.folders(),
+        }),
+      });
+    }
     return roots;
   });
 
   protected readonly selectedNodeId = computed<string | null>(() => {
     const url = this.router.url;
-    const match = /^\/(notes|tasks|goals|lists)\/([^/?]+)/.exec(url);
+    const match = /^\/(notes|tasks|goals|lists|writings)\/([^/?]+)/.exec(url);
     if (!match) return null;
     const kind =
       match[1] === 'notes'
@@ -163,7 +184,9 @@ export class WorkspaceSidebarContainer {
           ? 'task'
           : match[1] === 'goals'
             ? 'goal'
-            : 'list';
+            : match[1] === 'lists'
+              ? 'list'
+              : 'writing';
     return `${kind}:${match[2]}`;
   });
 
@@ -265,6 +288,16 @@ export class WorkspaceSidebarContainer {
     }
   }
 
+  protected async createWriting(): Promise<void> {
+    try {
+      await this.workspace.ensureWritable();
+      const writing = await this.writingsService.create('');
+      await this.router.navigate(['/writings', writing.id]);
+    } catch (e) {
+      this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize()));
+    }
+  }
+
   protected choose(nodeId: string): void {
     if (nodeId.startsWith('note:')) {
       void this.router.navigate(['/notes', nodeId.slice('note:'.length)]);
@@ -274,6 +307,8 @@ export class WorkspaceSidebarContainer {
       void this.router.navigate(['/goals', nodeId.slice('goal:'.length)]);
     } else if (nodeId.startsWith('list:')) {
       void this.router.navigate(['/lists', nodeId.slice('list:'.length)]);
+    } else if (nodeId.startsWith('writing:')) {
+      void this.router.navigate(['/writings', nodeId.slice('writing:'.length)]);
     }
   }
 
@@ -304,6 +339,7 @@ export class WorkspaceSidebarContainer {
             tasks: this.tasksService,
             goals: this.goalsService,
             lists: this.listsService,
+            writings: this.writingsService,
           },
           this.i18n,
         );

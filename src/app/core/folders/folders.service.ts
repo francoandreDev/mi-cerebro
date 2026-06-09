@@ -17,6 +17,7 @@ import { GoalsService } from '@features/goals/services/goals.service';
 import { ListsService } from '@features/lists/services/lists.service';
 import { NotesService } from '@features/notes/services/notes.service';
 import { TasksService } from '@features/tasks/services/tasks.service';
+import { WritingsService } from '@features/writings/services/writings.service';
 import { toSlug } from '@shared/utils/slug';
 
 import type { FolderKind } from './folders.types';
@@ -31,6 +32,7 @@ export class FoldersService {
   private readonly tasks = inject(TasksService);
   private readonly goals = inject(GoalsService);
   private readonly lists = inject(ListsService);
+  private readonly writings = inject(WritingsService);
 
   async createFolder(kind: FolderKind, parentPath: string, name: string): Promise<string> {
     const slug = toSlug(name);
@@ -123,21 +125,24 @@ export class FoldersService {
     if (kind === 'note') return this.notes.summaries();
     if (kind === 'task') return this.tasks.summaries();
     if (kind === 'goal') return this.goals.summaries();
-    return this.lists.summaries();
+    if (kind === 'list') return this.lists.summaries();
+    return this.writings.summaries();
   }
 
   private async softDeleteEntity(kind: FolderKind, id: string): Promise<void> {
     if (kind === 'note') await this.notes.deleteToTrash(id);
     else if (kind === 'task') await this.tasks.deleteToTrash(id);
     else if (kind === 'goal') await this.goals.deleteToTrash(id);
-    else await this.lists.deleteToTrash(id);
+    else if (kind === 'list') await this.lists.deleteToTrash(id);
+    else await this.writings.deleteToTrash(id);
   }
 
   private async refreshKind(kind: FolderKind): Promise<void> {
     if (kind === 'note') await this.notes.refresh();
     else if (kind === 'task') await this.tasks.refresh();
     else if (kind === 'goal') await this.goals.refresh();
-    else await this.lists.refresh();
+    else if (kind === 'list') await this.lists.refresh();
+    else await this.writings.refresh();
   }
 
   private async kindRoot(kind: FolderKind): Promise<FsDirectoryHandle> {

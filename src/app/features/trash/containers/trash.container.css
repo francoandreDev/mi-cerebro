@@ -67,6 +67,9 @@
 .kind[data-kind='list'] {
   color: var(--mc-state-info, #58a6ff);
 }
+.kind[data-kind='writing'] {
+  color: var(--mc-fg-secondary, #8957e5);
+}
 .title {
   min-width: 0;
   overflow: hidden;

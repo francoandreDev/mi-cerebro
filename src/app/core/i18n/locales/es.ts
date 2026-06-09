@@ -236,6 +236,28 @@ export const es = {
     'Otra pestaña empezó a editar esta lista. Tu vista quedó en modo lectura.',
   'lists.lock.evicted.dismiss': 'Entendido',
 
+  'writings.title': 'Escritos',
+  'writings.new': 'Nuevo escrito',
+  'writings.untitledTitle': 'Sin título',
+  'writings.empty': 'Sin escritos todavía. Empezá con "Nuevo escrito".',
+  'writings.placeholderTitle': 'Título...',
+  'writings.placeholderBody': 'Escribí lo que tengas en mente...',
+  'writings.deleteConfirm': '¿Mover "{title}" a la papelera?',
+  'writings.delete': 'Eliminar',
+  'writings.status.saved': 'Guardado',
+  'writings.status.saving': 'Guardando...',
+  'writings.status.unsaved': 'Sin guardar',
+  'writings.selectOne': 'Elegí un escrito o creá uno nuevo.',
+  'writings.lock.foreign.title': 'Este escrito está abierto en otra pestaña',
+  'writings.lock.foreign.message':
+    'Para evitar pisar cambios, este escrito está en modo lectura. Podés tomar control para empezar a editar acá.',
+  'writings.lock.foreign.readonly': 'Abrir solo lectura',
+  'writings.lock.foreign.takeover': 'Tomar control',
+  'writings.lock.evicted.title': 'Otra ventana tomó el control',
+  'writings.lock.evicted.message':
+    'Otra pestaña empezó a editar este escrito. Tu vista quedó en modo lectura.',
+  'writings.lock.evicted.dismiss': 'Entendido',
+
   'folders.newIn': 'Carpeta en {kind}',
   'folders.createPrompt': 'Nombre de la carpeta:',
   'folders.actionPrompt': '¿Qué querés hacer con esta carpeta?',
@@ -259,12 +281,14 @@ export const es = {
   'trash.kind.task': 'Tarea',
   'trash.kind.goal': 'Meta',
   'trash.kind.list': 'Lista',
+  'trash.kind.writing': 'Escrito',
 
   'tree.type.all': 'Todo',
   'tree.type.notes': 'Notas',
   'tree.type.tasks': 'Tareas',
   'tree.type.goals': 'Metas',
   'tree.type.lists': 'Listas',
+  'tree.type.writings': 'Escritos',
 } as const;
 
 export type EsDictionary = typeof es;
