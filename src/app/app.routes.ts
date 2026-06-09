@@ -40,6 +40,10 @@ export const routes: Routes = [
       import('./features/reminders/reminders.routes').then((m) => m.remindersRoutes),
   },
   {
+    path: 'music',
+    loadChildren: () => import('./features/music/music.routes').then((m) => m.musicRoutes),
+  },
+  {
     path: 'calendar',
     loadChildren: () => import('./features/calendar/calendar.routes').then((m) => m.calendarRoutes),
   },

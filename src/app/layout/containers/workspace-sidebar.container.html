@@ -37,6 +37,16 @@
     </button>
     <button
       type="button"
+      class="rail-btn music"
+      [class.active]="activeKey() === 'music'"
+      [title]="t('music.title')"
+      [attr.aria-label]="t('music.title')"
+      (click)="goTo('music')"
+    >
+      🎵
+    </button>
+    <button
+      type="button"
       class="rail-btn trash"
       [class.active]="activeKey() === 'trash'"
       [title]="t('trash.title')"

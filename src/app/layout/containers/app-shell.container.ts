@@ -10,6 +10,7 @@ import { ReminderToastContainer } from '@features/reminders/containers/reminder-
 import { CommandPaletteContainer } from '@features/search/containers/command-palette.container';
 
 import { ErrorDisplayContainer } from './error-display.container';
+import { MiniPlayerContainer } from './mini-player.container';
 import { WorkspaceSidebarContainer } from './workspace-sidebar.container';
 
 @Component({
@@ -23,6 +24,7 @@ import { WorkspaceSidebarContainer } from './workspace-sidebar.container';
     WorkspaceSidebarContainer,
     GoalReminderContainer,
     ReminderToastContainer,
+    MiniPlayerContainer,
   ],
   template: `
     @if (workspace.isReady()) {
@@ -35,6 +37,7 @@ import { WorkspaceSidebarContainer } from './workspace-sidebar.container';
       <mc-command-palette />
       <mc-goal-reminder />
       <mc-reminder-toast />
+      <mc-mini-player />
     } @else {
       <mc-onboarding />
     }

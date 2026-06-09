@@ -433,6 +433,29 @@ export const es = {
 
   'calendar.kind.reminder': 'Recordatorios',
   'trash.kind.reminder': 'Recordatorio',
+
+  'music.title': 'Música',
+  'music.library': 'Biblioteca',
+  'music.playlists': 'Playlists',
+  'music.upload': 'Subir MP3',
+  'music.newPlaylist': 'Nueva playlist',
+  'music.newPlaylistTitle': 'Nueva playlist',
+  'music.untitledPlaylist': 'Sin título',
+  'music.emptyLibrary': 'Subí MP3s para empezar.',
+  'music.emptyPlaylist': 'Esta playlist está vacía. Agregá tracks desde la biblioteca.',
+  'music.addToPlaylist': 'Agregar a la playlist activa',
+  'music.removeFromPlaylist': 'Quitar de la playlist',
+  'music.playAll': 'Reproducir',
+  'music.deleteTrackConfirm':
+    '¿Borrar "{name}" de la biblioteca? Se quitará también de todas las playlists.',
+  'music.deletePlaylistConfirm': '¿Borrar la playlist "{title}"?',
+  'music.openLibrary': 'Ir a la biblioteca',
+  'music.prev': 'Anterior',
+  'music.next': 'Siguiente',
+  'music.playPause': 'Reproducir/pausar',
+  'music.shuffle': 'Aleatorio',
+  'music.stop': 'Detener',
+  'tree.type.music': 'Música',
 } as const;
 
 export type EsDictionary = typeof es;
