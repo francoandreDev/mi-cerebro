@@ -50,6 +50,7 @@ export class FilesContainer {
   protected readonly tags = this.tagsService.tags;
   protected readonly active = signal<FileCollection | null>(null);
   protected readonly status = signal<FileCollectionSaveStatus>('saved');
+  protected readonly previewUrls = signal<Record<string, string>>({});
   protected readonly lock = new EntityLockController(FILE_KIND, this.active);
 
   constructor() {
@@ -62,9 +63,37 @@ export class FilesContainer {
       }
       if (current?.id !== wanted) void this.loadCollection(wanted);
     });
-    this.destroyRef.onDestroy(() => {
-      /* no blob URLs to revoke — downloads use one-shot URLs revoked inline */
-    });
+    this.destroyRef.onDestroy(() => this.revokeAllPreviews());
+  }
+
+  private isPreviewable(mime: string): boolean {
+    return mime.startsWith('image/') || mime === 'application/pdf';
+  }
+
+  private revokeAllPreviews(): void {
+    for (const url of Object.values(this.previewUrls())) URL.revokeObjectURL(url);
+    this.previewUrls.set({});
+  }
+
+  private async refreshPreviewsFor(collection: FileCollection): Promise<void> {
+    const next: Record<string, string> = { ...this.previewUrls() };
+    const stale = new Set(Object.keys(next));
+    for (const item of collection.items) {
+      stale.delete(item.id);
+      if (next[item.id] || !this.isPreviewable(item.mime)) continue;
+      try {
+        const blob = await this.filesService.readBlob(collection.id, item.id);
+        next[item.id] = URL.createObjectURL(blob);
+      } catch (cause) {
+        console.warn('[files] preview load failed', item.id, cause);
+      }
+    }
+    for (const orphan of stale) {
+      const url = next[orphan];
+      if (url) URL.revokeObjectURL(url);
+      delete next[orphan];
+    }
+    this.previewUrls.set(next);
   }
 
   protected t(key: TranslationKey): string {
@@ -133,6 +162,7 @@ export class FilesContainer {
       }
       const next = await this.filesService.readCollection(current.id);
       this.active.set(next);
+      await this.refreshPreviewsFor(next);
     } catch (e) {
       this.errors.report(this.withReauthIfNeeded(e));
     }
@@ -148,6 +178,7 @@ export class FilesContainer {
       await this.filesService.removeFile(current.id, itemId);
       const next = await this.filesService.readCollection(current.id);
       this.active.set(next);
+      await this.refreshPreviewsFor(next);
     } catch (e) {
       this.errors.report(e);
     }
@@ -221,6 +252,8 @@ export class FilesContainer {
       const collection = await this.filesService.readCollection(id);
       this.active.set(collection);
       this.status.set('saved');
+      this.revokeAllPreviews();
+      await this.refreshPreviewsFor(collection);
     } catch (e) {
       this.errors.report(e);
       this.active.set(null);

@@ -54,7 +54,15 @@ import {
             (dragend)="onItemDragEnd()"
           >
             <button type="button" class="card" (click)="download.emit(item.id)">
-              <span class="icon" aria-hidden="true">{{ iconFor(item) }}</span>
+              @if (previewFor(item); as preview) {
+                @if (preview.kind === 'image') {
+                  <img class="preview" [src]="preview.url" [alt]="item.originalName" />
+                } @else if (preview.kind === 'pdf') {
+                  <embed class="preview pdf" [src]="preview.url" type="application/pdf" />
+                }
+              } @else {
+                <span class="icon" aria-hidden="true">{{ iconFor(item) }}</span>
+              }
               <span class="name" [title]="item.originalName">{{ item.originalName }}</span>
               <span class="bytes">{{ formatSize(item.bytes) }}</span>
             </button>
@@ -183,6 +191,17 @@ import {
       font-size: 2rem;
       line-height: 1;
     }
+    .preview {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      border-radius: var(--mc-radius-sm);
+      background: var(--mc-bg-base);
+      pointer-events: none;
+    }
+    .preview.pdf {
+      object-fit: contain;
+    }
     .name {
       width: 100%;
       font-size: var(--mc-font-size-sm);
@@ -219,6 +238,7 @@ import {
 })
 export class FileGridComponent {
   readonly collection = input.required<FileCollection>();
+  readonly previews = input<Record<string, string>>({});
   readonly editable = input<boolean>(true);
   readonly addFiles = output<readonly File[]>();
   readonly download = output<string>();
@@ -254,6 +274,14 @@ export class FileGridComponent {
 
   protected iconFor(item: FileItem): string {
     return iconForMime(item.mime, item.originalName);
+  }
+
+  protected previewFor(item: FileItem): { kind: 'image' | 'pdf'; url: string } | null {
+    const url = this.previews()[item.id];
+    if (!url) return null;
+    if (item.mime.startsWith('image/')) return { kind: 'image', url };
+    if (item.mime === 'application/pdf') return { kind: 'pdf', url };
+    return null;
   }
 
   protected formatSize(bytes: number): string {
