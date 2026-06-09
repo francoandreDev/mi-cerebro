@@ -1,102 +1,32 @@
 @if (isReady()) {
   <header class="bar">
-    <h2 class="title">mi-cerebro</h2>
-    <div class="newgroup">
-      <button type="button" class="primary" (click)="createNote()">+ {{ t('notes.new') }}</button>
-      <button type="button" class="primary" (click)="createTask()">+ {{ t('tasks.new') }}</button>
-      <button type="button" class="primary" (click)="createGoal()">+ {{ t('goals.new') }}</button>
-      <button type="button" class="primary" (click)="createList()">+ {{ t('lists.new') }}</button>
-      <button type="button" class="primary" (click)="createWriting()">
-        + {{ t('writings.new') }}
+    <div class="title-row">
+      <h2 class="title">mi-cerebro</h2>
+      <button
+        type="button"
+        class="search-btn"
+        [attr.aria-label]="t('palette.openButton')"
+        [title]="t('palette.openButton')"
+        (click)="openPalette()"
+      >
+        🔍
       </button>
-      <button type="button" class="primary" (click)="createBook()">+ {{ t('books.new') }}</button>
     </div>
-    <div class="newgroup">
-      <button type="button" class="ghost" (click)="createFolder('note')">
-        + {{ t('folders.newIn').replace('{kind}', t('tree.type.notes')) }}
-      </button>
-      <button type="button" class="ghost" (click)="createFolder('task')">
-        + {{ t('folders.newIn').replace('{kind}', t('tree.type.tasks')) }}
-      </button>
-      <button type="button" class="ghost" (click)="createFolder('goal')">
-        + {{ t('folders.newIn').replace('{kind}', t('tree.type.goals')) }}
-      </button>
-      <button type="button" class="ghost" (click)="createFolder('list')">
-        + {{ t('folders.newIn').replace('{kind}', t('tree.type.lists')) }}
-      </button>
-      <button type="button" class="ghost" (click)="createFolder('writing')">
-        + {{ t('folders.newIn').replace('{kind}', t('tree.type.writings')) }}
-      </button>
-      <button type="button" class="ghost" (click)="createFolder('book')">
-        + {{ t('folders.newIn').replace('{kind}', t('tree.type.books')) }}
-      </button>
+    <div class="actions">
+      <mc-menu-button
+        variant="primary"
+        [label]="'+ ' + t('common.new')"
+        [options]="newOptions()"
+        (choose)="onCreateEntity($event)"
+      />
+      <mc-menu-button
+        variant="ghost"
+        [label]="'+ ' + t('common.folder')"
+        [options]="folderOptions()"
+        (choose)="onCreateFolderFor($event)"
+      />
     </div>
   </header>
-  <nav class="chips" role="tablist" [attr.aria-label]="t('tree.type.all')">
-    <button
-      type="button"
-      role="tab"
-      [attr.aria-selected]="typeFilter() === 'all'"
-      [class.active]="typeFilter() === 'all'"
-      (click)="setType('all')"
-    >
-      {{ t('tree.type.all') }}
-    </button>
-    <button
-      type="button"
-      role="tab"
-      [attr.aria-selected]="typeFilter() === 'notes'"
-      [class.active]="typeFilter() === 'notes'"
-      (click)="setType('notes')"
-    >
-      {{ t('tree.type.notes') }}
-    </button>
-    <button
-      type="button"
-      role="tab"
-      [attr.aria-selected]="typeFilter() === 'tasks'"
-      [class.active]="typeFilter() === 'tasks'"
-      (click)="setType('tasks')"
-    >
-      {{ t('tree.type.tasks') }}
-    </button>
-    <button
-      type="button"
-      role="tab"
-      [attr.aria-selected]="typeFilter() === 'goals'"
-      [class.active]="typeFilter() === 'goals'"
-      (click)="setType('goals')"
-    >
-      {{ t('tree.type.goals') }}
-    </button>
-    <button
-      type="button"
-      role="tab"
-      [attr.aria-selected]="typeFilter() === 'lists'"
-      [class.active]="typeFilter() === 'lists'"
-      (click)="setType('lists')"
-    >
-      {{ t('tree.type.lists') }}
-    </button>
-    <button
-      type="button"
-      role="tab"
-      [attr.aria-selected]="typeFilter() === 'writings'"
-      [class.active]="typeFilter() === 'writings'"
-      (click)="setType('writings')"
-    >
-      {{ t('tree.type.writings') }}
-    </button>
-    <button
-      type="button"
-      role="tab"
-      [attr.aria-selected]="typeFilter() === 'books'"
-      [class.active]="typeFilter() === 'books'"
-      (click)="setType('books')"
-    >
-      {{ t('tree.type.books') }}
-    </button>
-  </nav>
   <mc-tree-filter
     [query]="query()"
     [direction]="direction()"

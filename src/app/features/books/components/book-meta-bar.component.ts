@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, inject, input, output } from '@angu
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import type { Tag } from '@core/tags/tag.types';
+import { MenuButtonComponent, type MenuOption } from '@shared/menu-button/menu-button.component';
 import { TagPickerComponent } from '@shared/tags/tag-picker.component';
 
 import type { Book } from '../models/book.types';
@@ -12,48 +13,53 @@ export type BookSaveStatus = 'saved' | 'saving' | 'unsaved';
 @Component({
   selector: 'mc-book-meta-bar',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TagPickerComponent],
+  imports: [TagPickerComponent, MenuButtonComponent],
   template: `
-    <header class="bar">
-      <input
-        type="text"
-        class="title-input"
-        [value]="book().title"
-        [placeholder]="t('books.placeholderTitle')"
-        [attr.aria-label]="t('books.placeholderTitle')"
-        [readOnly]="!editable()"
-        (input)="onTitleInput($event)"
-      />
-      <span class="status" [attr.data-status]="status()">{{ statusLabel() }}</span>
-      @if (editable()) {
-        <button type="button" class="danger" (click)="removeBook.emit()">
-          {{ t('books.delete') }}
-        </button>
-      }
-    </header>
+    <input
+      type="text"
+      class="title-input"
+      [value]="book().title"
+      [placeholder]="t('books.placeholderTitle')"
+      [attr.aria-label]="t('books.placeholderTitle')"
+      [readOnly]="!editable()"
+      (input)="onTitleInput($event)"
+    />
     <mc-tag-picker
+      class="tags"
       [availableTags]="availableTags()"
       [selectedIds]="book().tags"
       [editable]="editable()"
       (addTag)="addTag.emit($event)"
       (removeTag)="removeTag.emit($event)"
     />
+    <span
+      class="status"
+      [attr.data-status]="status()"
+      [attr.aria-label]="statusLabel()"
+      [title]="statusLabel()"
+      >{{ statusGlyph() }}</span
+    >
+    @if (editable()) {
+      <mc-menu-button
+        variant="ghost"
+        [label]="'⋯'"
+        [options]="menuOptions()"
+        (choose)="onMenuChoose($event)"
+      />
+    }
   `,
   styles: `
     :host {
       display: flex;
-      flex-direction: column;
-      gap: var(--mc-space-3);
-      padding: var(--mc-space-4) var(--mc-space-4) 0;
-    }
-    .bar {
-      display: flex;
       align-items: center;
       gap: var(--mc-space-3);
+      padding: var(--mc-space-3) var(--mc-space-4);
+      border-bottom: 1px solid var(--mc-border-default);
     }
     .title-input {
       flex: 1;
-      font-size: var(--mc-font-size-xl);
+      min-width: 0;
+      font-size: var(--mc-font-size-lg);
       background: transparent;
       border: none;
       color: var(--mc-fg-primary);
@@ -63,26 +69,20 @@ export type BookSaveStatus = 'saved' | 'saving' | 'unsaved';
       outline: none;
       border-bottom: 1px solid var(--mc-accent-primary);
     }
+    .tags {
+      flex-shrink: 0;
+    }
     .status {
-      font-size: var(--mc-font-size-sm);
+      font-size: var(--mc-font-size-md);
       color: var(--mc-fg-muted);
+      width: 1.2rem;
+      text-align: center;
     }
     .status[data-status='saving'] {
       color: var(--mc-accent-primary);
     }
     .status[data-status='unsaved'] {
       color: var(--mc-fg-warning, #d97706);
-    }
-    .danger {
-      background: transparent;
-      color: var(--mc-fg-muted);
-      border: 1px solid var(--mc-border-default);
-      padding: var(--mc-space-1) var(--mc-space-3);
-      border-radius: var(--mc-radius-md);
-    }
-    .danger:hover {
-      color: var(--mc-fg-primary);
-      border-color: var(--mc-accent-primary);
     }
   `,
 })
@@ -102,6 +102,18 @@ export class BookMetaBarComponent {
   }
   protected statusLabel(): string {
     return this.t(`books.status.${this.status()}` as TranslationKey);
+  }
+  protected statusGlyph(): string {
+    const s = this.status();
+    if (s === 'saving') return '↻';
+    if (s === 'unsaved') return '●';
+    return '✓';
+  }
+  protected menuOptions(): readonly MenuOption[] {
+    return [{ key: 'delete', label: this.t('books.delete') }];
+  }
+  protected onMenuChoose(key: string): void {
+    if (key === 'delete') this.removeBook.emit();
   }
   protected onTitleInput(event: Event): void {
     const target = event.target as HTMLInputElement | null;

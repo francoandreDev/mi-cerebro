@@ -49,7 +49,14 @@
           (bodyChange)="onChapterBodyChange($event)"
         />
       } @else {
-        <div class="empty-chapter">{{ t('books.chapters.selectOne') }}</div>
+        <div class="empty-chapter">
+          <p>{{ t('books.chapters.selectOne') }}</p>
+          @if (lock.editable()) {
+            <button type="button" class="primary" (click)="onAddChapter()">
+              + {{ t('books.chapters.new') }}
+            </button>
+          }
+        </div>
       }
     </div>
   } @else {

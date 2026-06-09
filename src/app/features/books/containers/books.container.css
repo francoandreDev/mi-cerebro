@@ -16,8 +16,20 @@
 .empty,
 .empty-chapter {
   flex: 1;
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mc-space-3);
   color: var(--mc-fg-muted);
   padding: var(--mc-space-5);
+}
+.empty-chapter .primary {
+  background: var(--mc-accent-primary);
+  color: var(--mc-accent-fg);
+  border: none;
+  padding: var(--mc-space-2) var(--mc-space-4);
+  border-radius: var(--mc-radius-md);
+  cursor: pointer;
+  font-weight: 600;
 }
