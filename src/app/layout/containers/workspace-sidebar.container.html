@@ -17,6 +17,16 @@
     <div class="rail-spacer"></div>
     <button
       type="button"
+      class="rail-btn calendar"
+      [class.active]="activeKey() === 'calendar'"
+      [title]="t('calendar.title')"
+      [attr.aria-label]="t('calendar.title')"
+      (click)="goTo('calendar')"
+    >
+      📅
+    </button>
+    <button
+      type="button"
       class="rail-btn trash"
       [class.active]="activeKey() === 'trash'"
       [title]="t('trash.title')"

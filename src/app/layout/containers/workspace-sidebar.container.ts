@@ -33,7 +33,7 @@ import { buildFolderTree } from './folder-tree';
 import { goalBadges, tagBadges, taskBadges } from './tree-badges';
 
 type EntityKind = 'note' | 'task' | 'goal' | 'list' | 'writing' | 'book' | 'image' | 'file';
-type RailKey = EntityKind | 'trash';
+type RailKey = EntityKind | 'trash' | 'calendar';
 
 interface RailItem {
   readonly key: EntityKind;
@@ -118,6 +118,7 @@ export class WorkspaceSidebarContainer {
   protected readonly activeKey = computed<RailKey | null>(() => {
     const url = this.currentUrl();
     if (url.startsWith('/trash')) return 'trash';
+    if (url.startsWith('/calendar')) return 'calendar';
     const match = /^\/(notes|tasks|goals|lists|writings|books|images|files)/.exec(url);
     if (!match) return null;
     return ROUTE_TO_KIND[match[1] as keyof typeof ROUTE_TO_KIND];
@@ -125,13 +126,14 @@ export class WorkspaceSidebarContainer {
 
   protected readonly activeKind = computed<EntityKind | null>(() => {
     const k = this.activeKey();
-    return k === 'trash' || k === null ? null : k;
+    return k === 'trash' || k === 'calendar' || k === null ? null : k;
   });
 
   protected readonly activeTitle = computed<string>(() => {
     const k = this.activeKey();
     if (k === null) return this.t('app.name');
     if (k === 'trash') return this.t('trash.title');
+    if (k === 'calendar') return this.t('calendar.title');
     return this.t(`tree.type.${KIND_TO_TYPE[k]}` as TranslationKey);
   });
 
@@ -330,6 +332,10 @@ export class WorkspaceSidebarContainer {
     this.cursor.set(0);
     if (key === 'trash') {
       void this.router.navigate(['/trash']);
+      return;
+    }
+    if (key === 'calendar') {
+      void this.router.navigate(['/calendar']);
       return;
     }
     void this.router.navigate([KIND_TO_ROUTE[key]]);

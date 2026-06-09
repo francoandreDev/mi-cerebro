@@ -395,6 +395,24 @@ export const es = {
   'editor.imagePicker.empty': 'No hay galerías con imágenes todavía.',
   'editor.imagePicker.galleryEmpty': 'Esta galería está vacía.',
   'editor.imagePicker.untitled': 'Sin título',
+
+  'calendar.title': 'Calendario',
+  'calendar.view.month': 'Mes',
+  'calendar.view.year': 'Año',
+  'calendar.nav.prev': 'Anterior',
+  'calendar.nav.next': 'Siguiente',
+  'calendar.nav.today': 'Hoy',
+  'calendar.filters.kind': 'Tipo',
+  'calendar.filters.tag': 'Tag',
+  'calendar.filters.clear': 'Limpiar tags',
+  'calendar.kind.task': 'Tareas',
+  'calendar.kind.goal': 'Metas',
+  'calendar.day.heading': 'Día {date}',
+  'calendar.day.empty': 'Sin entradas en este día.',
+  'calendar.day.untitled': 'Sin título',
+  'calendar.day.newTask': 'Nueva tarea',
+  'calendar.day.newGoal': 'Nueva meta',
+  'tree.type.calendar': 'Calendario',
 } as const;
 
 export type EsDictionary = typeof es;

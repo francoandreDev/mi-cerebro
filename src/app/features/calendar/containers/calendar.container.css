@@ -1,0 +1,64 @@
+:host {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+.page {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: var(--mc-space-3);
+  gap: var(--mc-space-3);
+  overflow-y: auto;
+}
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mc-space-3);
+  flex-wrap: wrap;
+}
+.head h2 {
+  margin: 0;
+  font-size: var(--mc-font-size-md);
+  min-width: 12ch;
+  text-align: center;
+}
+.nav {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-1);
+}
+.views {
+  display: flex;
+  gap: var(--mc-space-1);
+}
+.ghost {
+  background: transparent;
+  border: 0;
+  color: var(--mc-fg-primary);
+  cursor: pointer;
+  padding: var(--mc-space-1) var(--mc-space-2);
+  border-radius: var(--mc-radius-sm);
+}
+.ghost:hover {
+  background: var(--mc-bg-hover);
+}
+.today-btn {
+  border: 1px solid var(--mc-border-default);
+  font-size: var(--mc-font-size-xs);
+}
+.chip {
+  background: var(--mc-bg-elevated);
+  color: var(--mc-fg-primary);
+  border: 1px solid var(--mc-border-default);
+  padding: 2px var(--mc-space-2);
+  border-radius: var(--mc-radius-pill);
+  cursor: pointer;
+  font-size: var(--mc-font-size-xs);
+}
+.chip.active {
+  background: var(--mc-accent-primary);
+  color: var(--mc-accent-fg);
+  border-color: var(--mc-accent-primary);
+}

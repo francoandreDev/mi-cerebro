@@ -1,0 +1,80 @@
+<section class="page">
+  <header class="head">
+    <div class="nav">
+      <button
+        type="button"
+        class="ghost"
+        (click)="onPrev()"
+        [attr.aria-label]="t('calendar.nav.prev')"
+      >
+        ‹
+      </button>
+      <h2>{{ periodLabel() }}</h2>
+      <button
+        type="button"
+        class="ghost"
+        (click)="onNext()"
+        [attr.aria-label]="t('calendar.nav.next')"
+      >
+        ›
+      </button>
+      <button type="button" class="ghost today-btn" (click)="onToday()">
+        {{ t('calendar.nav.today') }}
+      </button>
+    </div>
+    <div class="views">
+      <button
+        type="button"
+        class="chip"
+        [class.active]="view() === 'month'"
+        (click)="setView('month')"
+      >
+        {{ t('calendar.view.month') }}
+      </button>
+      <button
+        type="button"
+        class="chip"
+        [class.active]="view() === 'year'"
+        (click)="setView('year')"
+      >
+        {{ t('calendar.view.year') }}
+      </button>
+    </div>
+  </header>
+
+  <mc-calendar-filters
+    [kinds]="kindFilter()"
+    [tagIds]="tagFilter()"
+    [tags]="tags()"
+    (toggleKind)="onToggleKind($event)"
+    (toggleTag)="onToggleTag($event)"
+    (clearTags)="onClearTags()"
+  />
+
+  @if (view() === 'month') {
+    <mc-calendar-month-grid
+      [year]="cursor().year"
+      [month]="cursor().month"
+      [selected]="cursor().day"
+      [events]="monthEvents()"
+      (pick)="onPickDay($event)"
+    />
+  } @else {
+    <mc-calendar-year-grid
+      [year]="cursor().year"
+      [events]="yearEvents()"
+      (pick)="onPickYearMonth($event)"
+      (openMonth)="onOpenMonth($event)"
+    />
+  }
+
+  @if (cursor().day; as day) {
+    <mc-calendar-day-panel
+      [date]="day"
+      [events]="dayEvents()"
+      (open)="onOpenEvent($event)"
+      (createTask)="onCreateTask()"
+      (createGoal)="onCreateGoal()"
+    />
+  }
+</section>
