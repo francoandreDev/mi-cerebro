@@ -17,7 +17,7 @@
     <div class="rail-spacer"></div>
     <button
       type="button"
-      class="rail-btn"
+      class="rail-btn trash"
       [class.active]="activeKey() === 'trash'"
       [title]="t('trash.title')"
       [attr.aria-label]="t('trash.title')"
@@ -55,6 +55,7 @@
         [query]="query()"
         [direction]="direction()"
         [matchCount]="result().matches.length"
+        [placeholder]="filterPlaceholder()"
         (queryChange)="onQuery($event)"
         (directionChange)="onDirection($event)"
         (next)="onNext()"

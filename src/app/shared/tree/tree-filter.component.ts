@@ -26,8 +26,8 @@ const DIRECTIONS: readonly FilterDirection[] = ['general', 'up', 'down'];
         type="text"
         class="input"
         [value]="query()"
-        [placeholder]="t('tree.filter.placeholder')"
-        [attr.aria-label]="t('tree.filter.placeholder')"
+        [placeholder]="placeholder() || t('tree.filter.placeholder')"
+        [attr.aria-label]="placeholder() || t('tree.filter.placeholder')"
         (input)="onInput($event)"
         (keydown)="onKey($event)"
       />
@@ -104,6 +104,7 @@ export class TreeFilterComponent {
   readonly query = input<string>('');
   readonly direction = input<FilterDirection>('general');
   readonly matchCount = input<number>(0);
+  readonly placeholder = input<string>('');
   readonly queryChange = output<string>();
   readonly directionChange = output<FilterDirection>();
   readonly next = output<void>();

@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router } from '@angular/router';
+import { filter, map, startWith } from 'rxjs/operators';
 
 import { withReauthIfNeeded } from '@core/errors/with-reauth';
 import { ErrorService } from '@core/errors/error.service';
@@ -63,6 +65,18 @@ export class WorkspaceSidebarContainer {
   protected readonly query = signal('');
   protected readonly direction = signal<FilterDirection>('general');
   private readonly cursor = signal(0);
+  // why: router.url is a getter, not a signal — computeds reading it never
+  //      invalidate, so the rail's active state stayed pinned to the first
+  //      route until something else triggered CD. Project router events into
+  //      a signal so every dependent computed re-derives on NavigationEnd.
+  private readonly currentUrl = toSignal(
+    this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      map((e) => e.urlAfterRedirects),
+      startWith(this.router.url),
+    ),
+    { initialValue: this.router.url },
+  );
 
   constructor() {
     void (async () => {
@@ -94,7 +108,7 @@ export class WorkspaceSidebarContainer {
   ]);
 
   protected readonly activeKey = computed<RailKey | null>(() => {
-    const url = this.router.url;
+    const url = this.currentUrl();
     if (url.startsWith('/trash')) return 'trash';
     const match = /^\/(notes|tasks|goals|lists|writings|books)/.exec(url);
     if (!match) return null;
@@ -117,6 +131,13 @@ export class WorkspaceSidebarContainer {
     const k = this.activeKind();
     if (!k) return '';
     return this.t(`${KIND_TO_TYPE[k]}.new` as TranslationKey);
+  });
+
+  protected readonly filterPlaceholder = computed<string>(() => {
+    const k = this.activeKind();
+    if (!k) return '';
+    const kindLabel = this.t(`tree.type.${KIND_TO_TYPE[k]}` as TranslationKey);
+    return this.t('tree.filter.placeholderIn').replace('{kind}', kindLabel);
   });
 
   protected readonly moreOptions = computed<readonly MenuOption[]>(() => {
@@ -212,7 +233,7 @@ export class WorkspaceSidebarContainer {
   });
 
   protected readonly selectedNodeId = computed<string | null>(() => {
-    const url = this.router.url;
+    const url = this.currentUrl();
     const match = /^\/(notes|tasks|goals|lists|writings|books)\/([^/?]+)/.exec(url);
     if (!match) return null;
     const kind = ROUTE_TO_KIND[match[1] as keyof typeof ROUTE_TO_KIND];

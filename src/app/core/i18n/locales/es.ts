@@ -115,6 +115,7 @@ export const es = {
   'notes.selectOne': 'Elegí una nota o creá una nueva.',
 
   'tree.filter.placeholder': 'Filtrar...',
+  'tree.filter.placeholderIn': 'Filtrar en {kind}...',
   'tree.noMatches': 'Sin coincidencias.',
   'tree.matches.count': '{n} coincidencias',
   'tree.direction.label': 'Dirección de búsqueda',
