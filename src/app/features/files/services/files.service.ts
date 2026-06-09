@@ -1,0 +1,383 @@
+import { Injectable, computed, inject, signal } from '@angular/core';
+
+import { AppError } from '@core/errors/app-error';
+import { ERROR_CODES } from '@core/errors/error.codes';
+import { FsService } from '@core/fs/fs.service';
+import type { FsDirectoryHandle } from '@core/fs/fs.types';
+import { getDirByPath, getOrCreateDirByPath, joinPath } from '@core/fs/walk';
+import { WorkspaceService } from '@core/fs/workspace.service';
+import { MigrationsService } from '@core/migrations/migrations.service';
+import { SearchIndexService } from '@core/search/search-index.service';
+import type { SearchDoc } from '@core/search/search.types';
+import { TagsService } from '@core/tags/tags.service';
+import { toSlug, withSuffix } from '@shared/utils/slug';
+
+import {
+  COLLECTION_META_FILE,
+  FILE_COLLECTION_SCHEMA_VERSION,
+  FILE_KIND,
+  FILES_DIR,
+  ITEMS_DIR,
+  extFromName,
+  type FileCollection,
+  type FileCollectionSummary,
+  type FileItem,
+} from '../models/file-collection.types';
+
+const TRASH_DIR = '.mi-cerebro';
+const TRASH_SUBDIR = 'trash';
+
+interface CollectionLocation {
+  readonly folder: string;
+  readonly slug: string;
+}
+
+@Injectable({ providedIn: 'root' })
+export class FilesService {
+  private readonly fs = inject(FsService);
+  private readonly workspace = inject(WorkspaceService);
+  private readonly migrations = inject(MigrationsService);
+  private readonly search = inject(SearchIndexService);
+  private readonly tags = inject(TagsService);
+
+  private readonly idToLoc = new Map<string, CollectionLocation>();
+  private readonly summariesSignal = signal<readonly FileCollectionSummary[]>([]);
+  readonly summaries = this.summariesSignal.asReadonly();
+  private readonly foldersSignal = signal<readonly string[]>([]);
+  readonly folders = this.foldersSignal.asReadonly();
+  readonly foldersSet = computed(() => new Set(this.foldersSignal()));
+
+  constructor() {
+    this.migrations.register({
+      kind: FILE_KIND,
+      latest: FILE_COLLECTION_SCHEMA_VERSION,
+      steps: [],
+    });
+  }
+
+  async refresh(): Promise<readonly FileCollectionSummary[]> {
+    const root = await this.filesDir();
+    this.idToLoc.clear();
+    const summaries: FileCollectionSummary[] = [];
+    const folders: string[] = [];
+    const indexDocs: SearchDoc[] = [];
+    await this.walkCollections(root, '', summaries, folders, indexDocs);
+    summaries.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    this.summariesSignal.set(summaries);
+    this.foldersSignal.set(folders);
+    for (const doc of indexDocs) await this.search.upsert(doc);
+    return summaries;
+  }
+
+  async createCollection(title = '', folder = ''): Promise<FileCollection> {
+    const root = await this.filesDir();
+    const parent = await getOrCreateDirByPath(this.fs, root, folder);
+    const slug = await this.allocSlug(parent, title);
+    const collectionDir = await this.fs.getOrCreateDir(parent, slug);
+    await this.fs.getOrCreateDir(collectionDir, ITEMS_DIR);
+    const now = new Date().toISOString();
+    const collection: FileCollection = {
+      id: crypto.randomUUID(),
+      title,
+      tags: [],
+      order: [],
+      items: [],
+      createdAt: now,
+      updatedAt: now,
+      schemaVersion: FILE_COLLECTION_SCHEMA_VERSION,
+    };
+    await this.fs.writeFileAtomic(
+      collectionDir,
+      COLLECTION_META_FILE,
+      JSON.stringify(collection, null, 2),
+    );
+    this.idToLoc.set(collection.id, { folder, slug });
+    this.summariesSignal.update((curr) => [this.toSummary(collection, folder), ...curr]);
+    if (folder !== '' && !this.foldersSet().has(folder)) {
+      this.foldersSignal.update((curr) => [...curr, folder]);
+    }
+    await this.search.upsert(this.toSearchDoc(collection));
+    return collection;
+  }
+
+  async readCollection(id: string): Promise<FileCollection> {
+    const dir = await this.collectionDir(id);
+    const raw = await this.fs.readJson<FileCollection>(dir, COLLECTION_META_FILE);
+    return this.migrations.migrate<FileCollection>(FILE_KIND, raw);
+  }
+
+  async saveCollection(collection: FileCollection): Promise<FileCollection> {
+    const dir = await this.collectionDir(collection.id);
+    const cleanTags = this.dropStaleTags(collection.tags);
+    const updated: FileCollection = {
+      ...collection,
+      tags: cleanTags,
+      updatedAt: new Date().toISOString(),
+    };
+    await this.fs.writeFileAtomic(dir, COLLECTION_META_FILE, JSON.stringify(updated, null, 2));
+    const loc = this.idToLoc.get(collection.id);
+    if (loc) {
+      this.summariesSignal.update((curr) =>
+        curr.map((s) => (s.id === collection.id ? this.toSummary(updated, loc.folder) : s)),
+      );
+    }
+    await this.search.upsert(this.toSearchDoc(updated));
+    return updated;
+  }
+
+  async addFile(collectionId: string, blob: Blob, originalName: string): Promise<FileItem> {
+    const collection = await this.readCollection(collectionId);
+    const dir = await this.collectionDir(collectionId);
+    const mime = blob.type || 'application/octet-stream';
+    const ext = extFromName(originalName);
+    const id = crypto.randomUUID();
+    const itemsDir = await this.fs.getOrCreateDir(dir, ITEMS_DIR);
+    await this.fs.writeFileAtomicBinary(itemsDir, `${id}.${ext}`, blob);
+    const item: FileItem = {
+      id,
+      originalName,
+      mime,
+      ext,
+      bytes: blob.size,
+      addedAt: new Date().toISOString(),
+    };
+    const updated: FileCollection = {
+      ...collection,
+      items: [...collection.items, item],
+      order: [...collection.order, id],
+    };
+    await this.saveCollection(updated);
+    return item;
+  }
+
+  async readBlob(collectionId: string, itemId: string): Promise<Blob> {
+    const collection = await this.readCollection(collectionId);
+    const meta = collection.items.find((i) => i.id === itemId);
+    if (!meta) throw new AppError(ERROR_CODES.FS_003, { severity: 'error', context: { itemId } });
+    const dir = await this.collectionDir(collectionId);
+    const itemsDir = await this.fs.getOrCreateDir(dir, ITEMS_DIR);
+    return this.fs.readFile(itemsDir, `${itemId}.${meta.ext}`);
+  }
+
+  async removeFile(collectionId: string, itemId: string): Promise<void> {
+    const collection = await this.readCollection(collectionId);
+    const meta = collection.items.find((i) => i.id === itemId);
+    if (!meta) return;
+    const dir = await this.collectionDir(collectionId);
+    const itemsDir = await this.fs.getOrCreateDir(dir, ITEMS_DIR);
+    try {
+      await this.fs.removeEntry(itemsDir, `${itemId}.${meta.ext}`);
+    } catch {
+      /* already gone */
+    }
+    const updated: FileCollection = {
+      ...collection,
+      items: collection.items.filter((i) => i.id !== itemId),
+      order: collection.order.filter((id) => id !== itemId),
+    };
+    await this.saveCollection(updated);
+  }
+
+  async reorderFiles(collectionId: string, order: readonly string[]): Promise<void> {
+    const collection = await this.readCollection(collectionId);
+    await this.saveCollection({ ...collection, order });
+  }
+
+  async deleteCollectionToTrash(id: string): Promise<void> {
+    const root = this.requireRoot();
+    const loc = this.requireLoc(id);
+    const parent = await this.getFolderDir(loc.folder);
+    if (!parent) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
+    const srcDir = await this.fs.getDir(parent, loc.slug);
+    if (!srcDir) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
+    const trash = await this.trashDir(root);
+    const destName = `${FILE_KIND}__${id}__${loc.slug}`;
+    const destDir = await this.fs.getOrCreateDir(trash, destName);
+    await moveCollectionDir(this.fs, srcDir, destDir);
+    try {
+      await this.fs.removeEntry(parent, loc.slug, { recursive: true });
+    } catch {
+      /* already gone */
+    }
+    this.idToLoc.delete(id);
+    this.summariesSignal.update((curr) => curr.filter((s) => s.id !== id));
+    await this.search.remove(id);
+  }
+
+  async restoreFromDir(trashDayDir: FsDirectoryHandle, entryName: string): Promise<void> {
+    const srcDir = await this.fs.getDir(trashDayDir, entryName);
+    if (!srcDir) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
+    const collection = await this.fs.readJson<FileCollection>(srcDir, COLLECTION_META_FILE);
+    const root = await this.filesDir();
+    const slug = await this.allocSlug(root, collection.title);
+    const destDir = await this.fs.getOrCreateDir(root, slug);
+    await moveCollectionDir(this.fs, srcDir, destDir);
+    try {
+      await this.fs.removeEntry(trashDayDir, entryName, { recursive: true });
+    } catch {
+      /* already gone */
+    }
+    await this.refresh();
+  }
+
+  async moveCollectionToFolder(id: string, newFolder: string): Promise<void> {
+    const loc = this.requireLoc(id);
+    if (loc.folder === newFolder) return;
+    const root = await this.filesDir();
+    const srcParent = await this.getFolderDir(loc.folder);
+    if (!srcParent) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
+    const destParent = await getOrCreateDirByPath(this.fs, root, newFolder);
+    const destSlug = await this.allocAvailableDir(destParent, loc.slug);
+    const srcDir = await this.fs.getDir(srcParent, loc.slug);
+    if (!srcDir) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
+    const destDir = await this.fs.getOrCreateDir(destParent, destSlug);
+    await moveCollectionDir(this.fs, srcDir, destDir);
+    try {
+      await this.fs.removeEntry(srcParent, loc.slug, { recursive: true });
+    } catch {
+      /* already gone */
+    }
+    this.idToLoc.set(id, { folder: newFolder, slug: destSlug });
+    this.summariesSignal.update((curr) =>
+      curr.map((s) => (s.id === id ? { ...s, folder: newFolder } : s)),
+    );
+    if (newFolder !== '' && !this.foldersSet().has(newFolder)) {
+      this.foldersSignal.update((curr) => [...curr, newFolder]);
+    }
+  }
+
+  private async walkCollections(
+    dir: FsDirectoryHandle,
+    folder: string,
+    summaries: FileCollectionSummary[],
+    folders: string[],
+    indexDocs: SearchDoc[],
+  ): Promise<void> {
+    for await (const name of this.fs.listSubdirs(dir)) {
+      const sub = await this.fs.getDir(dir, name);
+      if (!sub) continue;
+      if (await this.fs.hasEntry(sub, COLLECTION_META_FILE)) {
+        try {
+          const raw = await this.fs.readJson<FileCollection>(sub, COLLECTION_META_FILE);
+          const collection = await this.migrations.migrate<FileCollection>(FILE_KIND, raw);
+          this.idToLoc.set(collection.id, { folder, slug: name });
+          summaries.push(this.toSummary(collection, folder));
+          indexDocs.push(this.toSearchDoc(collection));
+        } catch (cause) {
+          console.warn('[files] skipped collection', name, cause);
+        }
+      } else {
+        const path = joinPath(folder, name);
+        folders.push(path);
+        await this.walkCollections(sub, path, summaries, folders, indexDocs);
+      }
+    }
+  }
+
+  private requireRoot(): FsDirectoryHandle {
+    const root = this.workspace.root();
+    if (!root) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
+    return root;
+  }
+
+  private requireLoc(id: string): CollectionLocation {
+    const loc = this.idToLoc.get(id);
+    if (!loc) throw new AppError(ERROR_CODES.FS_003, { severity: 'error', context: { id } });
+    return loc;
+  }
+
+  private async filesDir(): Promise<FsDirectoryHandle> {
+    return this.fs.getOrCreateDir(this.requireRoot(), FILES_DIR);
+  }
+
+  private async getFolderDir(folder: string): Promise<FsDirectoryHandle | null> {
+    const root = await this.filesDir();
+    return getDirByPath(this.fs, root, folder);
+  }
+
+  private async collectionDir(id: string): Promise<FsDirectoryHandle> {
+    const loc = this.requireLoc(id);
+    const parent = await this.getFolderDir(loc.folder);
+    if (!parent) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
+    const dir = await this.fs.getDir(parent, loc.slug);
+    if (!dir) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
+    return dir;
+  }
+
+  private async trashDir(root: FsDirectoryHandle): Promise<FsDirectoryHandle> {
+    const meta = await this.fs.getOrCreateDir(root, TRASH_DIR);
+    const trash = await this.fs.getOrCreateDir(meta, TRASH_SUBDIR);
+    const today = new Date().toISOString().slice(0, 10).replace(/-/g, '/');
+    let cursor = trash;
+    for (const part of today.split('/')) {
+      cursor = await this.fs.getOrCreateDir(cursor, part);
+    }
+    return cursor;
+  }
+
+  private async allocSlug(dir: FsDirectoryHandle, title: string): Promise<string> {
+    const base = toSlug(title, 'coleccion');
+    for (let n = 1; n < 1000; n++) {
+      const candidate = withSuffix(base, n);
+      if (!(await this.fs.hasEntry(dir, candidate))) return candidate;
+    }
+    throw new AppError(ERROR_CODES.FS_001, { severity: 'error', context: { base } });
+  }
+
+  private async allocAvailableDir(dir: FsDirectoryHandle, name: string): Promise<string> {
+    if (!(await this.fs.hasEntry(dir, name))) return name;
+    for (let n = 1; n < 1000; n++) {
+      const candidate = `${name}-${n}`;
+      if (!(await this.fs.hasEntry(dir, candidate))) return candidate;
+    }
+    throw new AppError(ERROR_CODES.FS_001, { severity: 'error' });
+  }
+
+  private toSummary(collection: FileCollection, folder: string): FileCollectionSummary {
+    return {
+      id: collection.id,
+      title: collection.title,
+      updatedAt: collection.updatedAt,
+      tags: collection.tags,
+      folder,
+      itemCount: collection.items.length,
+    };
+  }
+
+  private toSearchDoc(collection: FileCollection): SearchDoc {
+    const tagIds = this.dropStaleTags(collection.tags);
+    const tagLabels = tagIds
+      .map((id) => this.tags.byId(id)?.label ?? '')
+      .filter((l) => l !== '')
+      .join(' ');
+    const itemNames = collection.items.map((i) => i.originalName).join(' ');
+    return {
+      id: collection.id,
+      kind: FILE_KIND,
+      title: collection.title,
+      body: `${tagLabels} ${itemNames}`.trim(),
+      tagIds,
+    };
+  }
+
+  private dropStaleTags(tagIds: readonly string[]): readonly string[] {
+    if (tagIds.length === 0) return tagIds;
+    return tagIds.filter((id) => this.tags.byId(id) !== undefined);
+  }
+}
+
+const moveCollectionDir = async (
+  fs: FsService,
+  src: FsDirectoryHandle,
+  dest: FsDirectoryHandle,
+): Promise<void> => {
+  for await (const filename of fs.listFiles(src)) {
+    await fs.moveFile(src, filename, dest, filename);
+  }
+  for await (const sub of fs.listSubdirs(src)) {
+    const subSrc = await fs.getDir(src, sub);
+    if (!subSrc) continue;
+    const subDest = await fs.getOrCreateDir(dest, sub);
+    await moveCollectionDir(fs, subSrc, subDest);
+  }
+};

@@ -11,6 +11,8 @@ import { NotesService } from '@features/notes/services/notes.service';
 import { TasksService } from '@features/tasks/services/tasks.service';
 import { BooksService } from '@features/books/services/books.service';
 import type { BookBundle } from '@features/books/models/book.types';
+import { FilesService } from '@features/files/services/files.service';
+import { COLLECTION_META_FILE } from '@features/files/models/file-collection.types';
 import { GalleriesService } from '@features/images/services/galleries.service';
 import { GALLERY_META_FILE } from '@features/images/models/gallery.types';
 import { WritingsService } from '@features/writings/services/writings.service';
@@ -35,6 +37,7 @@ export class TrashService {
   private readonly writings = inject(WritingsService);
   private readonly books = inject(BooksService);
   private readonly galleries = inject(GalleriesService);
+  private readonly files = inject(FilesService);
 
   private readonly entriesSignal = signal<readonly TrashEntry[]>([]);
   readonly entries = this.entriesSignal.asReadonly();
@@ -87,6 +90,11 @@ export class TrashService {
       this.entriesSignal.update((list) => list.filter((e) => !sameEntry(e, entry)));
       return;
     }
+    if (entry.kind === 'file') {
+      await this.files.restoreFromDir(day, entry.filename);
+      this.entriesSignal.update((list) => list.filter((e) => !sameEntry(e, entry)));
+      return;
+    }
     const target = await this.fs.getOrCreateDir(root, KIND_DIRS[entry.kind]);
     const original = this.stripPrefix(entry.filename, entry.kind, entry.id);
     const dest = await this.allocDest(target, original);
@@ -119,7 +127,8 @@ export class TrashService {
     else if (kind === 'list') await this.lists.refresh();
     else if (kind === 'writing') await this.writings.refresh();
     else if (kind === 'book') await this.books.refresh();
-    else await this.galleries.refresh();
+    else if (kind === 'image') await this.galleries.refresh();
+    else await this.files.refresh();
   }
 
   private async parseEntry(
@@ -140,8 +149,9 @@ export class TrashService {
       kind !== 'list' &&
       kind !== 'writing' &&
       kind !== 'book'
-    )
+    ) {
       return null;
+    }
     const rest = stem.slice(sep + 2);
     const sep2 = rest.indexOf('__');
     if (sep2 < 0) return null;
@@ -173,7 +183,7 @@ export class TrashService {
     const sep = name.indexOf('__');
     if (sep < 0) return null;
     const kind = name.slice(0, sep);
-    if (kind !== 'image') return null;
+    if (kind !== 'image' && kind !== 'file') return null;
     const rest = name.slice(sep + 2);
     const sep2 = rest.indexOf('__');
     if (sep2 < 0) return null;
@@ -181,12 +191,13 @@ export class TrashService {
     try {
       const dir = await this.fs.getDir(day, name);
       if (!dir) return null;
-      const raw = await this.fs.readJson<{ title?: string }>(dir, GALLERY_META_FILE);
+      const metaFile = kind === 'image' ? GALLERY_META_FILE : COLLECTION_META_FILE;
+      const raw = await this.fs.readJson<{ title?: string }>(dir, metaFile);
       return {
         filename: name,
         parentPath,
         id,
-        kind: 'image',
+        kind: kind as TrashKind,
         title: raw.title ?? '',
         deletedAt: parentPath.join('-'),
         shape: 'directory',

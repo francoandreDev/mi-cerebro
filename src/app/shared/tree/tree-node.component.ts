@@ -193,7 +193,8 @@ export class TreeNodeComponent {
       kind === 'list' ||
       kind === 'writing' ||
       kind === 'book' ||
-      kind === 'image'
+      kind === 'image' ||
+      kind === 'file'
     );
   });
 

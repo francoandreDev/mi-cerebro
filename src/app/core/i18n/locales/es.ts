@@ -324,6 +324,35 @@ export const es = {
     'Otra pestaña empezó a editar esta galería. Tu vista quedó en modo lectura.',
   'images.lock.evicted.dismiss': 'Entendido',
 
+  'files.title': 'Archivos',
+  'files.new': 'Nueva colección',
+  'files.untitledTitle': 'Sin título',
+  'files.empty': 'Sin colecciones de archivos todavía. Empezá con "Nueva colección".',
+  'files.placeholderTitle': 'Nombre de la colección...',
+  'files.deleteConfirm': '¿Mover "{title}" y todos sus archivos a la papelera?',
+  'files.delete': 'Eliminar colección',
+  'files.status.saved': 'Guardado',
+  'files.status.saving': 'Guardando...',
+  'files.status.unsaved': 'Sin guardar',
+  'files.selectOne': 'Elegí una colección o creá una nueva.',
+  'files.items.title': 'Archivos',
+  'files.items.add': 'Agregar archivos',
+  'files.items.empty': 'Sin archivos. Agregá el primero.',
+  'files.items.dropHint': 'Arrastrá archivos acá o usá "Agregar archivos".',
+  'files.items.deleteConfirm': '¿Eliminar el archivo "{name}"? No se manda a papelera.',
+  'files.items.moveUp': 'Subir',
+  'files.items.moveDown': 'Bajar',
+  'files.items.delete': 'Eliminar',
+  'files.lock.foreign.title': 'Esta colección está abierta en otra pestaña',
+  'files.lock.foreign.message':
+    'Para evitar pisar cambios, esta colección está en modo lectura. Podés tomar control para empezar a editar acá.',
+  'files.lock.foreign.readonly': 'Abrir solo lectura',
+  'files.lock.foreign.takeover': 'Tomar control',
+  'files.lock.evicted.title': 'Otra ventana tomó el control',
+  'files.lock.evicted.message':
+    'Otra pestaña empezó a editar esta colección. Tu vista quedó en modo lectura.',
+  'files.lock.evicted.dismiss': 'Entendido',
+
   'folders.newIn': 'Carpeta en {kind}',
   'folders.createPrompt': 'Nombre de la carpeta:',
   'folders.actionPrompt': '¿Qué querés hacer con esta carpeta?',
@@ -350,6 +379,7 @@ export const es = {
   'trash.kind.writing': 'Escrito',
   'trash.kind.book': 'Libro',
   'trash.kind.image': 'Galería',
+  'trash.kind.file': 'Colección',
 
   'tree.type.all': 'Todo',
   'tree.type.notes': 'Notas',
@@ -359,6 +389,7 @@ export const es = {
   'tree.type.writings': 'Escritos',
   'tree.type.books': 'Libros',
   'tree.type.images': 'Imágenes',
+  'tree.type.files': 'Archivos',
 } as const;
 
 export type EsDictionary = typeof es;

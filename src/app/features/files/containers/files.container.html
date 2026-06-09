@@ -1,0 +1,44 @@
+<div class="pane">
+  @if (active(); as collection) {
+    @if (lock.showForeign()) {
+      <mc-lock-banner
+        kind="foreign"
+        [title]="t('files.lock.foreign.title')"
+        [message]="t('files.lock.foreign.message')"
+        [readonlyLabel]="t('files.lock.foreign.readonly')"
+        [takeoverLabel]="t('files.lock.foreign.takeover')"
+        (readonly)="lock.acceptReadonly()"
+        (takeover)="lock.takeover()"
+      />
+    } @else if (lock.showEvicted()) {
+      <mc-lock-banner
+        kind="evicted"
+        [title]="t('files.lock.evicted.title')"
+        [message]="t('files.lock.evicted.message')"
+        [dismissLabel]="t('files.lock.evicted.dismiss')"
+        (dismiss)="lock.dismissEvicted()"
+      />
+    }
+    <mc-file-collection-meta-bar
+      [collection]="collection"
+      [status]="status()"
+      [availableTags]="tags()"
+      [editable]="lock.editable()"
+      (titleChange)="onTitleChange($event)"
+      (removeCollection)="onDeleteCollection()"
+      (addTag)="onAddTag($event)"
+      (removeTag)="onRemoveTag($event)"
+    />
+    <mc-file-grid
+      [collection]="collection"
+      [editable]="lock.editable()"
+      (addFiles)="onAddFiles($event)"
+      (download)="onDownload($event)"
+      (remove)="onRemoveItem($event)"
+      (moveUp)="onMoveUp($event)"
+      (moveDown)="onMoveDown($event)"
+    />
+  } @else {
+    <div class="empty">{{ t('files.selectOne') }}</div>
+  }
+</div>
