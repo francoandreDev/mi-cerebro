@@ -9,18 +9,76 @@ import {
   inject,
   input,
   output,
+  signal,
   viewChild,
 } from '@angular/core';
 import { Editor, type JSONContent } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 
+import { I18nService } from '@core/i18n/i18n.service';
+import { ImageReaderService } from '@core/images/image-reader.service';
+import { IMAGE_REF_NAME, createImageRefNode } from '@core/tiptap/image-ref/image-ref.node';
+
+import { ImagePickerDialogComponent } from './image-picker-dialog.component';
+
 @Component({
   selector: 'mc-editor',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `<div #host class="editor-host" data-testid="editor-host"></div>`,
+  imports: [ImagePickerDialogComponent],
+  template: `
+    @if (editable() && hasGalleries()) {
+      <div class="toolbar">
+        <button
+          type="button"
+          class="ghost"
+          (click)="openPicker()"
+          [attr.aria-label]="t('editor.insertImage')"
+        >
+          🖼 {{ t('editor.insertImage') }}
+        </button>
+      </div>
+    }
+    <div #host class="editor-host" data-testid="editor-host"></div>
+    @if (pickerOpen()) {
+      <mc-image-picker-dialog (picked)="onPicked($event)" (dismiss)="closePicker()" />
+    }
+  `,
   styles: `
     :host {
       display: block;
+    }
+    .toolbar {
+      display: flex;
+      gap: var(--mc-space-1);
+      padding: 0 0 var(--mc-space-1) 0;
+    }
+    .ghost {
+      background: transparent;
+      border: 0;
+      color: var(--mc-fg-muted);
+      cursor: pointer;
+      font-size: var(--mc-font-size-sm);
+      padding: var(--mc-space-1) var(--mc-space-2);
+      border-radius: var(--mc-radius-sm);
+    }
+    .ghost:hover {
+      color: var(--mc-fg-primary);
+      background: var(--mc-bg-elevated);
+    }
+    .editor-host :global(.mc-image-ref) {
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .editor-host :global(.mc-image-ref img) {
+      max-width: 320px;
+      max-height: 240px;
+      border-radius: var(--mc-radius-sm);
+    }
+    .editor-host :global(.mc-image-ref--missing) {
+      display: inline-block;
+      padding: 2px 6px;
+      border: 1px dashed var(--mc-border-default);
+      color: var(--mc-fg-muted);
     }
     .editor-host {
       min-height: 200px;
@@ -57,6 +115,36 @@ export class EditorComponent {
   private readonly host = viewChild.required<ElementRef<HTMLElement>>('host');
   private readonly destroyRef = inject(DestroyRef);
   private readonly injector = inject(Injector);
+  private readonly reader = inject(ImageReaderService);
+  private readonly i18n = inject(I18nService);
+
+  protected readonly pickerOpen = signal(false);
+  protected readonly hasGalleries = (): boolean => this.reader.summaries().length > 0;
+
+  protected t(key: Parameters<I18nService['t']>[0]): string {
+    return this.i18n.t(key);
+  }
+
+  protected openPicker(): void {
+    this.pickerOpen.set(true);
+  }
+
+  protected closePicker(): void {
+    this.pickerOpen.set(false);
+  }
+
+  protected onPicked(payload: { galleryId: string; imageId: string; alt: string }): void {
+    this.pickerOpen.set(false);
+    const ed = this.editor;
+    if (!ed) return;
+    ed.chain()
+      .focus()
+      .insertContent({
+        type: IMAGE_REF_NAME,
+        attrs: { galleryId: payload.galleryId, imageId: payload.imageId, alt: payload.alt },
+      })
+      .run();
+  }
 
   private editor: Editor | null = null;
   // why: suppress the onUpdate -> output emission when we just pushed the
@@ -70,7 +158,7 @@ export class EditorComponent {
   private mount(): void {
     this.editor = new Editor({
       element: this.host().nativeElement,
-      extensions: [StarterKit],
+      extensions: [StarterKit, createImageRefNode(this.reader)],
       content: this.value(),
       editable: this.editable(),
       onUpdate: ({ editor }) => {

@@ -14,7 +14,7 @@ import type { BookBundle } from '@features/books/models/book.types';
 import { FilesService } from '@features/files/services/files.service';
 import { COLLECTION_META_FILE } from '@features/files/models/file-collection.types';
 import { GalleriesService } from '@features/images/services/galleries.service';
-import { GALLERY_META_FILE } from '@features/images/models/gallery.types';
+import { GALLERY_META_FILE } from '@core/images/image-paths';
 import { WritingsService } from '@features/writings/services/writings.service';
 
 import {

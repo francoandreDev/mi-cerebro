@@ -1,10 +1,13 @@
+export {
+  GALLERY_META_FILE,
+  IMAGES_DIR,
+  ORIGINAL_DIR,
+  THUMBS_DIR,
+  THUMB_EXT,
+} from '@core/images/image-paths';
+
 export const GALLERY_SCHEMA_VERSION = 1;
 export const IMAGE_KIND = 'image';
-export const IMAGES_DIR = 'images';
-export const GALLERY_META_FILE = '_gallery.json';
-export const ORIGINAL_DIR = 'original';
-export const THUMBS_DIR = 'thumbs';
-export const THUMB_EXT = 'webp';
 export const THUMB_MIME = 'image/webp';
 export const THUMB_MAX_DIM = 320;
 export const THUMB_QUALITY = 0.8;

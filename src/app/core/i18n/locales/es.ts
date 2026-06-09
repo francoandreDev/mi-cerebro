@@ -390,6 +390,11 @@ export const es = {
   'tree.type.books': 'Libros',
   'tree.type.images': 'Imágenes',
   'tree.type.files': 'Archivos',
+  'editor.insertImage': 'Insertar imagen',
+  'editor.imagePicker.title': 'Insertar imagen',
+  'editor.imagePicker.empty': 'No hay galerías con imágenes todavía.',
+  'editor.imagePicker.galleryEmpty': 'Esta galería está vacía.',
+  'editor.imagePicker.untitled': 'Sin título',
 } as const;
 
 export type EsDictionary = typeof es;

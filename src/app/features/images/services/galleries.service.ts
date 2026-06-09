@@ -3,6 +3,8 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
 import { FsService } from '@core/fs/fs.service';
+import { ImageReaderService } from '@core/images/image-reader.service';
+import type { ImageRef, ImageRefGallery } from '@core/images/image-reader.types';
 import type { FsDirectoryHandle } from '@core/fs/fs.types';
 import { getDirByPath, getOrCreateDirByPath, joinPath } from '@core/fs/walk';
 import { WorkspaceService } from '@core/fs/workspace.service';
@@ -44,6 +46,7 @@ export class GalleriesService {
   private readonly migrations = inject(MigrationsService);
   private readonly search = inject(SearchIndexService);
   private readonly tags = inject(TagsService);
+  private readonly imageReader = inject(ImageReaderService);
 
   private readonly idToLoc = new Map<string, GalleryLocation>();
   private readonly summariesSignal = signal<readonly GallerySummary[]>([]);
@@ -59,6 +62,7 @@ export class GalleriesService {
   async refresh(): Promise<readonly GallerySummary[]> {
     const root = await this.imagesDir();
     this.idToLoc.clear();
+    this.imageReader.clear();
     const summaries: GallerySummary[] = [];
     const folders: string[] = [];
     const indexDocs: SearchDoc[] = [];
@@ -90,6 +94,7 @@ export class GalleriesService {
     };
     await this.fs.writeFileAtomic(galleryDir, GALLERY_META_FILE, JSON.stringify(gallery, null, 2));
     this.idToLoc.set(gallery.id, { folder, slug });
+    this.imageReader.register(gallery.id, folder, slug, this.toReaderGallery(gallery, folder));
     this.summariesSignal.update((curr) => [this.toSummary(gallery, folder), ...curr]);
     if (folder !== '' && !this.foldersSet().has(folder)) {
       this.foldersSignal.update((curr) => [...curr, folder]);
@@ -111,6 +116,12 @@ export class GalleriesService {
     await this.fs.writeFileAtomic(dir, GALLERY_META_FILE, JSON.stringify(updated, null, 2));
     const loc = this.idToLoc.get(gallery.id);
     if (loc) {
+      this.imageReader.register(
+        gallery.id,
+        loc.folder,
+        loc.slug,
+        this.toReaderGallery(updated, loc.folder),
+      );
       this.summariesSignal.update((curr) =>
         curr.map((s) => (s.id === gallery.id ? this.toSummary(updated, loc.folder) : s)),
       );
@@ -214,6 +225,7 @@ export class GalleriesService {
       /* already gone */
     }
     this.idToLoc.delete(id);
+    this.imageReader.unregister(id);
     this.summariesSignal.update((curr) => curr.filter((s) => s.id !== id));
     await this.search.remove(id);
   }
@@ -252,6 +264,10 @@ export class GalleriesService {
       /* already gone */
     }
     this.idToLoc.set(id, { folder: newFolder, slug: destSlug });
+    const moved = this.imageReader.getGallery(id);
+    if (moved) {
+      this.imageReader.register(id, newFolder, destSlug, { ...moved, folder: newFolder });
+    }
     this.summariesSignal.update((curr) =>
       curr.map((s) => (s.id === id ? { ...s, folder: newFolder } : s)),
     );
@@ -275,6 +291,12 @@ export class GalleriesService {
           const raw = await this.fs.readJson<Gallery>(sub, GALLERY_META_FILE);
           const gallery = await this.migrations.migrate<Gallery>(IMAGE_KIND, raw);
           this.idToLoc.set(gallery.id, { folder, slug: name });
+          this.imageReader.register(
+            gallery.id,
+            folder,
+            name,
+            this.toReaderGallery(gallery, folder),
+          );
           summaries.push(this.toSummary(gallery, folder));
           indexDocs.push(this.toSearchDoc(gallery));
         } catch (cause) {
@@ -356,6 +378,16 @@ export class GalleriesService {
       folder,
       imageCount: gallery.images.length,
     };
+  }
+
+  private toReaderGallery(gallery: Gallery, folder: string): ImageRefGallery {
+    const images: ImageRef[] = gallery.images.map((i) => ({
+      id: i.id,
+      originalName: i.originalName,
+      mime: i.mime,
+      ext: i.ext,
+    }));
+    return { id: gallery.id, title: gallery.title, folder, images };
   }
 
   private toSearchDoc(gallery: Gallery): SearchDoc {
