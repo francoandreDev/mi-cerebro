@@ -11,6 +11,8 @@ import { NotesService } from '@features/notes/services/notes.service';
 import { TasksService } from '@features/tasks/services/tasks.service';
 import { BooksService } from '@features/books/services/books.service';
 import type { BookBundle } from '@features/books/models/book.types';
+import { GalleriesService } from '@features/images/services/galleries.service';
+import { GALLERY_META_FILE } from '@features/images/models/gallery.types';
 import { WritingsService } from '@features/writings/services/writings.service';
 
 import {
@@ -32,6 +34,7 @@ export class TrashService {
   private readonly lists = inject(ListsService);
   private readonly writings = inject(WritingsService);
   private readonly books = inject(BooksService);
+  private readonly galleries = inject(GalleriesService);
 
   private readonly entriesSignal = signal<readonly TrashEntry[]>([]);
   readonly entries = this.entriesSignal.asReadonly();
@@ -56,6 +59,10 @@ export class TrashService {
             const entry = await this.parseEntry(d, filename, [yyyy, mm, dd]);
             if (entry) out.push(entry);
           }
+          for await (const subdir of this.fs.listSubdirs(d)) {
+            const entry = await this.parseDirEntry(d, subdir, [yyyy, mm, dd]);
+            if (entry) out.push(entry);
+          }
         }
       }
     }
@@ -75,6 +82,11 @@ export class TrashService {
       this.entriesSignal.update((list) => list.filter((e) => !sameEntry(e, entry)));
       return;
     }
+    if (entry.kind === 'image') {
+      await this.galleries.restoreFromDir(day, entry.filename);
+      this.entriesSignal.update((list) => list.filter((e) => !sameEntry(e, entry)));
+      return;
+    }
     const target = await this.fs.getOrCreateDir(root, KIND_DIRS[entry.kind]);
     const original = this.stripPrefix(entry.filename, entry.kind, entry.id);
     const dest = await this.allocDest(target, original);
@@ -87,7 +99,7 @@ export class TrashService {
     const root = this.requireRoot();
     const day = await this.dayDir(root, entry.parentPath);
     if (!day) return;
-    await this.fs.removeEntry(day, entry.filename);
+    await this.fs.removeEntry(day, entry.filename, { recursive: entry.shape === 'directory' });
     this.entriesSignal.update((list) => list.filter((e) => !sameEntry(e, entry)));
   }
 
@@ -106,7 +118,8 @@ export class TrashService {
     else if (kind === 'goal') await this.goals.refresh();
     else if (kind === 'list') await this.lists.refresh();
     else if (kind === 'writing') await this.writings.refresh();
-    else await this.books.refresh();
+    else if (kind === 'book') await this.books.refresh();
+    else await this.galleries.refresh();
   }
 
   private async parseEntry(
@@ -145,6 +158,38 @@ export class TrashService {
         kind: kind as TrashKind,
         title: raw.book?.title ?? raw.title ?? '',
         deletedAt: parentPath.join('-'),
+        shape: 'file',
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  private async parseDirEntry(
+    day: FsDirectoryHandle,
+    name: string,
+    parentPath: readonly string[],
+  ): Promise<TrashEntry | null> {
+    const sep = name.indexOf('__');
+    if (sep < 0) return null;
+    const kind = name.slice(0, sep);
+    if (kind !== 'image') return null;
+    const rest = name.slice(sep + 2);
+    const sep2 = rest.indexOf('__');
+    if (sep2 < 0) return null;
+    const id = rest.slice(0, sep2);
+    try {
+      const dir = await this.fs.getDir(day, name);
+      if (!dir) return null;
+      const raw = await this.fs.readJson<{ title?: string }>(dir, GALLERY_META_FILE);
+      return {
+        filename: name,
+        parentPath,
+        id,
+        kind: 'image',
+        title: raw.title ?? '',
+        deletedAt: parentPath.join('-'),
+        shape: 'directory',
       };
     } catch {
       return null;

@@ -1,4 +1,6 @@
-export type TrashKind = 'note' | 'task' | 'goal' | 'list' | 'writing' | 'book';
+export type TrashKind = 'note' | 'task' | 'goal' | 'list' | 'writing' | 'book' | 'image';
+
+export type TrashEntryShape = 'file' | 'directory';
 
 export interface TrashEntry {
   readonly filename: string;
@@ -7,6 +9,7 @@ export interface TrashEntry {
   readonly kind: TrashKind;
   readonly title: string;
   readonly deletedAt: string;
+  readonly shape: TrashEntryShape;
 }
 
 export const TRASH_META_DIR = '.mi-cerebro';
@@ -20,4 +23,5 @@ export const KIND_DIRS: Record<TrashKind, string> = {
   list: 'lists',
   writing: 'writings',
   book: 'books',
+  image: 'images',
 };

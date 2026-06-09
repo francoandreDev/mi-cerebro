@@ -1,0 +1,52 @@
+<div class="pane">
+  @if (active(); as gallery) {
+    @if (lock.showForeign()) {
+      <mc-lock-banner
+        kind="foreign"
+        [title]="t('images.lock.foreign.title')"
+        [message]="t('images.lock.foreign.message')"
+        [readonlyLabel]="t('images.lock.foreign.readonly')"
+        [takeoverLabel]="t('images.lock.foreign.takeover')"
+        (readonly)="lock.acceptReadonly()"
+        (takeover)="lock.takeover()"
+      />
+    } @else if (lock.showEvicted()) {
+      <mc-lock-banner
+        kind="evicted"
+        [title]="t('images.lock.evicted.title')"
+        [message]="t('images.lock.evicted.message')"
+        [dismissLabel]="t('images.lock.evicted.dismiss')"
+        (dismiss)="lock.dismissEvicted()"
+      />
+    }
+    <mc-gallery-meta-bar
+      [gallery]="gallery"
+      [status]="status()"
+      [availableTags]="tags()"
+      [editable]="lock.editable()"
+      (titleChange)="onTitleChange($event)"
+      (removeGallery)="onDeleteGallery()"
+      (addTag)="onAddTag($event)"
+      (removeTag)="onRemoveTag($event)"
+    />
+    <mc-image-grid
+      [gallery]="gallery"
+      [urls]="thumbUrls()"
+      [editable]="lock.editable()"
+      (addFiles)="onAddFiles($event)"
+      (open)="onOpenImage($event)"
+      (remove)="onRemoveImage($event)"
+      (moveUp)="onMoveUp($event)"
+      (moveDown)="onMoveDown($event)"
+    />
+    @if (openImage(); as img) {
+      <mc-image-lightbox
+        [image]="img"
+        [url]="originalUrls()[img.id] ?? ''"
+        (dismiss)="onCloseLightbox()"
+      />
+    }
+  } @else {
+    <div class="empty">{{ t('images.selectOne') }}</div>
+  }
+</div>

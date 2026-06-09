@@ -15,6 +15,7 @@ import type { Tag } from '@core/tags/tag.types';
 import { TagsService } from '@core/tags/tags.service';
 import { BooksService } from '@features/books/services/books.service';
 import { GoalsService } from '@features/goals/services/goals.service';
+import { GalleriesService } from '@features/images/services/galleries.service';
 import { ListsService } from '@features/lists/services/lists.service';
 import { NotesService } from '@features/notes/services/notes.service';
 import { TasksService } from '@features/tasks/services/tasks.service';
@@ -30,7 +31,7 @@ import { handleCreateFolder, handleEntityAction, handleFolderAction } from './fo
 import { buildFolderTree } from './folder-tree';
 import { goalBadges, tagBadges, taskBadges } from './tree-badges';
 
-type EntityKind = 'note' | 'task' | 'goal' | 'list' | 'writing' | 'book';
+type EntityKind = 'note' | 'task' | 'goal' | 'list' | 'writing' | 'book' | 'image';
 type RailKey = EntityKind | 'trash';
 
 interface RailItem {
@@ -53,6 +54,7 @@ export class WorkspaceSidebarContainer {
   private readonly listsService = inject(ListsService);
   private readonly writingsService = inject(WritingsService);
   private readonly booksService = inject(BooksService);
+  private readonly galleriesService = inject(GalleriesService);
   private readonly foldersService = inject(FoldersService);
   private readonly tagsService = inject(TagsService);
   private readonly workspace = inject(WorkspaceService);
@@ -88,6 +90,7 @@ export class WorkspaceSidebarContainer {
         await this.listsService.refresh();
         await this.writingsService.refresh();
         await this.booksService.refresh();
+        await this.galleriesService.refresh();
       } catch (e: unknown) {
         this.errors.report(e);
       }
@@ -105,12 +108,13 @@ export class WorkspaceSidebarContainer {
     { key: 'list', label: this.t('tree.type.lists'), icon: '📋' },
     { key: 'writing', label: this.t('tree.type.writings'), icon: '✍' },
     { key: 'book', label: this.t('tree.type.books'), icon: '📚' },
+    { key: 'image', label: this.t('tree.type.images'), icon: '🖼' },
   ]);
 
   protected readonly activeKey = computed<RailKey | null>(() => {
     const url = this.currentUrl();
     if (url.startsWith('/trash')) return 'trash';
-    const match = /^\/(notes|tasks|goals|lists|writings|books)/.exec(url);
+    const match = /^\/(notes|tasks|goals|lists|writings|books|images)/.exec(url);
     if (!match) return null;
     return ROUTE_TO_KIND[match[1] as keyof typeof ROUTE_TO_KIND];
   });
@@ -220,21 +224,33 @@ export class WorkspaceSidebarContainer {
         folders: this.writingsService.folders(),
       });
     }
+    if (kind === 'book') {
+      return buildFolderTree({
+        idPrefix: 'book',
+        entities: this.booksService.summaries().map((b) => ({
+          id: b.id,
+          folder: b.folder,
+          label: b.title || this.t('books.untitledTitle'),
+          badges: tagBadges(b.tags, lookup),
+        })),
+        folders: this.booksService.folders(),
+      });
+    }
     return buildFolderTree({
-      idPrefix: 'book',
-      entities: this.booksService.summaries().map((b) => ({
-        id: b.id,
-        folder: b.folder,
-        label: b.title || this.t('books.untitledTitle'),
-        badges: tagBadges(b.tags, lookup),
+      idPrefix: 'image',
+      entities: this.galleriesService.summaries().map((g) => ({
+        id: g.id,
+        folder: g.folder,
+        label: g.title || this.t('images.untitledTitle'),
+        badges: tagBadges(g.tags, lookup),
       })),
-      folders: this.booksService.folders(),
+      folders: this.galleriesService.folders(),
     });
   });
 
   protected readonly selectedNodeId = computed<string | null>(() => {
     const url = this.currentUrl();
-    const match = /^\/(notes|tasks|goals|lists|writings|books)\/([^/?]+)/.exec(url);
+    const match = /^\/(notes|tasks|goals|lists|writings|books|images)\/([^/?]+)/.exec(url);
     if (!match) return null;
     const kind = ROUTE_TO_KIND[match[1] as keyof typeof ROUTE_TO_KIND];
     return `${kind}:${match[2]}`;
@@ -348,7 +364,8 @@ export class WorkspaceSidebarContainer {
     if (kind === 'goal') return ['/goals', (await this.goalsService.create('')).id];
     if (kind === 'list') return ['/lists', (await this.listsService.create('')).id];
     if (kind === 'writing') return ['/writings', (await this.writingsService.create('')).id];
-    return ['/books', (await this.booksService.createBook('')).id];
+    if (kind === 'book') return ['/books', (await this.booksService.createBook('')).id];
+    return ['/images', (await this.galleriesService.createGallery('')).id];
   }
 
   private jumpToCursor(): void {
@@ -371,6 +388,7 @@ export class WorkspaceSidebarContainer {
             lists: this.listsService,
             writings: this.writingsService,
             books: this.booksService,
+            galleries: this.galleriesService,
           },
           this.i18n,
         );
@@ -388,6 +406,7 @@ const ROUTE_TO_KIND = {
   lists: 'list',
   writings: 'writing',
   books: 'book',
+  images: 'image',
 } as const;
 
 const KIND_TO_ROUTE: Record<EntityKind, string> = {
@@ -397,11 +416,12 @@ const KIND_TO_ROUTE: Record<EntityKind, string> = {
   list: '/lists',
   writing: '/writings',
   book: '/books',
+  image: '/images',
 };
 
 const KIND_TO_TYPE: Record<
   EntityKind,
-  'notes' | 'tasks' | 'goals' | 'lists' | 'writings' | 'books'
+  'notes' | 'tasks' | 'goals' | 'lists' | 'writings' | 'books' | 'images'
 > = {
   note: 'notes',
   task: 'tasks',
@@ -409,4 +429,5 @@ const KIND_TO_TYPE: Record<
   list: 'lists',
   writing: 'writings',
   book: 'books',
+  image: 'images',
 };

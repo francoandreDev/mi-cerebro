@@ -84,6 +84,30 @@ export class FsService {
     }
   }
 
+  async writeFileAtomicBinary(
+    parent: FsDirectoryHandle,
+    name: string,
+    data: Blob | ArrayBuffer,
+  ): Promise<void> {
+    try {
+      const handle = await parent.getFileHandle(name, { create: true });
+      const writable = await handle.createWritable({ keepExistingData: false });
+      await writable.write(data);
+      await writable.close();
+    } catch (cause) {
+      throw this.classifyFsError(cause, { name, op: 'write' });
+    }
+  }
+
+  async readFile(parent: FsDirectoryHandle, name: string): Promise<File> {
+    try {
+      const handle = await parent.getFileHandle(name);
+      return await handle.getFile();
+    } catch (cause) {
+      throw this.classifyFsError(cause, { name, op: 'read' });
+    }
+  }
+
   async readJson<T>(parent: FsDirectoryHandle, name: string): Promise<T> {
     try {
       const handle = await parent.getFileHandle(name);
