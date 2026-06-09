@@ -37,6 +37,7 @@
       (remove)="onRemoveItem($event)"
       (moveUp)="onMoveUp($event)"
       (moveDown)="onMoveDown($event)"
+      (reorder)="onReorder($event)"
     />
   } @else {
     <div class="empty">{{ t('files.selectOne') }}</div>

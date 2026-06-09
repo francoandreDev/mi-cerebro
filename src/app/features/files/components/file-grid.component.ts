@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output, signal } from '@angular/core';
 
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { MC_INTERNAL_DND_TYPE, hasInternalDnd } from '@shared/utils/dnd';
 
 import {
   formatBytes,
@@ -41,7 +42,17 @@ import {
     } @else {
       <ul class="grid">
         @for (item of orderedItems(); track item.id; let i = $index) {
-          <li class="cell">
+          <li
+            class="cell"
+            [class.drop-target]="dropTargetId() === item.id"
+            [class.dragging]="draggingId() === item.id"
+            [attr.draggable]="editable() ? true : null"
+            (dragstart)="onItemDragStart($event, item.id)"
+            (dragover)="onItemDragOver($event, item.id)"
+            (dragleave)="onItemDragLeave(item.id)"
+            (drop)="onItemDrop($event, item.id)"
+            (dragend)="onItemDragEnd()"
+          >
             <button type="button" class="card" (click)="download.emit(item.id)">
               <span class="icon" aria-hidden="true">{{ iconFor(item) }}</span>
               <span class="name" [title]="item.originalName">{{ item.originalName }}</span>
@@ -141,6 +152,16 @@ import {
       flex-direction: column;
       gap: var(--mc-space-1);
     }
+    .cell[draggable='true'] {
+      cursor: grab;
+    }
+    .cell.dragging {
+      opacity: 0.4;
+    }
+    .cell.drop-target > .card {
+      outline: 2px solid var(--mc-accent-primary);
+      outline-offset: 2px;
+    }
     .card {
       background: var(--mc-bg-elevated);
       border: 1px solid var(--mc-border-default);
@@ -204,6 +225,7 @@ export class FileGridComponent {
   readonly remove = output<string>();
   readonly moveUp = output<string>();
   readonly moveDown = output<string>();
+  readonly reorder = output<{ from: string; to: string }>();
 
   private readonly i18n = inject(I18nService);
   protected t(key: TranslationKey): string {
@@ -262,5 +284,40 @@ export class FileGridComponent {
     this.dragOverState.value = false;
     const files = event.dataTransfer ? Array.from(event.dataTransfer.files) : [];
     if (files.length > 0) this.addFiles.emit(files);
+  }
+
+  protected readonly draggingId = signal<string | null>(null);
+  protected readonly dropTargetId = signal<string | null>(null);
+
+  protected onItemDragStart(event: DragEvent, id: string): void {
+    if (!this.editable() || !event.dataTransfer) return;
+    event.dataTransfer.setData(MC_INTERNAL_DND_TYPE, id);
+    event.dataTransfer.effectAllowed = 'move';
+    this.draggingId.set(id);
+  }
+  protected onItemDragOver(event: DragEvent, id: string): void {
+    if (!this.editable() || !event.dataTransfer) return;
+    if (!hasInternalDnd(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = 'move';
+    if (this.dropTargetId() !== id) this.dropTargetId.set(id);
+  }
+  protected onItemDragLeave(id: string): void {
+    if (this.dropTargetId() === id) this.dropTargetId.set(null);
+  }
+  protected onItemDrop(event: DragEvent, to: string): void {
+    if (!this.editable() || !event.dataTransfer) return;
+    const from = event.dataTransfer.getData(MC_INTERNAL_DND_TYPE);
+    if (!from) return;
+    event.preventDefault();
+    event.stopPropagation();
+    this.dropTargetId.set(null);
+    this.draggingId.set(null);
+    if (from !== to) this.reorder.emit({ from, to });
+  }
+  protected onItemDragEnd(): void {
+    this.draggingId.set(null);
+    this.dropTargetId.set(null);
   }
 }

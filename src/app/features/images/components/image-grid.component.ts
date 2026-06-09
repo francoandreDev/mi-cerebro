@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output, signal } from '@angular/core';
 
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { MC_INTERNAL_DND_TYPE, hasInternalDnd } from '@shared/utils/dnd';
 
 import type { Gallery, GalleryImage } from '../models/gallery.types';
 
@@ -43,7 +44,17 @@ import type { Gallery, GalleryImage } from '../models/gallery.types';
     } @else {
       <ul class="grid">
         @for (img of orderedImages(); track img.id; let i = $index) {
-          <li class="cell">
+          <li
+            class="cell"
+            [class.drop-target]="dropTargetId() === img.id"
+            [class.dragging]="draggingId() === img.id"
+            [attr.draggable]="editable() ? true : null"
+            (dragstart)="onItemDragStart($event, img.id)"
+            (dragover)="onItemDragOver($event, img.id)"
+            (dragleave)="onItemDragLeave(img.id)"
+            (drop)="onItemDrop($event, img.id)"
+            (dragend)="onItemDragEnd()"
+          >
             <button type="button" class="thumb" (click)="open.emit(img.id)">
               @if (urls()[img.id]; as url) {
                 <img [src]="url" [alt]="img.originalName" />
@@ -145,6 +156,16 @@ import type { Gallery, GalleryImage } from '../models/gallery.types';
       flex-direction: column;
       gap: var(--mc-space-1);
     }
+    .cell[draggable='true'] {
+      cursor: grab;
+    }
+    .cell.dragging {
+      opacity: 0.4;
+    }
+    .cell.drop-target > .thumb {
+      outline: 2px solid var(--mc-accent-primary);
+      outline-offset: 2px;
+    }
     .thumb {
       background: var(--mc-bg-elevated);
       border: 1px solid var(--mc-border-default);
@@ -199,6 +220,7 @@ export class ImageGridComponent {
   readonly remove = output<string>();
   readonly moveUp = output<string>();
   readonly moveDown = output<string>();
+  readonly reorder = output<{ from: string; to: string }>();
 
   private readonly i18n = inject(I18nService);
   protected t(key: TranslationKey): string {
@@ -250,5 +272,40 @@ export class ImageGridComponent {
     const files = event.dataTransfer ? Array.from(event.dataTransfer.files) : [];
     const images = files.filter((f) => f.type.startsWith('image/'));
     if (images.length > 0) this.addFiles.emit(images);
+  }
+
+  protected readonly draggingId = signal<string | null>(null);
+  protected readonly dropTargetId = signal<string | null>(null);
+
+  protected onItemDragStart(event: DragEvent, id: string): void {
+    if (!this.editable() || !event.dataTransfer) return;
+    event.dataTransfer.setData(MC_INTERNAL_DND_TYPE, id);
+    event.dataTransfer.effectAllowed = 'move';
+    this.draggingId.set(id);
+  }
+  protected onItemDragOver(event: DragEvent, id: string): void {
+    if (!this.editable() || !event.dataTransfer) return;
+    if (!hasInternalDnd(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = 'move';
+    if (this.dropTargetId() !== id) this.dropTargetId.set(id);
+  }
+  protected onItemDragLeave(id: string): void {
+    if (this.dropTargetId() === id) this.dropTargetId.set(null);
+  }
+  protected onItemDrop(event: DragEvent, to: string): void {
+    if (!this.editable() || !event.dataTransfer) return;
+    const from = event.dataTransfer.getData(MC_INTERNAL_DND_TYPE);
+    if (!from) return;
+    event.preventDefault();
+    event.stopPropagation();
+    this.dropTargetId.set(null);
+    this.draggingId.set(null);
+    if (from !== to) this.reorder.emit({ from, to });
+  }
+  protected onItemDragEnd(): void {
+    this.draggingId.set(null);
+    this.dropTargetId.set(null);
   }
 }

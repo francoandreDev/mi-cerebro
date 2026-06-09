@@ -11,6 +11,7 @@ import type { TranslationKey } from '@core/i18n/i18n.types';
 import { EntityLockController } from '@core/locks/entity-lock.controller';
 import { TagsService } from '@core/tags/tags.service';
 import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
+import { reorderById } from '@shared/utils/reorder';
 
 import { BookMetaBarComponent, type BookSaveStatus } from '../components/book-meta-bar.component';
 import { ChapterEditorPaneComponent } from '../components/chapter-editor-pane.component';
@@ -163,6 +164,20 @@ export class BooksContainer {
 
   protected async onMoveDown(chapterId: string): Promise<void> {
     await this.swapChapter(chapterId, +1);
+  }
+
+  protected async onReorder(payload: { from: string; to: string }): Promise<void> {
+    const book = this.active();
+    if (!book || !this.lock.guardWrite()) return;
+    const order = reorderById(book.order, payload.from, payload.to);
+    if (order === book.order) return;
+    try {
+      await this.booksService.reorderChapters(book.id, order);
+      this.active.set(await this.booksService.readBook(book.id));
+      this.chapters.set(await this.booksService.listChapters(book.id));
+    } catch (e) {
+      this.errors.report(e);
+    }
   }
 
   protected async onRemoveChapter(chapterId: string): Promise<void> {

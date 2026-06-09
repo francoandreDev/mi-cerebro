@@ -38,6 +38,7 @@
         (addChapter)="onAddChapter()"
         (moveUp)="onMoveUp($event)"
         (moveDown)="onMoveDown($event)"
+        (reorder)="onReorder($event)"
         (removeChapter)="onRemoveChapter($event)"
       />
       @if (activeChapter(); as chapter) {

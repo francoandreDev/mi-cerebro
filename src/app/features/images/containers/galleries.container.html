@@ -38,6 +38,7 @@
       (remove)="onRemoveImage($event)"
       (moveUp)="onMoveUp($event)"
       (moveDown)="onMoveDown($event)"
+      (reorder)="onReorder($event)"
     />
     @if (openImage(); as img) {
       <mc-image-lightbox

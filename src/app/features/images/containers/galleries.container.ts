@@ -18,6 +18,7 @@ import type { TranslationKey } from '@core/i18n/i18n.types';
 import { EntityLockController } from '@core/locks/entity-lock.controller';
 import { TagsService } from '@core/tags/tags.service';
 import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
+import { reorderById } from '@shared/utils/reorder';
 
 import {
   GalleryMetaBarComponent,
@@ -181,6 +182,19 @@ export class GalleriesContainer {
 
   protected async onMoveDown(imageId: string): Promise<void> {
     await this.swap(imageId, +1);
+  }
+
+  protected async onReorder(payload: { from: string; to: string }): Promise<void> {
+    const current = this.active();
+    if (!current || !this.lock.guardWrite()) return;
+    const order = reorderById(current.order, payload.from, payload.to);
+    if (order === current.order) return;
+    try {
+      await this.galleriesService.reorderImages(current.id, order);
+      this.active.set(await this.galleriesService.readGallery(current.id));
+    } catch (e) {
+      this.errors.report(e);
+    }
   }
 
   protected async onOpenImage(imageId: string): Promise<void> {

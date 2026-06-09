@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output, signal } from '@angular/core';
 
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { MC_INTERNAL_DND_TYPE, hasInternalDnd } from '@shared/utils/dnd';
 
 import type { ChapterSummary } from '../models/book.types';
 
@@ -22,7 +23,18 @@ import type { ChapterSummary } from '../models/book.types';
     }
     <ul class="list">
       @for (ch of chapters(); track ch.id; let i = $index) {
-        <li class="row" [class.selected]="ch.id === activeId()">
+        <li
+          class="row"
+          [class.selected]="ch.id === activeId()"
+          [class.drop-target]="dropTargetId() === ch.id"
+          [class.dragging]="draggingId() === ch.id"
+          [attr.draggable]="editable() ? true : null"
+          (dragstart)="onItemDragStart($event, ch.id)"
+          (dragover)="onItemDragOver($event, ch.id)"
+          (dragleave)="onItemDragLeave(ch.id)"
+          (drop)="onItemDrop($event, ch.id)"
+          (dragend)="onItemDragEnd()"
+        >
           <button type="button" class="title" (click)="selectChapter.emit(ch.id)">
             {{ ch.title || t('books.chapters.untitled') }}
           </button>
@@ -108,6 +120,15 @@ import type { ChapterSummary } from '../models/book.types';
       background: var(--mc-bg-elevated);
       border-left: 3px solid var(--mc-accent-primary);
     }
+    .row[draggable='true'] {
+      cursor: grab;
+    }
+    .row.dragging {
+      opacity: 0.4;
+    }
+    .row.drop-target {
+      box-shadow: inset 0 2px 0 0 var(--mc-accent-primary);
+    }
     .title {
       flex: 1;
       background: transparent;
@@ -159,6 +180,42 @@ export class ChapterListComponent {
   readonly moveDown = output<string>();
   readonly addChapter = output<void>();
   readonly removeChapter = output<string>();
+  readonly reorder = output<{ from: string; to: string }>();
+
+  protected readonly draggingId = signal<string | null>(null);
+  protected readonly dropTargetId = signal<string | null>(null);
+
+  protected onItemDragStart(event: DragEvent, id: string): void {
+    if (!this.editable() || !event.dataTransfer) return;
+    event.dataTransfer.setData(MC_INTERNAL_DND_TYPE, id);
+    event.dataTransfer.effectAllowed = 'move';
+    this.draggingId.set(id);
+  }
+  protected onItemDragOver(event: DragEvent, id: string): void {
+    if (!this.editable() || !event.dataTransfer) return;
+    if (!hasInternalDnd(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = 'move';
+    if (this.dropTargetId() !== id) this.dropTargetId.set(id);
+  }
+  protected onItemDragLeave(id: string): void {
+    if (this.dropTargetId() === id) this.dropTargetId.set(null);
+  }
+  protected onItemDrop(event: DragEvent, to: string): void {
+    if (!this.editable() || !event.dataTransfer) return;
+    const from = event.dataTransfer.getData(MC_INTERNAL_DND_TYPE);
+    if (!from) return;
+    event.preventDefault();
+    event.stopPropagation();
+    this.dropTargetId.set(null);
+    this.draggingId.set(null);
+    if (from !== to) this.reorder.emit({ from, to });
+  }
+  protected onItemDragEnd(): void {
+    this.draggingId.set(null);
+    this.dropTargetId.set(null);
+  }
 
   private readonly i18n = inject(I18nService);
   protected t(key: TranslationKey): string {

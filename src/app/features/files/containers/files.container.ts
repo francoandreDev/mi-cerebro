@@ -18,6 +18,7 @@ import type { TranslationKey } from '@core/i18n/i18n.types';
 import { EntityLockController } from '@core/locks/entity-lock.controller';
 import { TagsService } from '@core/tags/tags.service';
 import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
+import { reorderById } from '@shared/utils/reorder';
 
 import {
   FileCollectionMetaBarComponent,
@@ -158,6 +159,19 @@ export class FilesContainer {
 
   protected async onMoveDown(itemId: string): Promise<void> {
     await this.swap(itemId, +1);
+  }
+
+  protected async onReorder(payload: { from: string; to: string }): Promise<void> {
+    const current = this.active();
+    if (!current || !this.lock.guardWrite()) return;
+    const order = reorderById(current.order, payload.from, payload.to);
+    if (order === current.order) return;
+    try {
+      await this.filesService.reorderFiles(current.id, order);
+      this.active.set(await this.filesService.readCollection(current.id));
+    } catch (e) {
+      this.errors.report(e);
+    }
   }
 
   protected async onDownload(itemId: string): Promise<void> {
