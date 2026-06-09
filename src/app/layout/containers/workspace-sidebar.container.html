@@ -9,6 +9,7 @@
       <button type="button" class="primary" (click)="createWriting()">
         + {{ t('writings.new') }}
       </button>
+      <button type="button" class="primary" (click)="createBook()">+ {{ t('books.new') }}</button>
     </div>
     <div class="newgroup">
       <button type="button" class="ghost" (click)="createFolder('note')">
@@ -25,6 +26,9 @@
       </button>
       <button type="button" class="ghost" (click)="createFolder('writing')">
         + {{ t('folders.newIn').replace('{kind}', t('tree.type.writings')) }}
+      </button>
+      <button type="button" class="ghost" (click)="createFolder('book')">
+        + {{ t('folders.newIn').replace('{kind}', t('tree.type.books')) }}
       </button>
     </div>
   </header>
@@ -82,6 +86,15 @@
       (click)="setType('writings')"
     >
       {{ t('tree.type.writings') }}
+    </button>
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="typeFilter() === 'books'"
+      [class.active]="typeFilter() === 'books'"
+      (click)="setType('books')"
+    >
+      {{ t('tree.type.books') }}
     </button>
   </nav>
   <mc-tree-filter

@@ -1,0 +1,23 @@
+:host {
+  display: block;
+  height: 100%;
+}
+.pane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+}
+.split {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+.empty,
+.empty-chapter {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  color: var(--mc-fg-muted);
+  padding: var(--mc-space-5);
+}

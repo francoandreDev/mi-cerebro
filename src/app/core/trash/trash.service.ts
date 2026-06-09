@@ -9,6 +9,8 @@ import { GoalsService } from '@features/goals/services/goals.service';
 import { ListsService } from '@features/lists/services/lists.service';
 import { NotesService } from '@features/notes/services/notes.service';
 import { TasksService } from '@features/tasks/services/tasks.service';
+import { BooksService } from '@features/books/services/books.service';
+import type { BookBundle } from '@features/books/models/book.types';
 import { WritingsService } from '@features/writings/services/writings.service';
 
 import {
@@ -29,6 +31,7 @@ export class TrashService {
   private readonly goals = inject(GoalsService);
   private readonly lists = inject(ListsService);
   private readonly writings = inject(WritingsService);
+  private readonly books = inject(BooksService);
 
   private readonly entriesSignal = signal<readonly TrashEntry[]>([]);
   readonly entries = this.entriesSignal.asReadonly();
@@ -65,6 +68,13 @@ export class TrashService {
     const root = this.requireRoot();
     const day = await this.dayDir(root, entry.parentPath);
     if (!day) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
+    if (entry.kind === 'book') {
+      const bundle = await this.fs.readJson<BookBundle>(day, entry.filename);
+      await this.books.restoreFromBundle(bundle);
+      await this.fs.removeEntry(day, entry.filename);
+      this.entriesSignal.update((list) => list.filter((e) => !sameEntry(e, entry)));
+      return;
+    }
     const target = await this.fs.getOrCreateDir(root, KIND_DIRS[entry.kind]);
     const original = this.stripPrefix(entry.filename, entry.kind, entry.id);
     const dest = await this.allocDest(target, original);
@@ -95,7 +105,8 @@ export class TrashService {
     else if (kind === 'task') await this.tasks.refresh();
     else if (kind === 'goal') await this.goals.refresh();
     else if (kind === 'list') await this.lists.refresh();
-    else await this.writings.refresh();
+    else if (kind === 'writing') await this.writings.refresh();
+    else await this.books.refresh();
   }
 
   private async parseEntry(
@@ -114,7 +125,8 @@ export class TrashService {
       kind !== 'task' &&
       kind !== 'goal' &&
       kind !== 'list' &&
-      kind !== 'writing'
+      kind !== 'writing' &&
+      kind !== 'book'
     )
       return null;
     const rest = stem.slice(sep + 2);
@@ -122,13 +134,16 @@ export class TrashService {
     if (sep2 < 0) return null;
     const id = rest.slice(0, sep2);
     try {
-      const raw = await this.fs.readJson<{ title?: string }>(day, filename);
+      const raw = await this.fs.readJson<{ title?: string; book?: { title?: string } }>(
+        day,
+        filename,
+      );
       return {
         filename,
         parentPath,
         id,
         kind: kind as TrashKind,
-        title: raw.title ?? '',
+        title: raw.book?.title ?? raw.title ?? '',
         deletedAt: parentPath.join('-'),
       };
     } catch {

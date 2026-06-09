@@ -1,0 +1,58 @@
+<div class="pane">
+  @if (active(); as book) {
+    @if (lock.showForeign()) {
+      <mc-lock-banner
+        kind="foreign"
+        [title]="t('books.lock.foreign.title')"
+        [message]="t('books.lock.foreign.message')"
+        [readonlyLabel]="t('books.lock.foreign.readonly')"
+        [takeoverLabel]="t('books.lock.foreign.takeover')"
+        (readonly)="lock.acceptReadonly()"
+        (takeover)="lock.takeover()"
+      />
+    } @else if (lock.showEvicted()) {
+      <mc-lock-banner
+        kind="evicted"
+        [title]="t('books.lock.evicted.title')"
+        [message]="t('books.lock.evicted.message')"
+        [dismissLabel]="t('books.lock.evicted.dismiss')"
+        (dismiss)="lock.dismissEvicted()"
+      />
+    }
+    <mc-book-meta-bar
+      [book]="book"
+      [status]="bookStatus()"
+      [availableTags]="tags()"
+      [editable]="lock.editable()"
+      (titleChange)="onTitleChange($event)"
+      (removeBook)="onDeleteBook()"
+      (addTag)="onAddTag($event)"
+      (removeTag)="onRemoveTag($event)"
+    />
+    <div class="split">
+      <mc-chapter-list
+        [chapters]="chapters()"
+        [activeId]="activeChapter()?.id ?? null"
+        [editable]="lock.editable()"
+        (selectChapter)="onSelectChapter($event)"
+        (addChapter)="onAddChapter()"
+        (moveUp)="onMoveUp($event)"
+        (moveDown)="onMoveDown($event)"
+        (removeChapter)="onRemoveChapter($event)"
+      />
+      @if (activeChapter(); as chapter) {
+        <mc-chapter-editor-pane
+          [chapter]="chapter"
+          [status]="chapterStatus()"
+          [editable]="lock.editable()"
+          (titleChange)="onChapterTitleChange($event)"
+          (bodyChange)="onChapterBodyChange($event)"
+        />
+      } @else {
+        <div class="empty-chapter">{{ t('books.chapters.selectOne') }}</div>
+      }
+    </div>
+  } @else {
+    <div class="empty">{{ t('books.selectOne') }}</div>
+  }
+</div>

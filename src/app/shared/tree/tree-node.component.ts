@@ -191,7 +191,8 @@ export class TreeNodeComponent {
       kind === 'task' ||
       kind === 'goal' ||
       kind === 'list' ||
-      kind === 'writing'
+      kind === 'writing' ||
+      kind === 'book'
     );
   });
 

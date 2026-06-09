@@ -8,7 +8,7 @@ export interface FolderTreeEntity {
 }
 
 export interface FolderTreeOptions {
-  readonly idPrefix: 'note' | 'task' | 'goal' | 'list' | 'writing';
+  readonly idPrefix: 'note' | 'task' | 'goal' | 'list' | 'writing' | 'book';
   readonly entities: readonly FolderTreeEntity[];
   readonly folders: readonly string[];
 }

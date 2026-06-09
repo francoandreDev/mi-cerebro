@@ -18,13 +18,14 @@ import { GoalsService } from '@features/goals/services/goals.service';
 import { ListsService } from '@features/lists/services/lists.service';
 import { NotesService } from '@features/notes/services/notes.service';
 import { TasksService } from '@features/tasks/services/tasks.service';
+import { BooksService } from '@features/books/services/books.service';
 import { WritingsService } from '@features/writings/services/writings.service';
 
 import { handleCreateFolder, handleEntityAction, handleFolderAction } from './folder-actions';
 import { buildFolderTree } from './folder-tree';
 import { goalBadges, tagBadges, taskBadges } from './tree-badges';
 
-type TypeFilter = 'all' | 'notes' | 'tasks' | 'goals' | 'lists' | 'writings';
+type TypeFilter = 'all' | 'notes' | 'tasks' | 'goals' | 'lists' | 'writings' | 'books';
 
 @Component({
   selector: 'mc-workspace-sidebar',
@@ -39,6 +40,7 @@ export class WorkspaceSidebarContainer {
   private readonly goalsService = inject(GoalsService);
   private readonly listsService = inject(ListsService);
   private readonly writingsService = inject(WritingsService);
+  private readonly booksService = inject(BooksService);
   private readonly foldersService = inject(FoldersService);
   private readonly tagsService = inject(TagsService);
   private readonly workspace = inject(WorkspaceService);
@@ -60,6 +62,7 @@ export class WorkspaceSidebarContainer {
         await this.goalsService.refresh();
         await this.listsService.refresh();
         await this.writingsService.refresh();
+        await this.booksService.refresh();
       } catch (e: unknown) {
         this.errors.report(e);
       }
@@ -170,12 +173,30 @@ export class WorkspaceSidebarContainer {
         }),
       });
     }
+    if (filter === 'all' || filter === 'books') {
+      const entities = this.booksService.summaries().map((b) => ({
+        id: b.id,
+        folder: b.folder,
+        label: b.title || this.i18n.t('books.untitledTitle'),
+        badges: tagBadges(b.tags, lookup),
+      }));
+      roots.push({
+        id: 'group:books',
+        label: this.i18n.t('books.title'),
+        kind: 'group',
+        children: buildFolderTree({
+          idPrefix: 'book',
+          entities,
+          folders: this.booksService.folders(),
+        }),
+      });
+    }
     return roots;
   });
 
   protected readonly selectedNodeId = computed<string | null>(() => {
     const url = this.router.url;
-    const match = /^\/(notes|tasks|goals|lists|writings)\/([^/?]+)/.exec(url);
+    const match = /^\/(notes|tasks|goals|lists|writings|books)\/([^/?]+)/.exec(url);
     if (!match) return null;
     const kind =
       match[1] === 'notes'
@@ -186,7 +207,9 @@ export class WorkspaceSidebarContainer {
             ? 'goal'
             : match[1] === 'lists'
               ? 'list'
-              : 'writing';
+              : match[1] === 'writings'
+                ? 'writing'
+                : 'book';
     return `${kind}:${match[2]}`;
   });
 
@@ -298,6 +321,16 @@ export class WorkspaceSidebarContainer {
     }
   }
 
+  protected async createBook(): Promise<void> {
+    try {
+      await this.workspace.ensureWritable();
+      const book = await this.booksService.createBook('');
+      await this.router.navigate(['/books', book.id]);
+    } catch (e) {
+      this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize()));
+    }
+  }
+
   protected choose(nodeId: string): void {
     if (nodeId.startsWith('note:')) {
       void this.router.navigate(['/notes', nodeId.slice('note:'.length)]);
@@ -309,6 +342,8 @@ export class WorkspaceSidebarContainer {
       void this.router.navigate(['/lists', nodeId.slice('list:'.length)]);
     } else if (nodeId.startsWith('writing:')) {
       void this.router.navigate(['/writings', nodeId.slice('writing:'.length)]);
+    } else if (nodeId.startsWith('book:')) {
+      void this.router.navigate(['/books', nodeId.slice('book:'.length)]);
     }
   }
 
@@ -340,6 +375,7 @@ export class WorkspaceSidebarContainer {
             goals: this.goalsService,
             lists: this.listsService,
             writings: this.writingsService,
+            books: this.booksService,
           },
           this.i18n,
         );

@@ -6,6 +6,7 @@ import type { GoalsService } from '@features/goals/services/goals.service';
 import type { ListsService } from '@features/lists/services/lists.service';
 import type { NotesService } from '@features/notes/services/notes.service';
 import type { TasksService } from '@features/tasks/services/tasks.service';
+import type { BooksService } from '@features/books/services/books.service';
 import type { WritingsService } from '@features/writings/services/writings.service';
 
 export interface EntityServices {
@@ -14,6 +15,7 @@ export interface EntityServices {
   readonly goals: GoalsService;
   readonly lists: ListsService;
   readonly writings: WritingsService;
+  readonly books: BooksService;
 }
 
 const t = (i18n: I18nService, key: TranslationKey): string => i18n.t(key);
@@ -63,6 +65,7 @@ export const handleEntityAction = async (
   else if (kind === 'goal') await services.goals.moveToFolder(id, folder);
   else if (kind === 'list') await services.lists.moveToFolder(id, folder);
   else if (kind === 'writing') await services.writings.moveToFolder(id, folder);
+  else if (kind === 'book') await services.books.moveBookToFolder(id, folder);
 };
 
 export const handleCreateFolder = async (

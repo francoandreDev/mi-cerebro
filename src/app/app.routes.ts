@@ -23,6 +23,10 @@ export const routes: Routes = [
     loadChildren: () => import('./features/writings/writings.routes').then((m) => m.writingsRoutes),
   },
   {
+    path: 'books',
+    loadChildren: () => import('./features/books/books.routes').then((m) => m.booksRoutes),
+  },
+  {
     path: 'trash',
     loadChildren: () => import('./features/trash/trash.routes').then((m) => m.trashRoutes),
   },

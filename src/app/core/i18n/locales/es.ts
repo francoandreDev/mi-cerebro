@@ -258,6 +258,39 @@ export const es = {
     'Otra pestaña empezó a editar este escrito. Tu vista quedó en modo lectura.',
   'writings.lock.evicted.dismiss': 'Entendido',
 
+  'books.title': 'Libros',
+  'books.new': 'Nuevo libro',
+  'books.untitledTitle': 'Sin título',
+  'books.empty': 'Sin libros todavía. Empezá con "Nuevo libro".',
+  'books.placeholderTitle': 'Título del libro...',
+  'books.deleteConfirm': '¿Mover "{title}" y todos sus capítulos a la papelera?',
+  'books.delete': 'Eliminar libro',
+  'books.status.saved': 'Guardado',
+  'books.status.saving': 'Guardando...',
+  'books.status.unsaved': 'Sin guardar',
+  'books.selectOne': 'Elegí un libro o creá uno nuevo.',
+  'books.chapters.title': 'Capítulos',
+  'books.chapters.new': 'Nuevo capítulo',
+  'books.chapters.empty': 'Sin capítulos. Agregá el primero.',
+  'books.chapters.untitled': 'Sin título',
+  'books.chapters.placeholderTitle': 'Título del capítulo...',
+  'books.chapters.placeholderBody': 'Escribí el capítulo...',
+  'books.chapters.selectOne': 'Elegí un capítulo o agregá uno nuevo.',
+  'books.chapters.moveUp': 'Subir',
+  'books.chapters.moveDown': 'Bajar',
+  'books.chapters.delete': 'Eliminar',
+  'books.chapters.deleteConfirm':
+    '¿Eliminar el capítulo "{title}"? Esta acción no va a la papelera y es irreversible.',
+  'books.lock.foreign.title': 'Este libro está abierto en otra pestaña',
+  'books.lock.foreign.message':
+    'Para evitar pisar cambios, este libro está en modo lectura. Podés tomar control para empezar a editar acá.',
+  'books.lock.foreign.readonly': 'Abrir solo lectura',
+  'books.lock.foreign.takeover': 'Tomar control',
+  'books.lock.evicted.title': 'Otra ventana tomó el control',
+  'books.lock.evicted.message':
+    'Otra pestaña empezó a editar este libro. Tu vista quedó en modo lectura.',
+  'books.lock.evicted.dismiss': 'Entendido',
+
   'folders.newIn': 'Carpeta en {kind}',
   'folders.createPrompt': 'Nombre de la carpeta:',
   'folders.actionPrompt': '¿Qué querés hacer con esta carpeta?',
@@ -282,6 +315,7 @@ export const es = {
   'trash.kind.goal': 'Meta',
   'trash.kind.list': 'Lista',
   'trash.kind.writing': 'Escrito',
+  'trash.kind.book': 'Libro',
 
   'tree.type.all': 'Todo',
   'tree.type.notes': 'Notas',
@@ -289,6 +323,7 @@ export const es = {
   'tree.type.goals': 'Metas',
   'tree.type.lists': 'Listas',
   'tree.type.writings': 'Escritos',
+  'tree.type.books': 'Libros',
 } as const;
 
 export type EsDictionary = typeof es;

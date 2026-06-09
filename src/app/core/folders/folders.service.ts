@@ -17,6 +17,7 @@ import { GoalsService } from '@features/goals/services/goals.service';
 import { ListsService } from '@features/lists/services/lists.service';
 import { NotesService } from '@features/notes/services/notes.service';
 import { TasksService } from '@features/tasks/services/tasks.service';
+import { BooksService } from '@features/books/services/books.service';
 import { WritingsService } from '@features/writings/services/writings.service';
 import { toSlug } from '@shared/utils/slug';
 
@@ -33,6 +34,7 @@ export class FoldersService {
   private readonly goals = inject(GoalsService);
   private readonly lists = inject(ListsService);
   private readonly writings = inject(WritingsService);
+  private readonly books = inject(BooksService);
 
   async createFolder(kind: FolderKind, parentPath: string, name: string): Promise<string> {
     const slug = toSlug(name);
@@ -126,7 +128,8 @@ export class FoldersService {
     if (kind === 'task') return this.tasks.summaries();
     if (kind === 'goal') return this.goals.summaries();
     if (kind === 'list') return this.lists.summaries();
-    return this.writings.summaries();
+    if (kind === 'writing') return this.writings.summaries();
+    return this.books.summaries();
   }
 
   private async softDeleteEntity(kind: FolderKind, id: string): Promise<void> {
@@ -134,7 +137,8 @@ export class FoldersService {
     else if (kind === 'task') await this.tasks.deleteToTrash(id);
     else if (kind === 'goal') await this.goals.deleteToTrash(id);
     else if (kind === 'list') await this.lists.deleteToTrash(id);
-    else await this.writings.deleteToTrash(id);
+    else if (kind === 'writing') await this.writings.deleteToTrash(id);
+    else await this.books.deleteBookToTrash(id);
   }
 
   private async refreshKind(kind: FolderKind): Promise<void> {
@@ -142,7 +146,8 @@ export class FoldersService {
     else if (kind === 'task') await this.tasks.refresh();
     else if (kind === 'goal') await this.goals.refresh();
     else if (kind === 'list') await this.lists.refresh();
-    else await this.writings.refresh();
+    else if (kind === 'writing') await this.writings.refresh();
+    else await this.books.refresh();
   }
 
   private async kindRoot(kind: FolderKind): Promise<FsDirectoryHandle> {
