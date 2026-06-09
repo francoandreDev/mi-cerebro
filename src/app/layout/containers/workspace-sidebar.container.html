@@ -1,7 +1,34 @@
 @if (isReady()) {
-  <header class="bar">
-    <div class="title-row">
-      <h2 class="title">mi-cerebro</h2>
+  <aside class="rail" [attr.aria-label]="t('tree.type.all')">
+    <span class="rail-brand" [title]="t('app.name')">mc</span>
+    @for (item of railItems(); track item.key) {
+      <button
+        type="button"
+        class="rail-btn"
+        [class.active]="activeKey() === item.key"
+        [attr.aria-current]="activeKey() === item.key ? 'page' : null"
+        [title]="item.label"
+        [attr.aria-label]="item.label"
+        (click)="goTo(item.key)"
+      >
+        {{ item.icon }}
+      </button>
+    }
+    <div class="rail-spacer"></div>
+    <button
+      type="button"
+      class="rail-btn"
+      [class.active]="activeKey() === 'trash'"
+      [title]="t('trash.title')"
+      [attr.aria-label]="t('trash.title')"
+      (click)="goTo('trash')"
+    >
+      🗑
+    </button>
+  </aside>
+  <section class="pane">
+    <header class="head">
+      <h2 class="title">{{ activeTitle() }}</h2>
       <button
         type="button"
         class="search-btn"
@@ -11,46 +38,40 @@
       >
         🔍
       </button>
-    </div>
-    <div class="actions">
-      <mc-menu-button
-        variant="primary"
-        [label]="'+ ' + t('common.new')"
-        [options]="newOptions()"
-        (choose)="onCreateEntity($event)"
+    </header>
+    @if (activeKind(); as kind) {
+      <div class="actions">
+        <button type="button" class="primary" (click)="createForActive()">
+          + {{ newLabel() }}
+        </button>
+        <mc-menu-button
+          variant="ghost"
+          [label]="'⋯'"
+          [options]="moreOptions()"
+          (choose)="onMoreChoose($event)"
+        />
+      </div>
+      <mc-tree-filter
+        [query]="query()"
+        [direction]="direction()"
+        [matchCount]="result().matches.length"
+        (queryChange)="onQuery($event)"
+        (directionChange)="onDirection($event)"
+        (next)="onNext()"
+        (prev)="onPrev()"
+        (activateFirst)="onActivateFirst()"
+        (clear)="onClear()"
       />
-      <mc-menu-button
-        variant="ghost"
-        [label]="'+ ' + t('common.folder')"
-        [options]="folderOptions()"
-        (choose)="onCreateFolderFor($event)"
+      <mc-tree
+        [nodes]="treeRoots()"
+        [visible]="result().visible"
+        [matchedIds]="matchedIds()"
+        [autoExpand]="result().autoExpand"
+        [selectedId]="selectedNodeId()"
+        [emptyKey]="emptyKey()"
+        (chooseNode)="choose($event)"
+        (nodeAction)="onNodeAction($event)"
       />
-    </div>
-  </header>
-  <mc-tree-filter
-    [query]="query()"
-    [direction]="direction()"
-    [matchCount]="result().matches.length"
-    (queryChange)="onQuery($event)"
-    (directionChange)="onDirection($event)"
-    (next)="onNext()"
-    (prev)="onPrev()"
-    (activateFirst)="onActivateFirst()"
-    (clear)="onClear()"
-  />
-  <mc-tree
-    [nodes]="treeRoots()"
-    [visible]="result().visible"
-    [matchedIds]="matchedIds()"
-    [autoExpand]="result().autoExpand"
-    [selectedId]="selectedNodeId()"
-    [emptyKey]="emptyKey()"
-    (chooseNode)="choose($event)"
-    (nodeAction)="onNodeAction($event)"
-  />
-  <footer class="footer">
-    <button type="button" class="trash-link" [class.active]="isTrashRoute()" (click)="goToTrash()">
-      {{ t('trash.title') }}
-    </button>
-  </footer>
+    }
+  </section>
 }

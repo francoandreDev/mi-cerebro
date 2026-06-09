@@ -28,7 +28,14 @@ import { handleCreateFolder, handleEntityAction, handleFolderAction } from './fo
 import { buildFolderTree } from './folder-tree';
 import { goalBadges, tagBadges, taskBadges } from './tree-badges';
 
-type EntityKey = 'note' | 'task' | 'goal' | 'list' | 'writing' | 'book';
+type EntityKind = 'note' | 'task' | 'goal' | 'list' | 'writing' | 'book';
+type RailKey = EntityKind | 'trash';
+
+interface RailItem {
+  readonly key: EntityKind;
+  readonly label: string;
+  readonly icon: string;
+}
 
 @Component({
   selector: 'mc-workspace-sidebar',
@@ -71,19 +78,56 @@ export class WorkspaceSidebarContainer {
         this.errors.report(e);
       }
     })();
-    this.treeState.expandAll([
-      'group:notes',
-      'group:tasks',
-      'group:goals',
-      'group:lists',
-      'group:writings',
-      'group:books',
-    ]);
   }
 
   protected t(key: TranslationKey): string {
     return this.i18n.t(key);
   }
+
+  protected readonly railItems = computed<readonly RailItem[]>(() => [
+    { key: 'note', label: this.t('tree.type.notes'), icon: '📝' },
+    { key: 'task', label: this.t('tree.type.tasks'), icon: '✓' },
+    { key: 'goal', label: this.t('tree.type.goals'), icon: '🎯' },
+    { key: 'list', label: this.t('tree.type.lists'), icon: '📋' },
+    { key: 'writing', label: this.t('tree.type.writings'), icon: '✍' },
+    { key: 'book', label: this.t('tree.type.books'), icon: '📚' },
+  ]);
+
+  protected readonly activeKey = computed<RailKey | null>(() => {
+    const url = this.router.url;
+    if (url.startsWith('/trash')) return 'trash';
+    const match = /^\/(notes|tasks|goals|lists|writings|books)/.exec(url);
+    if (!match) return null;
+    return ROUTE_TO_KIND[match[1] as keyof typeof ROUTE_TO_KIND];
+  });
+
+  protected readonly activeKind = computed<EntityKind | null>(() => {
+    const k = this.activeKey();
+    return k === 'trash' || k === null ? null : k;
+  });
+
+  protected readonly activeTitle = computed<string>(() => {
+    const k = this.activeKey();
+    if (k === null) return this.t('app.name');
+    if (k === 'trash') return this.t('trash.title');
+    return this.t(`tree.type.${KIND_TO_TYPE[k]}` as TranslationKey);
+  });
+
+  protected readonly newLabel = computed<string>(() => {
+    const k = this.activeKind();
+    if (!k) return '';
+    return this.t(`${KIND_TO_TYPE[k]}.new` as TranslationKey);
+  });
+
+  protected readonly moreOptions = computed<readonly MenuOption[]>(() => {
+    const k = this.activeKind();
+    if (!k) return [];
+    const kindLabel = this.t(`tree.type.${KIND_TO_TYPE[k]}` as TranslationKey);
+    return [
+      { key: 'folder', label: this.t('folders.newIn').replace('{kind}', kindLabel) },
+      { key: 'palette', label: this.t('palette.openButton') },
+    ];
+  });
 
   private readonly tagsById = computed(() => {
     const map = new Map<string, Tag>();
@@ -91,124 +135,80 @@ export class WorkspaceSidebarContainer {
     return map;
   });
 
-  protected readonly newOptions = computed<readonly MenuOption[]>(() => [
-    { key: 'note', label: this.t('notes.new') },
-    { key: 'task', label: this.t('tasks.new') },
-    { key: 'goal', label: this.t('goals.new') },
-    { key: 'list', label: this.t('lists.new') },
-    { key: 'writing', label: this.t('writings.new') },
-    { key: 'book', label: this.t('books.new') },
-  ]);
-
-  protected readonly folderOptions = computed<readonly MenuOption[]>(() => [
-    { key: 'note', label: this.t('tree.type.notes') },
-    { key: 'task', label: this.t('tree.type.tasks') },
-    { key: 'goal', label: this.t('tree.type.goals') },
-    { key: 'list', label: this.t('tree.type.lists') },
-    { key: 'writing', label: this.t('tree.type.writings') },
-    { key: 'book', label: this.t('tree.type.books') },
-  ]);
-
   protected readonly treeRoots = computed<readonly TreeNode[]>(() => {
+    const kind = this.activeKind();
+    if (!kind) return [];
     const lookup = this.tagsById();
-    const notes = this.notesService.summaries().map((n) => ({
-      id: n.id,
-      folder: n.folder,
-      label: n.title || this.i18n.t('notes.untitledTitle'),
-      badges: tagBadges(n.tags, lookup),
-    }));
-    const tasks = this.tasksService.summaries().map((tk) => ({
-      id: tk.id,
-      folder: tk.folder,
-      label: tk.title || this.i18n.t('tasks.untitledTitle'),
-      badges: taskBadges(tk, lookup, this.i18n),
-    }));
-    const goals = this.goalsService.summaries().map((g) => ({
-      id: g.id,
-      folder: g.folder,
-      label: g.title || this.i18n.t('goals.untitledTitle'),
-      badges: goalBadges(g, lookup, this.i18n),
-    }));
-    const lists = this.listsService.summaries().map((l) => ({
-      id: l.id,
-      folder: l.folder,
-      label: l.title || this.i18n.t('lists.untitledTitle'),
-      badges: tagBadges(l.tags, lookup),
-    }));
-    const writings = this.writingsService.summaries().map((w) => ({
-      id: w.id,
-      folder: w.folder,
-      label: w.title || this.i18n.t('writings.untitledTitle'),
-      badges: tagBadges(w.tags, lookup),
-    }));
-    const books = this.booksService.summaries().map((b) => ({
-      id: b.id,
-      folder: b.folder,
-      label: b.title || this.i18n.t('books.untitledTitle'),
-      badges: tagBadges(b.tags, lookup),
-    }));
-    return [
-      {
-        id: 'group:notes',
-        label: this.i18n.t('notes.title'),
-        kind: 'group',
-        children: buildFolderTree({
-          idPrefix: 'note',
-          entities: notes,
-          folders: this.notesService.folders(),
-        }),
-      },
-      {
-        id: 'group:tasks',
-        label: this.i18n.t('tasks.title'),
-        kind: 'group',
-        children: buildFolderTree({
-          idPrefix: 'task',
-          entities: tasks,
-          folders: this.tasksService.folders(),
-        }),
-      },
-      {
-        id: 'group:goals',
-        label: this.i18n.t('goals.title'),
-        kind: 'group',
-        children: buildFolderTree({
-          idPrefix: 'goal',
-          entities: goals,
-          folders: this.goalsService.folders(),
-        }),
-      },
-      {
-        id: 'group:lists',
-        label: this.i18n.t('lists.title'),
-        kind: 'group',
-        children: buildFolderTree({
-          idPrefix: 'list',
-          entities: lists,
-          folders: this.listsService.folders(),
-        }),
-      },
-      {
-        id: 'group:writings',
-        label: this.i18n.t('writings.title'),
-        kind: 'group',
-        children: buildFolderTree({
-          idPrefix: 'writing',
-          entities: writings,
-          folders: this.writingsService.folders(),
-        }),
-      },
-      {
-        id: 'group:books',
-        label: this.i18n.t('books.title'),
-        kind: 'group',
-        children: buildFolderTree({
-          idPrefix: 'book',
-          entities: books,
-          folders: this.booksService.folders(),
-        }),
-      },
-    ];
+    if (kind === 'note') {
+      return buildFolderTree({
+        idPrefix: 'note',
+        entities: this.notesService.summaries().map((n) => ({
+          id: n.id,
+          folder: n.folder,
+          label: n.title || this.t('notes.untitledTitle'),
+          badges: tagBadges(n.tags, lookup),
+        })),
+        folders: this.notesService.folders(),
+      });
+    }
+    if (kind === 'task') {
+      return buildFolderTree({
+        idPrefix: 'task',
+        entities: this.tasksService.summaries().map((tk) => ({
+          id: tk.id,
+          folder: tk.folder,
+          label: tk.title || this.t('tasks.untitledTitle'),
+          badges: taskBadges(tk, lookup, this.i18n),
+        })),
+        folders: this.tasksService.folders(),
+      });
+    }
+    if (kind === 'goal') {
+      return buildFolderTree({
+        idPrefix: 'goal',
+        entities: this.goalsService.summaries().map((g) => ({
+          id: g.id,
+          folder: g.folder,
+          label: g.title || this.t('goals.untitledTitle'),
+          badges: goalBadges(g, lookup, this.i18n),
+        })),
+        folders: this.goalsService.folders(),
+      });
+    }
+    if (kind === 'list') {
+      return buildFolderTree({
+        idPrefix: 'list',
+        entities: this.listsService.summaries().map((l) => ({
+          id: l.id,
+          folder: l.folder,
+          label: l.title || this.t('lists.untitledTitle'),
+          badges: tagBadges(l.tags, lookup),
+        })),
+        folders: this.listsService.folders(),
+      });
+    }
+    if (kind === 'writing') {
+      return buildFolderTree({
+        idPrefix: 'writing',
+        entities: this.writingsService.summaries().map((w) => ({
+          id: w.id,
+          folder: w.folder,
+          label: w.title || this.t('writings.untitledTitle'),
+          badges: tagBadges(w.tags, lookup),
+        })),
+        folders: this.writingsService.folders(),
+      });
+    }
+    return buildFolderTree({
+      idPrefix: 'book',
+      entities: this.booksService.summaries().map((b) => ({
+        id: b.id,
+        folder: b.folder,
+        label: b.title || this.t('books.untitledTitle'),
+        badges: tagBadges(b.tags, lookup),
+      })),
+      folders: this.booksService.folders(),
+    });
   });
 
   protected readonly selectedNodeId = computed<string | null>(() => {
@@ -218,12 +218,6 @@ export class WorkspaceSidebarContainer {
     const kind = ROUTE_TO_KIND[match[1] as keyof typeof ROUTE_TO_KIND];
     return `${kind}:${match[2]}`;
   });
-
-  protected readonly isTrashRoute = computed(() => this.router.url.startsWith('/trash'));
-
-  protected goToTrash(): void {
-    void this.router.navigate(['/trash']);
-  }
 
   protected openPalette(): void {
     this.palette.show();
@@ -235,9 +229,11 @@ export class WorkspaceSidebarContainer {
 
   protected readonly matchedIds = computed(() => new Set(this.result().matches.map((m) => m.id)));
 
-  protected readonly emptyKey = computed<TranslationKey>(() =>
-    this.query().trim() === '' ? 'notes.empty' : 'tree.noMatches',
-  );
+  protected readonly emptyKey = computed<TranslationKey>(() => {
+    if (this.query().trim() !== '') return 'tree.noMatches';
+    const k = this.activeKind();
+    return k ? (`${KIND_TO_TYPE[k]}.empty` as TranslationKey) : 'notes.empty';
+  });
 
   protected readonly isReady = this.workspace.isReady;
 
@@ -276,22 +272,43 @@ export class WorkspaceSidebarContainer {
     this.cursor.set(0);
   }
 
-  protected async onCreateEntity(key: string): Promise<void> {
+  protected goTo(key: RailKey): void {
+    this.query.set('');
+    this.cursor.set(0);
+    if (key === 'trash') {
+      void this.router.navigate(['/trash']);
+      return;
+    }
+    void this.router.navigate([KIND_TO_ROUTE[key]]);
+    this.treeState.expandAll([`root:${key}`]);
+  }
+
+  protected async createForActive(): Promise<void> {
+    const kind = this.activeKind();
+    if (!kind) return;
     try {
       await this.workspace.ensureWritable();
-      const [route, id] = await this.createByKind(key as EntityKey);
+      const [route, id] = await this.createByKind(kind);
       await this.router.navigate([route, id]);
     } catch (e) {
       this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize()));
     }
   }
 
-  protected async onCreateFolderFor(key: string): Promise<void> {
-    try {
-      await this.workspace.ensureWritable();
-      await handleCreateFolder(key as FolderKind, this.foldersService, this.i18n);
-    } catch (e) {
-      this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize()));
+  protected async onMoreChoose(key: string): Promise<void> {
+    if (key === 'palette') {
+      this.openPalette();
+      return;
+    }
+    if (key === 'folder') {
+      const kind = this.activeKind();
+      if (!kind) return;
+      try {
+        await this.workspace.ensureWritable();
+        await handleCreateFolder(kind as FolderKind, this.foldersService, this.i18n);
+      } catch (e) {
+        this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize()));
+      }
     }
   }
 
@@ -300,11 +317,11 @@ export class WorkspaceSidebarContainer {
     if (colon < 0) return;
     const kind = nodeId.slice(0, colon);
     const id = nodeId.slice(colon + 1);
-    const route = KIND_TO_ROUTE[kind as EntityKey];
+    const route = KIND_TO_ROUTE[kind as EntityKind];
     if (route) void this.router.navigate([route, id]);
   }
 
-  private async createByKind(kind: EntityKey): Promise<readonly [string, string]> {
+  private async createByKind(kind: EntityKind): Promise<readonly [string, string]> {
     if (kind === 'note') return ['/notes', (await this.notesService.create('')).id];
     if (kind === 'task') return ['/tasks', (await this.tasksService.create('')).id];
     if (kind === 'goal') return ['/goals', (await this.goalsService.create('')).id];
@@ -352,11 +369,23 @@ const ROUTE_TO_KIND = {
   books: 'book',
 } as const;
 
-const KIND_TO_ROUTE: Record<EntityKey, string> = {
+const KIND_TO_ROUTE: Record<EntityKind, string> = {
   note: '/notes',
   task: '/tasks',
   goal: '/goals',
   list: '/lists',
   writing: '/writings',
   book: '/books',
+};
+
+const KIND_TO_TYPE: Record<
+  EntityKind,
+  'notes' | 'tasks' | 'goals' | 'lists' | 'writings' | 'books'
+> = {
+  note: 'notes',
+  task: 'tasks',
+  goal: 'goals',
+  list: 'lists',
+  writing: 'writings',
+  book: 'books',
 };
