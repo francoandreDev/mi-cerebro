@@ -1,0 +1,87 @@
+<section class="page">
+  <header class="head">
+    <h2>{{ t('reminders.title') }}</h2>
+    <button type="button" class="primary" (click)="onCreate()">+ {{ t('reminders.new') }}</button>
+  </header>
+
+  <section class="group">
+    <h3>{{ t('reminders.pending') }} ({{ pending().length }})</h3>
+    @if (pending().length === 0) {
+      <p class="empty">{{ t('reminders.emptyPending') }}</p>
+    } @else {
+      <ul class="list">
+        @for (r of pending(); track r.id) {
+          <li class="row">
+            <input
+              type="checkbox"
+              [checked]="r.done"
+              (change)="onToggleDone(r)"
+              [attr.aria-label]="t('reminders.markDone')"
+            />
+            @if (editingId() === r.id) {
+              <input
+                type="text"
+                class="title-input"
+                [value]="draft()?.title ?? r.title"
+                (input)="onTitleInput(r.id, asInput($event.target).value)"
+                [placeholder]="t('reminders.titlePlaceholder')"
+              />
+              <input
+                type="datetime-local"
+                [value]="draft()?.dueAt ?? r.dueAt"
+                (input)="onDueInput(r.id, asInput($event.target).value)"
+              />
+              <button type="button" class="ghost" (click)="onSaveEdit()">
+                {{ t('common.confirm') }}
+              </button>
+              <button type="button" class="ghost" (click)="cancelEdit()">
+                {{ t('common.cancel') }}
+              </button>
+            } @else {
+              <button type="button" class="title-btn" (click)="onEdit(r)">
+                {{ r.title || t('reminders.untitled') }}
+              </button>
+              <span class="due">{{ formatDue(r.dueAt) }}</span>
+              <button
+                type="button"
+                class="ghost"
+                (click)="onDelete(r)"
+                [attr.aria-label]="t('common.delete')"
+              >
+                ✕
+              </button>
+            }
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  @if (done().length > 0) {
+    <section class="group">
+      <h3>{{ t('reminders.done') }} ({{ done().length }})</h3>
+      <ul class="list">
+        @for (r of done(); track r.id) {
+          <li class="row done">
+            <input
+              type="checkbox"
+              [checked]="r.done"
+              (change)="onToggleDone(r)"
+              [attr.aria-label]="t('reminders.markPending')"
+            />
+            <span class="title-btn done-title">{{ r.title || t('reminders.untitled') }}</span>
+            <span class="due">{{ formatDue(r.dueAt) }}</span>
+            <button
+              type="button"
+              class="ghost"
+              (click)="onDelete(r)"
+              [attr.aria-label]="t('common.delete')"
+            >
+              ✕
+            </button>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+</section>

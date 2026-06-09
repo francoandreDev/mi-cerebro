@@ -19,6 +19,7 @@ import { GoalsService } from '@features/goals/services/goals.service';
 import { GalleriesService } from '@features/images/services/galleries.service';
 import { ListsService } from '@features/lists/services/lists.service';
 import { NotesService } from '@features/notes/services/notes.service';
+import { RemindersService } from '@features/reminders/services/reminders.service';
 import { TasksService } from '@features/tasks/services/tasks.service';
 import { WritingsService } from '@features/writings/services/writings.service';
 import { MenuButtonComponent, type MenuOption } from '@shared/menu-button/menu-button.component';
@@ -33,7 +34,7 @@ import { buildFolderTree } from './folder-tree';
 import { goalBadges, tagBadges, taskBadges } from './tree-badges';
 
 type EntityKind = 'note' | 'task' | 'goal' | 'list' | 'writing' | 'book' | 'image' | 'file';
-type RailKey = EntityKind | 'trash' | 'calendar';
+type RailKey = EntityKind | 'trash' | 'calendar' | 'reminders';
 
 interface RailItem {
   readonly key: EntityKind;
@@ -57,6 +58,7 @@ export class WorkspaceSidebarContainer {
   private readonly booksService = inject(BooksService);
   private readonly galleriesService = inject(GalleriesService);
   private readonly filesService = inject(FilesService);
+  private readonly remindersService = inject(RemindersService);
   private readonly foldersService = inject(FoldersService);
   private readonly tagsService = inject(TagsService);
   private readonly workspace = inject(WorkspaceService);
@@ -94,6 +96,7 @@ export class WorkspaceSidebarContainer {
         await this.booksService.refresh();
         await this.galleriesService.refresh();
         await this.filesService.refresh();
+        await this.remindersService.refresh();
       } catch (e: unknown) {
         this.errors.report(e);
       }
@@ -119,6 +122,7 @@ export class WorkspaceSidebarContainer {
     const url = this.currentUrl();
     if (url.startsWith('/trash')) return 'trash';
     if (url.startsWith('/calendar')) return 'calendar';
+    if (url.startsWith('/reminders')) return 'reminders';
     const match = /^\/(notes|tasks|goals|lists|writings|books|images|files)/.exec(url);
     if (!match) return null;
     return ROUTE_TO_KIND[match[1] as keyof typeof ROUTE_TO_KIND];
@@ -126,7 +130,7 @@ export class WorkspaceSidebarContainer {
 
   protected readonly activeKind = computed<EntityKind | null>(() => {
     const k = this.activeKey();
-    return k === 'trash' || k === 'calendar' || k === null ? null : k;
+    return k === 'trash' || k === 'calendar' || k === 'reminders' || k === null ? null : k;
   });
 
   protected readonly activeTitle = computed<string>(() => {
@@ -134,6 +138,7 @@ export class WorkspaceSidebarContainer {
     if (k === null) return this.t('app.name');
     if (k === 'trash') return this.t('trash.title');
     if (k === 'calendar') return this.t('calendar.title');
+    if (k === 'reminders') return this.t('reminders.title');
     return this.t(`tree.type.${KIND_TO_TYPE[k]}` as TranslationKey);
   });
 
@@ -336,6 +341,10 @@ export class WorkspaceSidebarContainer {
     }
     if (key === 'calendar') {
       void this.router.navigate(['/calendar']);
+      return;
+    }
+    if (key === 'reminders') {
+      void this.router.navigate(['/reminders']);
       return;
     }
     void this.router.navigate([KIND_TO_ROUTE[key]]);

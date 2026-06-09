@@ -1,6 +1,5 @@
-import type { TrashKind } from '@core/trash/trash.types';
-
-export type FolderKind = TrashKind;
+// why: reminders are flat (no folders) so FolderKind diverges from TrashKind.
+export type FolderKind = 'note' | 'task' | 'goal' | 'list' | 'writing' | 'book' | 'image' | 'file';
 
 export interface FolderNode {
   readonly path: string;

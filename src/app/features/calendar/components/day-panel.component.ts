@@ -22,6 +22,9 @@ interface KindGroup {
         <button type="button" class="primary" (click)="createGoal.emit()">
           + {{ t('calendar.day.newGoal') }}
         </button>
+        <button type="button" class="primary" (click)="createReminder.emit()">
+          + {{ t('calendar.day.newReminder') }}
+        </button>
       </div>
     </header>
     @if (groups().length === 0) {
@@ -119,6 +122,7 @@ export class CalendarDayPanelComponent {
   readonly open = output<CalendarEvent>();
   readonly createTask = output<void>();
   readonly createGoal = output<void>();
+  readonly createReminder = output<void>();
 
   private readonly i18n = inject(I18nService);
 
@@ -131,7 +135,9 @@ export class CalendarDayPanelComponent {
   }
 
   protected kindLabel(kind: CalendarEventKind): string {
-    return this.t(kind === 'task' ? 'calendar.kind.task' : 'calendar.kind.goal');
+    if (kind === 'task') return this.t('calendar.kind.task');
+    if (kind === 'goal') return this.t('calendar.kind.goal');
+    return this.t('calendar.kind.reminder');
   }
 
   protected readonly groups = computed<readonly KindGroup[]>(() => {
@@ -141,7 +147,7 @@ export class CalendarDayPanelComponent {
       bucket.push(e);
       map.set(e.kind, bucket);
     }
-    const order: CalendarEventKind[] = ['task', 'goal'];
+    const order: CalendarEventKind[] = ['task', 'goal', 'reminder'];
     return order.filter((k) => map.has(k)).map((k) => ({ kind: k, events: map.get(k) ?? [] }));
   });
 }

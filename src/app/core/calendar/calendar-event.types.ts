@@ -1,4 +1,4 @@
-export type CalendarEventKind = 'task' | 'goal';
+export type CalendarEventKind = 'task' | 'goal' | 'reminder';
 
 export interface CalendarEvent {
   readonly id: string;
@@ -15,7 +15,10 @@ export interface CalendarFilters {
   readonly tagIds: ReadonlySet<string>;
 }
 
-export const ALL_CALENDAR_KINDS: readonly CalendarEventKind[] = ['task', 'goal'];
+export const ALL_CALENDAR_KINDS: readonly CalendarEventKind[] = ['task', 'goal', 'reminder'];
 
-export const eventRoute = (event: CalendarEvent): readonly string[] =>
-  event.kind === 'task' ? ['/tasks', event.entityId] : ['/goals', event.entityId];
+export const eventRoute = (event: CalendarEvent): readonly string[] => {
+  if (event.kind === 'task') return ['/tasks', event.entityId];
+  if (event.kind === 'goal') return ['/goals', event.entityId];
+  return ['/reminders'];
+};

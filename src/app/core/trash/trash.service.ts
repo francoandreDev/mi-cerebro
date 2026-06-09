@@ -15,6 +15,7 @@ import { FilesService } from '@features/files/services/files.service';
 import { COLLECTION_META_FILE } from '@features/files/models/file-collection.types';
 import { GalleriesService } from '@features/images/services/galleries.service';
 import { GALLERY_META_FILE } from '@core/images/image-paths';
+import { RemindersService } from '@features/reminders/services/reminders.service';
 import { WritingsService } from '@features/writings/services/writings.service';
 
 import {
@@ -38,6 +39,7 @@ export class TrashService {
   private readonly books = inject(BooksService);
   private readonly galleries = inject(GalleriesService);
   private readonly files = inject(FilesService);
+  private readonly reminders = inject(RemindersService);
 
   private readonly entriesSignal = signal<readonly TrashEntry[]>([]);
   readonly entries = this.entriesSignal.asReadonly();
@@ -128,6 +130,7 @@ export class TrashService {
     else if (kind === 'writing') await this.writings.refresh();
     else if (kind === 'book') await this.books.refresh();
     else if (kind === 'image') await this.galleries.refresh();
+    else if (kind === 'reminder') await this.reminders.refresh();
     else await this.files.refresh();
   }
 
@@ -148,7 +151,8 @@ export class TrashService {
       kind !== 'goal' &&
       kind !== 'list' &&
       kind !== 'writing' &&
-      kind !== 'book'
+      kind !== 'book' &&
+      kind !== 'reminder'
     ) {
       return null;
     }

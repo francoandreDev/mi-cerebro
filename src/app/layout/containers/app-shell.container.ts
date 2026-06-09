@@ -6,6 +6,7 @@ import { WorkspaceService } from '@core/fs/workspace.service';
 import { ThemeService } from '@core/theme/theme.service';
 import { GoalReminderContainer } from '@features/goals/containers/goal-reminder.container';
 import { OnboardingContainer } from '@features/onboarding/containers/onboarding.container';
+import { ReminderToastContainer } from '@features/reminders/containers/reminder-toast.container';
 import { CommandPaletteContainer } from '@features/search/containers/command-palette.container';
 
 import { ErrorDisplayContainer } from './error-display.container';
@@ -21,6 +22,7 @@ import { WorkspaceSidebarContainer } from './workspace-sidebar.container';
     CommandPaletteContainer,
     WorkspaceSidebarContainer,
     GoalReminderContainer,
+    ReminderToastContainer,
   ],
   template: `
     @if (workspace.isReady()) {
@@ -32,6 +34,7 @@ import { WorkspaceSidebarContainer } from './workspace-sidebar.container';
       </div>
       <mc-command-palette />
       <mc-goal-reminder />
+      <mc-reminder-toast />
     } @else {
       <mc-onboarding />
     }

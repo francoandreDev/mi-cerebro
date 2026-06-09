@@ -173,6 +173,10 @@ export class CalendarContainer {
     await this.router.navigate(['/goals']);
   }
 
+  protected async onCreateReminder(): Promise<void> {
+    await this.router.navigate(['/reminders']);
+  }
+
   private async navigate(patch: {
     view?: ViewMode;
     cursor?: string;

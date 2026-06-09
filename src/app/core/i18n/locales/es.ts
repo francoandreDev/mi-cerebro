@@ -412,7 +412,27 @@ export const es = {
   'calendar.day.untitled': 'Sin título',
   'calendar.day.newTask': 'Nueva tarea',
   'calendar.day.newGoal': 'Nueva meta',
+  'calendar.day.newReminder': 'Nuevo recordatorio',
   'tree.type.calendar': 'Calendario',
+  'tree.type.reminders': 'Recordatorios',
+
+  'common.delete': 'Borrar',
+
+  'reminders.title': 'Recordatorios',
+  'reminders.new': 'Nuevo recordatorio',
+  'reminders.pending': 'Pendientes',
+  'reminders.done': 'Hechos',
+  'reminders.emptyPending': 'No tenés recordatorios pendientes.',
+  'reminders.untitled': 'Sin título',
+  'reminders.titlePlaceholder': 'Título del recordatorio',
+  'reminders.markDone': 'Marcar como hecho',
+  'reminders.markPending': 'Reabrir',
+  'reminders.deleteConfirm': '¿Borrar "{title}"?',
+  'reminders.toast.title': 'Recordatorio',
+  'reminders.toast.open': 'Ver',
+
+  'calendar.kind.reminder': 'Recordatorios',
+  'trash.kind.reminder': 'Recordatorio',
 } as const;
 
 export type EsDictionary = typeof es;

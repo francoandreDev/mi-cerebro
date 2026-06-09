@@ -1,4 +1,13 @@
-export type TrashKind = 'note' | 'task' | 'goal' | 'list' | 'writing' | 'book' | 'image' | 'file';
+export type TrashKind =
+  | 'note'
+  | 'task'
+  | 'goal'
+  | 'list'
+  | 'writing'
+  | 'book'
+  | 'image'
+  | 'file'
+  | 'reminder';
 
 export type TrashEntryShape = 'file' | 'directory';
 
@@ -25,4 +34,5 @@ export const KIND_DIRS: Record<TrashKind, string> = {
   book: 'books',
   image: 'images',
   file: 'files',
+  reminder: 'reminders',
 };

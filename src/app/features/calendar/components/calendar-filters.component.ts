@@ -27,6 +27,14 @@ import type { Tag } from '@core/tags/tag.types';
       >
         {{ t('calendar.kind.goal') }}
       </button>
+      <button
+        type="button"
+        class="chip"
+        [class.active]="kinds().has('reminder')"
+        (click)="toggleKind.emit('reminder')"
+      >
+        {{ t('calendar.kind.reminder') }}
+      </button>
     </div>
     @if (tags().length > 0) {
       <div class="row">
