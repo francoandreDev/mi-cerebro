@@ -77,6 +77,29 @@ export class GalleriesContainer {
       }
     });
     this.destroyRef.onDestroy(() => this.revokeAll());
+    const onPaste = (event: ClipboardEvent): void => this.handlePaste(event);
+    document.addEventListener('paste', onPaste);
+    this.destroyRef.onDestroy(() => document.removeEventListener('paste', onPaste));
+  }
+
+  // why: paste at document level so we don't need the user to click into the
+  //      gallery first. We bail when the focus is inside a real input/editor
+  //      so the user can still paste text into the title or tag picker.
+  private handlePaste(event: ClipboardEvent): void {
+    if (!this.active() || !this.lock.editable()) return;
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('input, textarea, [contenteditable="true"], [contenteditable=""]')) return;
+    const items = event.clipboardData?.items;
+    if (!items) return;
+    const files: File[] = [];
+    for (const item of Array.from(items)) {
+      if (item.kind !== 'file' || !item.type.startsWith('image/')) continue;
+      const f = item.getAsFile();
+      if (f) files.push(f);
+    }
+    if (files.length === 0) return;
+    event.preventDefault();
+    void this.onAddFiles(files);
   }
 
   protected t(key: TranslationKey): string {
