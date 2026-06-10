@@ -56,7 +56,7 @@ export class AutocommitService {
 
   start(): void {
     if (this.timerHandle !== null) return;
-    void this.versioning.ensureRepo().catch((cause: unknown) => {
+    void this.bootstrap().catch((cause: unknown) => {
       this.errors.report(this.wrapError(cause, 'ensureRepo'));
     });
     this.timerHandle = setInterval(() => void this.tryCommit('timer'), AUTOCOMMIT_TIMER_MS);
@@ -85,6 +85,17 @@ export class AutocommitService {
   // Manual entry point for explicit user actions or future triggers.
   async commitNow(reason = 'manual'): Promise<string | null> {
     return this.runCommit(reason);
+  }
+
+  private async bootstrap(): Promise<void> {
+    await this.versioning.ensureRepo();
+    // why: lastCommitAt is in-memory; on reload we recover the timestamp
+    //      from the most recent commit so the footer shows the real
+    //      relative time instead of "Sin commits aún".
+    const entries = await this.versioning.log(1).catch(() => []);
+    if (entries.length > 0) {
+      this.lastCommitAtSignal.set(new Date(entries[0]!.authorTimestamp));
+    }
   }
 
   private onNavigation(url: string): void {
