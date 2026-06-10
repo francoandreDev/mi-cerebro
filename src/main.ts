@@ -1,6 +1,14 @@
-import { bootstrapApplication } from '@angular/platform-browser';
-import { appConfig } from './app/app.config';
-import { App } from './app/app';
+// why: isomorphic-git relies on Node's Buffer global. Browsers don't
+//      ship one, so we polyfill before any module that might import
+//      it. Must run before bootstrapApplication.
+import { Buffer } from 'buffer';
+(globalThis as unknown as { Buffer: typeof Buffer }).Buffer = Buffer;
 
-bootstrapApplication(App, appConfig)
-  .catch((err) => console.error(err));
+import { bootstrapApplication } from '@angular/platform-browser';
+
+import { App } from './app/app';
+import { appConfig } from './app/app.config';
+
+bootstrapApplication(App, appConfig).catch((err: unknown) => {
+  console.error(err);
+});

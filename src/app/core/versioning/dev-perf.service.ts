@@ -8,7 +8,7 @@
 // is an internal precondition signal, not user-facing.
 /* eslint-disable no-restricted-syntax */
 
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 
 import { WorkspaceService } from '@core/fs/workspace.service';
 
@@ -25,35 +25,28 @@ import {
   caso9,
   caso10,
 } from './dev-perf.casos';
+import type { CaseResult, PerfReport, ProgressState } from './dev-perf.types';
 import { GitFsAdapter } from './git-fs.adapter';
+
+export type { CaseResult, CaseStatus, PerfReport, ProgressState } from './dev-perf.types';
 
 const SCRATCH_ROOT = '/.mi-cerebro/perf';
 const COMMIT_THRESHOLD_MS = 3000;
 const LOG_THRESHOLD_MS = 500;
-
-export type CaseStatus = 'pass' | 'fail';
-
-export interface CaseResult {
-  readonly id: string;
-  readonly name: string;
-  readonly status: CaseStatus;
-  readonly durationMs: number;
-  readonly detail?: string;
-}
-
-export interface PerfReport {
-  readonly cases: readonly CaseResult[];
-  readonly caso7?: Caso7Detail;
-  readonly verdict: 'viable' | 'fallback' | 'partial';
-  readonly thresholds: {
-    readonly commitAllMs: number;
-    readonly logMs: number;
-  };
-}
+const TOTAL_CASES = 10;
 
 @Injectable({ providedIn: 'root' })
 export class DevPerfService {
   private readonly workspace = inject(WorkspaceService);
+  private readonly progressSignal = signal<ProgressState>({
+    phase: 'idle',
+    currentId: null,
+    currentName: null,
+    currentStartMs: 0,
+    completed: 0,
+    total: TOTAL_CASES,
+  });
+  readonly progress = this.progressSignal.asReadonly();
 
   private adapter(): GitFsAdapter {
     const root = this.workspace.root();
@@ -63,6 +56,14 @@ export class DevPerfService {
 
   async runAll(n: number): Promise<PerfReport> {
     const fs = this.adapter();
+    this.progressSignal.set({
+      phase: 'cleanup-start',
+      currentId: null,
+      currentName: 'limpiando scratch previo',
+      currentStartMs: performance.now(),
+      completed: 0,
+      total: TOTAL_CASES,
+    });
     await this.cleanup(fs);
     await fs.promises.mkdir('/.mi-cerebro').catch(() => undefined);
     await fs.promises.mkdir(SCRATCH_ROOT);
@@ -92,6 +93,13 @@ export class DevPerfService {
     );
     cases.push(await this.run('10', 'detecta repo existente', () => caso10(fs, dirFor('10'))));
 
+    this.progressSignal.update((p) => ({
+      ...p,
+      phase: 'cleanup-end',
+      currentId: null,
+      currentName: 'limpiando scratch',
+      currentStartMs: performance.now(),
+    }));
     await this.cleanup(fs);
 
     const correctnessOk = cases.filter((c) => c.id !== '7').every((c) => c.status === 'pass');
@@ -102,6 +110,14 @@ export class DevPerfService {
       detail.logMs < LOG_THRESHOLD_MS;
     const verdict: PerfReport['verdict'] =
       correctnessOk && perfOk ? 'viable' : correctnessOk ? 'partial' : 'fallback';
+
+    this.progressSignal.update((p) => ({
+      ...p,
+      phase: 'done',
+      currentId: null,
+      currentName: null,
+      completed: TOTAL_CASES,
+    }));
 
     return {
       cases,
@@ -118,18 +134,29 @@ export class DevPerfService {
 
   private async run(id: string, name: string, body: () => Promise<void>): Promise<CaseResult> {
     const start = performance.now();
+    this.progressSignal.update((p) => ({
+      ...p,
+      phase: 'running',
+      currentId: id,
+      currentName: name,
+      currentStartMs: start,
+    }));
+
+    console.log(`[perf] ▶ caso ${id}: ${name}`);
     try {
       await body();
-      return { id, name, status: 'pass', durationMs: performance.now() - start };
+      const durationMs = performance.now() - start;
+
+      console.log(`[perf] ✓ caso ${id}: ${Math.round(durationMs)} ms`);
+      this.progressSignal.update((p) => ({ ...p, completed: p.completed + 1 }));
+      return { id, name, status: 'pass', durationMs };
     } catch (e) {
       const msg = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
-      return {
-        id,
-        name,
-        status: 'fail',
-        durationMs: performance.now() - start,
-        detail: msg,
-      };
+      const durationMs = performance.now() - start;
+
+      console.warn(`[perf] ✗ caso ${id}: ${msg} (${Math.round(durationMs)} ms)`);
+      this.progressSignal.update((p) => ({ ...p, completed: p.completed + 1 }));
+      return { id, name, status: 'fail', durationMs, detail: msg };
     }
   }
 

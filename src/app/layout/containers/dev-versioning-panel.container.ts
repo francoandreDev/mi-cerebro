@@ -2,7 +2,8 @@
 // renders the resulting case table + verdict banner. Mounted only
 // when isDevMode() is true in app-shell. Has no place in prod.
 
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import type { OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import type { PerfReport } from '@core/versioning/dev-perf.service';
@@ -33,6 +34,26 @@ type State = 'idle' | 'running' | 'done';
             Limpiar scratch
           </button>
         </div>
+        @if (state() === 'running') {
+          <div class="progress">
+            <div class="progress-bar">
+              <div class="progress-fill" [style.width.%]="progressPct()"></div>
+            </div>
+            <div class="progress-text">
+              {{ progress().completed }} / {{ progress().total }} ·
+              {{
+                progress().currentName
+                  ? 'caso ' +
+                    (progress().currentId ?? '?') +
+                    ' — ' +
+                    progress().currentName +
+                    ' · ' +
+                    ms(elapsedMs())
+                  : '…'
+              }}
+            </div>
+          </div>
+        }
         @if (report(); as r) {
           <div class="verdict verdict-{{ r.verdict }}">
             Veredicto:
@@ -102,18 +123,30 @@ type State = 'idle' | 'running' | 'done';
   `,
   styleUrl: './dev-versioning-panel.container.css',
 })
-export class DevVersioningPanelContainer {
+export class DevVersioningPanelContainer implements OnDestroy {
   private readonly perf = inject(DevPerfService);
   protected readonly open = signal(false);
   protected readonly state = signal<State>('idle');
   protected readonly report = signal<PerfReport | null>(null);
   protected readonly error = signal<string | null>(null);
+  protected readonly progress = this.perf.progress;
+  protected readonly elapsedMs = signal(0);
+  protected readonly progressPct = computed(() => {
+    const p = this.progress();
+    return p.total > 0 ? Math.round((p.completed / p.total) * 100) : 0;
+  });
   protected nValue = 100;
+  private tickHandle: ReturnType<typeof setInterval> | null = null;
+
+  ngOnDestroy(): void {
+    this.stopTicker();
+  }
 
   protected async run(): Promise<void> {
     this.state.set('running');
     this.error.set(null);
     this.report.set(null);
+    this.startTicker();
     try {
       const r = await this.perf.runAll(Math.max(1, Math.min(2000, this.nValue | 0)));
       this.report.set(r);
@@ -121,6 +154,23 @@ export class DevVersioningPanelContainer {
     } catch (e) {
       this.error.set(e instanceof Error ? e.message : String(e));
       this.state.set('idle');
+    } finally {
+      this.stopTicker();
+    }
+  }
+
+  private startTicker(): void {
+    this.stopTicker();
+    this.tickHandle = setInterval(() => {
+      const p = this.progress();
+      this.elapsedMs.set(p.currentStartMs > 0 ? performance.now() - p.currentStartMs : 0);
+    }, 100);
+  }
+
+  private stopTicker(): void {
+    if (this.tickHandle !== null) {
+      clearInterval(this.tickHandle);
+      this.tickHandle = null;
     }
   }
 
