@@ -67,16 +67,109 @@
               >
                 <span class="entity-status">{{ d.status }}</span>
                 <span class="entity-path">{{ d.filepath }}</span>
-                @if (d.isBinary) {
+                @if (d.view.kind === 'binary') {
                   <span class="entity-meta">
-                    {{ formatBytes(d.beforeSize) }} → {{ formatBytes(d.afterSize) }}
+                    {{ formatBytes(d.view.beforeSize) }} → {{ formatBytes(d.view.afterSize) }}
                   </span>
                 }
               </button>
-              @if (expandedPath() === d.filepath && !d.isBinary) {
-                <pre
-                  class="diff"
-                >@for (chunk of d.chunks; track $index) {<span class="chunk chunk-{{ chunk.kind }}">{{ chunk.value }}</span>}</pre>
+              @if (expandedPath() === d.filepath) {
+                @switch (d.view.kind) {
+                  @case ('entity') {
+                    @if (d.view.title.status !== 'unchanged') {
+                      <section class="diff-section">
+                        <h4>{{ i18n.t('versioning.history.field.title') }}</h4>
+                        <div class="title-diff title-{{ d.view.title.status }}">
+                          @if (d.view.title.before !== null) {
+                            <div class="title-line title-before">{{ d.view.title.before }}</div>
+                          }
+                          @if (d.view.title.after !== null) {
+                            <div class="title-line title-after">{{ d.view.title.after }}</div>
+                          }
+                        </div>
+                      </section>
+                    }
+                    @if (d.view.body !== null && d.view.body.length > 0) {
+                      <section class="diff-section">
+                        <h4>{{ i18n.t('versioning.history.field.body') }}</h4>
+                        <pre
+                          class="diff"
+                        >@for (chunk of d.view.body; track $index) {<span class="chunk chunk-{{ chunk.kind }}">{{ chunk.value }}</span>}</pre>
+                      </section>
+                    }
+                    @if (d.view.tags.added.length + d.view.tags.removed.length > 0) {
+                      <section class="diff-section">
+                        <h4>{{ i18n.t('versioning.history.field.tags') }}</h4>
+                        <div class="tag-chips">
+                          @for (t of d.view.tags.removed; track t) {
+                            <span class="tag-chip tag-removed">− {{ t }}</span>
+                          }
+                          @for (t of d.view.tags.added; track t) {
+                            <span class="tag-chip tag-added">+ {{ t }}</span>
+                          }
+                          @for (t of d.view.tags.unchanged; track t) {
+                            <span class="tag-chip tag-unchanged">{{ t }}</span>
+                          }
+                        </div>
+                      </section>
+                    }
+                    @if (d.view.fields.user.length > 0) {
+                      <section class="diff-section">
+                        <h4>{{ i18n.t('versioning.history.field.userFields') }}</h4>
+                        <table class="fields">
+                          <thead>
+                            <tr>
+                              <th>{{ i18n.t('versioning.history.field.key') }}</th>
+                              <th>{{ i18n.t('versioning.history.field.before') }}</th>
+                              <th>{{ i18n.t('versioning.history.field.after') }}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @for (f of d.view.fields.user; track f.key) {
+                              <tr class="field-row field-{{ f.status }}">
+                                <td class="field-key">{{ f.key }}</td>
+                                <td class="field-cell field-before">{{ f.before ?? '—' }}</td>
+                                <td class="field-cell field-after">{{ f.after ?? '—' }}</td>
+                              </tr>
+                            }
+                          </tbody>
+                        </table>
+                      </section>
+                    }
+                    @if (d.view.fields.system.length > 0) {
+                      <section class="diff-section">
+                        <button
+                          type="button"
+                          class="system-toggle"
+                          [attr.aria-expanded]="isSystemExpanded(d.filepath)"
+                          (click)="toggleSystemExpanded(d.filepath)"
+                        >
+                          {{ isSystemExpanded(d.filepath) ? '▾' : '▸' }}
+                          {{ i18n.t('versioning.history.field.systemFields') }}
+                          ({{ d.view.fields.system.length }})
+                        </button>
+                        @if (isSystemExpanded(d.filepath)) {
+                          <table class="fields fields-system">
+                            <tbody>
+                              @for (f of d.view.fields.system; track f.key) {
+                                <tr class="field-row field-{{ f.status }}">
+                                  <td class="field-key">{{ f.key }}</td>
+                                  <td class="field-cell field-before">{{ f.before ?? '—' }}</td>
+                                  <td class="field-cell field-after">{{ f.after ?? '—' }}</td>
+                                </tr>
+                              }
+                            </tbody>
+                          </table>
+                        }
+                      </section>
+                    }
+                  }
+                  @case ('text') {
+                    <pre
+                      class="diff"
+                    >@for (chunk of d.view.chunks; track $index) {<span class="chunk chunk-{{ chunk.kind }}">{{ chunk.value }}</span>}</pre>
+                  }
+                }
               }
             </li>
           }

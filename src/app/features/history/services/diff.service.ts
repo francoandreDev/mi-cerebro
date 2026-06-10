@@ -1,7 +1,10 @@
-// Computes per-entity diffs between a commit and its parent. For each
-// changed path, fetches the blob on both sides, normalizes TipTap docs
-// to plain text, and runs jsdiff line-by-line. Binary entries (images,
-// audio) skip text rendering and just show before/after sizes.
+// Computes per-entity diffs between a commit and its parent. Walks
+// the two trees, classifies changed paths, then builds a structured
+// view per file:
+//   - entity JSON: title + body (TipTap prose) + tags chips + user
+//     fields table + system fields collapsed.
+//   - other text: plain unified line diff.
+//   - binary: just before/after sizes.
 
 import { Injectable, inject } from '@angular/core';
 import { diffLines } from 'diff';
@@ -10,7 +13,18 @@ import * as git from 'isomorphic-git';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { GitFsAdapter } from '@core/versioning/git-fs.adapter';
 
-import { blobToText, isLikelyBinary, rewriteJsonForDiff } from './diff.utils';
+import type { FieldCategories, FieldChangeStatus, TagsDelta } from './diff.utils';
+import {
+  asTagArray,
+  blobToText,
+  bodyDiffOf,
+  categorizeFields,
+  diffTagArrays,
+  isEntityPath,
+  isLikelyBinary,
+  parseEntityJson,
+  titleDiffOf,
+} from './diff.utils';
 
 export type DiffStatus = 'added' | 'modified' | 'deleted';
 
@@ -19,13 +33,29 @@ export interface DiffChunk {
   readonly value: string;
 }
 
+export interface TitleDiff {
+  readonly status: FieldChangeStatus;
+  readonly before: string | null;
+  readonly after: string | null;
+}
+
+export type EntityDiffView =
+  | { readonly kind: 'binary'; readonly beforeSize: number; readonly afterSize: number }
+  | { readonly kind: 'text'; readonly chunks: readonly DiffChunk[] }
+  | {
+      readonly kind: 'entity';
+      readonly title: TitleDiff;
+      readonly body: readonly DiffChunk[] | null;
+      readonly tags: TagsDelta;
+      readonly fields: FieldCategories;
+    };
+
 export interface EntityDiff {
   readonly filepath: string;
   readonly status: DiffStatus;
-  readonly isBinary: boolean;
+  readonly view: EntityDiffView;
   readonly beforeSize: number;
   readonly afterSize: number;
-  readonly chunks: readonly DiffChunk[];
 }
 
 @Injectable()
@@ -89,33 +119,32 @@ export class HistoryDiffService {
   }
 
   private async buildDiff(fs: GitFsAdapter, change: RawChange): Promise<EntityDiff> {
-    const before = change.beforeOid
-      ? (await git.readBlob({ fs, dir: '/', oid: change.beforeOid })).blob
-      : null;
-    const after = change.afterOid
-      ? (await git.readBlob({ fs, dir: '/', oid: change.afterOid })).blob
-      : null;
-    const isBinary = isLikelyBinary(before) || isLikelyBinary(after);
-    if (isBinary) {
-      return {
-        filepath: change.filepath,
-        status: change.status,
-        isBinary: true,
-        beforeSize: before?.byteLength ?? 0,
-        afterSize: after?.byteLength ?? 0,
-        chunks: [],
-      };
-    }
-    const beforeText = renderText(before);
-    const afterText = renderText(after);
-    return {
+    const before = await this.readBlob(fs, change.beforeOid);
+    const after = await this.readBlob(fs, change.afterOid);
+    const baseSize = before?.byteLength ?? 0;
+    const newSize = after?.byteLength ?? 0;
+    const common = {
       filepath: change.filepath,
       status: change.status,
-      isBinary: false,
-      beforeSize: before?.byteLength ?? 0,
-      afterSize: after?.byteLength ?? 0,
-      chunks: toChunks(beforeText, afterText),
+      beforeSize: baseSize,
+      afterSize: newSize,
     };
+    if (isLikelyBinary(before) || isLikelyBinary(after)) {
+      return { ...common, view: { kind: 'binary', beforeSize: baseSize, afterSize: newSize } };
+    }
+    if (isEntityPath(change.filepath)) {
+      const view = buildEntityView(before, after);
+      if (view) return { ...common, view };
+    }
+    return {
+      ...common,
+      view: { kind: 'text', chunks: toChunks(textOrEmpty(before), textOrEmpty(after)) },
+    };
+  }
+
+  private async readBlob(fs: GitFsAdapter, oid: string | null): Promise<Uint8Array | null> {
+    if (!oid) return null;
+    return (await git.readBlob({ fs, dir: '/', oid })).blob;
   }
 }
 
@@ -126,22 +155,29 @@ interface RawChange {
   readonly afterOid: string | null;
 }
 
-function renderText(blob: Uint8Array | null): string {
-  const text = blobToText(blob);
-  if (!text) return '';
-  try {
-    const parsed = JSON.parse(text) as unknown;
-    const rewritten = rewriteJsonForDiff(parsed);
-    return JSON.stringify(rewritten, null, 2);
-  } catch {
-    return text;
-  }
+function textOrEmpty(blob: Uint8Array | null): string {
+  return blob ? blobToText(blob) : '';
 }
 
 function toChunks(before: string, after: string): readonly DiffChunk[] {
-  const parts = diffLines(before, after);
-  return parts.map((p) => ({
+  return diffLines(before, after).map((p) => ({
     kind: p.added ? 'add' : p.removed ? 'remove' : 'context',
     value: p.value,
   }));
+}
+
+function buildEntityView(
+  beforeBlob: Uint8Array | null,
+  afterBlob: Uint8Array | null,
+): EntityDiffView | null {
+  const before = parseEntityJson(beforeBlob);
+  const after = parseEntityJson(afterBlob);
+  if (!before && !after) return null;
+  return {
+    kind: 'entity',
+    title: titleDiffOf(before?.['title'], after?.['title']),
+    body: bodyDiffOf(before?.['body'], after?.['body'], toChunks),
+    tags: diffTagArrays(asTagArray(before?.['tags']), asTagArray(after?.['tags'])),
+    fields: categorizeFields(before, after),
+  };
 }

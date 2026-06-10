@@ -92,6 +92,19 @@ export class HistoryContainer implements OnInit {
     this.expandedPathSignal.update((p) => (p === path ? null : path));
   }
 
+  private readonly systemExpandedSignal = signal<Set<string>>(new Set());
+  protected isSystemExpanded(path: string): boolean {
+    return this.systemExpandedSignal().has(path);
+  }
+  protected toggleSystemExpanded(path: string): void {
+    this.systemExpandedSignal.update((s) => {
+      const next = new Set(s);
+      if (next.has(path)) next.delete(path);
+      else next.add(path);
+      return next;
+    });
+  }
+
   protected formatBytes(n: number): string {
     if (n < 1024) return `${n} B`;
     if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
