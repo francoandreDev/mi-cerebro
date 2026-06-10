@@ -1,0 +1,124 @@
+:host {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 9999;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 12px;
+}
+
+.toggle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--mc-border, #ccc);
+  background: var(--mc-bg-base, #fff);
+  cursor: pointer;
+  font-size: 18px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.panel {
+  width: 480px;
+  max-height: 70vh;
+  overflow: auto;
+  background: var(--mc-bg-base, #fff);
+  color: var(--mc-fg-primary, #111);
+  border: 1px solid var(--mc-border, #ccc);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  padding: 12px;
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.close {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.controls input {
+  width: 60px;
+}
+
+.verdict {
+  padding: 6px 10px;
+  border-radius: 6px;
+  margin: 8px 0;
+}
+
+.verdict-viable {
+  background: #d1f5d3;
+  color: #064a09;
+}
+
+.verdict-partial {
+  background: #fff4cc;
+  color: #5a4400;
+}
+
+.verdict-fallback {
+  background: #fdd6d6;
+  color: #5a0707;
+}
+
+.caso7 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 12px;
+  background: rgba(0, 0, 0, 0.04);
+  padding: 8px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.caso7 .bad {
+  color: #a30000;
+  font-weight: 600;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 4px 6px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+th {
+  font-weight: 600;
+}
+
+tr.fail td {
+  color: #a30000;
+}
+
+tr.detail td {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: #555;
+  padding-top: 0;
+}
+
+.error {
+  color: #a30000;
+  margin-top: 8px;
+}

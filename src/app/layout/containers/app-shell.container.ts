@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, isDevMode } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
 import { ErrorService } from '@core/errors/error.service';
@@ -9,6 +9,7 @@ import { OnboardingContainer } from '@features/onboarding/containers/onboarding.
 import { ReminderToastContainer } from '@features/reminders/containers/reminder-toast.container';
 import { CommandPaletteContainer } from '@features/search/containers/command-palette.container';
 
+import { DevVersioningPanelContainer } from './dev-versioning-panel.container';
 import { ErrorDisplayContainer } from './error-display.container';
 import { MiniPlayerContainer } from './mini-player.container';
 import { WorkspaceSidebarContainer } from './workspace-sidebar.container';
@@ -25,6 +26,7 @@ import { WorkspaceSidebarContainer } from './workspace-sidebar.container';
     GoalReminderContainer,
     ReminderToastContainer,
     MiniPlayerContainer,
+    DevVersioningPanelContainer,
   ],
   template: `
     @if (workspace.isReady()) {
@@ -38,6 +40,9 @@ import { WorkspaceSidebarContainer } from './workspace-sidebar.container';
       <mc-goal-reminder />
       <mc-reminder-toast />
       <mc-mini-player />
+      @if (isDev) {
+        <mc-dev-versioning-panel />
+      }
     } @else {
       <mc-onboarding />
     }
@@ -65,6 +70,7 @@ export class AppShellContainer {
   // why: instantiate so theme is applied before first paint.
   protected readonly theme = inject(ThemeService);
   protected readonly workspace = inject(WorkspaceService);
+  protected readonly isDev = isDevMode();
   private readonly errors = inject(ErrorService);
 
   constructor() {
