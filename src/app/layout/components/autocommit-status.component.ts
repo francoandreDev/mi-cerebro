@@ -5,6 +5,7 @@
 
 import type { OnDestroy, OnInit } from '@angular/core';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 
 import { I18nService } from '@core/i18n/i18n.service';
 import { AutocommitService } from '@core/versioning/autocommit.service';
@@ -15,10 +16,17 @@ const TICK_MS = 30 * 1000;
   selector: 'mc-autocommit-status',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="status" [class.status-busy]="state() === 'committing'">
+    <button
+      type="button"
+      class="status"
+      [class.status-busy]="state() === 'committing'"
+      [attr.aria-label]="i18n.t('versioning.history.openButton')"
+      [title]="i18n.t('versioning.history.openButton')"
+      (click)="openHistory()"
+    >
       <span aria-hidden="true" class="dot"></span>
       <span class="label">{{ label() }}</span>
-    </div>
+    </button>
   `,
   styles: `
     :host {
@@ -32,6 +40,22 @@ const TICK_MS = 30 * 1000;
       display: flex;
       align-items: center;
       gap: 6px;
+      width: 100%;
+      background: transparent;
+      border: none;
+      padding: 4px 0;
+      color: inherit;
+      font: inherit;
+      cursor: pointer;
+      text-align: left;
+    }
+    .status:hover {
+      color: var(--mc-fg-primary, #111);
+    }
+    .status:focus-visible {
+      outline: 2px solid var(--mc-accent, #3a7bd5);
+      outline-offset: 2px;
+      border-radius: 4px;
     }
     .dot {
       width: 6px;
@@ -62,10 +86,15 @@ const TICK_MS = 30 * 1000;
 })
 export class AutocommitStatusComponent implements OnInit, OnDestroy {
   private readonly autocommit = inject(AutocommitService);
-  private readonly i18n = inject(I18nService);
+  protected readonly i18n = inject(I18nService);
+  private readonly router = inject(Router);
   protected readonly state = this.autocommit.state;
   private readonly tick = signal(Date.now());
   private tickHandle: ReturnType<typeof setInterval> | null = null;
+
+  protected openHistory(): void {
+    void this.router.navigate(['/history']);
+  }
 
   protected readonly label = computed(() => {
     if (this.state() === 'committing') return this.i18n.t('versioning.status.committing');

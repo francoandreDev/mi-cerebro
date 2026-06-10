@@ -51,4 +51,8 @@ export const routes: Routes = [
     path: 'trash',
     loadChildren: () => import('./features/trash/trash.routes').then((m) => m.trashRoutes),
   },
+  {
+    path: 'history',
+    loadChildren: () => import('./features/history/history.routes').then((m) => m.historyRoutes),
+  },
 ];

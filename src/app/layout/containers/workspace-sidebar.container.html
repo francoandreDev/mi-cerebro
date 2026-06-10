@@ -47,6 +47,16 @@
     </button>
     <button
       type="button"
+      class="rail-btn history"
+      [class.active]="activeKey() === 'history'"
+      [title]="t('versioning.history.title')"
+      [attr.aria-label]="t('versioning.history.title')"
+      (click)="goTo('history')"
+    >
+      🕐
+    </button>
+    <button
+      type="button"
       class="rail-btn trash"
       [class.active]="activeKey() === 'trash'"
       [title]="t('trash.title')"

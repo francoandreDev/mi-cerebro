@@ -112,6 +112,10 @@ export const es = {
   'versioning.status.none': 'Sin commits aún',
   'versioning.status.committing': 'Guardando versión…',
   'versioning.status.lastCommit': 'Último commit · hace {n} min',
+  'versioning.history.title': 'Historial',
+  'versioning.history.placeholder': 'Próximamente: timeline de commits, diff por entidad, restore.',
+  'versioning.history.openButton': 'Abrir historial',
+  'versioning.history.railLabel': 'Historial',
 
   'notes.title': 'Notas',
   'notes.new': 'Nueva nota',

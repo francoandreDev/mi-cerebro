@@ -38,7 +38,7 @@ import { buildFolderTree } from './folder-tree';
 import { goalBadges, tagBadges, taskBadges } from './tree-badges';
 
 type EntityKind = 'note' | 'task' | 'goal' | 'list' | 'writing' | 'book' | 'image' | 'file';
-type RailKey = EntityKind | 'trash' | 'calendar' | 'reminders' | 'music';
+type RailKey = EntityKind | 'trash' | 'calendar' | 'reminders' | 'music' | 'history';
 
 interface RailItem {
   readonly key: EntityKind;
@@ -133,6 +133,7 @@ export class WorkspaceSidebarContainer {
     if (url.startsWith('/calendar')) return 'calendar';
     if (url.startsWith('/reminders')) return 'reminders';
     if (url.startsWith('/music')) return 'music';
+    if (url.startsWith('/history')) return 'history';
     const match = /^\/(notes|tasks|goals|lists|writings|books|images|files)/.exec(url);
     if (!match) return null;
     return ROUTE_TO_KIND[match[1] as keyof typeof ROUTE_TO_KIND];
@@ -140,7 +141,14 @@ export class WorkspaceSidebarContainer {
 
   protected readonly activeKind = computed<EntityKind | null>(() => {
     const k = this.activeKey();
-    if (k === null || k === 'trash' || k === 'calendar' || k === 'reminders' || k === 'music') {
+    if (
+      k === null ||
+      k === 'trash' ||
+      k === 'calendar' ||
+      k === 'reminders' ||
+      k === 'music' ||
+      k === 'history'
+    ) {
       return null;
     }
     return k;
@@ -153,6 +161,7 @@ export class WorkspaceSidebarContainer {
     if (k === 'calendar') return this.t('calendar.title');
     if (k === 'reminders') return this.t('reminders.title');
     if (k === 'music') return this.t('music.title');
+    if (k === 'history') return this.t('versioning.history.title');
     return this.t(`tree.type.${KIND_TO_TYPE[k]}` as TranslationKey);
   });
 
@@ -394,6 +403,10 @@ export class WorkspaceSidebarContainer {
     }
     if (key === 'music') {
       void this.router.navigate(['/music']);
+      return;
+    }
+    if (key === 'history') {
+      void this.router.navigate(['/history']);
       return;
     }
     void this.router.navigate([KIND_TO_ROUTE[key]]);
