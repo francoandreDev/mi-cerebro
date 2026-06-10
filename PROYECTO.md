@@ -597,9 +597,13 @@ Cada familia tiene 3 índices independientes en IndexedDB: `idx-<family>-main`, 
 
 Configurable en settings: URL de repo privado + PAT (guardado en IndexedDB, no en localStorage). Toggle "push tras cada autocommit" con throttle de 5 min, o sólo manual con botón. **Cero llamadas a red sin esto configurado** (regla §4.14).
 
+### Costo de operaciones git sobre FS Access
+
+Cada operación de isomorphic-git sobre el adapter FS Access tiene un piso de ~100-200 ms por syscall del browser. En la práctica eso se traduce en commits que toman ~2-3 s aún para una sola entidad, ~6 s para 100 entidades a la vez. Las operaciones de **autocommit** corren en background y el costo es invisible. Las operaciones **disparadas por el usuario** (switch de variante, merge entre variantes, accept de un diff-mark del borrador, crear/borrar variante) muestran una **pantalla de carga con mensaje contextual** mientras la operación termina. Patrón estándar de clientes git; aceptable para esta app. Mover `.git/` a OPFS para reducir el piso queda como optimización futura (ver `docs/deferred.md`); se evalúa si la UX con loading screens resulta intolerable en uso real.
+
 ### Fallback si isomorphic-git resulta inviable
 
-Snapshots por entidad en `.mi-cerebro/history/<kind>/<id>/<timestamp>.json`. Misma UI de timeline, distinto backend. Las variantes no son soportables en este modo: la app degrada a una sola "Principal" implícita. Decisión sólo tras prototipo fallido del adapter de isomorphic-git en 13a.
+Snapshots por entidad en `.mi-cerebro/history/<kind>/<id>/<timestamp>.json`. Misma UI de timeline, distinto backend. Las variantes no son soportables en este modo: la app degrada a una sola "Principal" implícita. Decisión sólo tras prototipo fallido del adapter de isomorphic-git en 13a. **Estado al cierre de 13a**: descartado. El adapter pasa los 10 casos de validación con números aceptables bajo el modelo de loading screens.
 
 ---
 
