@@ -1,0 +1,59 @@
+<header class="head">
+  <h2>{{ i18n.t('versioning.history.title') }}</h2>
+</header>
+
+<div class="split">
+  <aside class="timeline" aria-label="Timeline de commits">
+    @if (loading()) {
+      <p class="placeholder">{{ i18n.t('versioning.history.loading') }}</p>
+    } @else if (error(); as err) {
+      <p class="error">{{ err }}</p>
+    } @else if (buckets().length === 0) {
+      <p class="placeholder">{{ i18n.t('versioning.history.empty') }}</p>
+    } @else {
+      @for (b of buckets(); track b.id) {
+        <section class="bucket">
+          <h3 class="bucket-label">{{ bucketLabel(b.id) }}</h3>
+          <ul class="commits">
+            @for (c of b.entries; track c.oid) {
+              <li>
+                <button
+                  type="button"
+                  class="commit"
+                  [class.selected]="selectedOid() === c.oid"
+                  (click)="select(c.oid)"
+                >
+                  <span class="commit-time">{{ formatTime(c.date) }}</span>
+                  <span class="commit-message">{{ c.message }}</span>
+                  @if (c.kinds.length > 0) {
+                    <span class="commit-chips">
+                      @for (k of c.kinds; track k) {
+                        <span class="chip">{{ k }}</span>
+                      }
+                    </span>
+                  }
+                  <span class="commit-oid">{{ c.shortOid }}</span>
+                </button>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+    }
+  </aside>
+
+  <section class="detail" aria-live="polite">
+    @if (selectedEntry(); as entry) {
+      <header class="detail-head">
+        <h3>{{ entry.message }}</h3>
+        <div class="detail-meta">
+          <code>{{ entry.shortOid }}</code>
+          <span>{{ entry.date.toLocaleString() }}</span>
+        </div>
+      </header>
+      <p class="placeholder">{{ i18n.t('versioning.history.detailComingSoon') }}</p>
+    } @else if (!loading() && buckets().length > 0) {
+      <p class="placeholder">{{ i18n.t('versioning.history.selectACommit') }}</p>
+    }
+  </section>
+</div>
