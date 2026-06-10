@@ -96,3 +96,37 @@ Formato por entrada:
 - **Qué**: §10 menciona "vuelve a la última ruta + última entidad abierta + scroll". Hoy se abre en `/notes` sin recordar nada.
 - **Por qué**: requiere infra de `localStorage` y un listener de route changes. Fuera del scope estricto de búsqueda.
 - **Target**: §19.16a (continuidad de sesión + atajos).
+
+---
+
+## Versionado y variantes (origen: paso 13)
+
+### Anchor `range` para comentarios
+
+- **Qué**: §12 menciona tres niveles de anchor para comentarios (`entity`, `block`, `range`). 13c implementa sólo `entity` y `block`.
+- **Por qué**: `range` requiere UI de selección de texto + persistencia de offsets dentro del bloque + casos de borde de mapping cuando el texto del bloque cambia parcialmente. Cubre un caso minoritario ("comentario sobre estas 3 palabras") cuando `block` ("comentario sobre este párrafo") cubre el 80%.
+- **Target**: §19.16e (pulido del editor).
+
+### Renderizado inline (ghost / overlay) de diff-marks del borrador
+
+- **Qué**: en 13d el borrador se vive desde un panel lateral con lista de cambios pendientes + accept/reject. La versión "rica" — diff-marks renderizadas inline en el editor como ghost text/strikethrough, tipo track-changes de Word — queda fuera del alcance del paso.
+- **Por qué**: el panel lateral entrega funcionalidad completa. El renderizado inline es lindo de UX pero implica una capa nueva de decoraciones ProseMirror y resolución visual de conflictos contra el contenido vivo. Vale como pulido cuando el resto del sistema esté estable y haya uso real para guiar decisiones de diseño.
+- **Target**: §19.16e (pulido del editor) o sin asignar.
+
+### Renderizado overlay unificado (variante "B" original)
+
+- **Qué**: borrador y comentarios renderizados como overlay sobre `main` en una vista única e integrada, en lugar de paneles laterales separados. Era la opción "B" del diseño original; cerramos en "A con datos anclados".
+- **Por qué**: 13c/13d entregan el modelo de datos correcto (anchored refs + diff-marks). El overlay unificado es una capa de renderizado adicional que no aporta funcionalidad nueva, sólo presentación. Se evalúa una vez que el flujo lateral esté en uso real.
+- **Target**: sin asignar (se considera tras vivir con 13c/13d).
+
+### Granularidad por faceta dentro del bundle de merge
+
+- **Qué**: en 13b–d el merge ofrece elegir por entidad el bundle entero (main + draft + comments de la variante origen). Una versión avanzada permitiría tomar `main` de la variante origen pero quedarse con el `draft` o los `comments` de la variante destino.
+- **Por qué**: cubre un caso raro y agrega 3× botones por delta en la UI de merge. Decisión explícita de "simple gana".
+- **Target**: sin asignar (se agrega si aparece demanda real).
+
+### Variantes sobre el fallback sin isomorphic-git
+
+- **Qué**: si el adapter de isomorphic-git resulta inviable en 13a y se cae al fallback de snapshots en `.mi-cerebro/history/`, las variantes (13b en adelante) no son soportables. La app degrada a una sola "Principal" implícita.
+- **Por qué**: implementar variantes sin git significaría reinventar branching + merge desde cero. No vale la pena hasta confirmar que isomorphic-git no funciona.
+- **Target**: sin asignar (sólo se aborda si el fallback se activa en 13a).

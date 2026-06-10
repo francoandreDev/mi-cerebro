@@ -509,13 +509,97 @@ Características:
 
 ---
 
-## 12. Versionado e historial
+## 12. Versionado, variantes e historial
 
-- Commit automático cada cierto intervalo o al cerrar una entidad.
-- UI que maquilla los commits: línea de tiempo con vistas tipo "ayer", "hace una semana", diff visual de texto.
-- Backup off-site: configurar un repo GitHub privado y `git push` desde la app.
-- Botón **export ZIP** siempre disponible como snapshot manual rápido / backup local.
-- Fallback si isomorphic-git resulta inviable: snapshots propios por entidad en `.mi-cerebro/history/`.
+Sistema combinado de autocommits + **variantes** (ramas renombradas en UI) + panel de historial navegable, sobre **isomorphic-git** con adapter propio a File System Access API. El export ZIP (paso 14) coexiste como snapshot manual rápido fuera del flujo git.
+
+### Autocommits
+
+- Timer cada N minutos (default 5, configurable) que evalúa si hubo cambios desde `HEAD` y commitea sólo si los hay. Triggers adicionales: cierre de entidad, cambio de feature, `beforeunload`. Throttle de 60s entre commits aunque se apilen triggers.
+- Mensaje derivado del staging: `auto: 3 notes, 1 task (2026-06-10 14:32)`. Cada autocommit lleva prefijo de faceta para que la timeline entremezclada sea legible: `auto: …` (main), `auto [borrador]: …`, `auto [comentarios]: …`.
+- `.gitignore` automático para binarios pesados (`music/tracks/`, `images/*/original/`) y para las redes de seguridad paralelas (`.mi-cerebro/recovery/`, `/pre-migration/`, `/trash/`). Toggle global "incluir binarios en historial" off por default; si se prende, advertencia de bloat.
+
+### Variantes como familias de 3 ramas
+
+Una variante visible al usuario es internamente una **familia de tres ramas git** que se gestiona en bloque:
+
+| Variante visible | Rama main        | Rama borrador             | Rama comentarios             |
+| ---------------- | ---------------- | ------------------------- | ---------------------------- |
+| Principal        | `main`           | `variant/principal/draft` | `variant/principal/comments` |
+| Variante X       | `variant/<slug>` | `variant/<slug>/draft`    | `variant/<slug>/comments`    |
+
+`.mi-cerebro/variants.json` lleva el registro: id, nombre legible, color, `protected`, `lastActivityAt`, refs de las 3 ramas. Borrador y Comentarios son **facetas permanentes de cada familia**: se crean junto con la variante, se borran con ella, no existen sueltas. Principal nunca se borra.
+
+- **Crear variante** = bifurcar las 3 ramas a la vez, cada una forkeada de su faceta hermana en la familia origen. No se arranca con borrador/comentarios vacíos: se heredan los actuales. Forkear el contexto entero, no sólo lo definitivo.
+- **Borrar variante** = `git branch -D` sobre las 3 + remover entrada. Una sola acción del usuario; si tenía commits no mergeados, warning con opción de exportar a ZIP antes.
+
+### Comentarios anclados (rama `comments`)
+
+La rama comentarios **no guarda copias de entidades**. Guarda anotaciones referidas por anchor a contenido en `main` de la misma familia.
+
+- Forma en disco: `comments/<entityId>.json` con array `{id, anchorType, anchor, body, createdAt, orphaned}`.
+- `anchorType` soportados desde 13c: `entity` (toda la entidad) y `block` (un nodo TipTap por id estable). `range` (porción de texto dentro de un bloque) queda diferido a pulido posterior (ver `docs/deferred.md`).
+- **IDs estables de bloques:** extensión TipTap que asigna UUID a cada nodo top-level (párrafos, headings, list items, etc.) al crearlo, persistido como atributo del nodo. Es la única forma de tener anchors que sobrevivan a ediciones; coste ~5% en tamaño del JSON, aceptable.
+- Anchors que quedan invalidados por ediciones que borran el bloque referido se marcan `orphaned: true`. Aparecen en una sección de revisión del panel. **Nunca expiran solos:** el usuario decide re-anclar o eliminar.
+
+### Borrador anclado (rama `draft`, track-changes)
+
+La rama borrador tampoco guarda copias completas. Guarda **diff-marks pendientes** sobre `main` de la misma familia.
+
+- Forma en disco: `drafts/<entityId>.json` con array `{id, anchor, before, after, status: 'pending'|'accepted'|'rejected', createdAt}`.
+- **Modo borrador del editor:** toggle per-entidad (la siguiente entidad arranca en modo normal). Mientras está activo, las ediciones se capturan como diff-marks pendientes en la rama `draft` en vez de aplicarse a `main`.
+- **Aceptar un diff-mark:** genera un commit nuevo en `main` de la familia (`accept-draft: <entidad> (N cambios)`). Nunca pisa historia. El draft pasa a `status: 'accepted'` y desaparece del panel.
+- UI inicial: panel lateral con lista de pending marks + accept/reject por mark. Renderizado inline (ghost / strikethrough en el editor, tipo track-changes de Word) queda diferido a pulido.
+
+### Position tracking
+
+Cada vez que se edita `main`, se recorren los ProseMirror steps y se mapean las posiciones de todos los anchors (de la rama `comments` y de la rama `draft`) para esa entidad. Persistencia automática en las ramas correspondientes vía isomorphic-git plumbing (sin checkout de esas ramas).
+
+### Switch de variante activa
+
+- Una sola variante activa por workspace. Estado: `{family}` (no hay `facet`: borrador y comentarios se viven dentro del editor como paneles laterales, no como vistas separadas del workspace).
+- Cambio de variante: commit forzado de dirty en la familia saliente + `git checkout` a `main` de la familia entrante + invalidación del índice + carga del índice por familia desde IndexedDB.
+- BroadcastChannel sincroniza otras pestañas a la nueva variante; si rehúsan, entran en modo lectura con banner (reusa la maquinaria del paso 8).
+- **Borrador y comentarios nunca aparecen como archivos en el FS del usuario.** Viven exclusivamente en `.git/`, leídos/escritos vía isomorphic-git plumbing sin checkout. El FS siempre refleja `main` de la variante activa.
+
+### Lifecycle de variantes en reposo
+
+- `lastActivityAt` de cada familia = el más reciente `lastActivityAt` de sus 3 ramas. Editar sólo el borrador mantiene viva a la familia.
+- Default 30 días sin actividad → `state: 'dormant'`. Configurable en settings. **Nunca borra sola**, sólo cambia de sección visual.
+- Principal está exenta. Las familias del usuario pueden entrar en reposo; en `/variants` aparecen agrupadas aparte con CTA "Mergear" y "Eliminar".
+
+### Merge entre variantes
+
+Pantalla dedicada (`/variants/merge?from=X&into=Y`).
+
+- Unidad de elección por default: **bundle de las 3 facetas por entidad**. Click "← Quedarme con esto de X" aplica main + comentarios anclados + diff-marks pendientes de X a la familia destino simultáneamente.
+- Granularidad por faceta dentro del bundle queda como opción avanzada, no preseleccionada (ver `docs/deferred.md`).
+- Atajos masivos: `Todo de X →`, `← Todo de Y`. Saltar = no tocar la entidad en destino.
+- Aplicación: 3 commits secuenciales (uno por faceta) compartiendo `Merge-Group: <uuid>` en el trailer. La timeline los agrupa como una sola operación. Si revienta a mitad, los commits ya hechos quedan y la UI muestra "merge parcial, reintentar". No silencioso.
+- Mergear nunca borra la familia origen. Eliminar es una acción separada y explícita.
+
+### Historial `/history`
+
+Split de 2 columnas. Izquierda: commits agrupados por bucket temporal (_Hoy / Ayer / Esta semana / La semana pasada / Hace dos semanas / Hace un mes / Más viejo_) con sticky headers, chips por kind tocado, dot del color de la variante. Toggle "ver todas las variantes" (off por default; on entremezcla commits de todas las familias). Derecha: detalle del commit con lista de entidades cambiadas → diff visual de cada una.
+
+**Diff visual:** texto rico convertido a texto plano normalizado + jsdiff línea a línea inline; metadata aparte como tabla "antes → después"; tags con chips +/–; binarios sólo tamaño antes/después.
+
+### Restore
+
+- **Por entidad:** "restaurar esta versión" → escribe el blob del commit a la ruta actual con escritura atómica + autosave marca dirty.
+- **Por commit completo:** modal de confirmación fuerte + autocommit `before-restore: <hash>` previo. Siempre reversible.
+
+### Índice de búsqueda por familia
+
+Cada familia tiene 3 índices independientes en IndexedDB: `idx-<family>-main`, `idx-<family>-comments`, `idx-<family>-draft`. Cuesta más memoria pero da switch de variante instantáneo (no rebuild) y permite búsqueda dentro de comentarios y drafts sin tocar disco. Las facetas borrador/comentarios suelen ser más livianas que main en contenido, así que el costo real es bastante menor que 3×.
+
+### Push a GitHub (opt-in)
+
+Configurable en settings: URL de repo privado + PAT (guardado en IndexedDB, no en localStorage). Toggle "push tras cada autocommit" con throttle de 5 min, o sólo manual con botón. **Cero llamadas a red sin esto configurado** (regla §4.14).
+
+### Fallback si isomorphic-git resulta inviable
+
+Snapshots por entidad en `.mi-cerebro/history/<kind>/<id>/<timestamp>.json`. Misma UI de timeline, distinto backend. Las variantes no son soportables en este modo: la app degrada a una sola "Principal" implícita. Decisión sólo tras prototipo fallido del adapter de isomorphic-git en 13a.
 
 ---
 
@@ -709,7 +793,12 @@ Tono: **neutro frío sobre blanco**. Acento naranja recalibrado para AA sobre fo
 10. **Calendar.** Feature consumidora-pura: lee de tasks (cada `dueDate`) y goals (deadline) — únicas entidades con fecha hoy; notas/recordatorios entrarán cuando el paso 11 sume reminders y cuando notas ganen fecha. **Cross-feature decoupling:** `@core/calendar/calendar-event.types` define `CalendarEvent { id, entityId, kind: 'task'|'goal', title, date, tags, done }`, `CalendarFilters { kinds, tagIds }` y `eventRoute(event)`; `@core/calendar/calendar-events.service` inyecta `TasksService` y `GoalsService` (mismo patrón que `TrashService`/`FoldersService` para servicios agregadores que viven en core), expone `events` (computed plano sorteado por fecha+título), `eventsByDay` (computed `Map<isoDay, events[]>`) y `filter(events, filters)`. `features/calendar` sólo importa el service de core, nunca features hermanos. **Vistas:** ruta `/calendar` con query params `?view=month|year&cursor=YYYY-MM-DD&day=YYYY-MM-DD`. `CalendarContainer` lee los params con `toSignal(route.queryParamMap)` y deriva `view`, `cursor` y eventos filtrados por mes/año. **Month grid:** componente `CalendarMonthGridComponent` arma siempre 6 semanas (42 celdas) con `buildMonthGrid(year, month)` para que el layout no salte; muestra dots por kind (azul tarea, naranja meta) cuando hay eventos en el día; resalta hoy y el día seleccionado. **Year grid:** `CalendarYearGridComponent` arma 12 mini-meses con tinte `--mc-bg-selected` en días con eventos; click en día abre vista mes + selecciona, click en nombre del mes abre vista mes en ese mes. **Day panel:** `CalendarDayPanelComponent` se monta debajo del grid cuando hay `day` en query params, agrupa eventos por kind ("Tareas" / "Metas") con tachado en done/completed; botones `+ Nueva tarea` y `+ Nueva meta` navegan a `/tasks` y `/goals` (prefijar fecha en la entidad creada queda como follow-up). **Filtros:** `CalendarFiltersComponent` con chips para los dos kinds y chips para tags globales (de `TagsService.tags()`); cuando hay tags seleccionados aparece `Limpiar tags`. Sidebar suma rail-icon 📅 "Calendario" antes del 🗑, con tratamiento de RailKey análogo a `trash` (no es entity-kind, no abre árbol). Rutas registradas en `app.routes.ts`. Fuera de alcance: prefijar fecha al crear una entidad desde el calendario, drag-and-drop entre días, vista semana, integrar `notas fechadas` (modelo de Note aún no tiene fecha) y reminders (paso 11). _Cerrado._
 11. **Reminders.** Entidad plana, sin folders ni tags ni body — solo `title`, `dueAt` (ISO local sin timezone, `YYYY-MM-DDTHH:mm`), `done` y timestamps. `RemindersService` (en `features/reminders/services/`) reusa el patrón de single-file pero simplificado: refresh/create/read/save/deleteToTrash, sin walkEntities ni folders, archivos en `reminders/<uuid>.json`. Summary con `title/dueAt/done/updatedAt`, ordenado pending-earliest-first y luego done por updatedAt desc. **Scheduler in-app:** nuevo `@core/reminders/reminder-scheduler.service` (singleton root, instanciado al montar el toast) computa el próximo pending no-fired (`nextDue`), arma un `setTimeout` y al disparar mete el reminder en una signal `active`. Re-arma en cada cambio de summaries via `effect`. `dueAt` se parsea como wall-clock local (`new Date(y, mo-1, d, h, mi)`) — coincide con el calendario del usuario sin chasing de zonas. `firedIds` Set en memoria evita re-disparar el mismo recordatorio durante la sesión (al recargar arrancan limpios — consistente con "solo in-app con la app abierta" del §14). **Toast UI:** `ReminderToastContainer` montado en `AppShellContainer` debajo de `<mc-goal-reminder>`; banner abajo-derecha con borde acento, título y botones "Ver" (navega a `/reminders` y dismiss) y "✕". **Pantalla dedicada:** `RemindersContainer` (ruta `/reminders`) con lista pending arriba (editable inline: title input + datetime-local) + lista done abajo, checkbox para toggle, botón "+" para crear, ✕ para mover a papelera. Sidebar suma rail-icon ⏰ "Recordatorios" después del 📅, con tratamiento de RailKey análogo a calendar/trash. **Integración trash:** `TrashKind` y `KIND_DIRS` extendidos con `reminder → reminders`; `parseEntry` acepta el nuevo prefijo; `refreshKind` llama a `RemindersService.refresh`. **Divergencia FolderKind/TrashKind:** como reminders no tiene folders, `FolderKind` deja de ser un alias de `TrashKind` y se define explícito (todos los kinds menos reminder), para que el switch exhaustivo de `FoldersService` no caiga en una rama imposible. **Integración calendar:** `CalendarEventKind` suma `'reminder'`, `ALL_CALENDAR_KINDS` lo incluye, `eventRoute(reminder)` apunta a `/reminders` (sin id de detalle — no hay vista individual), `CalendarEventsService` inyecta `RemindersService` y proyecta cada summary con `tags: []`. Filtros + day-panel ganan chip y botón "+ Nuevo recordatorio". Fuera de alcance: notificaciones del SO con app cerrada (§2 fuera de alcance), folders + tags + body en reminders, snooze, repetición (recurring). _Cerrado._
 12. **Music player.** Reproductor mini global + sección dedicada `/music`. **Almacenamiento en disco:** carpeta `music/` con `_library.json` (manifest `{tracks: Track[]}`), `tracks/<id>.mp3` (binarios) y `playlists/<slug>.json` (uno por playlist). `MusicLibraryService` (`features/music/services/`) maneja library: `refresh` lee el manifest (tolera ausencia), `addTracks(files)` filtra por `audio/mpeg` o extensión `.mp3`, escribe cada blob con `FsService.writeFileAtomicBinary` y actualiza el manifest atómicamente, `removeTrack` borra el archivo + actualiza manifest, `readBlob(id)` devuelve el `Blob` para reproducción/exposición. `PlaylistsService` reusa el patrón flat (sin folders): `refresh` enumera `playlists/*.json`, `create/read/save/delete`, más `removeTrackFromAll(trackId)` para limpiar refs cuando se borra un track de la biblioteca. **Playback core:** `@core/music/player.service` (singleton root) encapsula un único `HTMLAudioElement`. Estado en signals: `queue: {trackIds, index}`, `isPlaying`, `shuffle` (default `true` — §16 "reproducción aleatoria en bucle"), `currentTrackId`, `currentTrack`. API: `playTrack(id)`, `playPlaylist(trackIds, startIndex)` (si shuffle, baraja en orden con `shuffleFrom` poniendo el seleccionado al frente), `next/prev` (módulo length = bucle), `toggle/stop/toggleShuffle`. Crea/revoca blob URLs por track. `ended` event ⇒ `next()` automático. **Mini-player global:** `MiniPlayerContainer` en `layout/`, montado dentro del shell sólo cuando hay `currentTrack`. Barra fija abajo con título (link a `/music`), ⏮ ▶/⏸ ⏭ 🔀 (toggle aleatorio, resaltado cuando activo) y ✕ (stop). **Sección `/music`:** `MusicContainer` con grid 2-col: biblioteca (subir MP3 múltiple via `<input type=file>` oculto, lista con ▶/⏸ por track, "+" para agregar a playlist activa, ✕ para borrar de biblioteca con `removeTrackFromAll`) y playlists (lista clickable + editor de la activa con título editable, ▶ Reproducir, ↑/↓/✕ por track, borrar playlist). Sidebar suma rail-icon 🎵 "Música" después de ⏰, con RailKey análogo a calendar/trash/reminders (no es entity-kind). Refresh inicial de `MusicLibraryService` + `PlaylistsService` en el constructor del sidebar para que el mini-player vea tracks al primer arranque. Fuera de alcance: drag-and-drop para reordenar tracks de playlist, papelera para tracks/playlists (borrado directo), formatos distintos de MP3, edición de metadata (tags ID3), duración real del archivo (sólo se persiste `null` por ahora), control de volumen, scrubbing en la timeline. _Cerrado._
-13. **Versionado** (isomorphic-git).
+13. **Versionado y variantes.** Sistema combinado de autocommits + variantes + historial navegable sobre **isomorphic-git** con adapter propio a File System Access API. Dividido en sub-pasos:
+    - **13a.** Autocommit + timeline + restore sobre una variante implícita. Sin UI de variantes, sin push remoto. Adapter de isomorphic-git sobre FS Access API; `git init` al detectar workspace sin `.git/`; `VersioningService` con timer (default 5 min, configurable) + triggers (cierre de entidad, cambio de feature, `beforeunload`) + throttle 60s + skip si no hay diff. `.gitignore` automático para binarios (`music/tracks/`, `images/*/original/`) y redes de seguridad (`.mi-cerebro/recovery/`, `/pre-migration/`, `/trash/`). Ruta `/history` con timeline agrupada por bucket temporal + diff visual por entidad (TipTap a texto plano + jsdiff línea a línea; metadata como tabla antes→después; tags con chips +/–; binarios sólo tamaño). Restore por entidad y por commit (con autocommit `before-restore: <hash>` previo). Footer del sidebar con "Último commit · hace 3 min". Errores `MCB-VER-001..003`. **Si el adapter resulta inviable** (típicamente performance del walk inicial), fallback a snapshots por entidad en `.mi-cerebro/history/<kind>/<id>/<timestamp>.json` con la misma UI; variantes (13b en adelante) no soportables en ese modo y queda registrado.
+    - **13b.** Variantes (familias) + switch + lifecycle + merge sobre `main`. Modelo de familia de 3 ramas por variante (`main`/`draft`/`comments`); `.mi-cerebro/variants.json` con la metadata. Crear variante = bifurcar las 3 ramas heredando de las facetas hermanas de la familia origen. Borrar variante = `git branch -D` sobre las 3 + remover entrada. Switch de familia con commit forzado de dirty + `git checkout` + invalidación e intercambio de índice. Pill de variante activa en el header del editor (color por familia). Pantalla `/variants` con secciones Activas / Principal (permanente) / En reposo. Lifecycle de reposo a 30 días default (configurable en settings). Merge entre variantes (`/variants/merge?from=X&into=Y`) con bundle por entidad limitado a `main` por ahora (las facetas `draft`/`comments` existen como ramas inicializadas pero sin UI de uso hasta 13c/13d). BroadcastChannel sincroniza otras pestañas a la variante activa; rehúso → modo lectura. Índice de búsqueda por familia en IndexedDB (`idx-<family>-main`). Errores `MCB-VER-004..006`.
+    - **13c.** Comentarios anclados. Extensión TipTap que asigna UUID estable a cada nodo top-level (persistido como atributo). `comments/<entityId>.json` en la rama `variant/<family>/comments` con anchors `entity` y `block` (sin `range` — diferido a pulido). Position tracking via mapping de ProseMirror steps al editar `main`; anchors invalidados → `orphaned: true` (nunca expiran solos). Panel lateral en el editor con lista de comentarios para la entidad activa + agregar + sección de huérfanos. Búsqueda por familia se extiende con índice de comentarios (`idx-<family>-comments`). El bundle del merge ahora incluye comentarios de la entidad. Mensajes de autocommit prefijados `auto [comentarios]: …`. Lectura/escritura de la rama vía isomorphic-git plumbing sin checkout. Errores `MCB-VER-007..009`.
+    - **13d.** Borrador anclado (track-changes). `drafts/<entityId>.json` en la rama `variant/<family>/draft` con diff-marks `{anchor, before, after, status}`. Toggle "modo borrador" per-entidad: cuando está activo, las ediciones se capturan como pending diff-marks en vez de aplicarse a `main`. Panel lateral con accept/reject por mark. Aceptar = commit nuevo en `main` de la familia (`accept-draft: <entidad> (N cambios)`); nunca pisa historia. Position tracking compartido con comentarios. El bundle del merge ahora incluye drafts. Índice por familia (`idx-<family>-draft`). Mensajes prefijados `auto [borrador]: …`. Renderizado inline (ghost / strikethrough) queda diferido a pulido. Errores `MCB-VER-010..012`.
+    - **13e.** Push a GitHub. Settings con URL de repo privado + PAT (guardado en IndexedDB). Toggle "push tras cada autocommit" con throttle 5 min, o sólo manual. Cero llamadas a red sin configuración explícita (regla §4.14). Errores `MCB-VER-013..016`.
 14. **Export ZIP.**
 15. **Temas custom + validación WCAG.** Incluye color picker custom para tags (hoy el color sale determinístico de un hash).
 16. **Pulido** — partido en sub-fases temáticas para mantener scope acotado:
@@ -719,3 +808,5 @@ Tono: **neutro frío sobre blanco**. Acento naranja recalibrado para AA sobre fo
     - **16d.** Pulido de búsqueda: botón "reindexar" manual, snippet centrado en la coincidencia con highlight (en lugar de los primeros 160 chars del body).
     - **16e.** Pulido del editor: highlighting personalizable, banners de objetivos en cambio de ruta.
 17. **Modo pantalla completa de edición.** Atajo F11 (con fallback en menú) que entra a un modo focus: oculta sidebar, rail, header de la app y cualquier panel auxiliar (filtros, búsqueda, banners no críticos), dejando sólo el editor de la entidad activa.
+18. **Empaquetado nativo (Tauri + Capacitor).** Envolver la SPA Angular en binarios de escritorio (Tauri) y mobile (Capacitor) sin cambiar el core de la app: el código sigue siendo el mismo Angular, con un shim para que `FsService` use APIs nativas cuando el host las exponga (Tauri `fs`, Capacitor `Filesystem`) y caiga al File System Access API cuando corre en navegador. Habilita rutas que el sandbox del navegador no permite — spawn de procesos, acceso a binarios embebidos, notificaciones del SO con la app cerrada (§14), integración con el reproductor de medios del sistema (MPRIS/SMTC/MediaSession nativa). Pre-requisito de cualquier feature que necesite ejecutar código fuera del sandbox.
+19. **Descarga de MP3 desde YouTube.** Sección dedicada en `/music` (o expandir biblioteca con un input de URL) donde el usuario pega un link de video y el archivo entra directo a la biblioteca, auto-organizado (título del video → `originalName`, sin pasar por el picker de archivos). Depende del paso 18: necesita `yt-dlp` embebido como sidecar de Tauri y/o un plugin Capacitor equivalente, llamado vía bridge desde un nuevo `YoutubeDownloadService` que devuelve un `Blob` y lo pasa a `MusicLibraryService.addTracks`. Cuando corre en navegador sin host nativo, la UI queda deshabilitada con tooltip explicando el requisito.
