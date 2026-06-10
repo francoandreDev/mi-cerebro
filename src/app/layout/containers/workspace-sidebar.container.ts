@@ -25,6 +25,7 @@ import { MusicLibraryService } from '@features/music/services/music-library.serv
 import { PlaylistsService } from '@features/music/services/playlists.service';
 import { TasksService } from '@features/tasks/services/tasks.service';
 import { WritingsService } from '@features/writings/services/writings.service';
+import { AutocommitStatusComponent } from '@layout/components/autocommit-status.component';
 import { MenuButtonComponent, type MenuOption } from '@shared/menu-button/menu-button.component';
 import { filterTree } from '@shared/tree/filter';
 import { TreeFilterComponent } from '@shared/tree/tree-filter.component';
@@ -48,7 +49,7 @@ interface RailItem {
 @Component({
   selector: 'mc-workspace-sidebar',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TreeFilterComponent, TreeComponent, MenuButtonComponent],
+  imports: [TreeFilterComponent, TreeComponent, MenuButtonComponent, AutocommitStatusComponent],
   templateUrl: './workspace-sidebar.container.html',
   styleUrl: './workspace-sidebar.container.css',
 })

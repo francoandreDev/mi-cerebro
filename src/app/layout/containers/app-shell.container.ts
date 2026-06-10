@@ -4,6 +4,7 @@ import { RouterOutlet } from '@angular/router';
 import { ErrorService } from '@core/errors/error.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { ThemeService } from '@core/theme/theme.service';
+import { AutocommitService } from '@core/versioning/autocommit.service';
 import { GoalReminderContainer } from '@features/goals/containers/goal-reminder.container';
 import { OnboardingContainer } from '@features/onboarding/containers/onboarding.container';
 import { ReminderToastContainer } from '@features/reminders/containers/reminder-toast.container';
@@ -72,8 +73,14 @@ export class AppShellContainer {
   protected readonly workspace = inject(WorkspaceService);
   protected readonly isDev = isDevMode();
   private readonly errors = inject(ErrorService);
+  private readonly autocommit = inject(AutocommitService);
 
   constructor() {
-    this.workspace.bootstrap().catch((e: unknown) => this.errors.report(e));
+    this.workspace
+      .bootstrap()
+      .then(() => {
+        if (this.workspace.isReady()) this.autocommit.start();
+      })
+      .catch((e: unknown) => this.errors.report(e));
   }
 }

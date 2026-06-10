@@ -23,6 +23,7 @@ export const ERROR_CODES = {
   ENT_001: 'MCB-ENT-001',
   ENT_002: 'MCB-ENT-002',
   VER_001: 'MCB-VER-001',
+  VER_002: 'MCB-VER-002',
 } as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
@@ -50,4 +51,5 @@ export const ERROR_CODE_META: Record<ErrorCode, CodeMeta> = {
   'MCB-ENT-001': { titleKey: 'errors.ent.001.title', messageKey: 'errors.ent.001.message' },
   'MCB-ENT-002': { titleKey: 'errors.ent.002.title', messageKey: 'errors.ent.002.message' },
   'MCB-VER-001': { titleKey: 'errors.ver.001.title', messageKey: 'errors.ver.001.message' },
+  'MCB-VER-002': { titleKey: 'errors.ver.002.title', messageKey: 'errors.ver.002.message' },
 };

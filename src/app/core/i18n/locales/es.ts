@@ -105,6 +105,14 @@ export const es = {
   'errors.ver.001.message':
     'Una operación del sistema de versionado falló. Tus cambios siguen guardados en disco; el historial reintentará al próximo cambio.',
 
+  'errors.ver.002.title': 'Falló el autocommit',
+  'errors.ver.002.message':
+    'No pude crear el commit automático del historial. Tus archivos siguen guardados; el próximo trigger reintentará.',
+
+  'versioning.status.none': 'Sin commits aún',
+  'versioning.status.committing': 'Guardando versión…',
+  'versioning.status.lastCommit': 'Último commit · hace {n} min',
+
   'notes.title': 'Notas',
   'notes.new': 'Nueva nota',
   'notes.untitledTitle': 'Sin título',

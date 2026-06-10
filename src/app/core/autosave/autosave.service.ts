@@ -5,6 +5,7 @@ import { filter } from 'rxjs/operators';
 
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
+import { FsLockService } from '@core/fs/fs-lock.service';
 import { IdbService } from '@core/idb/idb.service';
 import type { DraftRecord } from '@core/idb/idb.types';
 
@@ -27,6 +28,7 @@ export class AutosaveService {
   private readonly idb = inject(IdbService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly fsLock = inject(FsLockService);
 
   private readonly pending = new Map<string, PendingEntry<unknown>>();
 
@@ -99,7 +101,16 @@ export class AutosaveService {
       });
     }
 
-    if (entry.onFlush) await entry.onFlush(payload);
+    // why: onFlush typically writes the entity JSON to the FS Access
+    //      workspace. Serialize via FsLockService so it doesn't race
+    //      with autocommit (which reads + writes .git/ under the same
+    //      handle). The IDB draft above doesn't need the lock.
+    if (entry.onFlush) {
+      const cb = entry.onFlush;
+      await this.fsLock.withLock(async () => {
+        await cb(payload);
+      });
+    }
   }
 
   async flushAll(): Promise<void> {

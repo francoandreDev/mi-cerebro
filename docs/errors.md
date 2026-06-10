@@ -177,3 +177,11 @@ Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `P
 - **Causa típica:** el adapter perdió permisos en medio de un walk largo, un archivo del workspace cambió mientras se calculaba la statusMatrix, o el `.git/` quedó parcialmente escrito tras un crash.
 - **Cómo resolver:** el autocommit siguiente reintenta. Si se repite, abrir `/history` para verificar el estado; los datos del usuario están en disco (no se pierden con un fallo de versionado).
 - **Recuperable:** sí — los cambios de la entidad siguen guardados en disco; sólo se pospone su entrada al historial.
+
+### MCB-VER-002 — Falló el autocommit
+
+- **Severidad:** warning
+- **Cuándo:** `AutocommitService` disparado por timer, navegación, `visibilitychange` o `beforeunload` falla al ejecutar el commit. Captura cualquier error de `VersioningService.commitAll` que no se haya convertido ya a `MCB-VER-001`.
+- **Causa típica:** permisos revocados a mitad del commit, lock contendido demasiado tiempo, o un autosave que terminó de escribir un archivo y dejó el FS en un estado que isomorphic-git no esperaba.
+- **Cómo resolver:** el próximo trigger reintenta automáticamente (timer cada 5 min, navegación, cierre de pestaña). Si los autocommits siguen fallando varias veces seguidas, abrir `/history` para verificar que el último commit conocido sigue válido y forzar un commit manual desde el footer del sidebar.
+- **Recuperable:** sí — los archivos del usuario están en disco; sólo el historial queda sin ese punto.
