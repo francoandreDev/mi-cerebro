@@ -35,15 +35,19 @@ export async function commitAll(
 ): Promise<string | null> {
   const matrix = await git.statusMatrix({ fs, dir });
   const dirty = matrix.filter(([, h, w, s]) => h !== w || h !== s);
-  const staged: typeof dirty = [];
-  for (const row of dirty) {
-    if (!(await git.isIgnored({ fs, dir, filepath: row[0] }))) staged.push(row);
-  }
-  if (staged.length === 0) return null;
-  for (const [filepath, , work] of staged) {
-    if (work === 0) await git.remove({ fs, dir, filepath });
-    else await git.add({ fs, dir, filepath });
-  }
+  const ignored = await Promise.all(
+    dirty.map(([filepath]) => git.isIgnored({ fs, dir, filepath })),
+  );
+  const adds: string[] = [];
+  const removes: string[] = [];
+  dirty.forEach((row, i) => {
+    if (ignored[i]) return;
+    if (row[2] === 0) removes.push(row[0]);
+    else adds.push(row[0]);
+  });
+  if (adds.length === 0 && removes.length === 0) return null;
+  for (const filepath of removes) await git.remove({ fs, dir, filepath });
+  if (adds.length > 0) await git.add({ fs, dir, filepath: adds });
   return git.commit({ fs, dir, message, author: AUTHOR });
 }
 
