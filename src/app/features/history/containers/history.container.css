@@ -193,18 +193,18 @@
 }
 
 .entity-added .entity-status {
-  background: #d1f5d3;
-  color: #064a09;
+  background: rgba(60, 200, 90, 0.32);
+  color: var(--mc-fg-primary);
 }
 
 .entity-modified .entity-status {
-  background: #fff4cc;
-  color: #5a4400;
+  background: rgba(240, 180, 40, 0.32);
+  color: var(--mc-fg-primary);
 }
 
 .entity-deleted .entity-status {
-  background: #fdd6d6;
-  color: #5a0707;
+  background: rgba(220, 60, 60, 0.32);
+  color: var(--mc-fg-primary);
 }
 
 .entity-path {
@@ -225,10 +225,11 @@
   margin: 0;
   padding: 8px 12px;
   font-family: ui-monospace, monospace;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.5;
-  background: var(--mc-bg-subtle, rgba(0, 0, 0, 0.02));
-  border-top: 1px solid var(--mc-border-subtle, rgba(0, 0, 0, 0.05));
+  background: var(--mc-bg-elevated, rgba(127, 127, 127, 0.08));
+  border-top: 1px solid var(--mc-border-subtle, rgba(127, 127, 127, 0.2));
+  color: var(--mc-fg-primary);
   white-space: pre-wrap;
   word-break: break-word;
   max-height: 400px;
@@ -238,20 +239,20 @@
 .chunk {
   display: block;
   padding: 0 4px;
+  color: var(--mc-fg-primary);
 }
 
 .chunk-add {
-  background: rgba(60, 200, 90, 0.15);
-  color: #064a09;
+  background: rgba(60, 200, 90, 0.28);
 }
 
 .chunk-remove {
-  background: rgba(220, 60, 60, 0.12);
-  color: #5a0707;
+  background: rgba(220, 60, 60, 0.28);
 }
 
 .chunk-context {
-  color: var(--mc-fg-secondary, #555);
+  color: var(--mc-fg-primary);
+  opacity: 0.7;
 }
 
 .diff-section {
@@ -282,14 +283,15 @@
 }
 
 .title-before {
-  background: rgba(220, 60, 60, 0.12);
-  color: #5a0707;
+  background: rgba(220, 60, 60, 0.28);
+  color: var(--mc-fg-primary);
   text-decoration: line-through;
+  opacity: 0.85;
 }
 
 .title-after {
-  background: rgba(60, 200, 90, 0.15);
-  color: #064a09;
+  background: rgba(60, 200, 90, 0.28);
+  color: var(--mc-fg-primary);
 }
 
 .title-unchanged .title-before {
@@ -313,19 +315,21 @@
 }
 
 .tag-added {
-  background: rgba(60, 200, 90, 0.18);
-  color: #064a09;
+  background: rgba(60, 200, 90, 0.32);
+  color: var(--mc-fg-primary);
 }
 
 .tag-removed {
-  background: rgba(220, 60, 60, 0.14);
-  color: #5a0707;
+  background: rgba(220, 60, 60, 0.32);
+  color: var(--mc-fg-primary);
   text-decoration: line-through;
+  opacity: 0.8;
 }
 
 .tag-unchanged {
-  background: rgba(0, 0, 0, 0.06);
-  color: var(--mc-fg-secondary, #555);
+  background: rgba(127, 127, 127, 0.18);
+  color: var(--mc-fg-primary);
+  opacity: 0.7;
 }
 
 .fields {
@@ -365,20 +369,24 @@
 }
 
 .field-added .field-after {
-  background: rgba(60, 200, 90, 0.12);
+  background: rgba(60, 200, 90, 0.24);
+  color: var(--mc-fg-primary);
 }
 
 .field-removed .field-before {
-  background: rgba(220, 60, 60, 0.10);
+  background: rgba(220, 60, 60, 0.24);
+  color: var(--mc-fg-primary);
   text-decoration: line-through;
 }
 
 .field-modified .field-before {
-  background: rgba(220, 60, 60, 0.08);
+  background: rgba(220, 60, 60, 0.20);
+  color: var(--mc-fg-primary);
 }
 
 .field-modified .field-after {
-  background: rgba(60, 200, 90, 0.10);
+  background: rgba(60, 200, 90, 0.24);
+  color: var(--mc-fg-primary);
 }
 
 .system-toggle {
