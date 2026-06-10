@@ -61,14 +61,22 @@ export class VersioningService {
     }
   }
 
-  // Stage every dirty path under the workspace and create a single
-  // commit. Returns the new oid, or null if there was nothing to commit.
+  // Stage every dirty non-ignored path and create a single commit.
+  // Returns the new oid, or null if there was nothing to commit.
+  // why: git.statusMatrix does NOT auto-filter .gitignore. We have to
+  //      call git.isIgnored per dirty path, otherwise binaries that the
+  //      gitignore explicitly excludes would still land in history.
   async commitAll(message: string): Promise<string | null> {
     const fs = this.requireAdapter();
     const matrix = await git.statusMatrix({ fs, dir: REPO_DIR });
     const dirty = matrix.filter(([, head, work, stage]) => head !== work || head !== stage);
-    if (dirty.length === 0) return null;
-    for (const [filepath, , work] of dirty) {
+    const staged: typeof dirty = [];
+    for (const row of dirty) {
+      const filepath = row[0];
+      if (!(await git.isIgnored({ fs, dir: REPO_DIR, filepath }))) staged.push(row);
+    }
+    if (staged.length === 0) return null;
+    for (const [filepath, , work] of staged) {
       if (work === 0) {
         await git.remove({ fs, dir: REPO_DIR, filepath });
       } else {
