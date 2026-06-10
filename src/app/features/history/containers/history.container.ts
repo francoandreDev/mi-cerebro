@@ -1,8 +1,18 @@
 import type { OnInit } from '@angular/core';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 
+import { ErrorService } from '@core/errors/error.service';
 import { I18nService } from '@core/i18n/i18n.service';
 
+import { HistoryDiffService } from '../services/diff.service';
+import type { EntityDiff } from '../services/diff.service';
 import { HistoryService } from '../services/history.service';
 import type { BucketId, CommitEntry } from '../services/history.types';
 
@@ -19,12 +29,14 @@ const BUCKET_LABEL_KEY: Record<BucketId, string> = {
 @Component({
   selector: 'mc-history',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [HistoryService],
+  providers: [HistoryService, HistoryDiffService],
   templateUrl: './history.container.html',
   styleUrl: './history.container.css',
 })
 export class HistoryContainer implements OnInit {
   private readonly history = inject(HistoryService);
+  private readonly diff = inject(HistoryDiffService);
+  private readonly errors = inject(ErrorService);
   protected readonly i18n = inject(I18nService);
 
   protected readonly buckets = this.history.buckets;
@@ -40,11 +52,50 @@ export class HistoryContainer implements OnInit {
     return this.entries().find((e) => e.oid === oid) ?? null;
   });
 
+  private readonly entityDiffsSignal = signal<readonly EntityDiff[]>([]);
+  private readonly diffLoadingSignal = signal(false);
+  private readonly expandedPathSignal = signal<string | null>(null);
+  protected readonly entityDiffs = this.entityDiffsSignal.asReadonly();
+  protected readonly diffLoading = this.diffLoadingSignal.asReadonly();
+  protected readonly expandedPath = this.expandedPathSignal.asReadonly();
+
+  constructor() {
+    effect(() => {
+      const oid = this.selectedOidSignal();
+      this.entityDiffsSignal.set([]);
+      this.expandedPathSignal.set(null);
+      if (!oid) return;
+      this.diffLoadingSignal.set(true);
+      void this.diff
+        .loadForCommit(oid)
+        .then((diffs) => {
+          if (this.selectedOidSignal() !== oid) return;
+          this.entityDiffsSignal.set(diffs);
+          const first = diffs[0];
+          if (first) this.expandedPathSignal.set(first.filepath);
+        })
+        .catch((e: unknown) => this.errors.report(e))
+        .finally(() => {
+          if (this.selectedOidSignal() === oid) this.diffLoadingSignal.set(false);
+        });
+    });
+  }
+
   ngOnInit(): void {
     void this.history.load().then(() => {
       const first = this.entries()[0];
       if (first) this.selectedOidSignal.set(first.oid);
     });
+  }
+
+  protected toggleExpanded(path: string): void {
+    this.expandedPathSignal.update((p) => (p === path ? null : path));
+  }
+
+  protected formatBytes(n: number): string {
+    if (n < 1024) return `${n} B`;
+    if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+    return `${(n / (1024 * 1024)).toFixed(1)} MB`;
   }
 
   protected bucketLabel(id: BucketId): string {

@@ -51,7 +51,37 @@
           <span>{{ entry.date.toLocaleString() }}</span>
         </div>
       </header>
-      <p class="placeholder">{{ i18n.t('versioning.history.detailComingSoon') }}</p>
+      @if (diffLoading()) {
+        <p class="placeholder">{{ i18n.t('versioning.history.diffLoading') }}</p>
+      } @else if (entityDiffs().length === 0) {
+        <p class="placeholder">{{ i18n.t('versioning.history.diffEmpty') }}</p>
+      } @else {
+        <ul class="entities">
+          @for (d of entityDiffs(); track d.filepath) {
+            <li class="entity entity-{{ d.status }}">
+              <button
+                type="button"
+                class="entity-head"
+                [attr.aria-expanded]="expandedPath() === d.filepath"
+                (click)="toggleExpanded(d.filepath)"
+              >
+                <span class="entity-status">{{ d.status }}</span>
+                <span class="entity-path">{{ d.filepath }}</span>
+                @if (d.isBinary) {
+                  <span class="entity-meta">
+                    {{ formatBytes(d.beforeSize) }} → {{ formatBytes(d.afterSize) }}
+                  </span>
+                }
+              </button>
+              @if (expandedPath() === d.filepath && !d.isBinary) {
+                <pre
+                  class="diff"
+                >@for (chunk of d.chunks; track $index) {<span class="chunk chunk-{{ chunk.kind }}">{{ chunk.value }}</span>}</pre>
+              }
+            </li>
+          }
+        </ul>
+      }
     } @else if (!loading() && buckets().length > 0) {
       <p class="placeholder">{{ i18n.t('versioning.history.selectACommit') }}</p>
     }

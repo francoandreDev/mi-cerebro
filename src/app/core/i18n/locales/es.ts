@@ -120,6 +120,8 @@ export const es = {
   'versioning.history.empty': 'Todavía no hay commits.',
   'versioning.history.selectACommit': 'Elegí un commit a la izquierda.',
   'versioning.history.detailComingSoon': 'Diff por entidad y restore: próximo paso.',
+  'versioning.history.diffLoading': 'Cargando diff…',
+  'versioning.history.diffEmpty': 'Sin cambios respecto al commit anterior.',
   'versioning.history.bucket.today': 'Hoy',
   'versioning.history.bucket.yesterday': 'Ayer',
   'versioning.history.bucket.thisWeek': 'Esta semana',
