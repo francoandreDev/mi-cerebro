@@ -35,7 +35,9 @@
     "@tiptap/core": "^3.26.0",
     "@tiptap/pm": "^3.26.0",
     "@tiptap/starter-kit": "^3.26.0",
+    "diff": "^9.0.0",
     "idb": "^8.0.3",
+    "isomorphic-git": "^1.38.4",
     "minisearch": "^7.2.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
@@ -46,6 +48,7 @@
     "@angular/cli": "^21.2.14",
     "@angular/compiler-cli": "^21.2.0",
     "@eslint/js": "^10.0.1",
+    "@types/diff": "^8.0.0",
     "angular-eslint": "21.4.0",
     "eslint": "^10.3.0",
     "eslint-plugin-import": "^2.32.0",
