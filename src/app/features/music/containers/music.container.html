@@ -28,16 +28,6 @@
                 {{ currentTrackId() === track.id && isPlaying() ? '⏸' : '▶' }}
               </button>
               <span class="title">{{ track.originalName }}</span>
-              @if (active()) {
-                <button
-                  type="button"
-                  class="ghost"
-                  (click)="onAddToPlaylist(track)"
-                  [title]="t('music.addToPlaylist')"
-                >
-                  +
-                </button>
-              }
               <button
                 type="button"
                 class="ghost"
@@ -53,82 +43,154 @@
     </section>
 
     <section class="playlists">
-      <header class="sub-head">
-        <h3>{{ t('music.playlists') }} ({{ playlistSummaries().length }})</h3>
-        <button type="button" class="primary" (click)="onCreatePlaylist()">
-          + {{ t('music.newPlaylist') }}
-        </button>
-      </header>
-      <ul class="pl-list">
-        @for (p of playlistSummaries(); track p.id) {
-          <li>
-            <button
-              type="button"
-              [class.selected]="active()?.id === p.id"
-              (click)="onSelectPlaylist(p)"
-            >
-              {{ p.title || t('music.untitledPlaylist') }}
-              <span class="count">{{ p.trackCount }}</span>
-            </button>
-          </li>
-        }
-      </ul>
       @if (active(); as playlist) {
-        <div class="pl-edit">
-          <header class="pl-edit-head">
+        <header class="sub-head pl-edit-head">
+          <button
+            type="button"
+            class="ghost back"
+            (click)="onBackToList()"
+            [attr.aria-label]="t('music.backToPlaylists')"
+            [title]="t('music.backToPlaylists')"
+          >
+            ←
+          </button>
+          <input
+            type="text"
+            class="title-input"
+            [value]="playlist.title"
+            (change)="onTitleInput(asInput($event.target).value)"
+            [placeholder]="t('music.untitledPlaylist')"
+          />
+          <button
+            type="button"
+            class="icon-btn"
+            [class.fav-active]="playlist.favorite === true"
+            (click)="onToggleFavorite()"
+            [title]="t('music.favoriteToggle')"
+            [attr.aria-label]="t('music.favoriteToggle')"
+            [attr.aria-pressed]="playlist.favorite === true"
+          >
+            {{ playlist.favorite === true ? '★' : '☆' }}
+          </button>
+          <button
+            type="button"
+            class="icon-btn"
+            (click)="onPlayPlaylist()"
+            [disabled]="activeTracks().length === 0"
+            [title]="t('music.playAll')"
+            [attr.aria-label]="t('music.playAll')"
+          >
+            ▶
+          </button>
+          <button
+            type="button"
+            class="icon-btn danger"
+            (click)="onDeletePlaylist()"
+            [title]="t('common.delete')"
+            [attr.aria-label]="t('common.delete')"
+          >
+            🗑
+          </button>
+        </header>
+
+        @if (activeTracks().length === 0) {
+          <p class="empty">{{ t('music.emptyPlaylist') }}</p>
+        } @else {
+          <ul class="list pl-tracks">
+            @for (track of activeTracks(); track track.id; let i = $index) {
+              <li class="row" [class.playing]="currentTrackId() === track.id">
+                <button type="button" class="play" (click)="onPlayTrack(track)">
+                  {{ currentTrackId() === track.id && isPlaying() ? '⏸' : '▶' }}
+                </button>
+                <span class="title">{{ track.originalName }}</span>
+                <button
+                  type="button"
+                  class="ghost"
+                  [disabled]="i === 0"
+                  (click)="onMove(track.id, -1)"
+                  aria-label="↑"
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  class="ghost"
+                  [disabled]="i === activeTracks().length - 1"
+                  (click)="onMove(track.id, 1)"
+                  aria-label="↓"
+                >
+                  ↓
+                </button>
+                <button
+                  type="button"
+                  class="ghost"
+                  (click)="onRemoveFromPlaylist(track.id)"
+                  [attr.aria-label]="t('music.removeFromPlaylist')"
+                >
+                  ✕
+                </button>
+              </li>
+            }
+          </ul>
+        }
+
+        <div class="add-section">
+          <button type="button" class="primary add-toggle" (click)="togglePicker()">
+            {{ picking() ? t('music.done') : '+ ' + t('music.addTracks') }}
+          </button>
+          @if (picking()) {
             <input
-              type="text"
-              class="title-input"
-              [value]="playlist.title"
-              (change)="onTitleInput(asInput($event.target).value)"
-              [placeholder]="t('music.untitledPlaylist')"
+              type="search"
+              class="search-input"
+              [value]="pickerQuery()"
+              (input)="onPickerQueryInput(asInput($event.target).value)"
+              [placeholder]="t('music.searchTracks')"
             />
-            <button type="button" class="primary" (click)="onPlayPlaylist()">
-              ▶ {{ t('music.playAll') }}
-            </button>
-            <button type="button" class="ghost" (click)="onDeletePlaylist()">
-              {{ t('common.delete') }}
-            </button>
-          </header>
-          @if (activeTracks().length === 0) {
-            <p class="empty">{{ t('music.emptyPlaylist') }}</p>
-          } @else {
-            <ul class="list">
-              @for (track of activeTracks(); track track.id; let i = $index) {
-                <li class="row" [class.playing]="currentTrackId() === track.id">
-                  <button type="button" class="play" (click)="onPlayTrack(track)">
-                    {{ currentTrackId() === track.id && isPlaying() ? '⏸' : '▶' }}
-                  </button>
-                  <span class="title">{{ track.originalName }}</span>
-                  <button
-                    type="button"
-                    class="ghost"
-                    [disabled]="i === 0"
-                    (click)="onMove(track.id, -1)"
-                  >
-                    ↑
-                  </button>
-                  <button
-                    type="button"
-                    class="ghost"
-                    [disabled]="i === activeTracks().length - 1"
-                    (click)="onMove(track.id, 1)"
-                  >
-                    ↓
-                  </button>
-                  <button
-                    type="button"
-                    class="ghost"
-                    (click)="onRemoveFromPlaylist(track.id)"
-                    [attr.aria-label]="t('music.removeFromPlaylist')"
-                  >
-                    ✕
-                  </button>
-                </li>
-              }
-            </ul>
+            @if (availableForActive().length === 0) {
+              <p class="empty">{{ t('music.allTracksAdded') }}</p>
+            } @else if (pickerResults().length === 0) {
+              <p class="empty">{{ t('music.noTracksMatch') }}</p>
+            } @else {
+              <ul class="list picker-list">
+                @for (track of pickerResults(); track track.id) {
+                  <li class="row picker-row">
+                    <button
+                      type="button"
+                      class="picker-add"
+                      (click)="onAddToPlaylist(track)"
+                      [attr.aria-label]="t('music.addToPlaylist')"
+                    >
+                      <span class="plus">+</span>
+                      <span class="title">{{ track.originalName }}</span>
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
           }
         </div>
+      } @else {
+        <header class="sub-head">
+          <h3>{{ t('music.playlists') }} ({{ playlistSummaries().length }})</h3>
+          <button type="button" class="primary" (click)="onCreatePlaylist()">
+            + {{ t('music.newPlaylist') }}
+          </button>
+        </header>
+        <ul class="pl-list">
+          @for (p of playlistSummaries(); track p.id) {
+            <li>
+              <button type="button" (click)="onSelectPlaylist(p)">
+                <span class="pl-title">
+                  @if (p.favorite) {
+                    <span class="fav-icon" aria-hidden="true">★</span>
+                  }
+                  {{ p.title || t('music.untitledPlaylist') }}
+                </span>
+                <span class="count">{{ p.trackCount }}</span>
+              </button>
+            </li>
+          }
+        </ul>
       }
     </section>
   </div>

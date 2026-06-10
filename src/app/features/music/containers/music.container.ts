@@ -31,6 +31,16 @@ export class MusicContainer {
   protected readonly currentTrackId = this.player.currentTrackId;
   protected readonly isPlaying = this.player.isPlaying;
 
+  protected readonly picking = signal(false);
+  protected readonly pickerQuery = signal('');
+
+  protected readonly activeTracks = computed<readonly Track[]>(() => {
+    const playlist = this.active();
+    if (!playlist) return [];
+    const byId = new Map(this.tracks().map((t) => [t.id, t] as const));
+    return playlist.trackIds.map((id) => byId.get(id)).filter((t): t is Track => t !== undefined);
+  });
+
   protected readonly availableForActive = computed<readonly Track[]>(() => {
     const playlist = this.active();
     if (!playlist) return [];
@@ -38,11 +48,11 @@ export class MusicContainer {
     return this.tracks().filter((t) => !inUse.has(t.id));
   });
 
-  protected readonly activeTracks = computed<readonly Track[]>(() => {
-    const playlist = this.active();
-    if (!playlist) return [];
-    const byId = new Map(this.tracks().map((t) => [t.id, t] as const));
-    return playlist.trackIds.map((id) => byId.get(id)).filter((t): t is Track => t !== undefined);
+  protected readonly pickerResults = computed<readonly Track[]>(() => {
+    const q = this.pickerQuery().trim().toLowerCase();
+    const all = this.availableForActive();
+    if (q.length === 0) return all;
+    return all.filter((t) => t.originalName.toLowerCase().includes(q));
   });
 
   protected t(key: TranslationKey): string {
@@ -84,7 +94,7 @@ export class MusicContainer {
     try {
       await this.workspace.ensureWritable();
       const created = await this.playlists.create(this.t('music.newPlaylistTitle'));
-      this.active.set(created);
+      this.openPlaylist(created);
     } catch (e) {
       this.errors.report(this.withReauth(e));
     }
@@ -92,10 +102,16 @@ export class MusicContainer {
 
   protected async onSelectPlaylist(summary: PlaylistSummary): Promise<void> {
     try {
-      this.active.set(await this.playlists.read(summary.id));
+      this.openPlaylist(await this.playlists.read(summary.id));
     } catch (e) {
       this.errors.report(e);
     }
+  }
+
+  protected onBackToList(): void {
+    this.active.set(null);
+    this.picking.set(false);
+    this.pickerQuery.set('');
   }
 
   protected async onRenamePlaylist(title: string): Promise<void> {
@@ -111,7 +127,22 @@ export class MusicContainer {
     if (!confirm(this.t('music.deletePlaylistConfirm').replace('{title}', playlist.title || '—')))
       return;
     await this.playlists.delete(playlist.id);
-    this.active.set(null);
+    this.onBackToList();
+  }
+
+  protected async onToggleFavorite(): Promise<void> {
+    const playlist = this.active();
+    if (!playlist) return;
+    const updated = await this.playlists.save({
+      ...playlist,
+      favorite: !(playlist.favorite === true),
+    });
+    this.active.set(updated);
+  }
+
+  protected togglePicker(): void {
+    this.picking.update((v) => !v);
+    if (!this.picking()) this.pickerQuery.set('');
   }
 
   protected async onAddToPlaylist(track: Track): Promise<void> {
@@ -160,8 +191,18 @@ export class MusicContainer {
     void this.onRenamePlaylist(value);
   }
 
+  protected onPickerQueryInput(value: string): void {
+    this.pickerQuery.set(value);
+  }
+
   protected asInput(target: EventTarget | null): HTMLInputElement {
     return target as HTMLInputElement;
+  }
+
+  private openPlaylist(playlist: Playlist): void {
+    this.active.set(playlist);
+    this.picking.set(false);
+    this.pickerQuery.set('');
   }
 
   private withReauth(e: unknown): unknown {

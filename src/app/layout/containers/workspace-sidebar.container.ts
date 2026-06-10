@@ -10,6 +10,7 @@ import type { FolderKind } from '@core/folders/folders.types';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { PlayerService } from '@core/music/player.service';
 import { CommandPaletteService } from '@core/search/command-palette.service';
 import type { Tag } from '@core/tags/tag.types';
 import { TagsService } from '@core/tags/tags.service';
@@ -70,6 +71,7 @@ export class WorkspaceSidebarContainer {
   private readonly errors = inject(ErrorService);
   private readonly i18n = inject(I18nService);
   private readonly palette = inject(CommandPaletteService);
+  private readonly player = inject(PlayerService);
   private readonly treeState = inject(TreeStateService);
 
   protected readonly query = signal('');
@@ -307,6 +309,37 @@ export class WorkspaceSidebarContainer {
   });
 
   protected readonly isReady = this.workspace.isReady;
+
+  protected readonly favoritePlaylists = computed(() =>
+    this.playlistsService.summaries().filter((p) => p.favorite),
+  );
+
+  protected readonly topTracks = computed(() =>
+    [...this.musicLibrary.tracks()]
+      .filter((t) => (t.playCount ?? 0) > 0)
+      .sort((a, b) => (b.playCount ?? 0) - (a.playCount ?? 0))
+      .slice(0, 10),
+  );
+
+  protected readonly currentTrackId = this.player.currentTrackId;
+  protected readonly isPlaying = this.player.isPlaying;
+
+  protected async onPlayFavoritePlaylist(id: string): Promise<void> {
+    try {
+      const pl = await this.playlistsService.read(id);
+      if (pl.trackIds.length > 0) await this.player.playPlaylist(pl.trackIds, 0);
+    } catch (e) {
+      this.errors.report(e);
+    }
+  }
+
+  protected async onPlayTopTrack(id: string): Promise<void> {
+    try {
+      await this.player.playTrack(id);
+    } catch (e) {
+      this.errors.report(e);
+    }
+  }
 
   protected onQuery(value: string): void {
     this.query.set(value);

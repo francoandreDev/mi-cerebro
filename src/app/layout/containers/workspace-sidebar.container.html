@@ -69,7 +69,64 @@
         🔍
       </button>
     </header>
-    @if (activeKind(); as kind) {
+    @if (activeKey() === 'music') {
+      <div class="music-panel">
+        <section class="music-section">
+          <h3 class="music-section-title">
+            <span aria-hidden="true">★</span> {{ t('music.sidebar.favorites') }}
+          </h3>
+          @if (favoritePlaylists().length === 0) {
+            <p class="music-empty">{{ t('music.sidebar.emptyFavorites') }}</p>
+          } @else {
+            <ul class="music-list">
+              @for (p of favoritePlaylists(); track p.id) {
+                <li>
+                  <button
+                    type="button"
+                    class="music-row"
+                    (click)="onPlayFavoritePlaylist(p.id)"
+                    [disabled]="p.trackCount === 0"
+                  >
+                    <span class="music-row-icon" aria-hidden="true">▶</span>
+                    <span class="music-row-title">
+                      {{ p.title || t('music.untitledPlaylist') }}
+                    </span>
+                    <span class="music-row-meta">{{ p.trackCount }}</span>
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+        <section class="music-section">
+          <h3 class="music-section-title">
+            <span aria-hidden="true">🔥</span> {{ t('music.sidebar.topTracks') }}
+          </h3>
+          @if (topTracks().length === 0) {
+            <p class="music-empty">{{ t('music.sidebar.emptyTopTracks') }}</p>
+          } @else {
+            <ul class="music-list">
+              @for (track of topTracks(); track track.id) {
+                <li>
+                  <button
+                    type="button"
+                    class="music-row"
+                    [class.music-row-playing]="currentTrackId() === track.id"
+                    (click)="onPlayTopTrack(track.id)"
+                  >
+                    <span class="music-row-icon" aria-hidden="true">
+                      {{ currentTrackId() === track.id && isPlaying() ? '⏸' : '▶' }}
+                    </span>
+                    <span class="music-row-title">{{ track.originalName }}</span>
+                    <span class="music-row-meta">{{ track.playCount ?? 0 }}</span>
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+      </div>
+    } @else if (activeKind(); as kind) {
       <div class="actions">
         <button type="button" class="primary" (click)="createForActive()">
           + {{ newLabel() }}

@@ -12,6 +12,8 @@ export interface Track {
   readonly addedAt: string;
   readonly bytes: number;
   readonly durationMs: number | null;
+  readonly playCount?: number;
+  readonly lastPlayedAt?: string;
 }
 
 export interface MusicLibrary {
@@ -24,6 +26,7 @@ export interface Playlist {
   readonly trackIds: readonly string[];
   readonly createdAt: string;
   readonly updatedAt: string;
+  readonly favorite?: boolean;
 }
 
 export interface PlaylistSummary {
@@ -31,4 +34,5 @@ export interface PlaylistSummary {
   readonly title: string;
   readonly trackCount: number;
   readonly updatedAt: string;
+  readonly favorite: boolean;
 }

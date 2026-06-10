@@ -90,6 +90,23 @@ export class MusicLibraryService {
     return this.tracksSignal().find((t) => t.id === id) ?? null;
   }
 
+  async incrementPlayCount(id: string): Promise<void> {
+    const current = this.tracksSignal();
+    const idx = current.findIndex((t) => t.id === id);
+    if (idx < 0) return;
+    const track = current[idx]!;
+    const updated: Track = {
+      ...track,
+      playCount: (track.playCount ?? 0) + 1,
+      lastPlayedAt: new Date().toISOString(),
+    };
+    const next = [...current];
+    next[idx] = updated;
+    this.tracksSignal.set(next);
+    const root = await this.musicDir();
+    await this.writeLibrary(root, { tracks: next });
+  }
+
   private async musicDir(): Promise<FsDirectoryHandle> {
     const root = this.workspace.root();
     if (!root) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });

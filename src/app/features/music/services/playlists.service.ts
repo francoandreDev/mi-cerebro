@@ -121,6 +121,7 @@ export class PlaylistsService {
       title: p.title,
       trackCount: p.trackIds.length,
       updatedAt: p.updatedAt,
+      favorite: p.favorite === true,
     };
   }
 }

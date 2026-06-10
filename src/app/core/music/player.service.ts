@@ -99,6 +99,7 @@ export class PlayerService {
       this.currentBlobUrl = URL.createObjectURL(blob);
       this.audio.src = this.currentBlobUrl;
       if (autoPlay) await this.audio.play();
+      void this.library.incrementPlayCount(id);
     } catch (cause) {
       console.warn('[player] failed to load track', id, cause);
     }
