@@ -165,3 +165,15 @@ Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `P
 - **Causa típica:** duplicación manual de un archivo `.json` sin regenerar el ID.
 - **Cómo resolver:** renombrar/eliminar uno de los dos. Si querés conservar ambos, abrí el JSON y reemplazá uno de los IDs por un UUID nuevo.
 - **Recuperable:** sí — los links que apuntaban al ID original quedan intactos.
+
+---
+
+## VER — Versionado e historial
+
+### MCB-VER-001 — No se pudo guardar la versión
+
+- **Severidad:** error
+- **Cuándo:** una operación del `VersioningService` (init, commit, log, readBlob) falla. Engloba: workspace no listo cuando se invoca el servicio, error de isomorphic-git sobre el adapter FS Access, o I/O subyacente del FS rechazado a mitad.
+- **Causa típica:** el adapter perdió permisos en medio de un walk largo, un archivo del workspace cambió mientras se calculaba la statusMatrix, o el `.git/` quedó parcialmente escrito tras un crash.
+- **Cómo resolver:** el autocommit siguiente reintenta. Si se repite, abrir `/history` para verificar el estado; los datos del usuario están en disco (no se pierden con un fallo de versionado).
+- **Recuperable:** sí — los cambios de la entidad siguen guardados en disco; sólo se pospone su entrada al historial.

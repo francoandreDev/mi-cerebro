@@ -101,6 +101,10 @@ export const es = {
   'errors.ent.002.message':
     'Encontré dos archivos distintos compartiendo el mismo ID interno. Renombrá o eliminá una de las copias antes de seguir.',
 
+  'errors.ver.001.title': 'No se pudo guardar la versión',
+  'errors.ver.001.message':
+    'Una operación del sistema de versionado falló. Tus cambios siguen guardados en disco; el historial reintentará al próximo cambio.',
+
   'notes.title': 'Notas',
   'notes.new': 'Nueva nota',
   'notes.untitledTitle': 'Sin título',
