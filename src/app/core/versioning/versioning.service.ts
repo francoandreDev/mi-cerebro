@@ -86,7 +86,10 @@ export class VersioningService {
       await git.remove({ fs, dir: REPO_DIR, filepath });
     }
     if (adds.length > 0) {
-      await git.add({ fs, dir: REPO_DIR, filepath: adds });
+      // why: parallel: false is required. Internal parallelization of
+      //      git.add races on .git/index updates and triggers
+      //      InvalidStateError on FS Access (Chromium). Slower-but-safe.
+      await git.add({ fs, dir: REPO_DIR, filepath: adds, parallel: false });
     }
     return git.commit({
       fs,

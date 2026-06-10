@@ -47,7 +47,9 @@ export async function commitAll(
   });
   if (adds.length === 0 && removes.length === 0) return null;
   for (const filepath of removes) await git.remove({ fs, dir, filepath });
-  if (adds.length > 0) await git.add({ fs, dir, filepath: adds });
+  // why: parallel: false avoids races on .git/index that surface as
+  //      InvalidStateError on FS Access when writes are fast.
+  if (adds.length > 0) await git.add({ fs, dir, filepath: adds, parallel: false });
   return git.commit({ fs, dir, message, author: AUTHOR });
 }
 
