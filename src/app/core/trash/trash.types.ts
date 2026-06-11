@@ -21,6 +21,19 @@ export interface TrashEntry {
   readonly shape: TrashEntryShape;
 }
 
+export interface TrashPreviewFact {
+  readonly labelKey: string;
+  readonly value: string;
+}
+
+export interface TrashPreview {
+  readonly excerpt: string | null;
+  readonly tags: readonly string[];
+  readonly createdAt: string | null;
+  readonly updatedAt: string | null;
+  readonly facts: readonly TrashPreviewFact[];
+}
+
 export const TRASH_META_DIR = '.mi-cerebro';
 export const TRASH_SUBDIR = 'trash';
 export const TRASH_FILE_SUFFIX = '.json';

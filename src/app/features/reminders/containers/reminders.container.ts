@@ -5,6 +5,7 @@ import { withReauthIfNeeded } from '@core/errors/with-reauth';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { McDatePipe } from '@shared/pipes/mc-date.pipe';
 
 import type { Reminder, ReminderSummary } from '../models/reminder.types';
 import { RemindersService } from '../services/reminders.service';
@@ -18,6 +19,7 @@ interface DraftPatch {
 @Component({
   selector: 'mc-reminders',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [McDatePipe],
   templateUrl: './reminders.container.html',
   styleUrl: './reminders.container.css',
 })
@@ -105,12 +107,6 @@ export class RemindersContainer {
 
   protected asInput(target: EventTarget | null): HTMLInputElement {
     return target as HTMLInputElement;
-  }
-
-  protected formatDue(dueAt: string): string {
-    if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(dueAt)) return dueAt;
-    const [date, time] = dueAt.split('T');
-    return `${date} ${time!.slice(0, 5)}`;
   }
 
   private startEdit(reminder: Reminder): void {

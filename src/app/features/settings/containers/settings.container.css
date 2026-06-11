@@ -1,0 +1,96 @@
+:host {
+  display: block;
+  padding: var(--mc-space-4);
+}
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-5);
+  max-width: 720px;
+}
+.head h2 {
+  margin: 0;
+  font-size: var(--mc-font-size-xl);
+}
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-3);
+  padding: var(--mc-space-3) var(--mc-space-4);
+  background: var(--mc-bg-elevated);
+  border: 1px solid var(--mc-border-default);
+  border-radius: var(--mc-radius-md);
+}
+.group h3 {
+  margin: 0;
+  font-size: var(--mc-font-size-md);
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+}
+.group.placeholder {
+  opacity: 0.7;
+}
+.soon {
+  font-size: var(--mc-font-size-xs, 0.75rem);
+  padding: 2px var(--mc-space-2);
+  border-radius: var(--mc-radius-pill);
+  background: var(--mc-bg-base);
+  color: var(--mc-fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-1);
+}
+.field .label {
+  font-size: var(--mc-font-size-sm);
+  color: var(--mc-fg-muted);
+}
+.field select,
+.field input[type='text'] {
+  padding: var(--mc-space-1) var(--mc-space-2);
+  border: 1px solid var(--mc-border-default);
+  border-radius: var(--mc-radius-md);
+  background: var(--mc-bg-base);
+  color: var(--mc-fg-default);
+  font: inherit;
+}
+.field .hint {
+  font-size: var(--mc-font-size-xs, 0.75rem);
+  color: var(--mc-fg-muted);
+}
+.row {
+  display: flex;
+  gap: var(--mc-space-2);
+}
+.row input[type='text'] {
+  flex: 1;
+}
+.row .grow {
+  flex: 1;
+  min-width: 0;
+}
+.primary[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.primary {
+  background: var(--mc-accent-primary);
+  color: var(--mc-bg-base);
+  border: none;
+  padding: var(--mc-space-1) var(--mc-space-3);
+  border-radius: var(--mc-radius-md);
+  cursor: pointer;
+}
+.error {
+  font-size: var(--mc-font-size-xs, 0.75rem);
+  color: var(--mc-fg-warning, #d97706);
+}
+.muted {
+  margin: 0;
+  color: var(--mc-fg-muted);
+  font-size: var(--mc-font-size-sm);
+}

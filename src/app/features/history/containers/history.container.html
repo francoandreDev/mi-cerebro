@@ -24,7 +24,7 @@
                   [class.is-head]="headOid() === c.oid"
                   (click)="select(c.oid)"
                 >
-                  <span class="commit-time">{{ formatTime(c.date) }}</span>
+                  <span class="commit-time">{{ c.date | mcDate }}</span>
                   <span class="commit-message">
                     {{ c.message }}
                     @if (headOid() === c.oid) {
@@ -70,7 +70,7 @@
         </div>
         <div class="detail-meta">
           <code>{{ entry.shortOid }}</code>
-          <span>{{ entry.date.toLocaleString() }}</span>
+          <span>{{ entry.date | mcDate: true }}</span>
           @if (headOid() === entry.oid) {
             <span class="head-badge">{{ i18n.t('versioning.history.headBadge') }}</span>
           }

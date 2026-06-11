@@ -41,7 +41,7 @@
               <button type="button" class="title-btn" (click)="onEdit(r)">
                 {{ r.title || t('reminders.untitled') }}
               </button>
-              <span class="due">{{ formatDue(r.dueAt) }}</span>
+              <span class="due">{{ r.dueAt | mcDate: true }}</span>
               <button
                 type="button"
                 class="ghost"
@@ -70,7 +70,7 @@
               [attr.aria-label]="t('reminders.markPending')"
             />
             <span class="title-btn done-title">{{ r.title || t('reminders.untitled') }}</span>
-            <span class="due">{{ formatDue(r.dueAt) }}</span>
+            <span class="due">{{ r.dueAt | mcDate: true }}</span>
             <button
               type="button"
               class="ghost"

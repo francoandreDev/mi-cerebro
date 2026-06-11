@@ -11,6 +11,7 @@ import {
 import { ErrorService } from '@core/errors/error.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import { RestoreService } from '@core/versioning/restore.service';
+import { McDatePipe } from '@shared/pipes/mc-date.pipe';
 
 import { HistoryDiffService } from '../services/diff.service';
 import type { EntityDiff } from '../services/diff.service';
@@ -31,6 +32,7 @@ const BUCKET_LABEL_KEY: Record<BucketId, string> = {
   selector: 'mc-history',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [HistoryService, HistoryDiffService],
+  imports: [McDatePipe],
   templateUrl: './history.container.html',
   styleUrl: './history.container.css',
 })
@@ -122,11 +124,6 @@ export class HistoryContainer implements OnInit {
 
   protected select(oid: string): void {
     this.selectedOidSignal.set(oid);
-  }
-
-  protected formatTime(d: Date): string {
-    const pad = (n: number): string => n.toString().padStart(2, '0');
-    return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
   private readonly restoringPathSignal = signal<string | null>(null);

@@ -2,15 +2,17 @@ import { ChangeDetectionStrategy, Component, inject, input, output } from '@angu
 
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { McDatePipe } from '@shared/pipes/mc-date.pipe';
 
 @Component({
   selector: 'mc-deadline-picker',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [McDatePipe],
   template: `
     <div class="wrap">
       @if (deadline()) {
         <span class="chip" [class.overdue]="isOverdue(deadline()!)">
-          <span>{{ formatRelative(deadline()!) }}</span>
+          <span>{{ friendlyLabel(deadline()!) || (deadline()! | mcDate) }}</span>
           @if (editable()) {
             <button
               type="button"
@@ -57,10 +59,10 @@ export class DeadlinePickerComponent {
     return date < today();
   }
 
-  protected formatRelative(date: string): string {
+  protected friendlyLabel(date: string): string {
     if (date === today()) return this.t('goals.deadline.today');
     if (date === tomorrow()) return this.t('goals.deadline.tomorrow');
-    return date;
+    return '';
   }
 }
 

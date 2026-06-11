@@ -38,7 +38,7 @@ import { buildFolderTree } from './folder-tree';
 import { goalBadges, tagBadges, taskBadges } from './tree-badges';
 
 type EntityKind = 'note' | 'task' | 'goal' | 'list' | 'writing' | 'book' | 'image' | 'file';
-type RailKey = EntityKind | 'trash' | 'calendar' | 'reminders' | 'music' | 'history';
+type RailKey = EntityKind | 'trash' | 'calendar' | 'reminders' | 'music' | 'history' | 'settings';
 
 interface RailItem {
   readonly key: EntityKind;
@@ -134,6 +134,7 @@ export class WorkspaceSidebarContainer {
     if (url.startsWith('/reminders')) return 'reminders';
     if (url.startsWith('/music')) return 'music';
     if (url.startsWith('/history')) return 'history';
+    if (url.startsWith('/settings')) return 'settings';
     const match = /^\/(notes|tasks|goals|lists|writings|books|images|files)/.exec(url);
     if (!match) return null;
     return ROUTE_TO_KIND[match[1] as keyof typeof ROUTE_TO_KIND];
@@ -147,7 +148,8 @@ export class WorkspaceSidebarContainer {
       k === 'calendar' ||
       k === 'reminders' ||
       k === 'music' ||
-      k === 'history'
+      k === 'history' ||
+      k === 'settings'
     ) {
       return null;
     }
@@ -162,6 +164,7 @@ export class WorkspaceSidebarContainer {
     if (k === 'reminders') return this.t('reminders.title');
     if (k === 'music') return this.t('music.title');
     if (k === 'history') return this.t('versioning.history.title');
+    if (k === 'settings') return this.t('settings.title');
     return this.t(`tree.type.${KIND_TO_TYPE[k]}` as TranslationKey);
   });
 
@@ -407,6 +410,10 @@ export class WorkspaceSidebarContainer {
     }
     if (key === 'history') {
       void this.router.navigate(['/history']);
+      return;
+    }
+    if (key === 'settings') {
+      void this.router.navigate(['/settings']);
       return;
     }
     void this.router.navigate([KIND_TO_ROUTE[key]]);

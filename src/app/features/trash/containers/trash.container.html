@@ -10,19 +10,79 @@
   <div class="empty">{{ t('trash.emptyState') }}</div>
 } @else {
   <ul class="list">
-    @for (entry of entries(); track entry.filename) {
-      <li class="row">
-        <span class="kind" [attr.data-kind]="entry.kind">{{ kindLabel(entry) }}</span>
-        <span class="title">{{ entry.title || t('trash.untitledTitle') }}</span>
-        <span class="date">{{ entry.deletedAt }}</span>
-        <div class="actions">
-          <button type="button" class="primary" (click)="restore(entry)">
-            {{ t('trash.restore') }}
-          </button>
-          <button type="button" class="ghost" (click)="purge(entry)">
-            {{ t('trash.purge') }}
-          </button>
+    @for (entry of entries(); track entryKey(entry)) {
+      <li class="item" [class.expanded]="isExpanded(entry)">
+        <div
+          class="row"
+          role="button"
+          tabindex="0"
+          [attr.aria-expanded]="isExpanded(entry)"
+          (click)="toggle(entry)"
+          (keydown.enter)="toggle(entry)"
+          (keydown.space)="$event.preventDefault(); toggle(entry)"
+        >
+          <span class="chevron" aria-hidden="true">{{ isExpanded(entry) ? '▾' : '▸' }}</span>
+          <span class="kind" [attr.data-kind]="entry.kind">{{ kindLabel(entry) }}</span>
+          <span class="title">{{ entry.title || t('trash.untitledTitle') }}</span>
+          <span class="date">{{ entry.deletedAt | mcDate }}</span>
+          <span class="actions">
+            <button type="button" class="primary" (click)="restore(entry, $event)">
+              {{ t('trash.restore') }}
+            </button>
+            <button type="button" class="ghost" (click)="purge(entry, $event)">
+              {{ t('trash.purge') }}
+            </button>
+          </span>
         </div>
+        @if (isExpanded(entry)) {
+          @let state = previewState(entry);
+          <div class="preview">
+            @if (!state || state.status === 'loading') {
+              <div class="preview-status">{{ t('trash.preview.loading') }}</div>
+            } @else if (state.status === 'missing') {
+              <div class="preview-status">{{ t('trash.preview.unavailable') }}</div>
+            } @else {
+              @if (state.preview.facts.length) {
+                <dl class="facts">
+                  @for (fact of state.preview.facts; track fact.labelKey) {
+                    <div class="fact">
+                      <dt>{{ factLabel(fact.labelKey) }}</dt>
+                      <dd>{{ factValue(fact.value) }}</dd>
+                    </div>
+                  }
+                </dl>
+              }
+              @if (state.preview.tags.length) {
+                <div class="tags">
+                  @for (tag of state.preview.tags; track tag) {
+                    <span class="tag">#{{ tag }}</span>
+                  }
+                </div>
+              }
+              @if (state.preview.excerpt) {
+                <p class="excerpt">{{ state.preview.excerpt }}</p>
+              } @else if (!state.preview.facts.length && !state.preview.tags.length) {
+                <div class="preview-status">{{ t('trash.preview.noContent') }}</div>
+              }
+              @if (state.preview.createdAt || state.preview.updatedAt) {
+                <div class="stamps">
+                  @if (state.preview.createdAt) {
+                    <span
+                      >{{ t('trash.preview.createdAt') }}:
+                      {{ state.preview.createdAt | mcDate: true }}</span
+                    >
+                  }
+                  @if (state.preview.updatedAt) {
+                    <span
+                      >{{ t('trash.preview.updatedAt') }}:
+                      {{ state.preview.updatedAt | mcDate: true }}</span
+                    >
+                  }
+                </div>
+              }
+            }
+          </div>
+        }
       </li>
     }
   </ul>

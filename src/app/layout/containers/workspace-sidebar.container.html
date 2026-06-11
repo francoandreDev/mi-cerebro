@@ -65,6 +65,16 @@
     >
       🗑
     </button>
+    <button
+      type="button"
+      class="rail-btn settings"
+      [class.active]="activeKey() === 'settings'"
+      [title]="t('settings.title')"
+      [attr.aria-label]="t('settings.title')"
+      (click)="goTo('settings')"
+    >
+      ⚙
+    </button>
   </aside>
   <section class="pane">
     <header class="head">

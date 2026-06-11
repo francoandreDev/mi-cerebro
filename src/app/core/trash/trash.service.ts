@@ -18,6 +18,7 @@ import { GALLERY_META_FILE } from '@core/images/image-paths';
 import { RemindersService } from '@features/reminders/services/reminders.service';
 import { WritingsService } from '@features/writings/services/writings.service';
 
+import { buildTrashPreview } from './trash-preview';
 import {
   KIND_DIRS,
   TRASH_FILE_SUFFIX,
@@ -25,6 +26,7 @@ import {
   TRASH_SUBDIR,
   type TrashEntry,
   type TrashKind,
+  type TrashPreview,
 } from './trash.types';
 
 @Injectable({ providedIn: 'root' })
@@ -111,6 +113,31 @@ export class TrashService {
     if (!day) return;
     await this.fs.removeEntry(day, entry.filename, { recursive: entry.shape === 'directory' });
     this.entriesSignal.update((list) => list.filter((e) => !sameEntry(e, entry)));
+  }
+
+  async loadPreview(entry: TrashEntry): Promise<TrashPreview | null> {
+    const root = this.requireRoot();
+    const day = await this.dayDir(root, entry.parentPath);
+    if (!day) return null;
+    try {
+      const raw =
+        entry.shape === 'directory'
+          ? await this.readDirMeta(day, entry)
+          : await this.fs.readJson<Record<string, unknown>>(day, entry.filename);
+      return raw ? buildTrashPreview(entry.kind, raw) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private async readDirMeta(
+    day: FsDirectoryHandle,
+    entry: TrashEntry,
+  ): Promise<Record<string, unknown> | null> {
+    const dir = await this.fs.getDir(day, entry.filename);
+    if (!dir) return null;
+    const metaFile = entry.kind === 'image' ? GALLERY_META_FILE : COLLECTION_META_FILE;
+    return this.fs.readJson<Record<string, unknown>>(dir, metaFile);
   }
 
   async empty(): Promise<void> {

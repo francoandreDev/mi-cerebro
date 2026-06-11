@@ -1,0 +1,93 @@
+<section class="page">
+  <header class="head">
+    <h2>{{ t('settings.title') }}</h2>
+  </header>
+
+  <section class="group">
+    <h3>{{ t('settings.section.general') }}</h3>
+
+    <label class="field">
+      <span class="label">{{ t('settings.timezone.label') }}</span>
+      <span class="row">
+        <input
+          type="text"
+          class="grow"
+          list="mc-tz-list"
+          [value]="draft()"
+          (input)="onInput($event)"
+          (keydown.enter)="apply()"
+          (keydown.escape)="revert()"
+          placeholder="Continent/City"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button
+          type="button"
+          class="primary"
+          [disabled]="draft().trim() === state().timezone"
+          (click)="apply()"
+        >
+          {{ t('settings.timezone.apply') }}
+        </button>
+      </span>
+      <datalist id="mc-tz-list">
+        @for (tz of timezones; track tz) {
+          <option [value]="tz"></option>
+        }
+      </datalist>
+      <span class="hint">
+        {{ t('settings.timezone.hint') }}
+        · {{ t('settings.timezone.current') }}: <strong>{{ state().timezone }}</strong>
+      </span>
+      @if (error()) {
+        <span class="error">{{ t('settings.timezone.invalid') }}</span>
+      }
+    </label>
+  </section>
+
+  <section class="group placeholder">
+    <h3>
+      {{ t('settings.section.versioning') }} <span class="soon">{{ t('settings.soon') }}</span>
+    </h3>
+    <p class="muted">
+      {{ t('settings.versioning.autocommit') }}:
+      <strong>{{ state().versioning.autocommitMinutes }} min</strong>
+    </p>
+    <p class="muted">
+      {{ t('settings.versioning.push') }}:
+      <strong>{{
+        state().versioning.pushAfterAutocommit ? t('common.on') : t('common.off')
+      }}</strong>
+    </p>
+  </section>
+
+  <section class="group placeholder">
+    <h3>
+      {{ t('settings.section.variants') }} <span class="soon">{{ t('settings.soon') }}</span>
+    </h3>
+    <p class="muted">
+      {{ t('settings.variants.dormant') }}:
+      <strong>{{ state().variants.dormantThresholdDays }}</strong>
+    </p>
+  </section>
+
+  <section class="group placeholder">
+    <h3>
+      {{ t('settings.section.goals') }} <span class="soon">{{ t('settings.soon') }}</span>
+    </h3>
+    <p class="muted">
+      {{ t('settings.goals.dormant') }}:
+      <strong>{{ state().goals.dormantThresholdDays }}</strong>
+    </p>
+  </section>
+
+  <section class="group placeholder">
+    <h3>
+      {{ t('settings.section.theme') }} <span class="soon">{{ t('settings.soon') }}</span>
+    </h3>
+    <p class="muted">
+      {{ t('settings.theme.override') }}:
+      <strong>{{ state().theme.override }}</strong>
+    </p>
+  </section>
+</section>

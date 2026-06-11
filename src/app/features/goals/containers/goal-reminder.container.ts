@@ -5,6 +5,7 @@ import { filter } from 'rxjs/operators';
 
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { McDatePipe } from '@shared/pipes/mc-date.pipe';
 
 import type { GoalSummary } from '../models/goal.types';
 import { GoalsService } from '../services/goals.service';
@@ -17,6 +18,7 @@ const SOON_DAYS = 7;
 @Component({
   selector: 'mc-goal-reminder',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [McDatePipe],
   template: `
     @if (visible(); as goal) {
       <div class="banner" role="status">
@@ -28,7 +30,7 @@ const SOON_DAYS = 7;
               {{
                 isOverdue(goal.deadline) ? t('goals.reminder.overdue') : t('goals.reminder.dueSoon')
               }}
-              · {{ goal.deadline }}
+              · {{ goal.deadline | mcDate }}
             </span>
           }
         </div>

@@ -2,15 +2,17 @@ import { ChangeDetectionStrategy, Component, inject, input, output, signal } fro
 
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { McDatePipe } from '@shared/pipes/mc-date.pipe';
 
 @Component({
   selector: 'mc-due-dates-picker',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [McDatePipe],
   template: `
     <div class="wrap">
       @for (d of dates(); track d) {
         <span class="chip" [class.overdue]="isOverdue(d)">
-          <span>{{ formatRelative(d) }}</span>
+          <span>{{ friendlyLabel(d) || (d | mcDate) }}</span>
           @if (editable()) {
             <button
               type="button"
@@ -65,10 +67,10 @@ export class DueDatesPickerComponent {
     return date < today();
   }
 
-  protected formatRelative(date: string): string {
+  protected friendlyLabel(date: string): string {
     if (date === today()) return this.t('tasks.due.today');
     if (date === tomorrow()) return this.t('tasks.due.tomorrow');
-    return date;
+    return '';
   }
 }
 

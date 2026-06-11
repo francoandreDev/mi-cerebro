@@ -55,4 +55,8 @@ export const routes: Routes = [
     path: 'history',
     loadChildren: () => import('./features/history/history.routes').then((m) => m.historyRoutes),
   },
+  {
+    path: 'settings',
+    loadChildren: () => import('./features/settings/settings.routes').then((m) => m.settingsRoutes),
+  },
 ];
