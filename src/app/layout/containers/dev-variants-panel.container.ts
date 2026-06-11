@@ -10,10 +10,17 @@ import * as git from 'isomorphic-git';
 
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { GitFsAdapter } from '@core/versioning/git-fs.adapter';
+import { SwitchVariantService } from '@core/versioning/switch-variant.service';
 import { VariantsService } from '@core/versioning/variants.service';
 import type { Variant } from '@core/versioning/variants.types';
 import { BgColorDirective } from '@shared/directives/bg-color.directive';
 
+import {
+  testAlignWithGit,
+  testBroadcastSetsStale,
+  testPreSwitchCommit,
+  testRoundTripSwitch,
+} from './dev-variants-switch-tests';
 import {
   testCreateFlow,
   testDeleteFlow,
@@ -31,7 +38,14 @@ interface VariantGroup {
   readonly refs: readonly RefRow[];
 }
 
-type TestKey = 'create' | 'rollback' | 'delete';
+type TestKey =
+  | 'create'
+  | 'rollback'
+  | 'delete'
+  | 'round-trip'
+  | 'broadcast'
+  | 'align'
+  | 'pre-switch';
 type TestStatus = 'idle' | 'running' | 'pass' | 'fail';
 interface TestState {
   readonly status: TestStatus;
@@ -47,6 +61,7 @@ interface TestState {
 })
 export class DevVariantsPanelContainer {
   private readonly variants = inject(VariantsService);
+  private readonly switcher = inject(SwitchVariantService);
   private readonly workspace = inject(WorkspaceService);
 
   protected readonly open = signal(false);
@@ -85,10 +100,14 @@ export class DevVariantsPanelContainer {
     create: { status: 'idle', message: '' },
     rollback: { status: 'idle', message: '' },
     delete: { status: 'idle', message: '' },
+    'round-trip': { status: 'idle', message: '' },
+    broadcast: { status: 'idle', message: '' },
+    align: { status: 'idle', message: '' },
+    'pre-switch': { status: 'idle', message: '' },
   });
   protected readonly tests = this.testsSignal.asReadonly();
 
-  protected readonly testList: readonly { key: TestKey; label: string; detail: string }[] = [
+  protected readonly testListI: readonly { key: TestKey; label: string; detail: string }[] = [
     {
       key: 'create',
       label: '① Crear → 3 refs + entrada',
@@ -106,6 +125,33 @@ export class DevVariantsPanelContainer {
       label: '③ Borrar limpia las 3 ramas',
       detail:
         'Crea una variante throwaway y la borra; verifica que sus 3 refs y la entrada queden ausentes.',
+    },
+  ];
+
+  protected readonly testListII: readonly { key: TestKey; label: string; detail: string }[] = [
+    {
+      key: 'round-trip',
+      label: '⑤ Switch ida-y-vuelta',
+      detail:
+        'Desde Principal: crea throwaway, switch hacia ella, switch de vuelta, verifica activeId y HEAD en ambos extremos.',
+    },
+    {
+      key: 'broadcast',
+      label: '⑥ Broadcast cruzado dispara stale banner',
+      detail:
+        'Postea un mensaje en el canal mc-variants simulando otra pestaña; verifica que remoteSwitch en SwitchVariantService se vuelva no-null (lo que monta el banner amarillo).',
+    },
+    {
+      key: 'align',
+      label: '⑦ alignWithGit recupera de desalineo',
+      detail:
+        'Estando en una variante distinta de Principal: hace checkout manual a main, después llama alignWithGit; verifica que HEAD vuelva a la activa. Simula recovery de crash mid-switch.',
+    },
+    {
+      key: 'pre-switch',
+      label: '⑧ Switch con dirty crea pre-switch commit',
+      detail:
+        'Desde Principal: crea throwaway (modifica variants.json → dirty), switch, busca en el log el commit "auto: pre-switch-variant …".',
     },
   ];
 
@@ -132,20 +178,46 @@ export class DevVariantsPanelContainer {
     await this.runAction(() => this.variants.refresh());
   }
 
-  protected runTest(key: TestKey): Promise<void> {
-    const fn =
-      key === 'create'
-        ? testCreateFlow
-        : key === 'rollback'
-          ? testRollbackOnFailure
-          : testDeleteFlow;
-    return this.runTestWith(key, fn);
+  protected async runTest(key: TestKey): Promise<void> {
+    const fs = this.adapter();
+    if (!fs) return;
+    this.setTest(key, { status: 'running', message: '' });
+    try {
+      const result = await this.dispatchTest(key, fs);
+      this.setTest(key, { status: result.pass ? 'pass' : 'fail', message: result.message });
+    } catch (e) {
+      this.setTest(key, { status: 'fail', message: format(e) });
+    } finally {
+      await this.refreshBranches();
+    }
   }
 
-  protected async runAllTests(): Promise<void> {
-    await this.runTest('create');
-    await this.runTest('rollback');
-    await this.runTest('delete');
+  private dispatchTest(key: TestKey, fs: GitFsAdapter): Promise<TestResult> {
+    const deps = { variants: this.variants, switcher: this.switcher, fs };
+    switch (key) {
+      case 'create':
+        return testCreateFlow(this.variants, fs);
+      case 'rollback':
+        return testRollbackOnFailure(this.variants, fs);
+      case 'delete':
+        return testDeleteFlow(this.variants, fs);
+      case 'round-trip':
+        return testRoundTripSwitch(deps);
+      case 'broadcast':
+        return testBroadcastSetsStale(deps);
+      case 'align':
+        return testAlignWithGit(deps);
+      case 'pre-switch':
+        return testPreSwitchCommit(deps);
+    }
+  }
+
+  protected async runAllTestsI(): Promise<void> {
+    for (const t of this.testListI) await this.runTest(t.key);
+  }
+
+  protected async runAllTestsII(): Promise<void> {
+    for (const t of this.testListII) await this.runTest(t.key);
   }
 
   // Wrap every CRUD mutation: clear errors, mark busy, refresh the
@@ -160,26 +232,6 @@ export class DevVariantsPanelContainer {
     } finally {
       await this.refreshBranches();
       this.busy.set(false);
-    }
-  }
-
-  private async runTestWith(
-    key: TestKey,
-    fn: (s: VariantsService, fs: GitFsAdapter) => Promise<TestResult>,
-  ): Promise<void> {
-    const fs = this.adapter();
-    if (!fs) return;
-    this.setTest(key, { status: 'running', message: '' });
-    try {
-      const result = await fn(this.variants, fs);
-      this.setTest(key, {
-        status: result.pass ? 'pass' : 'fail',
-        message: result.message,
-      });
-    } catch (e) {
-      this.setTest(key, { status: 'fail', message: format(e) });
-    } finally {
-      await this.refreshBranches();
     }
   }
 

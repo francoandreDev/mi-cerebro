@@ -184,9 +184,46 @@
       }
       <mc-autocommit-status />
       @if (activeVariant(); as v) {
-        <div class="variant-pill" [title]="t('variants.activeTitle')">
-          <span class="variant-dot" [mcBgColor]="v.color"></span>
-          <span class="variant-name">{{ v.name }}</span>
+        <div class="variant-pill-wrapper">
+          <button
+            type="button"
+            class="variant-pill"
+            [title]="t('variants.activeTitle')"
+            [attr.aria-haspopup]="'menu'"
+            [attr.aria-expanded]="variantMenuOpen()"
+            [disabled]="!!switchingState()"
+            (click)="toggleVariantMenu($event)"
+          >
+            <span class="variant-dot" [mcBgColor]="v.color"></span>
+            <span class="variant-name">{{ v.name }}</span>
+            @if (switchingState()) {
+              <span class="variant-spinner" aria-hidden="true">⋯</span>
+            } @else {
+              <span class="variant-chev" aria-hidden="true">▾</span>
+            }
+          </button>
+          @if (variantMenuOpen() && !switchingState()) {
+            <ul class="variant-menu" role="menu">
+              @for (item of variantMenuItems(); track item.id) {
+                <li role="none">
+                  <button
+                    type="button"
+                    role="menuitem"
+                    class="variant-menu-item"
+                    [class.is-active]="item.id === v.id"
+                    [disabled]="item.id === v.id"
+                    (click)="onSwitchVariant(item.id, $event)"
+                  >
+                    <span class="variant-dot" [mcBgColor]="item.color"></span>
+                    <span class="variant-menu-name">{{ item.name }}</span>
+                    @if (item.id === v.id) {
+                      <span class="variant-menu-current">●</span>
+                    }
+                  </button>
+                </li>
+              }
+            </ul>
+          }
         </div>
       }
     </section>

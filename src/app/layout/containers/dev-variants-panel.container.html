@@ -124,7 +124,7 @@
     </section>
 
     <section class="sec">
-      <h4>Validación 13b-i</h4>
+      <h4>Validación 13b-i (foundation: modelo + atomicidad)</h4>
       <p class="hint">
         Cada test crea y limpia su propia variante throwaway (slug
         <code>__dev-test-*</code>); no toca tus variantes reales. El test
@@ -132,7 +132,7 @@
         espera <code>MCB-VER-004</code>; cuando aparece, el resultado es ✓.
       </p>
       <ul class="tests">
-        @for (t of testList; track t.key) {
+        @for (t of testListI; track t.key) {
           <li
             class="test"
             [class.test-pass]="tests()[t.key].status === 'pass'"
@@ -197,8 +197,60 @@
           <span class="test-manual-tag">manual</span>
         </li>
       </ul>
-      <button type="button" class="primary run-all" (click)="runAllTests()" [disabled]="busy()">
+      <button type="button" class="primary run-all" (click)="runAllTestsI()" [disabled]="busy()">
         Correr ① ② ③
+      </button>
+    </section>
+
+    <section class="sec">
+      <h4>Validación 13b-ii (switch + cross-tab + recovery)</h4>
+      <p class="hint">
+        ⑤ y ⑧ arrancan desde Principal; ⑦ desde una variante distinta. Si los corrés en orden con
+        Principal activa, ⑤/⑥/⑧ pasan; activá una throwaway antes de ⑦.
+      </p>
+      <ul class="tests">
+        @for (t of testListII; track t.key) {
+          <li
+            class="test"
+            [class.test-pass]="tests()[t.key].status === 'pass'"
+            [class.test-fail]="tests()[t.key].status === 'fail'"
+            [class.test-running]="tests()[t.key].status === 'running'"
+          >
+            <span class="test-status">
+              @switch (tests()[t.key].status) {
+                @case ('pass') {
+                  ✓
+                }
+                @case ('fail') {
+                  ✗
+                }
+                @case ('running') {
+                  ⋯
+                }
+                @default {
+                  ○
+                }
+              }
+            </span>
+            <div class="test-body">
+              <div class="test-title">{{ t.label }}</div>
+              <div class="test-detail">{{ t.detail }}</div>
+              @if (tests()[t.key].message) {
+                <div class="test-message">{{ tests()[t.key].message }}</div>
+              }
+            </div>
+            <button
+              type="button"
+              (click)="runTest(t.key)"
+              [disabled]="tests()[t.key].status === 'running'"
+            >
+              Correr
+            </button>
+          </li>
+        }
+      </ul>
+      <button type="button" class="primary run-all" (click)="runAllTestsII()" [disabled]="busy()">
+        Correr ⑤ ⑥ ⑦ ⑧
       </button>
     </section>
   </section>

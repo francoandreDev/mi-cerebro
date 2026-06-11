@@ -218,6 +218,30 @@ Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `P
 - **Cómo resolver:** la app sigue en la variante Principal implícita (no se pierden datos). Restaurar el archivo desde un backup en `.mi-cerebro/pre-migration/` (regla 31), o eliminar `variants.json` para que la app lo siembre con sólo Principal y reasocie variantes manualmente desde `/variants`.
 - **Recuperable:** sí — la app degrada a Principal-only y los commits/branches del usuario siguen intactos en `.git/`.
 
+### MCB-VER-007 — No se pudo preparar el cambio de variante
+
+- **Severidad:** error
+- **Cuándo:** durante el switch (paso 13b-ii), falló alguna de las dos operaciones previas al `checkout`: `AutosaveService.flushAll()` (vaciar borradores pendientes) o `VersioningService.commitAll('auto: pre-switch-variant <from> → <to>')` (capturar dirty). El servicio aborta antes de tocar `HEAD`, así que el workspace sigue en la variante origen.
+- **Causa típica:** permisos del adapter revocados mid-flujo, `FsLockService` contendido por demasiado tiempo, o un autosave que devolvió un error fatal antes de drenar.
+- **Cómo resolver:** reintentar el switch desde la pill del sidebar. Si persiste, abrir `/history` y verificar que el último commit conocido sigue válido; eventualmente forzar un commit manual desde el footer y volver a intentar.
+- **Recuperable:** sí — la `activeId` no se modificó, el `HEAD` sigue en la rama anterior, los archivos del usuario están intactos.
+
+### MCB-VER-008 — No se pudo cambiar de variante
+
+- **Severidad:** error
+- **Cuándo:** el `git.checkout({ ref: <main-de-destino> })` falló. Después del flush + commit, este es el punto donde el workspace efectivamente migra de rama; cualquier fallo acá aborta el switch y deja `HEAD` en la variante origen.
+- **Causa típica:** un binario protegido por antivirus impide reescribir su archivo durante el checkout, hay un lock externo en algún `.json` (otro programa abierto), o el ref destino no existe (eliminado externamente desde el último `refresh`).
+- **Cómo resolver:** cerrar cualquier programa que tenga archivos del workspace abiertos; reintentar. Si el ref destino fue eliminado externamente, ejecutar "Releer disco" desde el dev panel o recargar la app para que `VariantsService` reconcilie su vista.
+- **Recuperable:** sí — `activeId` no se actualizó, los archivos visibles siguen siendo los de la variante anterior.
+
+### MCB-VER-009 — Búsqueda deshabilitada tras el cambio
+
+- **Severidad:** warning
+- **Cuándo:** el checkout completó y `activeId` se actualizó, pero el rebuild del índice de búsqueda desde el nuevo estado del disco falló. La variante destino quedó montada y editable; sólo la búsqueda global queda fuera de servicio hasta el próximo refresh manual o reload.
+- **Causa típica:** un IDB en estado transitorio, una entidad con JSON corrupto que rompió el walk, o un quota exceeded al persistir el índice nuevo.
+- **Cómo resolver:** recargar la app (los workspaces re-indexan en el boot); o disparar "Reindexar" desde la pantalla de variantes (en 13b-iii). Mientras tanto el resto de la app funciona normal.
+- **Recuperable:** sí — los archivos están bien, sólo la búsqueda global queda momentáneamente vacía.
+
 ### MCB-VER-017 — No se pudo marcar este punto
 
 - **Severidad:** warning | error

@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  HostListener,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter, map, startWith } from 'rxjs/operators';
@@ -7,6 +15,7 @@ import { withReauthIfNeeded } from '@core/errors/with-reauth';
 import { ErrorService } from '@core/errors/error.service';
 import { FoldersService } from '@core/folders/folders.service';
 import type { FolderKind } from '@core/folders/folders.types';
+import { WorkspaceRefreshService } from '@core/fs/workspace-refresh.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
@@ -14,6 +23,7 @@ import { PlayerService } from '@core/music/player.service';
 import { CommandPaletteService } from '@core/search/command-palette.service';
 import type { Tag } from '@core/tags/tag.types';
 import { TagsService } from '@core/tags/tags.service';
+import { SwitchVariantService } from '@core/versioning/switch-variant.service';
 import { VariantsService } from '@core/versioning/variants.service';
 import { BooksService } from '@features/books/services/books.service';
 import { FilesService } from '@features/files/services/files.service';
@@ -21,7 +31,6 @@ import { GoalsService } from '@features/goals/services/goals.service';
 import { GalleriesService } from '@features/images/services/galleries.service';
 import { ListsService } from '@features/lists/services/lists.service';
 import { NotesService } from '@features/notes/services/notes.service';
-import { RemindersService } from '@features/reminders/services/reminders.service';
 import { MusicLibraryService } from '@features/music/services/music-library.service';
 import { PlaylistsService } from '@features/music/services/playlists.service';
 import { TasksService } from '@features/tasks/services/tasks.service';
@@ -71,12 +80,14 @@ export class WorkspaceSidebarContainer {
   private readonly booksService = inject(BooksService);
   private readonly galleriesService = inject(GalleriesService);
   private readonly filesService = inject(FilesService);
-  private readonly remindersService = inject(RemindersService);
   private readonly musicLibrary = inject(MusicLibraryService);
   private readonly playlistsService = inject(PlaylistsService);
   private readonly foldersService = inject(FoldersService);
   private readonly tagsService = inject(TagsService);
   private readonly variantsService = inject(VariantsService);
+  private readonly switchVariantService = inject(SwitchVariantService);
+  private readonly hostEl = inject(ElementRef<HTMLElement>);
+  private readonly workspaceRefresh = inject(WorkspaceRefreshService);
   private readonly workspace = inject(WorkspaceService);
   private readonly router = inject(Router);
   private readonly errors = inject(ErrorService);
@@ -109,6 +120,45 @@ export class WorkspaceSidebarContainer {
     return file.variants.find((v) => v.id === file.activeId && !v.pendingDelete) ?? null;
   });
 
+  protected readonly variantMenuItems = computed(() =>
+    this.variantsService.file().variants.filter((v) => !v.pendingDelete),
+  );
+  protected readonly switchingState = this.switchVariantService.switching;
+  private readonly variantMenuOpenSignal = signal(false);
+  protected readonly variantMenuOpen = this.variantMenuOpenSignal.asReadonly();
+
+  protected toggleVariantMenu(event: Event): void {
+    event.stopPropagation();
+    this.variantMenuOpenSignal.update((v) => !v);
+  }
+
+  protected closeVariantMenu(): void {
+    this.variantMenuOpenSignal.set(false);
+  }
+
+  protected async onSwitchVariant(id: string, event: Event): Promise<void> {
+    event.stopPropagation();
+    this.variantMenuOpenSignal.set(false);
+    try {
+      await this.switchVariantService.switchTo(id);
+    } catch (e: unknown) {
+      this.errors.report(e);
+    }
+  }
+
+  @HostListener('document:pointerdown', ['$event'])
+  protected onDocClickVariant(event: Event): void {
+    if (!this.variantMenuOpenSignal()) return;
+    const target = event.target as Node | null;
+    if (target && this.hostEl.nativeElement.contains(target)) return;
+    this.variantMenuOpenSignal.set(false);
+  }
+
+  @HostListener('document:keydown.escape')
+  protected onEscVariant(): void {
+    if (this.variantMenuOpenSignal()) this.variantMenuOpenSignal.set(false);
+  }
+
   protected readonly hidePane = computed(() => {
     const url = this.currentUrl();
     return url === '/history' || url.startsWith('/history/') || url.startsWith('/history?');
@@ -117,18 +167,7 @@ export class WorkspaceSidebarContainer {
   constructor() {
     void (async () => {
       try {
-        await this.tagsService.refresh();
-        await this.notesService.refresh();
-        await this.tasksService.refresh();
-        await this.goalsService.refresh();
-        await this.listsService.refresh();
-        await this.writingsService.refresh();
-        await this.booksService.refresh();
-        await this.galleriesService.refresh();
-        await this.filesService.refresh();
-        await this.remindersService.refresh();
-        await this.musicLibrary.refresh();
-        await this.playlistsService.refresh();
+        await this.workspaceRefresh.refreshAll();
         await this.variantsService.refresh();
       } catch (e: unknown) {
         this.errors.report(e);

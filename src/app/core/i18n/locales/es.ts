@@ -121,6 +121,18 @@ export const es = {
   'errors.ver.006.message':
     'El archivo `.mi-cerebro/variants.json` no se pudo leer o tiene una versión de schema incompatible. La app sigue en la variante Principal; podés restaurar el archivo desde un backup en `.mi-cerebro/pre-migration/`.',
 
+  'errors.ver.007.title': 'No se pudo preparar el cambio de variante',
+  'errors.ver.007.message':
+    'Falló el guardado previo (autosave o commit) al cambiar de variante. Tu workspace sigue en la variante anterior; podés reintentar.',
+
+  'errors.ver.008.title': 'No se pudo cambiar de variante',
+  'errors.ver.008.message':
+    'El checkout falló durante el cambio de variante. Tu workspace quedó en la variante anterior y tus archivos están intactos. Podés reintentar.',
+
+  'errors.ver.009.title': 'Búsqueda deshabilitada tras el cambio',
+  'errors.ver.009.message':
+    'Cambié de variante pero no pude reconstruir el índice de búsqueda. Tus archivos están bien; usá "Reindexar" desde la pantalla de variantes (o recargá la app) para volver a habilitar la búsqueda global.',
+
   'errors.ver.017.title': 'No se pudo marcar este punto',
   'errors.ver.017.message':
     'No pude crear el milestone. Tu historial sigue intacto; podés reintentar con otro nombre o más tarde.',
@@ -197,6 +209,12 @@ export const es = {
   'versioning.history.detailRail': 'Detalle',
 
   'variants.activeTitle': 'Variante activa',
+  'variants.switching.title': 'Cambiando a {name}…',
+  'variants.switching.detail':
+    'Guardando borradores y reescribiendo el workspace de "{from}" a "{to}".',
+  'variants.stale.banner':
+    'Otra pestaña cambió a la variante "{name}". Esta pestaña quedó desactualizada.',
+  'variants.stale.reload': 'Recargar',
 
   'notes.title': 'Notas',
   'notes.new': 'Nueva nota',

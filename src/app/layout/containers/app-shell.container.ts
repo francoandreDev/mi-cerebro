@@ -5,6 +5,8 @@ import { ErrorService } from '@core/errors/error.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { ThemeService } from '@core/theme/theme.service';
 import { AutocommitService } from '@core/versioning/autocommit.service';
+import { SwitchVariantService } from '@core/versioning/switch-variant.service';
+import { VariantsService } from '@core/versioning/variants.service';
 import { GoalReminderContainer } from '@features/goals/containers/goal-reminder.container';
 import { OnboardingContainer } from '@features/onboarding/containers/onboarding.container';
 import { ReminderToastContainer } from '@features/reminders/containers/reminder-toast.container';
@@ -12,6 +14,7 @@ import { CommandPaletteContainer } from '@features/search/containers/command-pal
 
 import { DevVariantsPanelContainer } from './dev-variants-panel.container';
 import { DevVersioningPanelContainer } from './dev-versioning-panel.container';
+import { VariantSwitchOverlayContainer } from './variant-switch-overlay.container';
 import { ErrorDisplayContainer } from './error-display.container';
 import { MiniPlayerContainer } from './mini-player.container';
 import { WorkspaceSidebarContainer } from './workspace-sidebar.container';
@@ -28,6 +31,7 @@ import { WorkspaceSidebarContainer } from './workspace-sidebar.container';
     GoalReminderContainer,
     ReminderToastContainer,
     MiniPlayerContainer,
+    VariantSwitchOverlayContainer,
     DevVersioningPanelContainer,
     DevVariantsPanelContainer,
   ],
@@ -43,6 +47,7 @@ import { WorkspaceSidebarContainer } from './workspace-sidebar.container';
       <mc-goal-reminder />
       <mc-reminder-toast />
       <mc-mini-player />
+      <mc-variant-switch-overlay />
       @if (isDev) {
         <mc-dev-versioning-panel />
         <mc-dev-variants-panel />
@@ -77,12 +82,19 @@ export class AppShellContainer {
   protected readonly isDev = isDevMode();
   private readonly errors = inject(ErrorService);
   private readonly autocommit = inject(AutocommitService);
+  private readonly variantsService = inject(VariantsService);
+  private readonly switchVariant = inject(SwitchVariantService);
 
   constructor() {
     this.workspace
       .bootstrap()
-      .then(() => {
-        if (this.workspace.isReady()) this.autocommit.start();
+      .then(async () => {
+        if (!this.workspace.isReady()) return;
+        this.autocommit.start();
+        // why: load variants.json before alignWithGit so it knows
+        //      what activeId to align HEAD to (covers crash mid-switch).
+        await this.variantsService.refresh();
+        await this.switchVariant.bootstrap();
       })
       .catch((e: unknown) => this.errors.report(e));
   }
