@@ -183,6 +183,12 @@
         />
       }
       <mc-autocommit-status />
+      @if (activeVariant(); as v) {
+        <div class="variant-pill" [title]="t('variants.activeTitle')">
+          <span class="variant-dot" [mcBgColor]="v.color"></span>
+          <span class="variant-name">{{ v.name }}</span>
+        </div>
+      }
     </section>
   }
 }

@@ -194,6 +194,30 @@ Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `P
 - **Cómo resolver:** la restauración es transaccional desde el lado del usuario: o terminó completa, o el disco quedó como estaba antes. Reintentar la acción. Si se repite, abrir el commit en `/history`, verificar que el blob existe (debería listarse en el diff) y, si persiste, restaurar manualmente la entidad copiando el contenido de la versión deseada.
 - **Recuperable:** sí — sin efectos parciales; los datos previos siguen en disco y en el historial.
 
+### MCB-VER-004 — No se pudo crear la variante
+
+- **Severidad:** error
+- **Cuándo:** `VariantsService.create` falla mid-flight al bifurcar las tres ramas (`main`, `draft`, `comments`) de la nueva familia. La creación es atómica: si la 2ª o 3ª rama falla, las que ya se habían creado se eliminan en reverso y `variants.json` no se modifica.
+- **Causa típica:** un ref con el mismo nombre ya existe (colisión de slug con una variante borrada cuya entrada de `pendingDelete` aún no se reintentó), permisos del adapter perdidos a mitad, o un disco que rechazó la escritura del segundo branch.
+- **Cómo resolver:** revisar `/variants` (cuando exista, 13b-iii) para ver si hay entradas `pendingDelete` que no se completaron; en dev panel reintentar. Si el problema persiste, exportar ZIP y reportar.
+- **Recuperable:** sí — el rollback dejó el repo como estaba antes del intento. No hay branches huérfanos ni entradas inconsistentes.
+
+### MCB-VER-005 — No se pudo eliminar la variante
+
+- **Severidad:** error
+- **Cuándo:** `VariantsService.delete` falla al borrar una de las 3 ramas. La entrada quedó marcada `pendingDelete: true` en `variants.json` antes de tocar refs, así que el siguiente arranque (o `list()`) reintenta el borrado.
+- **Causa típica:** la rama está checked-out (no se puede borrar la activa), o permisos a `.git/refs/heads/` revocados mid-operación.
+- **Cómo resolver:** cambiar a otra variante antes de borrar; reintentar. La entrada `pendingDelete` se purgará automáticamente cuando todas las ramas estén ausentes.
+- **Recuperable:** sí — los datos del usuario y los commits siguen ahí; sólo el ref puede quedar parcialmente borrado, y `list()` reconcilia.
+
+### MCB-VER-006 — Archivo de variantes ilegible
+
+- **Severidad:** error
+- **Cuándo:** al cargar `.mi-cerebro/variants.json`, el archivo está ausente y no se pudo sembrar, JSON inválido, o `schemaVersion` no coincide con el actual.
+- **Causa típica:** edición manual del archivo, archivo truncado por un crash mid-write, o downgrade de la app a una versión que no entiende el schema actual.
+- **Cómo resolver:** la app sigue en la variante Principal implícita (no se pierden datos). Restaurar el archivo desde un backup en `.mi-cerebro/pre-migration/` (regla 31), o eliminar `variants.json` para que la app lo siembre con sólo Principal y reasocie variantes manualmente desde `/variants`.
+- **Recuperable:** sí — la app degrada a Principal-only y los commits/branches del usuario siguen intactos en `.git/`.
+
 ### MCB-VER-017 — No se pudo marcar este punto
 
 - **Severidad:** warning | error

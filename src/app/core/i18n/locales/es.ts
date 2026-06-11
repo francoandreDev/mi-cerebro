@@ -109,6 +109,18 @@ export const es = {
   'errors.ver.002.message':
     'No pude crear el commit automático del historial. Tus archivos siguen guardados; el próximo trigger reintentará.',
 
+  'errors.ver.004.title': 'No se pudo crear la variante',
+  'errors.ver.004.message':
+    'La creación de la variante falló a mitad. Las ramas parciales se eliminaron y tu workspace quedó como estaba. Podés reintentar.',
+
+  'errors.ver.005.title': 'No se pudo eliminar la variante',
+  'errors.ver.005.message':
+    'No pude borrar todas las ramas de la variante. La entrada quedó marcada para reintentar en el próximo arranque; tus archivos y commits están intactos.',
+
+  'errors.ver.006.title': 'Archivo de variantes ilegible',
+  'errors.ver.006.message':
+    'El archivo `.mi-cerebro/variants.json` no se pudo leer o tiene una versión de schema incompatible. La app sigue en la variante Principal; podés restaurar el archivo desde un backup en `.mi-cerebro/pre-migration/`.',
+
   'errors.ver.017.title': 'No se pudo marcar este punto',
   'errors.ver.017.message':
     'No pude crear el milestone. Tu historial sigue intacto; podés reintentar con otro nombre o más tarde.',
@@ -183,6 +195,8 @@ export const es = {
   'versioning.history.expandDetail': 'Expandir detalle',
   'versioning.history.timelineRail': 'Timeline',
   'versioning.history.detailRail': 'Detalle',
+
+  'variants.activeTitle': 'Variante activa',
 
   'notes.title': 'Notas',
   'notes.new': 'Nueva nota',

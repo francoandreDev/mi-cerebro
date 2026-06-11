@@ -1,0 +1,209 @@
+@if (open()) {
+  <section class="panel dv-panel" role="dialog" aria-label="Validador de variantes (13b-i)">
+    <header class="head">
+      <div class="title">
+        <strong>Variantes · 13b-i</strong>
+        <small>Foundation: modelo + creación/borrado atómicos</small>
+      </div>
+      <button type="button" class="close" (click)="open.set(false)">✕</button>
+    </header>
+
+    <div class="counts">
+      <span class="count">
+        <strong>{{ file().variants.length }}</strong>
+        variantes
+      </span>
+      <span class="count">
+        <strong>{{ branches().length }}</strong>
+        ramas en .git
+      </span>
+      @if (pendingCount() > 0) {
+        <span class="count pending">
+          <strong>{{ pendingCount() }}</strong>
+          pendingDelete
+        </span>
+      }
+      @if (orphanBranches().length > 0) {
+        <span class="count danger">
+          <strong>{{ orphanBranches().length }}</strong>
+          ramas huérfanas
+        </span>
+      }
+      <button type="button" class="ghost" (click)="refresh()" [disabled]="busy()">
+        Releer disco
+      </button>
+    </div>
+
+    @if (lastError(); as err) {
+      <p class="error">{{ err }}</p>
+    }
+
+    <section class="sec">
+      <h4>Familias en <code>variants.json</code> ↔ refs en <code>.git</code></h4>
+      <ul class="groups">
+        @for (g of groups(); track g.variant.id) {
+          <li class="group" [class.is-active]="g.variant.id === file().activeId">
+            <header class="group-head">
+              <span class="dot" [mcBgColor]="g.variant.color"></span>
+              <span class="group-name">
+                {{ g.variant.name }}
+                @if (g.variant.id === file().activeId) {
+                  <span class="badge">activa</span>
+                }
+                @if (g.variant.protected) {
+                  <span class="badge muted">principal</span>
+                }
+                @if (g.variant.pendingDelete) {
+                  <span class="badge danger">pendingDelete</span>
+                }
+              </span>
+              <span class="group-id">{{ g.variant.id }}</span>
+              <span class="group-actions">
+                @if (g.variant.id !== file().activeId) {
+                  <button type="button" (click)="setActive(g.variant.id)" [disabled]="busy()">
+                    Activar
+                  </button>
+                }
+                @if (!g.variant.protected) {
+                  <button
+                    type="button"
+                    class="danger"
+                    (click)="del(g.variant.id)"
+                    [disabled]="busy()"
+                  >
+                    Borrar
+                  </button>
+                }
+              </span>
+            </header>
+            <ul class="refs">
+              @for (r of g.refs; track r.ref) {
+                <li class="ref" [class.absent]="!r.present">
+                  <span class="ref-status">{{ r.present ? '✓' : '✗' }}</span>
+                  <span class="ref-label">{{ r.label }}</span>
+                  <code class="ref-ref">{{ r.ref }}</code>
+                </li>
+              }
+            </ul>
+          </li>
+        }
+      </ul>
+      @if (orphanBranches().length > 0) {
+        <div class="orphans">
+          <strong>Ramas en .git sin familia</strong>
+          (rollback parcial, edición externa, o estado pre-13b):
+          <ul>
+            @for (b of orphanBranches(); track b) {
+              <li>
+                <code>{{ b }}</code>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+    </section>
+
+    <section class="sec">
+      <h4>Crear variante</h4>
+      <p class="hint">
+        CRUD normal: la entrada va a <code>variants.json</code> y sus 3 refs a <code>.git</code>.
+      </p>
+      <div class="form">
+        <label class="field">
+          <span>Nombre</span>
+          <input type="text" [(ngModel)]="newName" placeholder="experimento-1" />
+        </label>
+        <label class="field color">
+          <span>Color</span>
+          <input type="color" [(ngModel)]="newColor" />
+        </label>
+        <button type="button" class="primary" (click)="create()" [disabled]="busy()">
+          + Crear
+        </button>
+      </div>
+    </section>
+
+    <section class="sec">
+      <h4>Validación 13b-i</h4>
+      <p class="hint">
+        Cada test crea y limpia su propia variante throwaway (slug
+        <code>__dev-test-*</code>); no toca tus variantes reales. El test
+        <strong>rollback</strong>
+        espera <code>MCB-VER-004</code>; cuando aparece, el resultado es ✓.
+      </p>
+      <ul class="tests">
+        @for (t of testList; track t.key) {
+          <li
+            class="test"
+            [class.test-pass]="tests()[t.key].status === 'pass'"
+            [class.test-fail]="tests()[t.key].status === 'fail'"
+            [class.test-running]="tests()[t.key].status === 'running'"
+          >
+            <span class="test-status">
+              @switch (tests()[t.key].status) {
+                @case ('pass') {
+                  ✓
+                }
+                @case ('fail') {
+                  ✗
+                }
+                @case ('running') {
+                  ⋯
+                }
+                @default {
+                  ○
+                }
+              }
+            </span>
+            <div class="test-body">
+              <div class="test-title">{{ t.label }}</div>
+              <div class="test-detail">{{ t.detail }}</div>
+              @if (tests()[t.key].message) {
+                <div class="test-message">{{ tests()[t.key].message }}</div>
+              }
+            </div>
+            <button
+              type="button"
+              (click)="runTest(t.key)"
+              [disabled]="tests()[t.key].status === 'running'"
+            >
+              Correr
+            </button>
+          </li>
+        }
+        <li class="test test-manual">
+          <span class="test-status">⌨</span>
+          <div class="test-body">
+            <div class="test-title">④ Tolerancia a edición manual + corrupción</div>
+            <div class="test-detail">
+              Dos sub-casos sobre <code>.mi-cerebro/variants.json</code>:
+              <ul>
+                <li>
+                  <strong>Edits válidos:</strong>
+                  cambiar color, nombre, reordenar entradas. Recargar.
+                  <em>Esperado:</em>
+                  la app aplica los cambios sin error (es portabilidad por diseño, regla §1).
+                </li>
+                <li>
+                  <strong>JSON inválido o schema incompatible:</strong>
+                  romper la sintaxis (borrar una llave) o cambiar <code>schemaVersion</code> a un
+                  valor desconocido. Recargar.
+                  <em>Esperado:</em>
+                  toast <code>MCB-VER-006</code>; la app sigue con sólo Principal.
+                </li>
+              </ul>
+            </div>
+          </div>
+          <span class="test-manual-tag">manual</span>
+        </li>
+      </ul>
+      <button type="button" class="primary run-all" (click)="runAllTests()" [disabled]="busy()">
+        Correr ① ② ③
+      </button>
+    </section>
+  </section>
+} @else {
+  <button type="button" class="toggle" title="Validador de variantes (dev)" (click)="openPanel()">
+    🌿
+  </button>
+}

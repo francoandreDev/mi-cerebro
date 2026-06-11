@@ -10,6 +10,7 @@ import { OnboardingContainer } from '@features/onboarding/containers/onboarding.
 import { ReminderToastContainer } from '@features/reminders/containers/reminder-toast.container';
 import { CommandPaletteContainer } from '@features/search/containers/command-palette.container';
 
+import { DevVariantsPanelContainer } from './dev-variants-panel.container';
 import { DevVersioningPanelContainer } from './dev-versioning-panel.container';
 import { ErrorDisplayContainer } from './error-display.container';
 import { MiniPlayerContainer } from './mini-player.container';
@@ -28,6 +29,7 @@ import { WorkspaceSidebarContainer } from './workspace-sidebar.container';
     ReminderToastContainer,
     MiniPlayerContainer,
     DevVersioningPanelContainer,
+    DevVariantsPanelContainer,
   ],
   template: `
     @if (workspace.isReady()) {
@@ -43,6 +45,7 @@ import { WorkspaceSidebarContainer } from './workspace-sidebar.container';
       <mc-mini-player />
       @if (isDev) {
         <mc-dev-versioning-panel />
+        <mc-dev-variants-panel />
       }
     } @else {
       <mc-onboarding />

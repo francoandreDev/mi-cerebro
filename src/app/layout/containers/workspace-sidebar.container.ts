@@ -14,6 +14,7 @@ import { PlayerService } from '@core/music/player.service';
 import { CommandPaletteService } from '@core/search/command-palette.service';
 import type { Tag } from '@core/tags/tag.types';
 import { TagsService } from '@core/tags/tags.service';
+import { VariantsService } from '@core/versioning/variants.service';
 import { BooksService } from '@features/books/services/books.service';
 import { FilesService } from '@features/files/services/files.service';
 import { GoalsService } from '@features/goals/services/goals.service';
@@ -26,6 +27,7 @@ import { PlaylistsService } from '@features/music/services/playlists.service';
 import { TasksService } from '@features/tasks/services/tasks.service';
 import { WritingsService } from '@features/writings/services/writings.service';
 import { AutocommitStatusComponent } from '@layout/components/autocommit-status.component';
+import { BgColorDirective } from '@shared/directives/bg-color.directive';
 import { MenuButtonComponent, type MenuOption } from '@shared/menu-button/menu-button.component';
 import { filterTree } from '@shared/tree/filter';
 import { TreeFilterComponent } from '@shared/tree/tree-filter.component';
@@ -49,7 +51,13 @@ interface RailItem {
 @Component({
   selector: 'mc-workspace-sidebar',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TreeFilterComponent, TreeComponent, MenuButtonComponent, AutocommitStatusComponent],
+  imports: [
+    TreeFilterComponent,
+    TreeComponent,
+    MenuButtonComponent,
+    AutocommitStatusComponent,
+    BgColorDirective,
+  ],
   templateUrl: './workspace-sidebar.container.html',
   styleUrl: './workspace-sidebar.container.css',
   host: { '[class.no-pane]': 'hidePane()' },
@@ -68,6 +76,7 @@ export class WorkspaceSidebarContainer {
   private readonly playlistsService = inject(PlaylistsService);
   private readonly foldersService = inject(FoldersService);
   private readonly tagsService = inject(TagsService);
+  private readonly variantsService = inject(VariantsService);
   private readonly workspace = inject(WorkspaceService);
   private readonly router = inject(Router);
   private readonly errors = inject(ErrorService);
@@ -95,6 +104,11 @@ export class WorkspaceSidebarContainer {
   // why: /history navigates commits and diffs, not entities. The tree
   //      + search pane is dead weight there, so we collapse it to the
   //      nav rail only. The rail (cross-page navigation) always stays.
+  protected readonly activeVariant = computed(() => {
+    const file = this.variantsService.file();
+    return file.variants.find((v) => v.id === file.activeId && !v.pendingDelete) ?? null;
+  });
+
   protected readonly hidePane = computed(() => {
     const url = this.currentUrl();
     return url === '/history' || url.startsWith('/history/') || url.startsWith('/history?');
@@ -115,6 +129,7 @@ export class WorkspaceSidebarContainer {
         await this.remindersService.refresh();
         await this.musicLibrary.refresh();
         await this.playlistsService.refresh();
+        await this.variantsService.refresh();
       } catch (e: unknown) {
         this.errors.report(e);
       }
