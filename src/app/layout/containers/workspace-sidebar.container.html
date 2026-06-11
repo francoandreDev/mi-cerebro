@@ -57,6 +57,16 @@
     </button>
     <button
       type="button"
+      class="rail-btn variants"
+      [class.active]="activeKey() === 'variants'"
+      [title]="t('variants.page.title')"
+      [attr.aria-label]="t('variants.page.title')"
+      (click)="goTo('variants')"
+    >
+      🌿
+    </button>
+    <button
+      type="button"
       class="rail-btn trash"
       [class.active]="activeKey() === 'trash'"
       [title]="t('trash.title')"
@@ -222,6 +232,18 @@
                   </button>
                 </li>
               }
+              <li role="separator" class="variant-menu-sep"></li>
+              <li role="none">
+                <button
+                  type="button"
+                  role="menuitem"
+                  class="variant-menu-item variant-menu-manage"
+                  (click)="onManageVariants($event)"
+                >
+                  <span class="variant-dot" aria-hidden="true">🌿</span>
+                  <span class="variant-menu-name">{{ t('variants.action.manage') }}</span>
+                </button>
+              </li>
             </ul>
           }
         </div>

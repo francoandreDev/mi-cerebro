@@ -49,7 +49,15 @@ import { buildFolderTree } from './folder-tree';
 import { goalBadges, tagBadges, taskBadges } from './tree-badges';
 
 type EntityKind = 'note' | 'task' | 'goal' | 'list' | 'writing' | 'book' | 'image' | 'file';
-type RailKey = EntityKind | 'trash' | 'calendar' | 'reminders' | 'music' | 'history' | 'settings';
+type RailKey =
+  | EntityKind
+  | 'trash'
+  | 'calendar'
+  | 'reminders'
+  | 'music'
+  | 'history'
+  | 'variants'
+  | 'settings';
 
 interface RailItem {
   readonly key: EntityKind;
@@ -161,8 +169,17 @@ export class WorkspaceSidebarContainer {
 
   protected readonly hidePane = computed(() => {
     const url = this.currentUrl();
-    return url === '/history' || url.startsWith('/history/') || url.startsWith('/history?');
+    if (url === '/history' || url.startsWith('/history/') || url.startsWith('/history?')) {
+      return true;
+    }
+    return url === '/variants' || url.startsWith('/variants/') || url.startsWith('/variants?');
   });
+
+  protected onManageVariants(event: Event): void {
+    event.stopPropagation();
+    this.closeVariantMenu();
+    void this.router.navigate(['/variants']);
+  }
 
   constructor() {
     void (async () => {
@@ -197,6 +214,7 @@ export class WorkspaceSidebarContainer {
     if (url.startsWith('/reminders')) return 'reminders';
     if (url.startsWith('/music')) return 'music';
     if (url.startsWith('/history')) return 'history';
+    if (url.startsWith('/variants')) return 'variants';
     if (url.startsWith('/settings')) return 'settings';
     const match = /^\/(notes|tasks|goals|lists|writings|books|images|files)/.exec(url);
     if (!match) return null;
@@ -212,6 +230,7 @@ export class WorkspaceSidebarContainer {
       k === 'reminders' ||
       k === 'music' ||
       k === 'history' ||
+      k === 'variants' ||
       k === 'settings'
     ) {
       return null;
@@ -227,6 +246,7 @@ export class WorkspaceSidebarContainer {
     if (k === 'reminders') return this.t('reminders.title');
     if (k === 'music') return this.t('music.title');
     if (k === 'history') return this.t('versioning.history.title');
+    if (k === 'variants') return this.t('variants.page.title');
     if (k === 'settings') return this.t('settings.title');
     return this.t(`tree.type.${KIND_TO_TYPE[k]}` as TranslationKey);
   });
@@ -473,6 +493,10 @@ export class WorkspaceSidebarContainer {
     }
     if (key === 'history') {
       void this.router.navigate(['/history']);
+      return;
+    }
+    if (key === 'variants') {
+      void this.router.navigate(['/variants']);
       return;
     }
     if (key === 'settings') {

@@ -45,6 +45,11 @@ export class SettingsService {
     this.update((s) => ({ ...s, timezone: tz }));
   }
 
+  setVariantsDormantThreshold(days: number): void {
+    const clamped = Math.max(1, Math.min(365, Math.round(days)));
+    this.update((s) => ({ ...s, variants: { ...s.variants, dormantThresholdDays: clamped } }));
+  }
+
   private update(fn: (current: Settings) => Settings): void {
     this.stateSignal.update(fn);
     this.persistToLocalStorage();

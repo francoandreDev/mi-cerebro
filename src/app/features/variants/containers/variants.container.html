@@ -1,0 +1,212 @@
+<section class="page">
+  <header class="head">
+    <div>
+      <h2>{{ t('variants.page.title') }}</h2>
+      <p class="subtitle">{{ t('variants.page.subtitle') }}</p>
+    </div>
+    <div class="head-actions">
+      <button
+        type="button"
+        class="ghost"
+        (click)="refreshActivity()"
+        [disabled]="refreshing() || busy()"
+      >
+        {{ refreshing() ? t('variants.refreshing') : t('variants.refresh') }}
+      </button>
+      <button type="button" class="primary" (click)="openCreate()" [disabled]="busy()">
+        + {{ t('variants.action.new') }}
+      </button>
+    </div>
+  </header>
+
+  <section class="group">
+    <h3>{{ t('variants.section.active') }}</h3>
+    @if (activeList().length === 0) {
+      <p class="empty">{{ t('variants.section.active.empty') }}</p>
+    } @else {
+      <ul class="cards">
+        @for (v of activeList(); track v.id) {
+          <ng-container *ngTemplateOutlet="card; context: { v: v }"></ng-container>
+        }
+      </ul>
+    }
+  </section>
+
+  <section class="group">
+    <h3>{{ t('variants.section.principal') }}</h3>
+    @if (principal(); as p) {
+      <ul class="cards">
+        <ng-container *ngTemplateOutlet="card; context: { v: p }"></ng-container>
+      </ul>
+    }
+  </section>
+
+  <section class="group">
+    <h3>{{ t('variants.section.dormant') }}</h3>
+    <p class="hint">{{ t('variants.section.dormant.hint', { days: thresholdDays() }) }}</p>
+    @if (dormantList().length === 0) {
+      <p class="empty">{{ t('variants.section.dormant.empty') }}</p>
+    } @else {
+      <ul class="cards">
+        @for (v of dormantList(); track v.id) {
+          <ng-container *ngTemplateOutlet="card; context: { v: v }"></ng-container>
+        }
+      </ul>
+    }
+  </section>
+
+  <ng-template #card let-v="v">
+    <li class="card" [class.is-active]="isActive(v)" [class.is-dormant]="isDormantNow(v)">
+      <div class="card-head">
+        <label class="color-swatch" [title]="t('variants.form.color')">
+          <input
+            type="color"
+            [value]="v.color"
+            [disabled]="v.protected"
+            (change)="onColorInput(v, $event)"
+          />
+          <span class="swatch" [mcBgColor]="v.color"></span>
+        </label>
+        @if (renamingId() === v.id) {
+          <input
+            type="text"
+            class="rename-input"
+            [ngModel]="renameValue()"
+            (ngModelChange)="renameValue.set($event)"
+            (keydown.enter)="submitRename(v)"
+            (keydown.escape)="cancelRename()"
+          />
+        } @else {
+          <span class="card-name">{{ v.name }}</span>
+        }
+        <span class="card-badges">
+          @if (isActive(v)) {
+            <span class="badge">{{ t('variants.badge.active') }}</span>
+          }
+          @if (isDormantNow(v)) {
+            <span class="badge muted">{{ t('variants.badge.dormant') }}</span>
+          }
+        </span>
+      </div>
+
+      <div class="card-meta">
+        @if (v.lastActivityAt > 0) {
+          {{ t('variants.activity.lastAt', { at: '' }) }}
+          <strong>{{ v.lastActivityAt | mcDate }}</strong>
+        } @else {
+          {{ t('variants.activity.never') }}
+        }
+      </div>
+
+      <div class="card-actions">
+        @if (renamingId() === v.id) {
+          <button type="button" class="primary" (click)="submitRename(v)" [disabled]="busy()">
+            {{ t('variants.rename.save') }}
+          </button>
+          <button type="button" class="ghost" (click)="cancelRename()">
+            {{ t('variants.form.cancel') }}
+          </button>
+        } @else {
+          @if (!isActive(v)) {
+            <button
+              type="button"
+              class="primary"
+              (click)="onSwitch(v)"
+              [disabled]="busy() || !!switching()"
+            >
+              {{ t('variants.action.switch') }}
+            </button>
+          }
+          @if (!v.protected) {
+            <button type="button" (click)="startRename(v)" [disabled]="busy()">
+              {{ t('variants.action.rename') }}
+            </button>
+            <button type="button" disabled [title]="t('variants.action.merge.disabled')">
+              {{ t('variants.action.merge') }}
+            </button>
+            <button
+              type="button"
+              class="danger"
+              (click)="requestDelete(v)"
+              [disabled]="busy() || isActive(v)"
+            >
+              {{ t('variants.action.delete') }}
+            </button>
+          }
+        }
+      </div>
+    </li>
+  </ng-template>
+
+  @if (showCreate()) {
+    <button
+      type="button"
+      class="modal-backdrop"
+      [attr.aria-label]="t('variants.form.cancel')"
+      (click)="cancelCreate()"
+    ></button>
+    <div class="modal" role="dialog" aria-modal="true">
+      <h3>{{ t('variants.form.title') }}</h3>
+      <label class="field">
+        <span>{{ t('variants.form.name') }}</span>
+        <input
+          type="text"
+          [ngModel]="createName()"
+          (ngModelChange)="createName.set($event)"
+          [placeholder]="t('variants.form.name.placeholder')"
+        />
+      </label>
+      <label class="field">
+        <span>{{ t('variants.form.color') }}</span>
+        <input type="color" [ngModel]="createColor()" (ngModelChange)="createColor.set($event)" />
+      </label>
+      <label class="field">
+        <span>{{ t('variants.form.from') }}</span>
+        <select [ngModel]="createFrom()" (ngModelChange)="createFrom.set($event)">
+          @for (v of file().variants; track v.id) {
+            @if (!v.pendingDelete) {
+              <option [value]="v.id">{{ v.name }}</option>
+            }
+          }
+        </select>
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="ghost" (click)="cancelCreate()" [disabled]="busy()">
+          {{ t('variants.form.cancel') }}
+        </button>
+        <button
+          type="button"
+          class="primary"
+          (click)="submitCreate()"
+          [disabled]="busy() || !createName().trim()"
+        >
+          {{ t('variants.form.create') }}
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (deleteRequest(); as req) {
+    <button
+      type="button"
+      class="modal-backdrop"
+      [attr.aria-label]="t('variants.form.cancel')"
+      (click)="cancelDelete()"
+    ></button>
+    <div class="modal" role="alertdialog" aria-modal="true">
+      <h3>{{ t('variants.action.delete') }}</h3>
+      <p>{{ t('variants.delete.confirm', { name: req.variant.name }) }}</p>
+      @if (req.unmerged > 0) {
+        <p class="warning">{{ t('variants.delete.unmerged.warning', { n: req.unmerged }) }}</p>
+      }
+      <div class="modal-actions">
+        <button type="button" class="ghost" (click)="cancelDelete()" [disabled]="busy()">
+          {{ t('variants.form.cancel') }}
+        </button>
+        <button type="button" class="danger" (click)="confirmDelete()" [disabled]="busy()">
+          {{ t('variants.delete.confirm.button') }}
+        </button>
+      </div>
+    </div>
+  }
+</section>

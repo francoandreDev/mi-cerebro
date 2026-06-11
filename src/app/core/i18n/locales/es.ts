@@ -216,6 +216,53 @@ export const es = {
     'Otra pestaña cambió a la variante "{name}". Esta pestaña quedó desactualizada.',
   'variants.stale.reload': 'Recargar',
 
+  'variants.page.title': 'Variantes',
+  'variants.page.subtitle':
+    'Cada variante es una familia de tres ramas (main · draft · comments). Principal es permanente.',
+  'variants.section.active': 'Activas',
+  'variants.section.principal': 'Principal',
+  'variants.section.dormant': 'En reposo',
+  'variants.section.dormant.hint':
+    'Variantes sin actividad reciente. El umbral se configura en Ajustes ({days} días).',
+  'variants.section.active.empty':
+    'Aún no creaste variantes. Usá "Nueva variante" para empezar a explorar sin tocar Principal.',
+  'variants.section.dormant.empty': 'Ninguna variante en reposo.',
+  'variants.badge.active': 'activa',
+  'variants.badge.dormant': 'reposo',
+  'variants.badge.unmerged': '{n} sin mergear',
+  'variants.activity.never': 'Sin actividad',
+  'variants.activity.lastAt': 'Última actividad: {at}',
+  'variants.action.switch': 'Activar',
+  'variants.action.rename': 'Renombrar',
+  'variants.action.delete': 'Eliminar',
+  'variants.action.merge': 'Mergear',
+  'variants.action.merge.disabled': 'Mergeo disponible en 13b-iv',
+  'variants.action.new': 'Nueva variante',
+  'variants.form.title': 'Nueva variante',
+  'variants.form.name': 'Nombre',
+  'variants.form.name.placeholder': 'ej. experimento-2026',
+  'variants.form.color': 'Color',
+  'variants.form.from': 'Forkear desde',
+  'variants.form.cancel': 'Cancelar',
+  'variants.form.create': 'Crear',
+  'variants.form.invalid':
+    'Nombre inválido. Usá letras, números o guiones; no puede colisionar con "principal".',
+  'variants.rename.title': 'Renombrar variante',
+  'variants.rename.label': 'Nuevo nombre',
+  'variants.rename.save': 'Guardar',
+  'variants.delete.confirm':
+    '¿Eliminar la variante "{name}"? Sus 3 ramas y sus commits no mergeados se perderán.',
+  'variants.delete.unmerged.warning':
+    'Tiene {n} commits no mergeados respecto a Principal. Esta acción no se puede deshacer.',
+  'variants.delete.confirm.button': 'Eliminar definitivamente',
+  'variants.refreshing': 'Releyendo actividad…',
+  'variants.refresh': 'Releer actividad',
+  'variants.action.manage': 'Gestionar variantes…',
+
+  'settings.variants.dormant.apply': 'Aplicar',
+  'settings.variants.dormant.hint':
+    'Las variantes sin actividad por más de N días aparecen en la sección "En reposo".',
+
   'notes.title': 'Notas',
   'notes.new': 'Nueva nota',
   'notes.untitledTitle': 'Sin título',

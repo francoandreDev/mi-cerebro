@@ -1,16 +1,8 @@
-// 13b-i foundation: persist + manage the family-of-three-branches model
-// (PROYECTO.md §19 paso 13b). This service owns variants.json and the
-// git-side primitives to atomically create / delete a family. It does
-// NOT do the active-variant switch (that's 13b-ii).
-//
-// why: file goes over the 200-line soft cap (rule §4.4). Splitting any
-//      further would scatter the atomicity invariant — create/delete
-//      both need to keep their two-phase persistence + rollback logic
-//      side by side to be auditable. Validation IO + parsing already
-//      live in variants.io.ts.
+// Owns variants.json + orchestrates the family-of-3-branches model.
+// Switch flow is in SwitchVariantService (13b-ii); atomic branch ops
+// live in variants-branch-ops.ts; rename in variants-rename.ts.
 
 import { Injectable, inject, signal } from '@angular/core';
-import * as git from 'isomorphic-git';
 
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
@@ -18,19 +10,20 @@ import { FsService } from '@core/fs/fs.service';
 import type { FsDirectoryHandle } from '@core/fs/fs.types';
 import { WorkspaceService } from '@core/fs/workspace.service';
 
+import { computeLastActivityAt, isDormant } from './variants-activity';
+import { deleteFamilyRefs, forkFamilyAtomic } from './variants-branch-ops';
+import { renameVariant } from './variants-rename';
 import { GitFsAdapter } from './git-fs.adapter';
-import { isNotFound, resolveOrNull, sanitizeVariantsFile, stripHeadsPrefix } from './variants.io';
+import { isNotFound, sanitizeVariantsFile } from './variants.io';
 import {
   DEFAULT_VARIANTS_FILE,
   PRINCIPAL_VARIANT_ID,
   refsForSlug,
   variantSlug,
   type Variant,
-  type VariantRefs,
   type VariantsFile,
 } from './variants.types';
 
-const REPO_DIR = '/';
 const META_DIR = '.mi-cerebro';
 const VARIANTS_FILE = 'variants.json';
 
@@ -65,9 +58,6 @@ export class VariantsService {
     return this.fileSignal().variants.find((v) => v.id === id) ?? null;
   }
 
-  // why: 13b-i only persists the choice; 13b-ii adds the real checkout
-  //      + index swap flow. Splitting these makes the dangerous bit
-  //      land alone in 13b-ii.
   async setActiveId(id: string): Promise<void> {
     await this.ensureLoaded();
     const current = this.fileSignal();
@@ -82,6 +72,69 @@ export class VariantsService {
     await this.writeFile({ ...current, activeId: id });
   }
 
+  async rename(id: string, newName: string): Promise<Variant> {
+    await this.ensureLoaded();
+    const current = this.fileSignal();
+    const variant = current.variants.find((v) => v.id === id);
+    if (!variant) {
+      throw new AppError(ERROR_CODES.VER_006, {
+        severity: 'warning',
+        context: { reason: 'unknown-variant', id },
+        recoverable: true,
+      });
+    }
+    const fs = this.requireAdapter();
+    const { nextFile, nextVariant } = await renameVariant(fs, current, variant, newName);
+    await this.writeFile(nextFile);
+    return nextVariant;
+  }
+
+  async setColor(id: string, color: string): Promise<void> {
+    await this.ensureLoaded();
+    const current = this.fileSignal();
+    if (!current.variants.find((v) => v.id === id)) return;
+    const next = current.variants.map((v) => (v.id === id ? { ...v, color } : v));
+    await this.writeFile({ ...current, variants: next });
+  }
+
+  // why: Principal is exempt from the dormant lifecycle per PROYECTO §19 13b-iii.
+  async refreshActivity(thresholdDays: number, now = Date.now()): Promise<void> {
+    await this.ensureLoaded();
+    const fs = this.requireAdapter();
+    const current = this.fileSignal();
+    const updated: Variant[] = [];
+    for (const v of current.variants) {
+      if (v.id === PRINCIPAL_VARIANT_ID || v.protected) {
+        updated.push(v);
+        continue;
+      }
+      const lastActivityAt = await computeLastActivityAt(fs, v);
+      const state: Variant['state'] = isDormant(lastActivityAt, thresholdDays, now)
+        ? 'dormant'
+        : 'active';
+      if (v.lastActivityAt === lastActivityAt && v.state === state) {
+        updated.push(v);
+      } else {
+        updated.push({ ...v, lastActivityAt, state });
+      }
+    }
+    const changed = updated.some(
+      (v, i) =>
+        v.lastActivityAt !== current.variants[i]?.lastActivityAt ||
+        v.state !== current.variants[i]?.state,
+    );
+    if (changed) await this.writeFile({ ...current, variants: updated });
+  }
+
+  // why: dev-only. Pin lastActivityAt for the dormant validation gate;
+  //      next refreshActivity() will recompute from git.
+  async setLastActivityAt(id: string, ts: number): Promise<void> {
+    await this.ensureLoaded();
+    const current = this.fileSignal();
+    const next = current.variants.map((v) => (v.id === id ? { ...v, lastActivityAt: ts } : v));
+    await this.writeFile({ ...current, variants: next });
+  }
+
   async list(): Promise<readonly Variant[]> {
     await this.ensureLoaded();
     return this.fileSignal().variants.filter((v) => !v.pendingDelete);
@@ -92,10 +145,6 @@ export class VariantsService {
     await this.ensureLoaded();
   }
 
-  // Atomic creation: forks the parent family's three refs into the new
-  // family. If any of the three branch() calls fails, every branch we
-  // already created is deleted in reverse order and variants.json is not
-  // touched, so the workspace state matches what the user saw before.
   async create(opts: CreateVariantOptions): Promise<Variant> {
     await this.ensureLoaded();
     const slug = variantSlug(opts.name);
@@ -125,7 +174,7 @@ export class VariantsService {
       });
     }
     const newRefs = refsForSlug(slug);
-    await this.forkFamilyAtomic(parent.refs, newRefs);
+    await forkFamilyAtomic(this.requireAdapter(), parent.refs, newRefs);
     const variant: Variant = {
       id: slug,
       name: opts.name.trim(),
@@ -139,10 +188,9 @@ export class VariantsService {
     return variant;
   }
 
-  // Two-phase delete (PROYECTO.md §19 13b-i validation #2). Phase 1
-  // marks the entry pendingDelete + persists; phase 2 deletes branches +
-  // removes entry. If phase 2 crashes the entry stays pendingDelete and
-  // gets retried on next ensureLoaded().
+  // why: two-phase delete. Phase 1 marks pendingDelete + persists;
+  //      phase 2 wipes refs + entry. Crash between leaves a retryable
+  //      pendingDelete that ensureLoaded() picks up next load.
   async delete(id: string): Promise<void> {
     await this.ensureLoaded();
     if (id === PRINCIPAL_VARIANT_ID) {
@@ -181,14 +229,7 @@ export class VariantsService {
       parsed = sanitizeVariantsFile(raw);
     } catch (cause) {
       if (!isNotFound(cause)) {
-        // why: a corrupt or schema-mismatched file degrades to Principal
-        //      but we still report so the user can restore from
-        //      .mi-cerebro/pre-migration/ if needed.
-        throw new AppError(ERROR_CODES.VER_006, {
-          severity: 'error',
-          cause,
-          recoverable: true,
-        });
+        throw new AppError(ERROR_CODES.VER_006, { severity: 'error', cause, recoverable: true });
       }
     }
     if (!parsed) {
@@ -198,91 +239,24 @@ export class VariantsService {
     }
     this.fileSignal.set(parsed);
     this.loaded = true;
-    // why: opportunistically retry any deletions that didn't finish in
-    //      a previous run. Failure here is non-fatal — they'll be
-    //      retried again next load.
-    const pending = parsed.variants.filter((v) => v.pendingDelete);
-    for (const v of pending) {
+    // why: opportunistically retry deletions left half-applied by a
+    //      previous crash; failure is non-fatal (retried next load).
+    for (const v of parsed.variants.filter((p) => p.pendingDelete)) {
       try {
         await this.completeDelete(v.id);
       } catch {
-        // logged via subsequent user actions
+        // surfaces on next user action
       }
     }
   }
 
   private async completeDelete(id: string): Promise<void> {
-    const fs = this.requireAdapter();
     const current = this.fileSignal();
     const variant = current.variants.find((v) => v.id === id);
     if (!variant) return;
-    const refs: readonly string[] = [variant.refs.draft, variant.refs.comments, variant.refs.main];
-    const existing = new Set(await git.listBranches({ fs, dir: REPO_DIR }));
-    try {
-      for (const ref of refs) {
-        if (!existing.has(stripHeadsPrefix(ref))) continue;
-        await git.deleteBranch({ fs, dir: REPO_DIR, ref });
-      }
-    } catch (cause) {
-      throw new AppError(ERROR_CODES.VER_005, {
-        severity: 'error',
-        cause,
-        context: { id },
-        recoverable: true,
-      });
-    }
+    await deleteFamilyRefs(this.requireAdapter(), variant.refs);
     const next = current.variants.filter((v) => v.id !== id);
     await this.writeFile({ ...current, variants: next });
-  }
-
-  private async forkFamilyAtomic(parent: VariantRefs, target: VariantRefs): Promise<void> {
-    const fs = this.requireAdapter();
-    const pairs: readonly [keyof VariantRefs, string, string][] = [
-      ['main', parent.main, target.main],
-      ['draft', parent.draft, target.draft],
-      ['comments', parent.comments, target.comments],
-    ];
-    const created: string[] = [];
-    try {
-      for (const [, parentRef, newRef] of pairs) {
-        const oid = await resolveOrNull(fs, parentRef);
-        if (oid === null) {
-          // why: parent draft/comments may not exist yet if Principal
-          //      never seeded them. Use Principal's main as fallback so
-          //      every new family still gets a real starting point.
-          const fallback = await resolveOrNull(fs, 'main');
-          if (fallback === null) {
-            throw new AppError(ERROR_CODES.VER_004, {
-              severity: 'error',
-              context: { reason: 'no-parent-oid', parentRef },
-              recoverable: true,
-            });
-          }
-          await git.branch({ fs, dir: REPO_DIR, ref: newRef, object: fallback });
-        } else {
-          await git.branch({ fs, dir: REPO_DIR, ref: newRef, object: oid });
-        }
-        created.push(newRef);
-      }
-    } catch (cause) {
-      for (const ref of [...created].reverse()) {
-        try {
-          await git.deleteBranch({ fs, dir: REPO_DIR, ref });
-        } catch {
-          // best-effort cleanup; if it fails, ensureLoaded retry will
-          // not help because we never wrote variants.json. The leftover
-          // branch is invisible to the user; harmless until the next
-          // attempt to create the same slug, which surfaces VER-004.
-        }
-      }
-      if (cause instanceof AppError) throw cause;
-      throw new AppError(ERROR_CODES.VER_004, {
-        severity: 'error',
-        cause,
-        context: { target },
-        recoverable: true,
-      });
-    }
   }
 
   private requireAdapter(): GitFsAdapter {

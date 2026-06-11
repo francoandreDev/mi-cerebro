@@ -283,3 +283,12 @@
   font-size: 0.7rem;
   color: var(--mc-accent-primary);
 }
+.variant-menu-sep {
+  height: 1px;
+  margin: var(--mc-space-1) var(--mc-space-2);
+  background: var(--mc-border-default);
+  list-style: none;
+}
+.variant-menu-manage {
+  color: var(--mc-fg-muted);
+}

@@ -3,6 +3,7 @@ import { RouterOutlet } from '@angular/router';
 
 import { ErrorService } from '@core/errors/error.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
+import { SettingsService } from '@core/settings/settings.service';
 import { ThemeService } from '@core/theme/theme.service';
 import { AutocommitService } from '@core/versioning/autocommit.service';
 import { SwitchVariantService } from '@core/versioning/switch-variant.service';
@@ -84,6 +85,7 @@ export class AppShellContainer {
   private readonly autocommit = inject(AutocommitService);
   private readonly variantsService = inject(VariantsService);
   private readonly switchVariant = inject(SwitchVariantService);
+  private readonly settings = inject(SettingsService);
 
   constructor() {
     this.workspace
@@ -95,6 +97,9 @@ export class AppShellContainer {
         //      what activeId to align HEAD to (covers crash mid-switch).
         await this.variantsService.refresh();
         await this.switchVariant.bootstrap();
+        await this.variantsService.refreshActivity(
+          this.settings.state().variants.dormantThresholdDays,
+        );
       })
       .catch((e: unknown) => this.errors.report(e));
   }

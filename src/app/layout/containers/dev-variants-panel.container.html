@@ -67,6 +67,14 @@
                 @if (!g.variant.protected) {
                   <button
                     type="button"
+                    (click)="backdate(g.variant.id)"
+                    [disabled]="busy()"
+                    title="Pone lastActivityAt 31 días atrás (validación 13b-iii gate 2)"
+                  >
+                    -31d
+                  </button>
+                  <button
+                    type="button"
                     class="danger"
                     (click)="del(g.variant.id)"
                     [disabled]="busy()"

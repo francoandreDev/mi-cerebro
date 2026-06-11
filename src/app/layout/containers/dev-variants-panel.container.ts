@@ -178,6 +178,10 @@ export class DevVariantsPanelContainer {
     await this.runAction(() => this.variants.refresh());
   }
 
+  protected async backdate(id: string): Promise<void> {
+    await this.runAction(() => this.variants.setLastActivityAt(id, Date.now() - 31 * 86_400_000));
+  }
+
   protected async runTest(key: TestKey): Promise<void> {
     const fs = this.adapter();
     if (!fs) return;

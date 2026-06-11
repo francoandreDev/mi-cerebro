@@ -18,11 +18,23 @@ export class SettingsContainer {
   protected readonly timezones = listSupportedTimezones();
   protected readonly draft = signal('');
   protected readonly error = signal(false);
+  protected readonly dormantDraft = signal(0);
 
   constructor() {
     // why: keep the input synced when the timezone changes from elsewhere
     //      (workspace file load, future cross-tab sync).
     effect(() => this.draft.set(this.state().timezone));
+    effect(() => this.dormantDraft.set(this.state().variants.dormantThresholdDays));
+  }
+
+  protected onDormantInput(event: Event): void {
+    const v = parseInt((event.target as HTMLInputElement).value, 10);
+    if (!isNaN(v)) this.dormantDraft.set(v);
+  }
+
+  protected applyDormant(): void {
+    if (this.dormantDraft() === this.state().variants.dormantThresholdDays) return;
+    this.settings.setVariantsDormantThreshold(this.dormantDraft());
   }
 
   protected t(key: TranslationKey): string {
