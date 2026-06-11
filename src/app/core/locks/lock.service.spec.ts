@@ -48,6 +48,16 @@ describe('LockService', () => {
     expect(tab.state('note', 'n1')()).toBe('owned');
   });
 
+  // Regression for MCB-AUT-005 firing on single-tab loads: state must
+  // be 'owned' synchronously so that the editor's onUpdate-on-init
+  // doesn't trip guardWrite during the 150 ms pong window.
+  it('state is owned synchronously while acquire is pending', () => {
+    const bus = new FakeBus();
+    const tab = makeTab(bus);
+    void tab.acquire('note', 'n1');
+    expect(tab.state('note', 'n1')()).toBe('owned');
+  });
+
   it('rejects a second claimant and reports owner', async () => {
     const bus = new FakeBus();
     const a = makeTab(bus);

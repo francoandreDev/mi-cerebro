@@ -41,6 +41,17 @@ export class LockService {
 
   async acquire(kind: string, id: string): Promise<LockOutcome> {
     const key = this.keyOf(kind, id);
+    const entry = this.entry(key);
+    // why: optimistic claim. The previous "wait 150ms then own" model
+    //      left the entry in 'idle' during the pong window, which the
+    //      EntityLockController treats as not-editable — TipTap's
+    //      onUpdate-on-initialize would then fire MCB-AUT-005 every
+    //      time you opened an entity, even in a single tab where no
+    //      conflict was possible. We claim owned now; if a pong
+    //      reveals a real owner, we downgrade to foreign below.
+    entry.ownerTabId = this.tabId;
+    entry.state.set('owned');
+
     let conflict: string | null = null;
     const listener = (msg: LockMessage): void => {
       if (msg.type === 'pong' && msg.key === key && msg.tabId !== this.tabId) {
@@ -52,14 +63,11 @@ export class LockService {
     await this.wait(LOCK_PONG_WAIT_MS);
     this.pongListeners.delete(listener);
 
-    const entry = this.entry(key);
     if (conflict !== null) {
       entry.ownerTabId = conflict;
       entry.state.set('foreign');
       return { granted: false, ownerTabId: conflict };
     }
-    entry.ownerTabId = this.tabId;
-    entry.state.set('owned');
     return { granted: true };
   }
 
