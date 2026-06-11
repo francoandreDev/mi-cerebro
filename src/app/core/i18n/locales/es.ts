@@ -109,6 +109,10 @@ export const es = {
   'errors.ver.002.message':
     'No pude crear el commit automático del historial. Tus archivos siguen guardados; el próximo trigger reintentará.',
 
+  'errors.ver.003.title': 'No se pudo restaurar',
+  'errors.ver.003.message':
+    'No pude reescribir esta entidad con la versión seleccionada. Tu disco quedó como estaba; podés reintentar.',
+
   'versioning.status.none': 'Sin commits aún',
   'versioning.status.committing': 'Guardando versión…',
   'versioning.status.lastCommit': 'Último commit · hace {n} min',
@@ -137,6 +141,18 @@ export const es = {
   'versioning.history.bucket.twoWeeks': 'Hace dos semanas',
   'versioning.history.bucket.oneMonth': 'Hace un mes',
   'versioning.history.bucket.older': 'Más viejo',
+  'versioning.history.restoreEntity': 'Restaurar esta versión',
+  'versioning.history.restoreEntityConfirm':
+    '¿Sobrescribir "{path}" con la versión del commit {shortOid}? Quedará un commit nuevo con el cambio.',
+  'versioning.history.restoreEntityDeleteConfirm':
+    'En el commit {shortOid} esta entidad no existía. ¿Borrar "{path}" del disco? Quedará un commit nuevo con el cambio.',
+  'versioning.history.restoring': 'Restaurando…',
+  'versioning.history.headBadge': 'Actual',
+  'versioning.history.restoreCommit': 'Restaurar todo este commit',
+  'versioning.history.restoreCommitPrompt':
+    'Vas a restaurar TODO el workspace a la versión del commit {shortOid}.\n\nVoy a guardar un autocommit «before-restore» como red de seguridad antes de tocar nada — siempre podés volver atrás eligiendo ese punto.\n\nEscribí «{shortOid}» para confirmar:',
+  'versioning.history.restoreCommitMismatch': 'Texto incorrecto, no se restauró nada.',
+  'versioning.history.restoringCommit': 'Restaurando commit…',
 
   'notes.title': 'Notas',
   'notes.new': 'Nueva nota',

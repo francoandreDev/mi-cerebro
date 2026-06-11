@@ -30,6 +30,10 @@ export class HistoryService {
   readonly entries = this.entriesSignal.asReadonly();
   readonly loading = this.loadingSignal.asReadonly();
   readonly error = this.errorSignal.asReadonly();
+  // why: with our model (commits always land on main, restore always
+  //      produces a new commit on top) HEAD is by definition the most
+  //      recent entry. UI marks it as "actual".
+  readonly headOid = computed<string | null>(() => this.entriesSignal()[0]?.oid ?? null);
 
   readonly buckets = computed<readonly CommitBucket[]>(() => {
     const now = Date.now();

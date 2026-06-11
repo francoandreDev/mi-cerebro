@@ -81,6 +81,24 @@
   border-left-color: var(--mc-accent, #3a7bd5);
 }
 
+.commit.is-head {
+  border-left-color: rgba(60, 200, 90, 0.7);
+}
+
+.head-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: rgba(60, 200, 90, 0.28);
+  color: var(--mc-fg-primary);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  vertical-align: middle;
+}
+
 .commit-time {
   font-family: ui-monospace, monospace;
   color: var(--mc-fg-secondary, #666);
@@ -124,9 +142,41 @@
 }
 
 .detail-head h3 {
-  margin: 0 0 8px;
+  margin: 0;
   font-size: 14px;
   font-weight: 600;
+}
+
+.detail-head-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.commit-restore {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid var(--mc-border, rgba(0, 0, 0, 0.2));
+  border-radius: 4px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--mc-fg-primary);
+  cursor: pointer;
+}
+
+.commit-restore:hover:not(:disabled) {
+  background: rgba(220, 60, 60, 0.12);
+  border-color: rgba(220, 60, 60, 0.6);
+  color: var(--mc-fg-primary);
+}
+
+.commit-restore:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .detail-meta {
@@ -164,13 +214,20 @@
   overflow: hidden;
 }
 
+.entity-head-row {
+  display: flex;
+  align-items: stretch;
+  background: var(--mc-bg-base, #fff);
+}
+
 .entity-head {
   display: flex;
   align-items: center;
   gap: 12px;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   padding: 8px 12px;
-  background: var(--mc-bg-base, #fff);
+  background: transparent;
   border: none;
   font: inherit;
   font-size: 12px;
@@ -181,6 +238,30 @@
 
 .entity-head:hover {
   background: var(--mc-bg-hover, rgba(0, 0, 0, 0.04));
+}
+
+.entity-restore {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  margin: 4px 8px 4px 0;
+  background: transparent;
+  border: 1px solid var(--mc-border, rgba(0, 0, 0, 0.18));
+  border-radius: 4px;
+  font: inherit;
+  font-size: 11px;
+  color: var(--mc-fg-primary);
+  cursor: pointer;
+}
+
+.entity-restore:hover:not(:disabled) {
+  background: var(--mc-bg-hover, rgba(0, 0, 0, 0.06));
+  border-color: var(--mc-accent, #3a7bd5);
+  color: var(--mc-accent, #3a7bd5);
+}
+
+.entity-restore:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .entity-status {

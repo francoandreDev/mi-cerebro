@@ -185,3 +185,11 @@ Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `P
 - **Causa típica:** permisos revocados a mitad del commit, lock contendido demasiado tiempo, o un autosave que terminó de escribir un archivo y dejó el FS en un estado que isomorphic-git no esperaba.
 - **Cómo resolver:** el próximo trigger reintenta automáticamente (timer cada 5 min, navegación, cierre de pestaña). Si los autocommits siguen fallando varias veces seguidas, abrir `/history` para verificar que el último commit conocido sigue válido y forzar un commit manual desde el footer del sidebar.
 - **Recuperable:** sí — los archivos del usuario están en disco; sólo el historial queda sin ese punto.
+
+### MCB-VER-003 — No se pudo restaurar
+
+- **Severidad:** error
+- **Cuándo:** el usuario disparó "Restaurar esta versión" (o restore por commit completo) y la operación falló entre leer el blob del commit, escribir/borrar el archivo en disco o crear el commit que captura el cambio.
+- **Causa típica:** permisos a la carpeta revocados mid-operación, el archivo destino fue tocado externamente entre el `flushAll` y la escritura, o isomorphic-git no pudo leer el blob (oid corrupto o `.git/` parcialmente roto).
+- **Cómo resolver:** la restauración es transaccional desde el lado del usuario: o terminó completa, o el disco quedó como estaba antes. Reintentar la acción. Si se repite, abrir el commit en `/history`, verificar que el blob existe (debería listarse en el diff) y, si persiste, restaurar manualmente la entidad copiando el contenido de la versión deseada.
+- **Recuperable:** sí — sin efectos parciales; los datos previos siguen en disco y en el historial.

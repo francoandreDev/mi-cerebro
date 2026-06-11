@@ -83,8 +83,10 @@ export class AutocommitService {
   }
 
   // Manual entry point for explicit user actions or future triggers.
-  async commitNow(reason = 'manual'): Promise<string | null> {
-    return this.runCommit(reason);
+  // why: customMessage bypasses the `auto: N kind [reason]` format so callers
+  //      like restore can label the commit semantically.
+  async commitNow(reason = 'manual', customMessage?: string): Promise<string | null> {
+    return this.runCommit(reason, customMessage);
   }
 
   private async bootstrap(): Promise<void> {
@@ -121,7 +123,7 @@ export class AutocommitService {
     return this.runCommit(reason);
   }
 
-  private async runCommit(reason: string): Promise<string | null> {
+  private async runCommit(reason: string, customMessage?: string): Promise<string | null> {
     if (!this.workspace.isReady()) return null;
     if (this.stateSignal() === 'committing') return null;
     try {
@@ -130,7 +132,7 @@ export class AutocommitService {
       // through the lock.
       await this.autosave.flushAll();
       this.stateSignal.set('committing');
-      const oid = await this.fsLock.withLock(() => this.commitWithMessage(reason));
+      const oid = await this.fsLock.withLock(() => this.commitWithMessage(reason, customMessage));
       if (oid) this.lastCommitAtSignal.set(new Date());
       return oid;
     } catch (cause) {
@@ -141,7 +143,7 @@ export class AutocommitService {
     }
   }
 
-  private async commitWithMessage(reason: string): Promise<string | null> {
+  private async commitWithMessage(reason: string, customMessage?: string): Promise<string | null> {
     const adapter = this.adapter();
     if (!adapter) return null;
     const matrix = await git.statusMatrix({ fs: adapter, dir: '/' });
@@ -151,7 +153,7 @@ export class AutocommitService {
     );
     const visible = dirty.filter((_, i) => !ignored[i]).map(([p]) => p);
     if (visible.length === 0) return null;
-    const message = `${deriveAutocommitMessage(visible)} [${reason}]`;
+    const message = customMessage ?? `${deriveAutocommitMessage(visible)} [${reason}]`;
     return this.versioning.commitAll(message);
   }
 

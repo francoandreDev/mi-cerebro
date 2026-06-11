@@ -21,10 +21,16 @@
                   type="button"
                   class="commit"
                   [class.selected]="selectedOid() === c.oid"
+                  [class.is-head]="headOid() === c.oid"
                   (click)="select(c.oid)"
                 >
                   <span class="commit-time">{{ formatTime(c.date) }}</span>
-                  <span class="commit-message">{{ c.message }}</span>
+                  <span class="commit-message">
+                    {{ c.message }}
+                    @if (headOid() === c.oid) {
+                      <span class="head-badge">{{ i18n.t('versioning.history.headBadge') }}</span>
+                    }
+                  </span>
                   @if (c.kinds.length > 0) {
                     <span class="commit-chips">
                       @for (k of c.kinds; track k) {
@@ -45,10 +51,29 @@
   <section class="detail" aria-live="polite">
     @if (selectedEntry(); as entry) {
       <header class="detail-head">
-        <h3>{{ entry.message }}</h3>
+        <div class="detail-head-top">
+          <h3>{{ entry.message }}</h3>
+          @if (headOid() !== entry.oid) {
+            <button
+              type="button"
+              class="commit-restore"
+              [disabled]="restoringCommit() || restoringPath() !== null"
+              (click)="restoreWholeCommit()"
+            >
+              @if (restoringCommit()) {
+                {{ i18n.t('versioning.history.restoringCommit') }}
+              } @else {
+                {{ i18n.t('versioning.history.restoreCommit') }}
+              }
+            </button>
+          }
+        </div>
         <div class="detail-meta">
           <code>{{ entry.shortOid }}</code>
           <span>{{ entry.date.toLocaleString() }}</span>
+          @if (headOid() === entry.oid) {
+            <span class="head-badge">{{ i18n.t('versioning.history.headBadge') }}</span>
+          }
         </div>
       </header>
       @if (diffLoading()) {
@@ -59,20 +84,34 @@
         <ul class="entities">
           @for (d of entityDiffs(); track d.filepath) {
             <li class="entity entity-{{ d.status }}">
-              <button
-                type="button"
-                class="entity-head"
-                [attr.aria-expanded]="expandedPath() === d.filepath"
-                (click)="toggleExpanded(d.filepath)"
-              >
-                <span class="entity-status">{{ d.status }}</span>
-                <span class="entity-path">{{ d.filepath }}</span>
-                @if (d.view.kind === 'binary') {
-                  <span class="entity-meta">
-                    {{ formatBytes(d.view.beforeSize) }} → {{ formatBytes(d.view.afterSize) }}
-                  </span>
-                }
-              </button>
+              <div class="entity-head-row">
+                <button
+                  type="button"
+                  class="entity-head"
+                  [attr.aria-expanded]="expandedPath() === d.filepath"
+                  (click)="toggleExpanded(d.filepath)"
+                >
+                  <span class="entity-status">{{ d.status }}</span>
+                  <span class="entity-path">{{ d.filepath }}</span>
+                  @if (d.view.kind === 'binary') {
+                    <span class="entity-meta">
+                      {{ formatBytes(d.view.beforeSize) }} → {{ formatBytes(d.view.afterSize) }}
+                    </span>
+                  }
+                </button>
+                <button
+                  type="button"
+                  class="entity-restore"
+                  [disabled]="restoringPath() !== null"
+                  (click)="restoreEntity(d, $event)"
+                >
+                  @if (restoringPath() === d.filepath) {
+                    {{ i18n.t('versioning.history.restoring') }}
+                  } @else {
+                    {{ i18n.t('versioning.history.restoreEntity') }}
+                  }
+                </button>
+              </div>
               @if (expandedPath() === d.filepath) {
                 @switch (d.view.kind) {
                   @case ('entity') {

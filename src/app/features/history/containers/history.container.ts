@@ -10,6 +10,7 @@ import {
 
 import { ErrorService } from '@core/errors/error.service';
 import { I18nService } from '@core/i18n/i18n.service';
+import { RestoreService } from '@core/versioning/restore.service';
 
 import { HistoryDiffService } from '../services/diff.service';
 import type { EntityDiff } from '../services/diff.service';
@@ -36,6 +37,7 @@ const BUCKET_LABEL_KEY: Record<BucketId, string> = {
 export class HistoryContainer implements OnInit {
   private readonly history = inject(HistoryService);
   private readonly diff = inject(HistoryDiffService);
+  private readonly restore = inject(RestoreService);
   private readonly errors = inject(ErrorService);
   protected readonly i18n = inject(I18nService);
 
@@ -43,6 +45,7 @@ export class HistoryContainer implements OnInit {
   protected readonly loading = this.history.loading;
   protected readonly error = this.history.error;
   protected readonly entries = this.history.entries;
+  protected readonly headOid = this.history.headOid;
 
   private readonly selectedOidSignal = signal<string | null>(null);
   protected readonly selectedOid = this.selectedOidSignal.asReadonly();
@@ -124,5 +127,64 @@ export class HistoryContainer implements OnInit {
   protected formatTime(d: Date): string {
     const pad = (n: number): string => n.toString().padStart(2, '0');
     return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  private readonly restoringPathSignal = signal<string | null>(null);
+  protected readonly restoringPath = this.restoringPathSignal.asReadonly();
+  private readonly restoringCommitSignal = signal(false);
+  protected readonly restoringCommit = this.restoringCommitSignal.asReadonly();
+
+  protected async restoreEntity(d: EntityDiff, event: MouseEvent): Promise<void> {
+    event.stopPropagation();
+    const entry = this.selectedEntry();
+    if (!entry) return;
+    if (this.restoringPathSignal() !== null) return;
+    const mode = d.status === 'deleted' ? 'absent' : 'present';
+    const key =
+      mode === 'absent'
+        ? 'versioning.history.restoreEntityDeleteConfirm'
+        : 'versioning.history.restoreEntityConfirm';
+    const message = this.i18n.t(key, { path: d.filepath, shortOid: entry.shortOid });
+    // why: a confirm() is enough here — restore is reversible by selecting a
+    //      newer commit. Strong modal is reserved for the per-commit restore
+    //      that touches many entities at once.
+    if (!window.confirm(message)) return;
+    this.restoringPathSignal.set(d.filepath);
+    try {
+      await this.restore.restoreEntity(entry.oid, d.filepath, mode);
+      await this.history.load();
+      const first = this.entries()[0];
+      if (first) this.selectedOidSignal.set(first.oid);
+    } catch (e) {
+      this.errors.report(e);
+    } finally {
+      this.restoringPathSignal.set(null);
+    }
+  }
+
+  protected async restoreWholeCommit(): Promise<void> {
+    const entry = this.selectedEntry();
+    if (!entry) return;
+    if (this.restoringCommitSignal()) return;
+    const prompt = this.i18n.t('versioning.history.restoreCommitPrompt', {
+      shortOid: entry.shortOid,
+    });
+    const typed = window.prompt(prompt);
+    if (typed === null) return;
+    if (typed.trim() !== entry.shortOid) {
+      window.alert(this.i18n.t('versioning.history.restoreCommitMismatch'));
+      return;
+    }
+    this.restoringCommitSignal.set(true);
+    try {
+      await this.restore.restoreCommit(entry.oid);
+      await this.history.load();
+      const first = this.entries()[0];
+      if (first) this.selectedOidSignal.set(first.oid);
+    } catch (e) {
+      this.errors.report(e);
+    } finally {
+      this.restoringCommitSignal.set(false);
+    }
   }
 }
