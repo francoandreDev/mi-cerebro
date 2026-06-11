@@ -4,9 +4,10 @@
 
 import { Injectable, computed, inject, signal } from '@angular/core';
 
+import { MilestoneService } from '@core/versioning/milestone.service';
 import { VersioningService } from '@core/versioning/versioning.service';
 
-import type { BucketId, CommitBucket, CommitEntry } from './history.types';
+import type { BucketId, CommitBucket, CommitEntry, MilestoneEntry } from './history.types';
 
 const DEFAULT_DEPTH = 200;
 
@@ -23,13 +24,25 @@ const BUCKET_ORDER: readonly BucketId[] = [
 @Injectable()
 export class HistoryService {
   private readonly versioning = inject(VersioningService);
+  private readonly milestoneService = inject(MilestoneService);
   private readonly entriesSignal = signal<readonly CommitEntry[]>([]);
+  private readonly milestonesSignal = signal<readonly MilestoneEntry[]>([]);
   private readonly loadingSignal = signal(false);
   private readonly errorSignal = signal<string | null>(null);
 
   readonly entries = this.entriesSignal.asReadonly();
+  readonly milestones = this.milestonesSignal.asReadonly();
   readonly loading = this.loadingSignal.asReadonly();
   readonly error = this.errorSignal.asReadonly();
+  readonly milestonesByOid = computed<ReadonlyMap<string, readonly MilestoneEntry[]>>(() => {
+    const map = new Map<string, MilestoneEntry[]>();
+    for (const m of this.milestonesSignal()) {
+      const arr = map.get(m.oid) ?? [];
+      arr.push(m);
+      map.set(m.oid, arr);
+    }
+    return map;
+  });
   // why: with our model (commits always land on main, restore always
   //      produces a new commit on top) HEAD is by definition the most
   //      recent entry. UI marks it as "actual".
@@ -64,11 +77,18 @@ export class HistoryService {
         };
       });
       this.entriesSignal.set(entries);
+      const milestones = await this.milestoneService.list();
+      this.milestonesSignal.set(milestones);
     } catch (e) {
       this.errorSignal.set(e instanceof Error ? e.message : String(e));
     } finally {
       this.loadingSignal.set(false);
     }
+  }
+
+  async refreshMilestones(): Promise<void> {
+    const milestones = await this.milestoneService.list();
+    this.milestonesSignal.set(milestones);
   }
 }
 

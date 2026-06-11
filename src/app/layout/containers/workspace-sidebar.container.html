@@ -76,111 +76,113 @@
       ⚙
     </button>
   </aside>
-  <section class="pane">
-    <header class="head">
-      <h2 class="title">{{ activeTitle() }}</h2>
-      <button
-        type="button"
-        class="search-btn"
-        [attr.aria-label]="t('palette.openButton')"
-        [title]="t('palette.openButton')"
-        (click)="openPalette()"
-      >
-        🔍
-      </button>
-    </header>
-    @if (activeKey() === 'music') {
-      <div class="music-panel">
-        <section class="music-section">
-          <h3 class="music-section-title">
-            <span aria-hidden="true">★</span> {{ t('music.sidebar.favorites') }}
-          </h3>
-          @if (favoritePlaylists().length === 0) {
-            <p class="music-empty">{{ t('music.sidebar.emptyFavorites') }}</p>
-          } @else {
-            <ul class="music-list">
-              @for (p of favoritePlaylists(); track p.id) {
-                <li>
-                  <button
-                    type="button"
-                    class="music-row"
-                    (click)="onPlayFavoritePlaylist(p.id)"
-                    [disabled]="p.trackCount === 0"
-                  >
-                    <span class="music-row-icon" aria-hidden="true">▶</span>
-                    <span class="music-row-title">
-                      {{ p.title || t('music.untitledPlaylist') }}
-                    </span>
-                    <span class="music-row-meta">{{ p.trackCount }}</span>
-                  </button>
-                </li>
-              }
-            </ul>
-          }
-        </section>
-        <section class="music-section">
-          <h3 class="music-section-title">
-            <span aria-hidden="true">🔥</span> {{ t('music.sidebar.topTracks') }}
-          </h3>
-          @if (topTracks().length === 0) {
-            <p class="music-empty">{{ t('music.sidebar.emptyTopTracks') }}</p>
-          } @else {
-            <ul class="music-list">
-              @for (track of topTracks(); track track.id) {
-                <li>
-                  <button
-                    type="button"
-                    class="music-row"
-                    [class.music-row-playing]="currentTrackId() === track.id"
-                    (click)="onPlayTopTrack(track.id)"
-                  >
-                    <span class="music-row-icon" aria-hidden="true">
-                      {{ currentTrackId() === track.id && isPlaying() ? '⏸' : '▶' }}
-                    </span>
-                    <span class="music-row-title">{{ track.originalName }}</span>
-                    <span class="music-row-meta">{{ track.playCount ?? 0 }}</span>
-                  </button>
-                </li>
-              }
-            </ul>
-          }
-        </section>
-      </div>
-    } @else if (activeKind(); as kind) {
-      <div class="actions">
-        <button type="button" class="primary" (click)="createForActive()">
-          + {{ newLabel() }}
+  @if (!hidePane()) {
+    <section class="pane">
+      <header class="head">
+        <h2 class="title">{{ activeTitle() }}</h2>
+        <button
+          type="button"
+          class="search-btn"
+          [attr.aria-label]="t('palette.openButton')"
+          [title]="t('palette.openButton')"
+          (click)="openPalette()"
+        >
+          🔍
         </button>
-        <mc-menu-button
-          variant="ghost"
-          [label]="'⋯'"
-          [options]="moreOptions()"
-          (choose)="onMoreChoose($event)"
+      </header>
+      @if (activeKey() === 'music') {
+        <div class="music-panel">
+          <section class="music-section">
+            <h3 class="music-section-title">
+              <span aria-hidden="true">★</span> {{ t('music.sidebar.favorites') }}
+            </h3>
+            @if (favoritePlaylists().length === 0) {
+              <p class="music-empty">{{ t('music.sidebar.emptyFavorites') }}</p>
+            } @else {
+              <ul class="music-list">
+                @for (p of favoritePlaylists(); track p.id) {
+                  <li>
+                    <button
+                      type="button"
+                      class="music-row"
+                      (click)="onPlayFavoritePlaylist(p.id)"
+                      [disabled]="p.trackCount === 0"
+                    >
+                      <span class="music-row-icon" aria-hidden="true">▶</span>
+                      <span class="music-row-title">
+                        {{ p.title || t('music.untitledPlaylist') }}
+                      </span>
+                      <span class="music-row-meta">{{ p.trackCount }}</span>
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+          </section>
+          <section class="music-section">
+            <h3 class="music-section-title">
+              <span aria-hidden="true">🔥</span> {{ t('music.sidebar.topTracks') }}
+            </h3>
+            @if (topTracks().length === 0) {
+              <p class="music-empty">{{ t('music.sidebar.emptyTopTracks') }}</p>
+            } @else {
+              <ul class="music-list">
+                @for (track of topTracks(); track track.id) {
+                  <li>
+                    <button
+                      type="button"
+                      class="music-row"
+                      [class.music-row-playing]="currentTrackId() === track.id"
+                      (click)="onPlayTopTrack(track.id)"
+                    >
+                      <span class="music-row-icon" aria-hidden="true">
+                        {{ currentTrackId() === track.id && isPlaying() ? '⏸' : '▶' }}
+                      </span>
+                      <span class="music-row-title">{{ track.originalName }}</span>
+                      <span class="music-row-meta">{{ track.playCount ?? 0 }}</span>
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+          </section>
+        </div>
+      } @else if (activeKind(); as kind) {
+        <div class="actions">
+          <button type="button" class="primary" (click)="createForActive()">
+            + {{ newLabel() }}
+          </button>
+          <mc-menu-button
+            variant="ghost"
+            [label]="'⋯'"
+            [options]="moreOptions()"
+            (choose)="onMoreChoose($event)"
+          />
+        </div>
+        <mc-tree-filter
+          [query]="query()"
+          [direction]="direction()"
+          [matchCount]="result().matches.length"
+          [placeholder]="filterPlaceholder()"
+          (queryChange)="onQuery($event)"
+          (directionChange)="onDirection($event)"
+          (next)="onNext()"
+          (prev)="onPrev()"
+          (activateFirst)="onActivateFirst()"
+          (clear)="onClear()"
         />
-      </div>
-      <mc-tree-filter
-        [query]="query()"
-        [direction]="direction()"
-        [matchCount]="result().matches.length"
-        [placeholder]="filterPlaceholder()"
-        (queryChange)="onQuery($event)"
-        (directionChange)="onDirection($event)"
-        (next)="onNext()"
-        (prev)="onPrev()"
-        (activateFirst)="onActivateFirst()"
-        (clear)="onClear()"
-      />
-      <mc-tree
-        [nodes]="treeRoots()"
-        [visible]="result().visible"
-        [matchedIds]="matchedIds()"
-        [autoExpand]="result().autoExpand"
-        [selectedId]="selectedNodeId()"
-        [emptyKey]="emptyKey()"
-        (chooseNode)="choose($event)"
-        (nodeAction)="onNodeAction($event)"
-      />
-    }
-    <mc-autocommit-status />
-  </section>
+        <mc-tree
+          [nodes]="treeRoots()"
+          [visible]="result().visible"
+          [matchedIds]="matchedIds()"
+          [autoExpand]="result().autoExpand"
+          [selectedId]="selectedNodeId()"
+          [emptyKey]="emptyKey()"
+          (chooseNode)="choose($event)"
+          (nodeAction)="onNodeAction($event)"
+        />
+      }
+      <mc-autocommit-status />
+    </section>
+  }
 }

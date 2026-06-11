@@ -22,3 +22,9 @@ export interface CommitBucket {
   readonly id: BucketId;
   readonly entries: readonly CommitEntry[];
 }
+
+export interface MilestoneEntry {
+  readonly name: string;
+  readonly oid: string;
+  readonly message: string;
+}

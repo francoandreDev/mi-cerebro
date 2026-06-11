@@ -13,25 +13,22 @@ import { I18nService } from '@core/i18n/i18n.service';
 import { RestoreService } from '@core/versioning/restore.service';
 import { McDatePipe } from '@shared/pipes/mc-date.pipe';
 
+import { BUCKET_LABEL_KEY } from '../services/bucket-labels';
 import { HistoryDiffService } from '../services/diff.service';
 import type { EntityDiff } from '../services/diff.service';
 import { HistoryService } from '../services/history.service';
-import type { BucketId, CommitEntry } from '../services/history.types';
-
-const BUCKET_LABEL_KEY: Record<BucketId, string> = {
-  today: 'versioning.history.bucket.today',
-  yesterday: 'versioning.history.bucket.yesterday',
-  'this-week': 'versioning.history.bucket.thisWeek',
-  'last-week': 'versioning.history.bucket.lastWeek',
-  'two-weeks': 'versioning.history.bucket.twoWeeks',
-  'one-month': 'versioning.history.bucket.oneMonth',
-  older: 'versioning.history.bucket.older',
-};
+import type {
+  BucketId,
+  CommitBucket,
+  CommitEntry,
+  MilestoneEntry,
+} from '../services/history.types';
+import { MilestoneController } from '../services/milestone.controller';
 
 @Component({
   selector: 'mc-history',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [HistoryService, HistoryDiffService],
+  providers: [HistoryService, HistoryDiffService, MilestoneController],
   imports: [McDatePipe],
   templateUrl: './history.container.html',
   styleUrl: './history.container.css',
@@ -40,14 +37,58 @@ export class HistoryContainer implements OnInit {
   private readonly history = inject(HistoryService);
   private readonly diff = inject(HistoryDiffService);
   private readonly restore = inject(RestoreService);
+  protected readonly milestones = inject(MilestoneController);
   private readonly errors = inject(ErrorService);
   protected readonly i18n = inject(I18nService);
 
-  protected readonly buckets = this.history.buckets;
   protected readonly loading = this.history.loading;
   protected readonly error = this.history.error;
   protected readonly entries = this.history.entries;
   protected readonly headOid = this.history.headOid;
+  protected readonly milestonesByOid = this.history.milestonesByOid;
+
+  private readonly onlyMilestonesSignal = signal(false);
+  protected readonly onlyMilestones = this.onlyMilestonesSignal.asReadonly();
+  protected toggleOnlyMilestones(): void {
+    this.onlyMilestonesSignal.update((v) => !v);
+  }
+
+  // Collapsing either pane gives the other one the full /history width.
+  // State is ephemeral on purpose: leaving and re-entering /history
+  // resets to "both expanded" so the user never lands on a confusing
+  // half-hidden screen.
+  private readonly timelineCollapsedSignal = signal(false);
+  private readonly detailCollapsedSignal = signal(false);
+  protected readonly timelineCollapsed = this.timelineCollapsedSignal.asReadonly();
+  protected readonly detailCollapsed = this.detailCollapsedSignal.asReadonly();
+  // why: collapsing one pane forces the other open so /history never
+  //      ends up with both hidden.
+  protected toggleTimeline(): void {
+    const next = !this.timelineCollapsedSignal();
+    if (next) this.detailCollapsedSignal.set(false);
+    this.timelineCollapsedSignal.set(next);
+  }
+  protected toggleDetail(): void {
+    const next = !this.detailCollapsedSignal();
+    if (next) this.timelineCollapsedSignal.set(false);
+    this.detailCollapsedSignal.set(next);
+  }
+
+  // Filter the timeline to commits that have at least one milestone
+  // when the toggle is on. Buckets with zero matching entries are
+  // dropped so the empty-state shows instead of bare headers.
+  protected readonly buckets = computed<readonly CommitBucket[]>(() => {
+    const all = this.history.buckets();
+    if (!this.onlyMilestonesSignal()) return all;
+    const byOid = this.milestonesByOid();
+    return all
+      .map((b) => ({ id: b.id, entries: b.entries.filter((e) => byOid.has(e.oid)) }))
+      .filter((b) => b.entries.length > 0);
+  });
+
+  protected milestonesFor(oid: string): readonly MilestoneEntry[] {
+    return this.milestonesByOid().get(oid) ?? [];
+  }
 
   private readonly selectedOidSignal = signal<string | null>(null);
   protected readonly selectedOid = this.selectedOidSignal.asReadonly();
@@ -117,9 +158,7 @@ export class HistoryContainer implements OnInit {
   }
 
   protected bucketLabel(id: BucketId): string {
-    // why: BUCKET_LABEL_KEY values are typed only as string here, but each is a
-    //      real TranslationKey at runtime. Cast happens inside the i18n call.
-    return this.i18n.t(BUCKET_LABEL_KEY[id] as never);
+    return this.i18n.t(BUCKET_LABEL_KEY[id]);
   }
 
   protected select(oid: string): void {
@@ -157,6 +196,12 @@ export class HistoryContainer implements OnInit {
     } finally {
       this.restoringPathSignal.set(null);
     }
+  }
+
+  protected markMilestone(): void {
+    const entry = this.selectedEntry();
+    if (!entry) return;
+    void this.milestones.mark(entry.oid);
   }
 
   protected async restoreWholeCommit(): Promise<void> {

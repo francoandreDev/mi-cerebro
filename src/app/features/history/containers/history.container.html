@@ -2,8 +2,40 @@
   <h2>{{ i18n.t('versioning.history.title') }}</h2>
 </header>
 
-<div class="split">
+<div
+  class="split"
+  [class.timeline-collapsed]="timelineCollapsed()"
+  [class.detail-collapsed]="detailCollapsed()"
+>
   <aside class="timeline" aria-label="Timeline de commits">
+    <div class="timeline-head">
+      <button
+        type="button"
+        class="pane-toggle"
+        [attr.aria-label]="
+          i18n.t(
+            timelineCollapsed()
+              ? 'versioning.history.expandTimeline'
+              : 'versioning.history.collapseTimeline'
+          )
+        "
+        [title]="
+          i18n.t(
+            timelineCollapsed()
+              ? 'versioning.history.expandTimeline'
+              : 'versioning.history.collapseTimeline'
+          )
+        "
+        (click)="toggleTimeline()"
+      >
+        {{ timelineCollapsed() ? '›' : '‹' }}
+      </button>
+      <label class="only-milestones">
+        <input type="checkbox" [checked]="onlyMilestones()" (change)="toggleOnlyMilestones()" />
+        {{ i18n.t('versioning.history.milestone.onlyMilestones') }}
+      </label>
+      <span class="pane-collapsed-label">{{ i18n.t('versioning.history.timelineRail') }}</span>
+    </div>
     @if (loading()) {
       <p class="placeholder">{{ i18n.t('versioning.history.loading') }}</p>
     } @else if (error(); as err) {
@@ -17,11 +49,20 @@
           <ul class="commits">
             @for (c of b.entries; track c.oid) {
               <li>
+                @for (m of milestonesFor(c.oid); track m.name) {
+                  <div class="milestone-band" role="separator">
+                    <span class="milestone-band-label">{{
+                      i18n.t('versioning.history.milestone.bandLabel')
+                    }}</span>
+                    <span class="milestone-band-name">{{ m.name }}</span>
+                  </div>
+                }
                 <button
                   type="button"
                   class="commit"
                   [class.selected]="selectedOid() === c.oid"
                   [class.is-head]="headOid() === c.oid"
+                  [class.has-milestone]="milestonesFor(c.oid).length > 0"
                   (click)="select(c.oid)"
                 >
                   <span class="commit-time">{{ c.date | mcDate }}</span>
@@ -49,24 +90,86 @@
   </aside>
 
   <section class="detail" aria-live="polite">
+    <div class="detail-collapse-bar">
+      <button
+        type="button"
+        class="pane-toggle"
+        [attr.aria-label]="
+          i18n.t(
+            detailCollapsed()
+              ? 'versioning.history.expandDetail'
+              : 'versioning.history.collapseDetail'
+          )
+        "
+        [title]="
+          i18n.t(
+            detailCollapsed()
+              ? 'versioning.history.expandDetail'
+              : 'versioning.history.collapseDetail'
+          )
+        "
+        (click)="toggleDetail()"
+      >
+        {{ detailCollapsed() ? '‹' : '›' }}
+      </button>
+      <span class="pane-collapsed-label">{{ i18n.t('versioning.history.detailRail') }}</span>
+    </div>
     @if (selectedEntry(); as entry) {
       <header class="detail-head">
         <div class="detail-head-top">
           <h3>{{ entry.message }}</h3>
-          @if (headOid() !== entry.oid) {
-            <button
-              type="button"
-              class="commit-restore"
-              [disabled]="restoringCommit() || restoringPath() !== null"
-              (click)="restoreWholeCommit()"
-            >
-              @if (restoringCommit()) {
-                {{ i18n.t('versioning.history.restoringCommit') }}
-              } @else {
-                {{ i18n.t('versioning.history.restoreCommit') }}
+          <div class="detail-head-actions">
+            @if (milestonesFor(entry.oid).length === 0) {
+              <button
+                type="button"
+                class="milestone-mark"
+                [disabled]="milestones.busy()"
+                (click)="markMilestone()"
+              >
+                {{ i18n.t('versioning.history.milestone.mark') }}
+              </button>
+            } @else {
+              @for (m of milestonesFor(entry.oid); track m.name) {
+                <span class="milestone-chip">
+                  <span class="milestone-chip-name">{{ m.name }}</span>
+                  <button
+                    type="button"
+                    class="milestone-chip-action"
+                    [attr.aria-label]="i18n.t('versioning.history.milestone.rename')"
+                    [title]="i18n.t('versioning.history.milestone.rename')"
+                    [disabled]="milestones.busy()"
+                    (click)="milestones.rename(m)"
+                  >
+                    ✏
+                  </button>
+                  <button
+                    type="button"
+                    class="milestone-chip-action"
+                    [attr.aria-label]="i18n.t('versioning.history.milestone.delete')"
+                    [title]="i18n.t('versioning.history.milestone.delete')"
+                    [disabled]="milestones.busy()"
+                    (click)="milestones.delete(m)"
+                  >
+                    ✕
+                  </button>
+                </span>
               }
-            </button>
-          }
+            }
+            @if (headOid() !== entry.oid) {
+              <button
+                type="button"
+                class="commit-restore"
+                [disabled]="restoringCommit() || restoringPath() !== null"
+                (click)="restoreWholeCommit()"
+              >
+                @if (restoringCommit()) {
+                  {{ i18n.t('versioning.history.restoringCommit') }}
+                } @else {
+                  {{ i18n.t('versioning.history.restoreCommit') }}
+                }
+              </button>
+            }
+          </div>
         </div>
         <div class="detail-meta">
           <code>{{ entry.shortOid }}</code>

@@ -6,6 +6,9 @@
   background: var(--mc-bg-surface);
   height: 100vh;
 }
+:host(.no-pane) {
+  width: auto;
+}
 .rail {
   display: flex;
   flex-direction: column;

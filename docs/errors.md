@@ -193,3 +193,19 @@ Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `P
 - **Causa típica:** permisos a la carpeta revocados mid-operación, el archivo destino fue tocado externamente entre el `flushAll` y la escritura, o isomorphic-git no pudo leer el blob (oid corrupto o `.git/` parcialmente roto).
 - **Cómo resolver:** la restauración es transaccional desde el lado del usuario: o terminó completa, o el disco quedó como estaba antes. Reintentar la acción. Si se repite, abrir el commit en `/history`, verificar que el blob existe (debería listarse en el diff) y, si persiste, restaurar manualmente la entidad copiando el contenido de la versión deseada.
 - **Recuperable:** sí — sin efectos parciales; los datos previos siguen en disco y en el historial.
+
+### MCB-VER-017 — No se pudo marcar este punto
+
+- **Severidad:** warning | error
+- **Cuándo:** el usuario disparó "Marcar este punto" y la operación falló al crear el git tag anotado. También cubre nombres inválidos (vacíos tras normalizar a slug ASCII).
+- **Causa típica:** workspace sin abrir, permisos del adapter perdidos a mitad de la escritura del tag, o un nombre que tras `toSlug()` quedó vacío (sólo caracteres no ASCII no alfanuméricos).
+- **Cómo resolver:** elegir un nombre que produzca al menos un caracter `[a-z0-9]` tras normalizar; reintentar; si persiste, verificar permisos del workspace.
+- **Recuperable:** sí — el historial sigue intacto, el commit destino sigue ahí; sólo no se grabó la marca.
+
+### MCB-VER-018 — No se pudo actualizar el milestone
+
+- **Severidad:** error
+- **Cuándo:** un renombre, "mover a este commit" o eliminación de milestone falló. Internamente son `git.deleteTag` + (en renombre/move) `git.annotatedTag`; cualquiera de los dos pasos puede fallar.
+- **Causa típica:** permisos a `.git/refs/tags/` revocados mid-operación, el tag fue borrado externamente entre el read y el delete, o el oid destino del move no existe ya en el repo.
+- **Cómo resolver:** reintentar. Si la operación quedó parcial (el delete pasó pero el create no), la lista de milestones lo reflejará — recrear manualmente con "Marcar este punto" sobre el commit deseado.
+- **Recuperable:** sí — los datos del usuario y los commits no se tocan; sólo el ref del tag puede quedar en estado intermedio.

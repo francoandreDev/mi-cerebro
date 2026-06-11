@@ -52,6 +52,7 @@ interface RailItem {
   imports: [TreeFilterComponent, TreeComponent, MenuButtonComponent, AutocommitStatusComponent],
   templateUrl: './workspace-sidebar.container.html',
   styleUrl: './workspace-sidebar.container.css',
+  host: { '[class.no-pane]': 'hidePane()' },
 })
 export class WorkspaceSidebarContainer {
   private readonly notesService = inject(NotesService);
@@ -90,6 +91,14 @@ export class WorkspaceSidebarContainer {
     ),
     { initialValue: this.router.url },
   );
+
+  // why: /history navigates commits and diffs, not entities. The tree
+  //      + search pane is dead weight there, so we collapse it to the
+  //      nav rail only. The rail (cross-page navigation) always stays.
+  protected readonly hidePane = computed(() => {
+    const url = this.currentUrl();
+    return url === '/history' || url.startsWith('/history/') || url.startsWith('/history?');
+  });
 
   constructor() {
     void (async () => {

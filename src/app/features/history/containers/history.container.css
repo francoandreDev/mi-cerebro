@@ -23,6 +23,92 @@
   min-height: 0;
 }
 
+/* Collapse to rail. Toggle button + vertical label stay visible so the
+ * user can find their way back. Hides everything that consumes width. */
+.split.timeline-collapsed {
+  grid-template-columns: 36px 1fr;
+}
+.split.detail-collapsed {
+  grid-template-columns: 360px 36px;
+}
+
+.split.timeline-collapsed .timeline > :not(.timeline-head),
+.split.timeline-collapsed .timeline .only-milestones {
+  display: none;
+}
+.split.timeline-collapsed .timeline-head {
+  flex-direction: column;
+  padding: 8px 4px;
+  border-bottom: none;
+  gap: 6px;
+  align-items: center;
+}
+.split.timeline-collapsed .timeline .pane-collapsed-label {
+  display: block;
+}
+.split:not(.timeline-collapsed) .timeline .pane-collapsed-label {
+  display: none;
+}
+
+.split.detail-collapsed .detail > :not(.detail-collapse-bar) {
+  display: none;
+}
+.split.detail-collapsed .detail .pane-collapsed-label {
+  display: block;
+}
+.split:not(.detail-collapsed) .detail .pane-collapsed-label {
+  display: none;
+}
+
+.detail-collapse-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--mc-border-default);
+}
+.split.detail-collapsed .detail-collapse-bar {
+  flex-direction: column;
+  align-items: center;
+  border-bottom: none;
+  border-right: 1px solid var(--mc-border-default);
+  height: 100%;
+}
+.split.detail-collapsed .detail {
+  border-left: 1px solid var(--mc-border-default);
+}
+
+.pane-toggle {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--mc-border-default);
+  border-radius: 4px;
+  color: var(--mc-fg-muted);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.pane-toggle:hover {
+  background: var(--mc-bg-hover);
+  color: var(--mc-fg-primary);
+}
+
+.pane-collapsed-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--mc-fg-muted);
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  margin-top: 8px;
+}
+
 .timeline {
   border-right: 1px solid var(--mc-border, rgba(0, 0, 0, 0.08));
   overflow-y: auto;
@@ -177,6 +263,126 @@
 .commit-restore:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.detail-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.milestone-mark {
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid var(--mc-accent-primary);
+  border-radius: 4px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--mc-accent-primary);
+  cursor: pointer;
+}
+
+.milestone-mark:hover:not(:disabled) {
+  background: var(--mc-accent-primary);
+  color: var(--mc-accent-fg);
+}
+
+.milestone-mark:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.milestone-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 4px 4px 10px;
+  background: var(--mc-accent-primary);
+  color: var(--mc-accent-fg);
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.milestone-chip-name {
+  white-space: nowrap;
+}
+
+.milestone-chip-action {
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 9999px;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.milestone-chip-action:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.milestone-chip-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.timeline-head {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--mc-border-default);
+  display: flex;
+  align-items: center;
+}
+
+.only-milestones {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--mc-fg-muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.milestone-band {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 2px 0;
+  padding: 4px 8px;
+  border-left: 3px solid var(--mc-accent-primary);
+  background: color-mix(in srgb, var(--mc-accent-primary) 12%, transparent);
+  border-radius: 2px;
+}
+
+.milestone-band-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--mc-accent-primary);
+}
+
+.milestone-band-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mc-fg-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.commit.has-milestone {
+  border-left: 3px solid var(--mc-accent-primary);
 }
 
 .detail-meta {

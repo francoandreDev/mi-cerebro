@@ -109,6 +109,14 @@ export const es = {
   'errors.ver.002.message':
     'No pude crear el commit automático del historial. Tus archivos siguen guardados; el próximo trigger reintentará.',
 
+  'errors.ver.017.title': 'No se pudo marcar este punto',
+  'errors.ver.017.message':
+    'No pude crear el milestone. Tu historial sigue intacto; podés reintentar con otro nombre o más tarde.',
+
+  'errors.ver.018.title': 'No se pudo actualizar el milestone',
+  'errors.ver.018.message':
+    'No pude renombrar, mover o eliminar el milestone. Tu historial sigue intacto; podés reintentar.',
+
   'errors.ver.003.title': 'No se pudo restaurar',
   'errors.ver.003.message':
     'No pude reescribir esta entidad con la versión seleccionada. Tu disco quedó como estaba; podés reintentar.',
@@ -153,6 +161,28 @@ export const es = {
     'Vas a restaurar TODO el workspace a la versión del commit {shortOid}.\n\nVoy a guardar un autocommit «before-restore» como red de seguridad antes de tocar nada — siempre podés volver atrás eligiendo ese punto.\n\nEscribí «{shortOid}» para confirmar:',
   'versioning.history.restoreCommitMismatch': 'Texto incorrecto, no se restauró nada.',
   'versioning.history.restoringCommit': 'Restaurando commit…',
+
+  'versioning.history.milestone.mark': 'Marcar este punto',
+  'versioning.history.milestone.rename': 'Renombrar milestone',
+  'versioning.history.milestone.delete': 'Eliminar milestone',
+  'versioning.history.milestone.namePrompt': 'Nombre del milestone (ej. "antes de refactor X"):',
+  'versioning.history.milestone.descriptionPrompt': 'Descripción opcional (Enter para saltar):',
+  'versioning.history.milestone.renamePrompt': 'Nuevo nombre para "{name}":',
+  'versioning.history.milestone.deleteConfirm':
+    '¿Eliminar el milestone "{name}"? El commit sigue ahí, sólo se quita la marca.',
+  'versioning.history.milestone.collisionTitle': 'Ya existe un milestone llamado "{name}"',
+  'versioning.history.milestone.collisionBody': 'Apunta al commit {shortOid}. ¿Qué hacemos?',
+  'versioning.history.milestone.collisionUseOther': 'Usar otro nombre',
+  'versioning.history.milestone.collisionMoveHere': 'Mover el milestone existente a este commit',
+  'versioning.history.milestone.collisionCancel': 'Cancelar',
+  'versioning.history.milestone.onlyMilestones': 'Sólo milestones',
+  'versioning.history.milestone.bandLabel': 'Milestone',
+  'versioning.history.collapseTimeline': 'Colapsar timeline',
+  'versioning.history.expandTimeline': 'Expandir timeline',
+  'versioning.history.collapseDetail': 'Colapsar detalle',
+  'versioning.history.expandDetail': 'Expandir detalle',
+  'versioning.history.timelineRail': 'Timeline',
+  'versioning.history.detailRail': 'Detalle',
 
   'notes.title': 'Notas',
   'notes.new': 'Nueva nota',
