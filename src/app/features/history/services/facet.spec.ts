@@ -19,6 +19,10 @@ describe('facetOf', () => {
     expect(facetOf('accept-draft: Mi nota (2 cambios)')).toBe('draft');
   });
 
+  it('classifies merge-draft commits', () => {
+    expect(facetOf('merge [borrador]: abc123 (from "X" into "Y")')).toBe('draft');
+  });
+
   it('falls back to main for autocommit and merge', () => {
     expect(facetOf('auto: 3 notes (2026-06-12) [timer]')).toBe('main');
     expect(facetOf('merge: notes/x.json (from "X" into "Y")')).toBe('main');

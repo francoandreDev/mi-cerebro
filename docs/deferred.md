@@ -107,10 +107,10 @@ Formato por entrada:
 - **Por qué**: `range` requiere UI de selección de texto + persistencia de offsets dentro del bloque + casos de borde de mapping cuando el texto del bloque cambia parcialmente. Cubre un caso minoritario ("comentario sobre estas 3 palabras") cuando `block` ("comentario sobre este párrafo") cubre el 80%.
 - **Target**: §19.16e (pulido del editor).
 
-### Renderizado inline (ghost / overlay) de diff-marks del borrador
+### Ghost rendering inline para inserciones del borrador
 
-- **Qué**: en 13d el borrador se vive desde un panel lateral con lista de cambios pendientes + accept/reject. La versión "rica" — diff-marks renderizadas inline en el editor como ghost text/strikethrough, tipo track-changes de Word — queda fuera del alcance del paso.
-- **Por qué**: el panel lateral entrega funcionalidad completa. El renderizado inline es lindo de UX pero implica una capa nueva de decoraciones ProseMirror y resolución visual de conflictos contra el contenido vivo. Vale como pulido cuando el resto del sistema esté estable y haya uso real para guiar decisiones de diseño.
+- **Qué**: 13d-iii incorporó decoraciones ProseMirror para marks de mutación (tinte amarillo) y eliminación (strikethrough rojo) sobre los bloques existentes en `main`. Las **inserciones** (bloques que existen sólo en el borrador, no en `main`) no tienen anchor visible en el doc y quedaron renderizadas solo en el panel lateral. La versión "rica" — insertar un nodo widget fantasma en el editor con el contenido propuesto — queda fuera del alcance del paso.
+- **Por qué**: para inserciones habría que pintar el JSON del bloque propuesto como widget DOM dentro del ProseMirror sin tocar el doc real. Es factible pero requiere un mini-renderer JSON→DOM consistente con el theme del editor y resuelve un caso que el panel ya cubre. Se evalúa con uso real.
 - **Target**: §19.16e (pulido del editor) o sin asignar.
 
 ### Renderizado overlay unificado (variante "B" original)
@@ -166,6 +166,12 @@ Formato por entrada:
 - **Qué**: §12 y §19.13c-iv listan un índice MiniSearch persistido por familia para comentarios, integrado al palette global. La infraestructura técnica del índice por familia ya se diferió arriba para `main`; agregar comments multiplica el costo (un MiniSearch por faceta) sin tener todavía métricas reales. En 13c-iv elegimos cerrar position tracking + merge bundle + history chips, dejando la indexación global de comentarios para cuando exista un walk explícito de la rama comments al boot/family-switch (necesario para "primear" el índice sin abrir cada entidad a mano).
 - **Por qué se difirió**: integrar `SearchIndexService` con kind nuevo `'comment'` sin un walk de priming hace que la búsqueda sólo encuentre comentarios de entidades que el usuario tocó en la sesión actual — una UX "fantasma" peor que no tenerla. Hacer el walk requiere recorrer cada `comments/*.json` de la rama activa, lo que toca el mismo plumbing que el priming por familia y conviene diseñar junto.
 - **Target**: §19.16d (pulido de búsqueda) — o un sub-paso 13c-iv-bis si surge dolor concreto antes.
+
+### Índice de búsqueda global para borradores (`idx-<family>-draft`)
+
+- **Qué**: §12 y §19.13d-iv listan un índice MiniSearch persistido por familia para diff-marks de borrador, integrado al palette global. Mismo razonamiento que el índice de comentarios diferido arriba: integrarlo sin un walk de priming de la rama `draft` al boot/family-switch dejaría la búsqueda mostrando sólo marks de entidades tocadas en la sesión actual — UX "fantasma". Hacer el walk requiere recorrer cada `drafts/*.json` de la rama activa, lo que toca el mismo plumbing que el priming por familia para `main` y `comments`.
+- **Por qué se difirió**: los tres índices (main, comments, draft) convergen sobre la misma pieza de infraestructura (walk per-faceta + cache por familia en IndexedDB). Diseñarlos juntos evita reinventar el priming tres veces y permite decidir si los tres comparten un `idx-<family>-bundle` o quedan separados. Sin métricas reales de tamaño/latencia, mejor uno solo bien hecho.
+- **Target**: §19.16d (pulido de búsqueda) — junto con los índices de `main` y `comments`.
 
 ### `.git/` en OPFS para acelerar operaciones git
 

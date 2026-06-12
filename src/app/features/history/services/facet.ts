@@ -9,7 +9,7 @@ export type Facet = 'main' | 'comments' | 'draft';
 export const ALL_FACETS: readonly Facet[] = ['main', 'comments', 'draft'];
 
 const COMMENTS_RE = /^(?:auto|merge) \[comentarios\]:/;
-const DRAFT_RE = /^(?:auto \[borrador\]:|accept-draft:)/;
+const DRAFT_RE = /^(?:(?:auto|merge) \[borrador\]:|accept-draft:)/;
 
 export function facetOf(message: string): Facet {
   if (COMMENTS_RE.test(message)) return 'comments';
