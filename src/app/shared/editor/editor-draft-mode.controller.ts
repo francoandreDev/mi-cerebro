@@ -23,6 +23,12 @@ export interface EditorDraftModeContext {
   readonly onSaved: (count: number) => void;
 }
 
+// why: debounce window for autosave. 3s matches the typical "pause to
+//      think" cadence; long enough to avoid a commit per keystroke,
+//      short enough that losing work to a crash/forget-to-save is at
+//      worst that 3s window.
+const DRAFT_AUTOSAVE_DELAY_MS = 3000;
+
 export class EditorDraftModeController {
   readonly active = signal(false);
   readonly saving = signal(false);
@@ -33,6 +39,7 @@ export class EditorDraftModeController {
   private base: JSONContent | null = null;
   private buffer: JSONContent | null = null;
   private clearSaveTimer: ReturnType<typeof setTimeout> | null = null;
+  private autosaveTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(private readonly ctx: EditorDraftModeContext) {}
 
@@ -43,11 +50,13 @@ export class EditorDraftModeController {
   captureUpdate(json: JSONContent): boolean {
     if (!this.active()) return false;
     this.buffer = json;
+    this.scheduleAutosave();
     return true;
   }
 
   toggle(): void {
     if (this.active()) {
+      this.cancelAutosave();
       this.base = null;
       this.buffer = null;
       this.active.set(false);
@@ -61,7 +70,18 @@ export class EditorDraftModeController {
     this.active.set(true);
   }
 
+  // why: called by the host when the editor unmounts so a buffered diff
+  //      still in the debounce window is committed instead of being lost
+  //      to navigation/tab close. Mirrors AutosaveService.flushAll.
+  async flushPending(): Promise<void> {
+    if (!this.autosaveTimer) return;
+    this.cancelAutosave();
+    await this.save();
+  }
+
   async save(): Promise<void> {
+    this.cancelAutosave();
+    if (this.saving()) return;
     if (!this.base || !this.buffer) return;
     const id = this.ctx.entityId();
     if (!id) return;
@@ -89,5 +109,19 @@ export class EditorDraftModeController {
       this.lastSaveCount.set(null);
       this.clearSaveTimer = null;
     }, 2500);
+  }
+
+  private scheduleAutosave(): void {
+    this.cancelAutosave();
+    this.autosaveTimer = setTimeout(() => {
+      this.autosaveTimer = null;
+      void this.save();
+    }, DRAFT_AUTOSAVE_DELAY_MS);
+  }
+
+  private cancelAutosave(): void {
+    if (!this.autosaveTimer) return;
+    clearTimeout(this.autosaveTimer);
+    this.autosaveTimer = null;
   }
 }

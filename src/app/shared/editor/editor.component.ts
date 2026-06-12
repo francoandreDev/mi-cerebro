@@ -268,6 +268,10 @@ export class EditorComponent {
     if (this.draftMarks().length > 0) this.pushDecorations(this.draftMarks());
 
     this.destroyRef.onDestroy(() => {
+      // why: navigating away or closing the entity must not drop a draft
+      //      buffer waiting in the autosave debounce window. Fire-and-
+      //      forget — the host is already tearing down.
+      void this.draftCtrl.flushPending();
       this.editor?.destroy();
       this.editor = null;
     });
