@@ -73,8 +73,13 @@ import { ImagePickerDialogComponent } from './image-picker-dialog.component';
         }
         @if (draftMode()) {
           <button type="button" class="ghost" (click)="saveDraft()" [disabled]="savingDraft()">
-            {{ t('editor.draftMode.save') }}
+            {{ savingDraft() ? t('editor.draftMode.saving') : t('editor.draftMode.save') }}
           </button>
+        }
+        @if (lastDraftSaveCount() !== null) {
+          <span class="saved-flash" role="status" aria-live="polite">
+            ✓ {{ t('editor.draftMode.saved') }} ({{ lastDraftSaveCount() }})
+          </span>
         }
         @if (commentsAvailable()) {
           <button
@@ -150,6 +155,7 @@ export class EditorComponent {
   });
   protected readonly draftMode = this.draftCtrl.active;
   protected readonly savingDraft = this.draftCtrl.saving;
+  protected readonly lastDraftSaveCount = this.draftCtrl.lastSaveCount;
   private readonly draftMarks = signal<readonly DiffMark[]>([]);
   protected readonly commentsAvailable = computed(() => this.entityId().length > 0);
   protected readonly showToolbar = computed(

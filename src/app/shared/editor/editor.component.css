@@ -23,6 +23,19 @@
   color: var(--mc-fg-primary);
   background: var(--mc-bg-selected);
 }
+.saved-flash {
+  align-self: center;
+  font-size: var(--mc-font-size-sm);
+  color: #166534;
+  background: rgba(34, 197, 94, 0.16);
+  padding: 2px var(--mc-space-2);
+  border-radius: var(--mc-radius-sm);
+  animation: mc-saved-fade-in 0.2s ease-out;
+}
+@keyframes mc-saved-fade-in {
+  from { opacity: 0; transform: translateY(-2px); }
+  to { opacity: 1; transform: none; }
+}
 .shell {
   display: flex;
   align-items: stretch;

@@ -99,15 +99,32 @@ export class VersioningService {
     });
   }
 
-  async log(depth = 50): Promise<CommitSummary[]> {
+  // 13d-iv-bis — `refs` lets /history walk the family's secondary facetas
+  // (comments, draft) alongside main so faceta commits and their merge
+  // bundle siblings surface in the timeline. Without it, `git.log`
+  // defaults to HEAD and only main commits show up.
+  async log(depth = 50, refs?: readonly string[]): Promise<CommitSummary[]> {
     const fs = this.requireAdapter();
-    const entries = await git.log({ fs, dir: REPO_DIR, depth });
-    return entries.map((e) => ({
-      oid: e.oid,
-      message: e.commit.message,
-      authorTimestamp: e.commit.author.timestamp * 1000,
-      parents: e.commit.parent,
-    }));
+    if (!refs || refs.length === 0) {
+      const entries = await git.log({ fs, dir: REPO_DIR, depth });
+      return entries.map(toSummary);
+    }
+    const seen = new Set<string>();
+    const merged: CommitSummary[] = [];
+    for (const ref of refs) {
+      try {
+        const entries = await git.log({ fs, dir: REPO_DIR, ref, depth });
+        for (const e of entries) {
+          if (seen.has(e.oid)) continue;
+          seen.add(e.oid);
+          merged.push(toSummary(e));
+        }
+      } catch {
+        // ref may not exist yet (lazy seed of comments/draft branches)
+      }
+    }
+    merged.sort((a, b) => b.authorTimestamp - a.authorTimestamp);
+    return merged.slice(0, depth);
   }
 
   async readBlob(oid: string, filepath: string): Promise<Uint8Array> {
@@ -121,4 +138,16 @@ export class VersioningService {
     const matrix = await git.statusMatrix({ fs, dir: REPO_DIR });
     return matrix.some(([, head, work, stage]) => head !== work || head !== stage);
   }
+}
+
+function toSummary(e: {
+  oid: string;
+  commit: { message: string; author: { timestamp: number }; parent: readonly string[] };
+}): CommitSummary {
+  return {
+    oid: e.oid,
+    message: e.commit.message,
+    authorTimestamp: e.commit.author.timestamp * 1000,
+    parents: e.commit.parent,
+  };
 }

@@ -26,8 +26,13 @@ export interface EditorDraftModeContext {
 export class EditorDraftModeController {
   readonly active = signal(false);
   readonly saving = signal(false);
+  // why: transient feedback after a successful save. Cleared by setTimeout
+  //      so the toolbar doesn't keep the badge forever — the user just
+  //      needs visual confirmation that the save round-tripped.
+  readonly lastSaveCount = signal<number | null>(null);
   private base: JSONContent | null = null;
   private buffer: JSONContent | null = null;
+  private clearSaveTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(private readonly ctx: EditorDraftModeContext) {}
 
@@ -71,8 +76,18 @@ export class EditorDraftModeController {
       await this.ctx.drafts.save(id, this.ctx.entityTitle(), marks);
       this.base = this.buffer;
       this.ctx.onSaved(marks.length);
+      this.flashSaved(marks.length);
     } finally {
       this.saving.set(false);
     }
+  }
+
+  private flashSaved(count: number): void {
+    this.lastSaveCount.set(count);
+    if (this.clearSaveTimer) clearTimeout(this.clearSaveTimer);
+    this.clearSaveTimer = setTimeout(() => {
+      this.lastSaveCount.set(null);
+      this.clearSaveTimer = null;
+    }, 2500);
   }
 }

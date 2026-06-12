@@ -663,6 +663,8 @@ export const es = {
   'editor.draftMode.on': 'Activar modo borrador',
   'editor.draftMode.off': 'Salir del modo borrador (descarta cambios sin guardar)',
   'editor.draftMode.save': 'Guardar borrador',
+  'editor.draftMode.saving': 'Guardando…',
+  'editor.draftMode.saved': 'Guardado',
 
   'calendar.title': 'Calendario',
   'calendar.view.month': 'Mes',

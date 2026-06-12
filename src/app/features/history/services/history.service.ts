@@ -5,6 +5,8 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 
 import { MilestoneService } from '@core/versioning/milestone.service';
+import { VariantsService } from '@core/versioning/variants.service';
+import { stripHeadsPrefix } from '@core/versioning/variants.io';
 import { VersioningService } from '@core/versioning/versioning.service';
 
 import type {
@@ -32,6 +34,7 @@ const BUCKET_ORDER: readonly BucketId[] = [
 export class HistoryService {
   private readonly versioning = inject(VersioningService);
   private readonly milestoneService = inject(MilestoneService);
+  private readonly variants = inject(VariantsService);
   private readonly entriesSignal = signal<readonly CommitEntry[]>([]);
   private readonly milestonesSignal = signal<readonly MilestoneEntry[]>([]);
   private readonly loadingSignal = signal(false);
@@ -72,7 +75,15 @@ export class HistoryService {
     this.loadingSignal.set(true);
     this.errorSignal.set(null);
     try {
-      const summaries = await this.versioning.log(depth);
+      // why: walk main + comments + draft of the active variant so faceta
+      //      commits (`auto [borrador]:`, `merge [comentarios]:`, etc.)
+      //      surface in /history. Without this, git.log defaults to HEAD
+      //      and only main commits show up.
+      const active = this.variants.getActive();
+      const refs = active
+        ? [active.refs.main, active.refs.comments, active.refs.draft].map(stripHeadsPrefix)
+        : undefined;
+      const summaries = await this.versioning.log(depth, refs);
       const entries = summaries.map((s): CommitEntry => {
         const message = s.message.trim();
         return {
