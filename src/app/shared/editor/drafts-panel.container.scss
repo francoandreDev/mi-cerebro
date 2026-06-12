@@ -1,0 +1,123 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-2);
+  width: 320px;
+  max-width: 100%;
+  padding: var(--mc-space-3);
+  border-left: 1px solid var(--mc-border-default);
+  background: var(--mc-bg-surface);
+  color: var(--mc-fg-primary);
+  overflow-y: auto;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mc-space-2);
+
+  h3 {
+    margin: 0;
+    font-size: var(--mc-font-size-md);
+  }
+}
+
+.muted {
+  color: var(--mc-fg-muted);
+}
+
+.empty {
+  text-align: center;
+  padding: var(--mc-space-3) var(--mc-space-2);
+  color: var(--mc-fg-muted);
+
+  strong {
+    display: block;
+    color: var(--mc-fg-primary);
+    margin-bottom: var(--mc-space-1);
+  }
+}
+
+.bulk {
+  display: flex;
+  gap: var(--mc-space-1);
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-2);
+}
+
+.row {
+  border: 1px solid var(--mc-border-default);
+  border-radius: var(--mc-radius-md);
+  background: var(--mc-bg-elevated);
+  padding: var(--mc-space-2);
+}
+
+button.icon {
+  background: transparent;
+  border: 0;
+  color: var(--mc-fg-muted);
+  cursor: pointer;
+  font-size: var(--mc-font-size-sm);
+  border-radius: var(--mc-radius-sm);
+  padding: var(--mc-space-1);
+
+  &:hover {
+    color: var(--mc-fg-primary);
+    background: var(--mc-bg-hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--mc-accent-primary);
+    outline-offset: 1px;
+  }
+}
+
+button.primary,
+button.ghost {
+  border: 0;
+  cursor: pointer;
+  font-size: var(--mc-font-size-sm);
+  border-radius: var(--mc-radius-sm);
+  padding: var(--mc-space-1) var(--mc-space-2);
+}
+
+button.primary {
+  background: var(--mc-accent-primary);
+  color: var(--mc-bg-base);
+
+  &:hover {
+    background: var(--mc-accent-hover);
+  }
+}
+
+button.ghost {
+  background: transparent;
+  color: var(--mc-fg-muted);
+
+  &:hover {
+    color: var(--mc-fg-primary);
+    background: var(--mc-bg-hover);
+  }
+}
+
+button.small {
+  font-size: var(--mc-font-size-xs);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--mc-accent-primary);
+  outline-offset: 1px;
+}

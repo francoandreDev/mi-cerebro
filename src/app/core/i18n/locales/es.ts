@@ -793,6 +793,34 @@ export const es = {
   'comments.errors.noBlocks': 'No hay bloques con id en la entidad — anclá a toda la entidad.',
   'comments.errors.saveFailed': 'No se pudo guardar el comentario. Reintentá.',
   'comments.block.preview.empty': '(bloque vacío)',
+
+  'drafts.toggle.open': 'Mostrar borradores',
+  'drafts.toggle.close': 'Ocultar borradores',
+  'drafts.toggle.label': 'Borradores',
+  'drafts.title': 'Borradores pendientes',
+  'drafts.close': 'Cerrar panel de borradores',
+  'drafts.loading': 'Cargando borradores…',
+  'drafts.empty.title': 'Sin borradores pendientes',
+  'drafts.empty.hint': 'Activá el modo borrador desde la barra del editor para proponer cambios.',
+  'drafts.actions.accept': 'Aceptar',
+  'drafts.actions.reject': 'Rechazar',
+  'drafts.actions.acceptAll': 'Aceptar todos',
+  'drafts.actions.rejectAll': 'Rechazar todos',
+  'drafts.confirm.accept': '¿Aplicar este cambio a la entidad? Se hace un commit en main.',
+  'drafts.confirm.reject': '¿Descartar este cambio?',
+  'drafts.confirm.acceptAll':
+    '¿Aplicar los {n} cambios a la entidad? Cada uno genera un commit en main.',
+  'drafts.confirm.rejectAll': '¿Descartar los {n} cambios pendientes?',
+  'drafts.category.insert': 'Inserción',
+  'drafts.category.delete': 'Eliminación',
+  'drafts.category.mutate': 'Cambio',
+  'drafts.preview.before': 'Antes',
+  'drafts.preview.after': 'Después',
+  'drafts.preview.empty': '(bloque vacío)',
+  'drafts.errors.saveFailed': 'No se pudo guardar el borrador. Reintentá.',
+  'drafts.errors.applyFailed': 'No se pudo aplicar el cambio a main. Reintentá.',
+  'drafts.errors.missingBlock':
+    'El bloque ya no existe en la entidad — el cambio se marcó como huérfano.',
 } as const;
 
 export type EsDictionary = typeof es;

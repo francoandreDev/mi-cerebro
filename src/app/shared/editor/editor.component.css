@@ -65,6 +65,18 @@
   outline: none;
   min-height: 180px;
 }
+.editor-host :global(.mc-draft-mutate) {
+  background: rgba(250, 204, 21, 0.15);
+  border-left: 3px solid #d97706;
+  padding-left: var(--mc-space-1);
+}
+.editor-host :global(.mc-draft-strike) {
+  text-decoration: line-through;
+  color: var(--mc-fg-muted);
+  background: rgba(239, 68, 68, 0.08);
+  border-left: 3px solid #ef4444;
+  padding-left: var(--mc-space-1);
+}
 .editor-host :global(.ProseMirror p.is-editor-empty:first-child::before) {
   content: attr(data-placeholder);
   color: var(--mc-fg-muted);

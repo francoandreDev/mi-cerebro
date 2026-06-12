@@ -19,17 +19,23 @@ import StarterKit from '@tiptap/starter-kit';
 import { I18nService } from '@core/i18n/i18n.service';
 import { ImageReaderService } from '@core/images/image-reader.service';
 import { createBlockIdExtension } from '@core/tiptap/block-id/block-id.ext';
+import {
+  DRAFT_DECORATIONS_META_KEY,
+  createDraftDecorationsExtension,
+} from '@core/tiptap/draft-decorations/draft-decorations.ext';
 import { IMAGE_REF_NAME, createImageRefNode } from '@core/tiptap/image-ref/image-ref.node';
-import { buildBlockDiffMarks } from '@core/versioning/draft-capture';
 import { DraftsService } from '@core/versioning/drafts.service';
+import type { DiffMark } from '@core/versioning/drafts.types';
 
 import { CommentsPanelContainer } from './comments-panel.container';
+import { DraftsPanelContainer } from './drafts-panel.container';
+import { EditorDraftModeController } from './editor-draft-mode.controller';
 import { ImagePickerDialogComponent } from './image-picker-dialog.component';
 
 @Component({
   selector: 'mc-editor',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommentsPanelContainer, ImagePickerDialogComponent],
+  imports: [CommentsPanelContainer, DraftsPanelContainer, ImagePickerDialogComponent],
   template: `
     @if (showToolbar()) {
       <div class="toolbar">
@@ -70,6 +76,19 @@ import { ImagePickerDialogComponent } from './image-picker-dialog.component';
             {{ t('editor.draftMode.save') }}
           </button>
         }
+        @if (commentsAvailable()) {
+          <button
+            type="button"
+            class="ghost"
+            (click)="toggleDraftsPanel()"
+            [attr.aria-pressed]="draftsPanelOpen()"
+            [attr.aria-label]="
+              draftsPanelOpen() ? t('drafts.toggle.close') : t('drafts.toggle.open')
+            "
+          >
+            📋 {{ t('drafts.toggle.label') }}
+          </button>
+        }
       </div>
     }
     <div class="shell" [class.has-panel]="panelOpen()">
@@ -80,6 +99,16 @@ import { ImagePickerDialogComponent } from './image-picker-dialog.component';
           [entityTitle]="entityTitle()"
           [value]="value()"
           (closed)="closePanel()"
+        />
+      }
+      @if (commentsAvailable() && draftsPanelOpen()) {
+        <mc-drafts-panel
+          [entityId]="entityId()"
+          [entityTitle]="entityTitle()"
+          [value]="value()"
+          (closed)="closeDraftsPanel()"
+          (applyToDoc)="onAcceptApply($event)"
+          (marksChange)="onDraftMarksChange($event)"
         />
       }
     </div>
@@ -93,9 +122,8 @@ export class EditorComponent {
   readonly value = input.required<JSONContent>();
   readonly placeholder = input<string>('');
   readonly editable = input<boolean>(true);
-  // why: comments panel is gated on a non-empty entityId — keeps the
-  //      shared editor usable in transient contexts (preview dialogs,
-  //      etc.) without dragging the comments stack along.
+  // why: comments/drafts panels are gated on a non-empty entityId — keeps
+  //      the shared editor usable in transient contexts (preview dialogs).
   readonly entityId = input<string>('');
   readonly entityTitle = input<string>('');
   readonly valueChange = output<JSONContent>();
@@ -110,8 +138,19 @@ export class EditorComponent {
 
   protected readonly pickerOpen = signal(false);
   protected readonly panelOpen = signal(false);
-  protected readonly draftMode = signal(false);
-  protected readonly savingDraft = signal(false);
+  protected readonly draftsPanelOpen = signal(false);
+  private readonly draftCtrl = new EditorDraftModeController({
+    drafts: this.drafts,
+    editor: () => this.editor,
+    currentValue: () => this.value(),
+    entityId: () => this.entityId(),
+    entityTitle: () => this.entityTitle(),
+    restoreView: (doc) => this.replaceContent(doc),
+    onSaved: (n) => this.draftSaved.emit(n),
+  });
+  protected readonly draftMode = this.draftCtrl.active;
+  protected readonly savingDraft = this.draftCtrl.saving;
+  private readonly draftMarks = signal<readonly DiffMark[]>([]);
   protected readonly commentsAvailable = computed(() => this.entityId().length > 0);
   protected readonly showToolbar = computed(
     () => (this.editable() && this.hasGalleries()) || this.commentsAvailable(),
@@ -122,64 +161,33 @@ export class EditorComponent {
     return this.i18n.t(key);
   }
 
-  protected openPicker(): void {
-    this.pickerOpen.set(true);
+  protected openPicker = (): void => this.pickerOpen.set(true);
+  protected closePicker = (): void => this.pickerOpen.set(false);
+
+  protected togglePanel = (): void => this.panelOpen.update((v) => !v);
+  protected closePanel = (): void => this.panelOpen.set(false);
+  protected toggleDraftsPanel = (): void => this.draftsPanelOpen.update((v) => !v);
+  protected closeDraftsPanel = (): void => this.draftsPanelOpen.set(false);
+
+  protected onDraftMarksChange(marks: readonly DiffMark[]): void {
+    this.draftMarks.set(marks);
+    this.pushDecorations(marks);
   }
 
-  protected closePicker(): void {
-    this.pickerOpen.set(false);
+  protected onAcceptApply(next: JSONContent): void {
+    this.replaceContent(next);
+    this.valueChange.emit(next);
   }
 
-  protected togglePanel(): void {
-    this.panelOpen.update((v) => !v);
-  }
+  protected toggleDraft = (): void => this.draftCtrl.toggle();
+  protected saveDraft = (): Promise<void> => this.draftCtrl.save();
 
-  protected closePanel(): void {
-    this.panelOpen.set(false);
-  }
-
-  // why: draft mode is per-session, no persistence of the toggle. When
-  //      on, edits are buffered locally and never emitted to the host,
-  //      so the entity body in `main` stays untouched. Turning it off
-  //      discards the buffer and snaps the editor back to the last
-  //      saved-to-main value.
-  protected toggleDraft(): void {
+  private replaceContent(doc: JSONContent): void {
     const ed = this.editor;
-    if (this.draftMode()) {
-      this.baseDoc = null;
-      this.bufferDoc = null;
-      this.draftMode.set(false);
-      if (ed) {
-        this.suppressEmit = true;
-        ed.commands.setContent(this.value(), { emitUpdate: false });
-        this.suppressEmit = false;
-      }
-      return;
-    }
-    const snapshot = ed ? ed.getJSON() : this.value();
-    this.baseDoc = snapshot;
-    this.bufferDoc = snapshot;
-    this.draftMode.set(true);
-  }
-
-  protected async saveDraft(): Promise<void> {
-    if (!this.baseDoc || !this.bufferDoc) return;
-    const id = this.entityId();
-    if (!id) return;
-    this.savingDraft.set(true);
-    try {
-      const marks = buildBlockDiffMarks({
-        before: this.baseDoc,
-        after: this.bufferDoc,
-        now: new Date().toISOString(),
-        genId: () => crypto.randomUUID(),
-      });
-      await this.drafts.save(id, this.entityTitle(), marks);
-      this.baseDoc = this.bufferDoc;
-      this.draftSaved.emit(marks.length);
-    } finally {
-      this.savingDraft.set(false);
-    }
+    if (!ed) return;
+    this.suppressEmit = true;
+    ed.commands.setContent(doc, { emitUpdate: false });
+    this.suppressEmit = false;
   }
 
   protected onPicked(payload: { galleryId: string; imageId: string; alt: string }): void {
@@ -199,8 +207,6 @@ export class EditorComponent {
   // why: suppress the onUpdate -> output emission when we just pushed the
   //      same JSON back in from the input — avoids feedback loops in OnPush.
   private suppressEmit = false;
-  private baseDoc: JSONContent | null = null;
-  private bufferDoc: JSONContent | null = null;
 
   constructor() {
     afterNextRender(() => this.mount());
@@ -209,16 +215,18 @@ export class EditorComponent {
   private mount(): void {
     this.editor = new Editor({
       element: this.host().nativeElement,
-      extensions: [StarterKit, createBlockIdExtension(), createImageRefNode(this.reader)],
+      extensions: [
+        StarterKit,
+        createBlockIdExtension(),
+        createImageRefNode(this.reader),
+        createDraftDecorationsExtension(),
+      ],
       content: this.value(),
       editable: this.editable(),
       onUpdate: ({ editor }) => {
         if (this.suppressEmit) return;
         const json = editor.getJSON();
-        if (this.draftMode()) {
-          this.bufferDoc = json;
-          return;
-        }
+        if (this.draftCtrl.captureUpdate(json)) return;
         this.valueChange.emit(json);
       },
     });
@@ -250,10 +258,20 @@ export class EditorComponent {
       { injector: this.injector },
     );
 
+    // why: replay marks if they arrived from the panel before mount.
+    if (this.draftMarks().length > 0) this.pushDecorations(this.draftMarks());
+
     this.destroyRef.onDestroy(() => {
       this.editor?.destroy();
       this.editor = null;
     });
+  }
+
+  private pushDecorations(marks: readonly DiffMark[]): void {
+    const ed = this.editor;
+    if (!ed) return;
+    const view = ed.view;
+    view.dispatch(view.state.tr.setMeta(DRAFT_DECORATIONS_META_KEY, marks));
   }
 }
 
