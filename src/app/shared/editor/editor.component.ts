@@ -20,6 +20,8 @@ import { I18nService } from '@core/i18n/i18n.service';
 import { ImageReaderService } from '@core/images/image-reader.service';
 import { createBlockIdExtension } from '@core/tiptap/block-id/block-id.ext';
 import { IMAGE_REF_NAME, createImageRefNode } from '@core/tiptap/image-ref/image-ref.node';
+import { buildBlockDiffMarks } from '@core/versioning/draft-capture';
+import { DraftsService } from '@core/versioning/drafts.service';
 
 import { CommentsPanelContainer } from './comments-panel.container';
 import { ImagePickerDialogComponent } from './image-picker-dialog.component';
@@ -52,6 +54,22 @@ import { ImagePickerDialogComponent } from './image-picker-dialog.component';
             💬 {{ t('comments.toggle.label') }}
           </button>
         }
+        @if (commentsAvailable() && editable()) {
+          <button
+            type="button"
+            class="ghost"
+            (click)="toggleDraft()"
+            [attr.aria-pressed]="draftMode()"
+            [attr.aria-label]="draftMode() ? t('editor.draftMode.off') : t('editor.draftMode.on')"
+          >
+            📝 {{ t('editor.draftMode.label') }}
+          </button>
+        }
+        @if (draftMode()) {
+          <button type="button" class="ghost" (click)="saveDraft()" [disabled]="savingDraft()">
+            {{ t('editor.draftMode.save') }}
+          </button>
+        }
       </div>
     }
     <div class="shell" [class.has-panel]="panelOpen()">
@@ -69,82 +87,7 @@ import { ImagePickerDialogComponent } from './image-picker-dialog.component';
       <mc-image-picker-dialog (picked)="onPicked($event)" (dismiss)="closePicker()" />
     }
   `,
-  styles: `
-    :host {
-      display: block;
-    }
-    .toolbar {
-      display: flex;
-      gap: var(--mc-space-1);
-      padding: 0 0 var(--mc-space-1) 0;
-    }
-    .ghost {
-      background: transparent;
-      border: 0;
-      color: var(--mc-fg-muted);
-      cursor: pointer;
-      font-size: var(--mc-font-size-sm);
-      padding: var(--mc-space-1) var(--mc-space-2);
-      border-radius: var(--mc-radius-sm);
-    }
-    .ghost:hover {
-      color: var(--mc-fg-primary);
-      background: var(--mc-bg-elevated);
-    }
-    .ghost[aria-pressed='true'] {
-      color: var(--mc-fg-primary);
-      background: var(--mc-bg-selected);
-    }
-    .shell {
-      display: flex;
-      align-items: stretch;
-      gap: 0;
-    }
-    .shell.has-panel .editor-host {
-      flex: 1;
-      min-width: 0;
-    }
-    .editor-host :global(.mc-image-ref) {
-      display: inline-block;
-      vertical-align: middle;
-    }
-    .editor-host :global(.mc-image-ref img) {
-      max-width: 320px;
-      max-height: 240px;
-      border-radius: var(--mc-radius-sm);
-    }
-    .editor-host :global(.mc-image-ref--missing) {
-      display: inline-block;
-      padding: 2px 6px;
-      border: 1px dashed var(--mc-border-default);
-      color: var(--mc-fg-muted);
-    }
-    .editor-host {
-      flex: 1;
-      min-height: 200px;
-      padding: var(--mc-space-3);
-      border: 1px solid var(--mc-border-default);
-      border-radius: var(--mc-radius-md);
-      background: var(--mc-bg-elevated);
-      color: var(--mc-fg-primary);
-    }
-    .editor-host:focus-within {
-      border-color: var(--mc-accent-primary);
-      outline: 2px solid var(--mc-accent-primary);
-      outline-offset: -2px;
-    }
-    .editor-host :global(.ProseMirror) {
-      outline: none;
-      min-height: 180px;
-    }
-    .editor-host :global(.ProseMirror p.is-editor-empty:first-child::before) {
-      content: attr(data-placeholder);
-      color: var(--mc-fg-muted);
-      pointer-events: none;
-      float: left;
-      height: 0;
-    }
-  `,
+  styleUrl: './editor.component.css',
 })
 export class EditorComponent {
   readonly value = input.required<JSONContent>();
@@ -156,15 +99,19 @@ export class EditorComponent {
   readonly entityId = input<string>('');
   readonly entityTitle = input<string>('');
   readonly valueChange = output<JSONContent>();
+  readonly draftSaved = output<number>();
 
   private readonly host = viewChild.required<ElementRef<HTMLElement>>('host');
   private readonly destroyRef = inject(DestroyRef);
   private readonly injector = inject(Injector);
   private readonly reader = inject(ImageReaderService);
   private readonly i18n = inject(I18nService);
+  private readonly drafts = inject(DraftsService);
 
   protected readonly pickerOpen = signal(false);
   protected readonly panelOpen = signal(false);
+  protected readonly draftMode = signal(false);
+  protected readonly savingDraft = signal(false);
   protected readonly commentsAvailable = computed(() => this.entityId().length > 0);
   protected readonly showToolbar = computed(
     () => (this.editable() && this.hasGalleries()) || this.commentsAvailable(),
@@ -191,6 +138,50 @@ export class EditorComponent {
     this.panelOpen.set(false);
   }
 
+  // why: draft mode is per-session, no persistence of the toggle. When
+  //      on, edits are buffered locally and never emitted to the host,
+  //      so the entity body in `main` stays untouched. Turning it off
+  //      discards the buffer and snaps the editor back to the last
+  //      saved-to-main value.
+  protected toggleDraft(): void {
+    const ed = this.editor;
+    if (this.draftMode()) {
+      this.baseDoc = null;
+      this.bufferDoc = null;
+      this.draftMode.set(false);
+      if (ed) {
+        this.suppressEmit = true;
+        ed.commands.setContent(this.value(), { emitUpdate: false });
+        this.suppressEmit = false;
+      }
+      return;
+    }
+    const snapshot = ed ? ed.getJSON() : this.value();
+    this.baseDoc = snapshot;
+    this.bufferDoc = snapshot;
+    this.draftMode.set(true);
+  }
+
+  protected async saveDraft(): Promise<void> {
+    if (!this.baseDoc || !this.bufferDoc) return;
+    const id = this.entityId();
+    if (!id) return;
+    this.savingDraft.set(true);
+    try {
+      const marks = buildBlockDiffMarks({
+        before: this.baseDoc,
+        after: this.bufferDoc,
+        now: new Date().toISOString(),
+        genId: () => crypto.randomUUID(),
+      });
+      await this.drafts.save(id, this.entityTitle(), marks);
+      this.baseDoc = this.bufferDoc;
+      this.draftSaved.emit(marks.length);
+    } finally {
+      this.savingDraft.set(false);
+    }
+  }
+
   protected onPicked(payload: { galleryId: string; imageId: string; alt: string }): void {
     this.pickerOpen.set(false);
     const ed = this.editor;
@@ -208,6 +199,8 @@ export class EditorComponent {
   // why: suppress the onUpdate -> output emission when we just pushed the
   //      same JSON back in from the input — avoids feedback loops in OnPush.
   private suppressEmit = false;
+  private baseDoc: JSONContent | null = null;
+  private bufferDoc: JSONContent | null = null;
 
   constructor() {
     afterNextRender(() => this.mount());
@@ -221,7 +214,12 @@ export class EditorComponent {
       editable: this.editable(),
       onUpdate: ({ editor }) => {
         if (this.suppressEmit) return;
-        this.valueChange.emit(editor.getJSON());
+        const json = editor.getJSON();
+        if (this.draftMode()) {
+          this.bufferDoc = json;
+          return;
+        }
+        this.valueChange.emit(json);
       },
     });
 
@@ -236,11 +234,13 @@ export class EditorComponent {
 
     // why: keep external value in sync without forcing a remount on every
     //      keystroke; only reset when the incoming JSON actually differs.
+    //      Skips entirely while draft mode is on so the buffer survives.
     effect(
       () => {
         const next = this.value();
         const ed = this.editor;
         if (!ed) return;
+        if (this.draftMode()) return;
         const current = ed.getJSON();
         if (jsonEquals(current, next)) return;
         this.suppressEmit = true;

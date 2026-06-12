@@ -659,6 +659,10 @@ export const es = {
   'editor.imagePicker.empty': 'No hay galerías con imágenes todavía.',
   'editor.imagePicker.galleryEmpty': 'Esta galería está vacía.',
   'editor.imagePicker.untitled': 'Sin título',
+  'editor.draftMode.label': 'Modo borrador',
+  'editor.draftMode.on': 'Activar modo borrador',
+  'editor.draftMode.off': 'Salir del modo borrador (descarta cambios sin guardar)',
+  'editor.draftMode.save': 'Guardar borrador',
 
   'calendar.title': 'Calendario',
   'calendar.view.month': 'Mes',

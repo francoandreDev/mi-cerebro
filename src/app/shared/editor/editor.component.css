@@ -1,0 +1,74 @@
+:host {
+  display: block;
+}
+.toolbar {
+  display: flex;
+  gap: var(--mc-space-1);
+  padding: 0 0 var(--mc-space-1) 0;
+}
+.ghost {
+  background: transparent;
+  border: 0;
+  color: var(--mc-fg-muted);
+  cursor: pointer;
+  font-size: var(--mc-font-size-sm);
+  padding: var(--mc-space-1) var(--mc-space-2);
+  border-radius: var(--mc-radius-sm);
+}
+.ghost:hover {
+  color: var(--mc-fg-primary);
+  background: var(--mc-bg-elevated);
+}
+.ghost[aria-pressed='true'] {
+  color: var(--mc-fg-primary);
+  background: var(--mc-bg-selected);
+}
+.shell {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+.shell.has-panel .editor-host {
+  flex: 1;
+  min-width: 0;
+}
+.editor-host :global(.mc-image-ref) {
+  display: inline-block;
+  vertical-align: middle;
+}
+.editor-host :global(.mc-image-ref img) {
+  max-width: 320px;
+  max-height: 240px;
+  border-radius: var(--mc-radius-sm);
+}
+.editor-host :global(.mc-image-ref--missing) {
+  display: inline-block;
+  padding: 2px 6px;
+  border: 1px dashed var(--mc-border-default);
+  color: var(--mc-fg-muted);
+}
+.editor-host {
+  flex: 1;
+  min-height: 200px;
+  padding: var(--mc-space-3);
+  border: 1px solid var(--mc-border-default);
+  border-radius: var(--mc-radius-md);
+  background: var(--mc-bg-elevated);
+  color: var(--mc-fg-primary);
+}
+.editor-host:focus-within {
+  border-color: var(--mc-accent-primary);
+  outline: 2px solid var(--mc-accent-primary);
+  outline-offset: -2px;
+}
+.editor-host :global(.ProseMirror) {
+  outline: none;
+  min-height: 180px;
+}
+.editor-host :global(.ProseMirror p.is-editor-empty:first-child::before) {
+  content: attr(data-placeholder);
+  color: var(--mc-fg-muted);
+  pointer-events: none;
+  float: left;
+  height: 0;
+}
