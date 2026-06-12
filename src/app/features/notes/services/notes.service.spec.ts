@@ -28,7 +28,7 @@ describe('NotesService', () => {
     const note = await svc.create('Hola');
     expect(note.id).toMatch(/[0-9a-f-]{36}/);
     expect(note.title).toBe('Hola');
-    expect(note.schemaVersion).toBe(1);
+    expect(note.schemaVersion).toBe(2);
     const notes = fs.root.dirs.get('notes')!;
     expect(notes.files.has('hola.json')).toBe(true);
     const stored = JSON.parse(notes.files.get('hola.json')!) as { id: string };

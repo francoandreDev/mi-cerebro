@@ -1,6 +1,6 @@
 import type { JSONContent } from '@tiptap/core';
 
-export const WRITING_SCHEMA_VERSION = 1;
+export const WRITING_SCHEMA_VERSION = 2;
 export const WRITING_KIND = 'writing';
 export const WRITINGS_DIR = 'writings';
 export const WRITING_FILE_SUFFIX = '.json';

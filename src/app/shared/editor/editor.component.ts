@@ -17,6 +17,7 @@ import StarterKit from '@tiptap/starter-kit';
 
 import { I18nService } from '@core/i18n/i18n.service';
 import { ImageReaderService } from '@core/images/image-reader.service';
+import { createBlockIdExtension } from '@core/tiptap/block-id/block-id.ext';
 import { IMAGE_REF_NAME, createImageRefNode } from '@core/tiptap/image-ref/image-ref.node';
 
 import { ImagePickerDialogComponent } from './image-picker-dialog.component';
@@ -158,7 +159,7 @@ export class EditorComponent {
   private mount(): void {
     this.editor = new Editor({
       element: this.host().nativeElement,
-      extensions: [StarterKit, createImageRefNode(this.reader)],
+      extensions: [StarterKit, createBlockIdExtension(), createImageRefNode(this.reader)],
       content: this.value(),
       editable: this.editable(),
       onUpdate: ({ editor }) => {

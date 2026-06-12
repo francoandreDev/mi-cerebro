@@ -1,6 +1,6 @@
 import type { JSONContent } from '@tiptap/core';
 
-export const GOAL_SCHEMA_VERSION = 1;
+export const GOAL_SCHEMA_VERSION = 2;
 export const GOAL_KIND = 'goal';
 export const GOALS_DIR = 'goals';
 export const GOAL_FILE_SUFFIX = '.json';

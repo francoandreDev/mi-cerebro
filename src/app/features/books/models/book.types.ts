@@ -1,7 +1,7 @@
 import type { JSONContent } from '@tiptap/core';
 
-export const BOOK_SCHEMA_VERSION = 1;
-export const CHAPTER_SCHEMA_VERSION = 1;
+export const BOOK_SCHEMA_VERSION = 2;
+export const CHAPTER_SCHEMA_VERSION = 2;
 export const BOOK_KIND = 'book';
 export const BOOKS_DIR = 'books';
 export const BOOK_META_FILE = '_book.json';

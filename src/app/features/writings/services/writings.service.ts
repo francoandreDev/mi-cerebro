@@ -15,6 +15,7 @@ import {
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { MigrationsService } from '@core/migrations/migrations.service';
 import { SearchIndexService } from '@core/search/search-index.service';
+import { blockIdMigrationStep } from '@core/tiptap/block-id/block-id.migration';
 import type { SearchDoc } from '@core/search/search.types';
 import { extractPlainText } from '@core/search/tiptap-text';
 import { TagsService } from '@core/tags/tags.service';
@@ -49,7 +50,11 @@ export class WritingsService {
   readonly foldersSet = computed(() => new Set(this.foldersSignal()));
 
   constructor() {
-    this.migrations.register({ kind: WRITING_KIND, latest: WRITING_SCHEMA_VERSION, steps: [] });
+    this.migrations.register({
+      kind: WRITING_KIND,
+      latest: WRITING_SCHEMA_VERSION,
+      steps: [blockIdMigrationStep(1)],
+    });
   }
 
   async refresh(): Promise<readonly WritingSummary[]> {

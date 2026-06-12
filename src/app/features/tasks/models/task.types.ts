@@ -1,6 +1,6 @@
 import type { JSONContent } from '@tiptap/core';
 
-export const TASK_SCHEMA_VERSION = 1;
+export const TASK_SCHEMA_VERSION = 2;
 export const TASK_KIND = 'task';
 export const TASKS_DIR = 'tasks';
 export const TASK_FILE_SUFFIX = '.json';

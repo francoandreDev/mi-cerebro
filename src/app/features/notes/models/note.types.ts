@@ -1,6 +1,6 @@
 import type { JSONContent } from '@tiptap/core';
 
-export const NOTE_SCHEMA_VERSION = 1;
+export const NOTE_SCHEMA_VERSION = 2;
 export const NOTE_KIND = 'note';
 export const NOTES_DIR = 'notes';
 export const NOTE_FILE_SUFFIX = '.json';

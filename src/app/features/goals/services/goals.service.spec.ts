@@ -28,7 +28,7 @@ describe('GoalsService', () => {
     const goal = await svc.create('Aprender ruso');
     expect(goal.completed).toBe(false);
     expect(goal.deadline).toBeNull();
-    expect(goal.schemaVersion).toBe(1);
+    expect(goal.schemaVersion).toBe(2);
     const goals = fs.root.dirs.get('goals')!;
     expect(goals.files.has('aprender-ruso.json')).toBe(true);
   });

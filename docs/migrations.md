@@ -18,7 +18,12 @@ Cada entidad persistida lleva un `schemaVersion`. Cuando aumentamos esa versión
 
 ## Registro
 
-_Sin migraciones registradas todavía._ Esta sección crece con el tiempo, una entrada por bump.
+### note / task / goal / list / writing / book v1 → v2 (2026-06-12)
+
+- **Qué cambia:** cada nodo "bloque anclable" del `body` TipTap (paragraph, heading, blockquote, codeBlock, listItem, horizontalRule) gana un atributo `blockId: string` con un UUID estable, persistido como `data-block-id`.
+- **Por qué:** 13c (comentarios anclados) y 13d (borrador como track-changes) necesitan un anchor que sobreviva a ediciones. El walker es la **única** vía para que entidades pre-13c queden anclables sin requerir que el usuario reabra y reedite cada archivo.
+- **Mapeo:** `injectBlockIds(body)` recorre el doc y rellena `attrs.blockId` con `crypto.randomUUID()` donde falta. Idempotente: ids válidos existentes se preservan; duplicados (típicamente por copy/paste) se reemplazan. Si la entidad no tiene `body` (caso Book bajo `BOOK_KIND`, que comparte la cadena con Chapter), sólo se bump-ea `schemaVersion`.
+- **Compatibilidad:** la extensión `mcBlockId` de TipTap mantiene esta invariante en runtime, así que cualquier doc abierto en el editor (incluso ya migrado) sigue ganando ids para bloques nuevos. Backup automático antes de aplicar la migración por entidad (regla §4.15).
 
 ### Plantilla
 

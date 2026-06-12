@@ -1,6 +1,6 @@
 import type { JSONContent } from '@tiptap/core';
 
-export const LIST_SCHEMA_VERSION = 1;
+export const LIST_SCHEMA_VERSION = 2;
 export const LIST_KIND = 'list';
 export const LISTS_DIR = 'lists';
 export const LIST_FILE_SUFFIX = '.json';
