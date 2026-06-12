@@ -1,0 +1,194 @@
+@let f = from();
+@let i = into();
+@let p = plan();
+@let c = counts();
+
+<section class="merge-page">
+  <header class="merge-head">
+    <button type="button" class="back" (click)="back()">←</button>
+    <div class="titles">
+      <h1>{{ t('merge.page.title') }}</h1>
+      @if (f && i) {
+        <p class="subtitle">
+          {{ t('merge.page.subtitle', { from: f.name, into: i.name }) }}
+        </p>
+      }
+    </div>
+  </header>
+
+  <div class="selector-bar">
+    <label>
+      <span class="label">{{ t('merge.selector.from') }}</span>
+      <select [ngModel]="fromId()" (ngModelChange)="onFromChange($event)">
+        <option value="">—</option>
+        @for (v of allVariants(); track v.id) {
+          <option [value]="v.id" [disabled]="v.id === intoId()">{{ v.name }}</option>
+        }
+      </select>
+    </label>
+    <button
+      type="button"
+      class="swap"
+      (click)="swapSides()"
+      [disabled]="!fromId() || !intoId()"
+      [title]="t('merge.selector.swap')"
+    >
+      ⇄
+    </button>
+    <label>
+      <span class="label">{{ t('merge.selector.into') }}</span>
+      <select [ngModel]="intoId()" (ngModelChange)="onIntoChange($event)">
+        <option value="">—</option>
+        @for (v of allVariants(); track v.id) {
+          <option [value]="v.id" [disabled]="v.id === fromId()">{{ v.name }}</option>
+        }
+      </select>
+    </label>
+  </div>
+
+  @if (!f || !i) {
+    <p class="empty">{{ t('merge.invalid') }}</p>
+  } @else if (f.id === i.id) {
+    <p class="empty">{{ t('merge.same.variant') }}</p>
+  } @else if (loading()) {
+    <p class="empty">{{ t('merge.loading') }}</p>
+  } @else if (!p || p.entries.length === 0) {
+    <p class="empty">{{ t('merge.noDiff') }}</p>
+  } @else {
+    <div class="bulk-bar">
+      <span class="bulk-label">{{ t('merge.bulk.label') }}</span>
+      <button type="button" (click)="applyAll('from')">
+        {{ t('merge.bulk.allFrom', { name: f.name }) }}
+      </button>
+      <button type="button" (click)="applyAll('into')">
+        {{ t('merge.bulk.allInto', { name: i.name }) }}
+      </button>
+      <button type="button" (click)="applyAll('skip')">
+        {{ t('merge.bulk.allSkip') }}
+      </button>
+      <span class="bulk-counts">
+        {{ t('merge.counts', { from: c.from, into: c.into, skip: c.skip, total: c.total }) }}
+      </span>
+    </div>
+
+    <div class="table">
+      <div class="row head">
+        <div class="col path">{{ t('merge.col.path') }}</div>
+        <div class="col status">{{ t('merge.col.status') }}</div>
+        <div class="col preview">{{ t('merge.col.previewFrom', { name: f.name }) }}</div>
+        <div class="col preview">{{ t('merge.col.previewInto', { name: i.name }) }}</div>
+        <div class="col choice">{{ t('merge.col.choice') }}</div>
+      </div>
+      @for (entry of p.entries; track entry.filepath) {
+        @let choice = choiceFor(entry);
+        <div class="row" [class.skip]="choice === 'skip'">
+          <div class="col path" [title]="entry.filepath">{{ entry.filepath }}</div>
+          <div class="col status">
+            <span class="badge" [class]="'badge-' + entry.status">{{ statusLabel(entry) }}</span>
+          </div>
+          <div class="col preview">
+            @if (entry.previewFrom !== null) {
+              <pre>{{ entry.previewFrom }}</pre>
+            } @else {
+              <span class="muted">—</span>
+            }
+          </div>
+          <div class="col preview">
+            @if (entry.previewInto !== null) {
+              <pre>{{ entry.previewInto }}</pre>
+            } @else {
+              <span class="muted">—</span>
+            }
+          </div>
+          <div class="col choice">
+            <div class="seg">
+              <button
+                type="button"
+                [class.on]="choice === 'from'"
+                (click)="setChoice(entry, 'from')"
+                [title]="t('merge.choice.from', { name: f.name })"
+              >
+                ← {{ f.name }}
+              </button>
+              <button
+                type="button"
+                [class.on]="choice === 'into'"
+                (click)="setChoice(entry, 'into')"
+                [title]="t('merge.choice.into', { name: i.name })"
+              >
+                {{ i.name }} →
+              </button>
+              <button
+                type="button"
+                [class.on]="choice === 'skip'"
+                (click)="setChoice(entry, 'skip')"
+                [title]="t('merge.choice.skip')"
+              >
+                {{ t('merge.choice.skip.short') }}
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <footer class="merge-foot">
+      <button type="button" class="ghost" (click)="back()" [disabled]="applying()">
+        {{ t('merge.cancel') }}
+      </button>
+      <button
+        type="button"
+        class="primary"
+        [disabled]="applying() || c.from === 0"
+        (click)="applyMerge()"
+      >
+        @if (applying()) {
+          {{ t('merge.applying') }}
+        } @else {
+          {{ t('merge.apply', { n: c.from }) }}
+        }
+      </button>
+    </footer>
+  }
+
+  @let o = outcome();
+  @if (o) {
+    <div class="outcome" [class.ok]="!o.failedAt" [class.fail]="o.failedAt">
+      @if (o.failedAt) {
+        <p>
+          <strong>{{ t('merge.outcome.partial', { n: o.applied.length }) }}</strong>
+        </p>
+        <p>
+          {{ t('merge.outcome.failedAt', { path: o.failedAt.path, reason: o.failedAt.reason }) }}
+        </p>
+        @if (o.remaining.length > 0) {
+          <p>{{ t('merge.outcome.remaining', { n: o.remaining.length }) }}</p>
+        }
+      } @else if (o.applied.length === 0) {
+        <p>{{ t('merge.outcome.empty') }}</p>
+      } @else {
+        <p>{{ t('merge.outcome.ok', { n: o.applied.length }) }}</p>
+      }
+      @if (i && o.applied.length > 0) {
+        <p class="outcome-activity">
+          {{ t('merge.outcome.activity', { name: i.name, at: (i.lastActivityAt | mcDate) }) }}
+        </p>
+      }
+      <div class="outcome-actions">
+        @if (o.failedAt) {
+          <button type="button" class="primary" (click)="retryFailed()" [disabled]="applying()">
+            {{ t('merge.outcome.retry') }}
+          </button>
+          @if (o.remaining.length > 0) {
+            <button type="button" (click)="skipAndContinue()" [disabled]="applying()">
+              {{ t('merge.outcome.skipContinue', { n: o.remaining.length }) }}
+            </button>
+          }
+        }
+        <button type="button" class="ghost" (click)="dismissOutcome()" [disabled]="applying()">
+          {{ t('common.close') }}
+        </button>
+      </div>
+    </div>
+  }
+</section>

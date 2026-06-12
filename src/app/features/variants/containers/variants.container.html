@@ -121,7 +121,7 @@
             <button type="button" (click)="startRename(v)" [disabled]="busy()">
               {{ t('variants.action.rename') }}
             </button>
-            <button type="button" disabled [title]="t('variants.action.merge.disabled')">
+            <button type="button" (click)="onMerge(v)" [disabled]="busy()">
               {{ t('variants.action.merge') }}
             </button>
             <button

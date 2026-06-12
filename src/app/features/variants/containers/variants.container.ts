@@ -6,6 +6,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import type { OnInit } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 
 import { ErrorService } from '@core/errors/error.service';
 import { I18nService } from '@core/i18n/i18n.service';
@@ -40,6 +41,7 @@ export class VariantsContainer implements OnInit {
   private readonly settings = inject(SettingsService);
   private readonly i18n = inject(I18nService);
   private readonly errors = inject(ErrorService);
+  private readonly router = inject(Router);
 
   protected readonly file = this.variants.file;
   protected readonly switching = this.switcher.switching;
@@ -189,6 +191,13 @@ export class VariantsContainer implements OnInit {
     const color = (event.target as HTMLInputElement).value;
     if (color === v.color) return;
     void this.variants.setColor(v.id, color).catch((e) => this.errors.report(e));
+  }
+
+  protected onMerge(v: Variant): void {
+    if (v.protected) return;
+    void this.router.navigate(['/variants/merge'], {
+      queryParams: { from: v.id, into: PRINCIPAL_VARIANT_ID },
+    });
   }
 
   protected async requestDelete(v: Variant): Promise<void> {

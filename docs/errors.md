@@ -242,6 +242,30 @@ Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `P
 - **Cómo resolver:** recargar la app (los workspaces re-indexan en el boot); o disparar "Reindexar" desde la pantalla de variantes (en 13b-iii). Mientras tanto el resto de la app funciona normal.
 - **Recuperable:** sí — los archivos están bien, sólo la búsqueda global queda momentáneamente vacía.
 
+### MCB-VER-010 — No se pudo aplicar el merge
+
+- **Severidad:** error
+- **Cuándo:** `MergeService.apply` falló durante la fase locked: `requireAdapter` no encontró workspace listo (`workspace-not-ready`), `findVariant` no encontró origen o destino (`variant-not-found`), o `buildMergeCommit`/`writeRef` falló a mitad del bucle por entidad.
+- **Causa típica:** permisos del adapter revocados a mitad del merge, el ref del destino fue tocado externamente entre `resolveRef` y `writeRef`, o un blob del origen quedó ilegible por corrupción del `.git/objects`.
+- **Cómo resolver:** la operación es per-commit y atómica por entidad: los commits previos quedan aplicados sobre el destino, el snapshot `pre-merge` queda como red de seguridad y la UI muestra "Reintentar la fallida" / "Saltar y continuar". Si lo querés revertir entero, abrir `/history`, ubicar el commit `auto: pre-merge` y "Restaurar todo este commit".
+- **Recuperable:** sí — los commits aplicados son individualmente revertibles desde `/history`, agrupados visualmente por el trailer `Merge-Group`. Las entidades del origen no se tocan.
+
+### MCB-VER-011 — Entidad cambió externamente
+
+- **Severidad:** warning
+- **Cuándo:** entre la generación de la preview en `/variants/merge` y la aplicación de un commit, una entidad del destino cambió de oid (otra pestaña commiteó, un autocommit corrió, o un editor externo tocó el archivo y el siguiente autocommit lo capturó). El plan calculado ya no representa el estado actual.
+- **Causa típica:** otra pestaña abierta sobre el mismo workspace acaba de commitear; o el lock se liberó a mitad por un fallo y otro proceso ganó la carrera.
+- **Cómo resolver:** refrescar la página de merge (`/variants/merge?from=...&into=...`) para recalcular el diff y reaplicar selecciones. Los commits ya aplicados quedan; sólo reintentás los pendientes sobre el nuevo estado.
+- **Recuperable:** sí — el lock impide commits parciales sobre datos viejos; sólo se aborta la entidad afectada.
+
+### MCB-VER-012 — Merge-Group inconsistente
+
+- **Severidad:** error
+- **Cuándo:** `/history` detectó dos commits con el mismo `Merge-Group: <uuid>` pero `Merge-From` / `Merge-Into` distintos. Es un invariante: una sesión de merge usa un único groupId y un único par (origen, destino).
+- **Causa típica:** edición manual del repo, dos sesiones de merge concurrentes con un colisión astronómicamente improbable de UUID, o un bug en el formateo del trailer.
+- **Cómo resolver:** no es esperable; reportar el caso con el oid de los commits afectados. La agrupación visual en `/history` cae a tratar cada commit como individual.
+- **Recuperable:** sí — los commits están bien, sólo la agrupación visual queda degradada hasta resolver.
+
 ### MCB-VER-017 — No se pudo marcar este punto
 
 - **Severidad:** warning | error

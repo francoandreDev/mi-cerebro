@@ -9,10 +9,12 @@ import { FormsModule } from '@angular/forms';
 import * as git from 'isomorphic-git';
 
 import { WorkspaceService } from '@core/fs/workspace.service';
+import { AutocommitService } from '@core/versioning/autocommit.service';
 import { GitFsAdapter } from '@core/versioning/git-fs.adapter';
 import { SwitchVariantService } from '@core/versioning/switch-variant.service';
 import { VariantsService } from '@core/versioning/variants.service';
 import type { Variant } from '@core/versioning/variants.types';
+import { NotesService } from '@features/notes/services/notes.service';
 import { BgColorDirective } from '@shared/directives/bg-color.directive';
 
 import {
@@ -63,6 +65,8 @@ export class DevVariantsPanelContainer {
   private readonly variants = inject(VariantsService);
   private readonly switcher = inject(SwitchVariantService);
   private readonly workspace = inject(WorkspaceService);
+  private readonly notes = inject(NotesService);
+  private readonly autocommit = inject(AutocommitService);
 
   protected readonly open = signal(false);
   protected readonly busy = signal(false);
@@ -180,6 +184,23 @@ export class DevVariantsPanelContainer {
 
   protected async backdate(id: string): Promise<void> {
     await this.runAction(() => this.variants.setLastActivityAt(id, Date.now() - 31 * 86_400_000));
+  }
+
+  protected seedCount = 20;
+
+  // why: gate ⑨ of 13b-iv needs ~N entities that diverge between two
+  //      variants. The user runs this on the throwaway variant they
+  //      want to merge from; the autocommit at the end captures every
+  //      seeded note in a single commit on that variant's `main`.
+  protected async seedNotes(): Promise<void> {
+    const n = Math.max(1, Math.min(200, Number(this.seedCount) || 0));
+    await this.runAction(async () => {
+      const stamp = Date.now().toString(36);
+      for (let i = 1; i <= n; i++) {
+        await this.notes.create(`__dev-seed-${stamp}-${i.toString().padStart(2, '0')}`);
+      }
+      await this.autocommit.commitNow('dev-seed');
+    });
   }
 
   protected async runTest(key: TestKey): Promise<void> {

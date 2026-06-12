@@ -22,6 +22,7 @@ import type {
   CommitBucket,
   CommitEntry,
   MilestoneEntry,
+  TimelineItem,
 } from '../services/history.types';
 import { MilestoneController } from '../services/milestone.controller';
 
@@ -76,15 +77,33 @@ export class HistoryContainer implements OnInit {
 
   // Filter the timeline to commits that have at least one milestone
   // when the toggle is on. Buckets with zero matching entries are
-  // dropped so the empty-state shows instead of bare headers.
+  // dropped so the empty-state shows instead of bare headers. Merge
+  // groups are kept only if any member has a milestone.
   protected readonly buckets = computed<readonly CommitBucket[]>(() => {
     const all = this.history.buckets();
     if (!this.onlyMilestonesSignal()) return all;
     const byOid = this.milestonesByOid();
+    const hits = (item: TimelineItem): boolean =>
+      item.kind === 'commit'
+        ? byOid.has(item.entry.oid)
+        : item.members.some((m) => byOid.has(m.oid));
     return all
-      .map((b) => ({ id: b.id, entries: b.entries.filter((e) => byOid.has(e.oid)) }))
-      .filter((b) => b.entries.length > 0);
+      .map((b) => ({ id: b.id, items: b.items.filter(hits) }))
+      .filter((b) => b.items.length > 0);
   });
+
+  private readonly expandedMergeGroupsSignal = signal<Set<string>>(new Set());
+  protected isMergeGroupExpanded(id: string): boolean {
+    return this.expandedMergeGroupsSignal().has(id);
+  }
+  protected toggleMergeGroup(id: string): void {
+    this.expandedMergeGroupsSignal.update((s) => {
+      const next = new Set(s);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   protected milestonesFor(oid: string): readonly MilestoneEntry[] {
     return this.milestonesByOid().get(oid) ?? [];
@@ -96,6 +115,21 @@ export class HistoryContainer implements OnInit {
     const oid = this.selectedOidSignal();
     if (!oid) return null;
     return this.entries().find((e) => e.oid === oid) ?? null;
+  });
+
+  // Split the commit message into its subject (first line) and trailer
+  // block (the rest). The h3 only shows the subject so multi-line merge
+  // messages don't crush together; trailers go into a collapsible
+  // section below the header.
+  protected readonly selectedSubject = computed<string>(() => {
+    const m = this.selectedEntry()?.message ?? '';
+    const idx = m.indexOf('\n');
+    return idx === -1 ? m : m.slice(0, idx);
+  });
+  protected readonly selectedBody = computed<string>(() => {
+    const m = this.selectedEntry()?.message ?? '';
+    const idx = m.indexOf('\n');
+    return idx === -1 ? '' : m.slice(idx + 1).trim();
   });
 
   private readonly entityDiffsSignal = signal<readonly EntityDiff[]>([]);

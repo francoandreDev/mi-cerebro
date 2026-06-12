@@ -104,14 +104,17 @@ export class VariantsService {
     const current = this.fileSignal();
     const updated: Variant[] = [];
     for (const v of current.variants) {
-      if (v.id === PRINCIPAL_VARIANT_ID || v.protected) {
-        updated.push(v);
-        continue;
-      }
       const lastActivityAt = await computeLastActivityAt(fs, v);
-      const state: Variant['state'] = isDormant(lastActivityAt, thresholdDays, now)
-        ? 'dormant'
-        : 'active';
+      // why: Principal is exempt from the dormant lifecycle but its
+      //      lastActivityAt still tracks real commits — otherwise a
+      //      merge INTO Principal would leave its tile visually stale
+      //      on /variants.
+      const isProtected = v.id === PRINCIPAL_VARIANT_ID || v.protected;
+      const state: Variant['state'] = isProtected
+        ? 'active'
+        : isDormant(lastActivityAt, thresholdDays, now)
+          ? 'dormant'
+          : 'active';
       if (v.lastActivityAt === lastActivityAt && v.state === state) {
         updated.push(v);
       } else {

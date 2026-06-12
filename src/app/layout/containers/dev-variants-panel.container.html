@@ -129,6 +129,19 @@
           + Crear
         </button>
       </div>
+      <p class="hint">
+        Sembrar notas en la variante <strong>activa</strong> (útil para gate ⑨ del merge): genera N
+        notas <code>__dev-seed-*</code> y dispara un autocommit.
+      </p>
+      <div class="form">
+        <label class="field">
+          <span>N</span>
+          <input type="number" min="1" max="200" [(ngModel)]="seedCount" />
+        </label>
+        <button type="button" (click)="seedNotes()" [disabled]="busy()">
+          Sembrar notas en la activa
+        </button>
+      </div>
     </section>
 
     <section class="sec">
@@ -260,6 +273,75 @@
       <button type="button" class="primary run-all" (click)="runAllTestsII()" [disabled]="busy()">
         Correr ⑤ ⑥ ⑦ ⑧
       </button>
+    </section>
+
+    <section class="sec">
+      <h4>Validación 13b-iv (merge entre variantes)</h4>
+      <p class="hint">
+        Las 4 puertas de cierre son flujos manuales de UI sobre <code>/variants/merge</code> y
+        <code>/history</code>. No se automatizan acá porque requieren generar diferencias reales
+        entre familias (escribir entidades en una variante y no en otra) y observar el banner de
+        outcome — cosas que el panel no puede inspeccionar sin replicar la UI.
+      </p>
+      <ul class="tests">
+        <li class="test test-manual">
+          <span class="test-status">⌨</span>
+          <div class="test-body">
+            <div class="test-title">⑨ Merge de ~20 entidades sin fallos</div>
+            <div class="test-detail">
+              Crear una variante throwaway, activarla, generar ~20 notas/tasks. Volver a Principal,
+              ir a <code>/variants/merge?from=&lt;throwaway&gt;&into=&lt;principal&gt;</code>, "Todo
+              desde origen", Aplicar.
+              <em>Esperado:</em>
+              banner verde "Merge aplicado (~20 commits)" y la tile de Principal en
+              <code>/variants</code> muestra una "Última actividad" recién actualizada.
+            </div>
+          </div>
+          <span class="test-manual-tag">manual</span>
+        </li>
+        <li class="test test-manual">
+          <span class="test-status">⌨</span>
+          <div class="test-body">
+            <div class="test-title">⑩ Partial-fail reporta y ofrece retry/skip</div>
+            <div class="test-detail">
+              Forzar un fallo a mitad: con el dev panel, revocar permisos del workspace después de
+              que apliquen 4 de 10 commits (o renombrar externamente el ref destino). El banner debe
+              decir "Merge parcial — N commits aplicados antes del fallo" + "Falló en …". Acciones
+              "Reintentar la fallida" y "Saltar y continuar con las K restantes" deben quedar
+              habilitadas y funcionar.
+            </div>
+          </div>
+          <span class="test-manual-tag">manual</span>
+        </li>
+        <li class="test test-manual">
+          <span class="test-status">⌨</span>
+          <div class="test-body">
+            <div class="test-title">⑪ /history agrupa por Merge-Group</div>
+            <div class="test-detail">
+              Después de ⑨ (o ⑩), abrir <code>/history</code>: los N commits del merge colapsan a
+              una sola fila "Merge: N entradas desde X hacia Y" con chip
+              <code>merge</code>
+              . El ▸ a la izquierda expande los commits individuales sin perder el orden ni los
+              milestones.
+            </div>
+          </div>
+          <span class="test-manual-tag">manual</span>
+        </li>
+        <li class="test test-manual">
+          <span class="test-status">⌨</span>
+          <div class="test-body">
+            <div class="test-title">⑫ pre-merge sirve como punto de restauración</div>
+            <div class="test-detail">
+              En <code>/history</code>, ubicar el commit
+              <code>auto [pre-merge]: …</code>
+              inmediatamente debajo del bloque del merge. "Restaurar todo este commit" debe deshacer
+              el merge completo (todas las entidades vuelven al estado previo). Verificar que las
+              entidades del origen no se hayan tocado.
+            </div>
+          </div>
+          <span class="test-manual-tag">manual</span>
+        </li>
+      </ul>
     </section>
   </section>
 } @else {

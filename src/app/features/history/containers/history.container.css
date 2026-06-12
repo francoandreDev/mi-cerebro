@@ -695,3 +695,84 @@
   margin-top: 4px;
   opacity: 0.85;
 }
+
+.merge-group {
+  list-style: none;
+}
+
+.merge-group-row {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.merge-group-toggle {
+  flex-shrink: 0;
+  width: 22px;
+  border: none;
+  background: transparent;
+  color: var(--mc-text-secondary);
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0;
+}
+
+.merge-group-toggle:hover {
+  color: var(--mc-text-primary);
+}
+
+.commit.merge-leader {
+  flex: 1;
+}
+
+.chip-merge {
+  background: rgba(120, 140, 220, 0.18);
+  color: #8aa1e0;
+}
+
+.merge-group-members {
+  list-style: none;
+  margin: 4px 0 4px 22px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-left: 1px dashed var(--mc-border);
+  padding-left: 8px;
+}
+
+.commit-nested {
+  opacity: 0.85;
+}
+
+.commit-nested:hover {
+  opacity: 1;
+}
+
+.commit-trailers {
+  margin-top: 8px;
+  font-size: 0.82rem;
+}
+
+.commit-trailers summary {
+  cursor: pointer;
+  color: var(--mc-text-secondary);
+  user-select: none;
+}
+
+.commit-trailers summary:hover {
+  color: var(--mc-text-primary);
+}
+
+.commit-trailers pre {
+  margin: 6px 0 0;
+  padding: 8px 10px;
+  background: var(--mc-surface-2);
+  border: 1px solid var(--mc-border);
+  border-radius: 6px;
+  font-family: var(--mc-font-mono, monospace);
+  font-size: 0.78rem;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: var(--mc-text-secondary);
+}

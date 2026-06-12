@@ -7,7 +7,14 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { MilestoneService } from '@core/versioning/milestone.service';
 import { VersioningService } from '@core/versioning/versioning.service';
 
-import type { BucketId, CommitBucket, CommitEntry, MilestoneEntry } from './history.types';
+import type {
+  BucketId,
+  CommitBucket,
+  CommitEntry,
+  MergeGroupInfo,
+  MilestoneEntry,
+  TimelineItem,
+} from './history.types';
 
 const DEFAULT_DEPTH = 200;
 
@@ -56,8 +63,8 @@ export class HistoryService {
       const id = bucketFor(entry.date.getTime(), now);
       groups.get(id)!.push(entry);
     }
-    return BUCKET_ORDER.map((id) => ({ id, entries: groups.get(id)! })).filter(
-      (b) => b.entries.length > 0,
+    return BUCKET_ORDER.map((id) => ({ id, items: collapseMergeGroups(groups.get(id)!) })).filter(
+      (b) => b.items.length > 0,
     );
   });
 
@@ -74,6 +81,7 @@ export class HistoryService {
           message,
           date: new Date(s.authorTimestamp),
           kinds: parseKindsFromMessage(message),
+          mergeGroup: parseMergeGroup(message),
         };
       });
       this.entriesSignal.set(entries);
@@ -130,4 +138,56 @@ function parseKindsFromMessage(msg: string): readonly string[] {
 function singularize(word: string): string {
   if (word.endsWith('s') && word.length > 1) return word.slice(0, -1);
   return word;
+}
+
+// Trailer format written by MergeService.formatMessage:
+//   merge: <path> (from "<fromName>" into "<intoName>")
+//
+//   Merge-Group: <uuid>
+//   Merge-From: <id>
+//   Merge-Into: <id>
+//   Merge-Choice: <choice>
+function parseMergeGroup(message: string): MergeGroupInfo | null {
+  const idMatch = /^Merge-Group:\s*(\S+)/m.exec(message);
+  if (!idMatch) return null;
+  const subjectMatch = /from "([^"]+)" into "([^"]+)"/.exec(message);
+  return {
+    id: idMatch[1]!,
+    fromName: subjectMatch?.[1] ?? null,
+    intoName: subjectMatch?.[2] ?? null,
+  };
+}
+
+// why: VersioningService.log returns commits newest-first; merge group
+//      members are emitted in commit-time order so within one bucket
+//      they are contiguous. The first hit in iteration is the most
+//      recent, which becomes the leader shown when collapsed.
+function collapseMergeGroups(entries: readonly CommitEntry[]): readonly TimelineItem[] {
+  const out: TimelineItem[] = [];
+  let i = 0;
+  while (i < entries.length) {
+    const entry = entries[i]!;
+    const group = entry.mergeGroup;
+    if (!group) {
+      out.push({ kind: 'commit', entry });
+      i++;
+      continue;
+    }
+    const members: CommitEntry[] = [entry];
+    let j = i + 1;
+    while (j < entries.length && entries[j]!.mergeGroup?.id === group.id) {
+      members.push(entries[j]!);
+      j++;
+    }
+    out.push({
+      kind: 'merge-group',
+      id: group.id,
+      fromName: group.fromName,
+      intoName: group.intoName,
+      latest: entry,
+      members,
+    });
+    i = j;
+  }
+  return out;
 }
