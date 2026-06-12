@@ -305,3 +305,27 @@ Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `P
 - **Causa típica:** el usuario eliminó el bloque al que apuntaba el comentario entre el momento en que abrió la entidad y el momento en que envió el comentario, o el anchor proviene de una versión vieja.
 - **Cómo resolver:** apuntar a otro bloque o usar `anchorType: 'entity'` para anclar al documento completo.
 - **Recuperable:** sí — el comentario nunca se persistió.
+
+### MCB-VER-022 — No se pudo leer o guardar el borrador
+
+- **Severidad:** error
+- **Cuándo:** lectura o escritura de `drafts/<entityId>.json` en la rama `variant/<family>/draft` falla en el plumbing de isomorphic-git (`readBlob` / `writeBlob` / `writeTree` / `writeCommit` / `writeRef`).
+- **Causa típica:** permisos al directorio raíz revocados, `.git/` corrupto o el ref `variant/<family>/draft` apunta a un oid inexistente (cierre forzoso mid-fork de variante).
+- **Cómo resolver:** reintentar; si persiste, verificar que la variante activa existe en `/variants` y que los permisos a la carpeta raíz no fueron revocados. La entidad subyacente (`main`) no se toca.
+- **Recuperable:** sí — las marcas viejas siguen en el último commit de la rama; sólo la escrita que falló se pierde y queda re-intentable.
+
+### MCB-VER-023 — Archivo de borrador ilegible
+
+- **Severidad:** error
+- **Cuándo:** se leyó `drafts/<entityId>.json` pero el JSON no parsea, le falta `schemaVersion`, o la versión es mayor que la `latest` registrada para `draftsFile`.
+- **Causa típica:** archivo corrupto por escritura interrumpida (mitigado por escritura atómica vía plumbing, pero posible si el repo se manipuló externamente) o downgrade de la app después de un upgrade que bumpeó el schema.
+- **Cómo resolver:** restaurar la rama draft al commit anterior desde `/history` (toggle "ver todas las variantes" → buscar el último `auto [borrador]: …` válido y restaurar). La entidad principal no se toca.
+- **Recuperable:** sí — las marcas previas al archivo corrupto siguen disponibles en el historial.
+
+### MCB-VER-024 — El anchor del cambio ya no existe
+
+- **Severidad:** warning
+- **Cuándo:** al persistir una marca de borrador con `anchorType: 'block'` referenciando un `blockId` que no existe en el doc actual de la entidad.
+- **Causa típica:** el bloque al que apuntaba la marca fue eliminado entre el momento de capturarla y el de guardarla, o el anchor proviene de una versión vieja.
+- **Cómo resolver:** apuntar a otro bloque, descartar la marca, o usar `anchorType: 'doc'` si el cambio aplica a toda la entidad.
+- **Recuperable:** sí — la marca nunca se persistió.

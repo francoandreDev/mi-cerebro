@@ -153,6 +153,18 @@ export const es = {
   'errors.ver.021.message':
     'El bloque al que querías anclar este comentario no se encuentra en la entidad actual. Probá apuntar a otro bloque o anclar al documento completo.',
 
+  'errors.ver.022.title': 'No se pudo leer o guardar el borrador',
+  'errors.ver.022.message':
+    'Falló la lectura o escritura de la rama de borrador de esta variante. Tus marcas anteriores siguen en el historial; podés reintentar.',
+
+  'errors.ver.023.title': 'Archivo de borrador ilegible',
+  'errors.ver.023.message':
+    'El archivo de borrador de esta entidad no se pudo parsear o tiene una versión de schema incompatible. La entidad sigue intacta; restaurá una versión anterior desde el historial si querés recuperar el borrador.',
+
+  'errors.ver.024.title': 'El anchor del cambio ya no existe',
+  'errors.ver.024.message':
+    'El bloque al que querías anclar este cambio no se encuentra en la entidad actual. Probá apuntar a otro bloque o descartar la marca.',
+
   'errors.ver.003.title': 'No se pudo restaurar',
   'errors.ver.003.message':
     'No pude reescribir esta entidad con la versión seleccionada. Tu disco quedó como estaba; podés reintentar.',
