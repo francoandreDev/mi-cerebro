@@ -141,6 +141,18 @@ export const es = {
   'errors.ver.018.message':
     'No pude renombrar, mover o eliminar el milestone. Tu historial sigue intacto; podés reintentar.',
 
+  'errors.ver.019.title': 'No se pudo leer o guardar comentarios',
+  'errors.ver.019.message':
+    'Falló la lectura o escritura de la rama de comentarios de esta variante. Tus comentarios anteriores siguen en el historial; podés reintentar.',
+
+  'errors.ver.020.title': 'Archivo de comentarios ilegible',
+  'errors.ver.020.message':
+    'El archivo de comentarios de esta entidad no se pudo parsear o tiene una versión de schema incompatible. La entidad sigue intacta; restaurá una versión anterior desde el historial si querés recuperar los comentarios.',
+
+  'errors.ver.021.title': 'El anchor del comentario ya no existe',
+  'errors.ver.021.message':
+    'El bloque al que querías anclar este comentario no se encuentra en la entidad actual. Probá apuntar a otro bloque o anclar al documento completo.',
+
   'errors.ver.003.title': 'No se pudo restaurar',
   'errors.ver.003.message':
     'No pude reescribir esta entidad con la versión seleccionada. Tu disco quedó como estaba; podés reintentar.',

@@ -281,3 +281,27 @@ Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `P
 - **Causa típica:** permisos a `.git/refs/tags/` revocados mid-operación, el tag fue borrado externamente entre el read y el delete, o el oid destino del move no existe ya en el repo.
 - **Cómo resolver:** reintentar. Si la operación quedó parcial (el delete pasó pero el create no), la lista de milestones lo reflejará — recrear manualmente con "Marcar este punto" sobre el commit deseado.
 - **Recuperable:** sí — los datos del usuario y los commits no se tocan; sólo el ref del tag puede quedar en estado intermedio.
+
+### MCB-VER-019 — No se pudo leer o guardar comentarios
+
+- **Severidad:** error
+- **Cuándo:** lectura o escritura de `comments/<entityId>.json` en la rama `variant/<family>/comments` falla en el plumbing de isomorphic-git (`readBlob` / `writeBlob` / `writeTree` / `writeCommit` / `writeRef`).
+- **Causa típica:** permisos al directorio raíz revocados, `.git/` corrupto o el ref `variant/<family>/comments` apunta a un oid inexistente (cierre forzoso mid-fork de variante).
+- **Cómo resolver:** reintentar; si persiste, verificar que la variante activa existe en `/variants` y que los permisos a la carpeta raíz no fueron revocados. La entidad subyacente (`main`) no se toca.
+- **Recuperable:** sí — los comentarios viejos siguen en el último commit de la rama; sólo el escrito que falló se pierde y queda re-intentable.
+
+### MCB-VER-020 — Archivo de comentarios ilegible
+
+- **Severidad:** error
+- **Cuándo:** se leyó `comments/<entityId>.json` pero el JSON no parsea, le falta `schemaVersion`, o la versión es mayor que la `latest` registrada para `commentsFile`.
+- **Causa típica:** archivo corrupto por escritura interrumpida (mitigado por escritura atómica vía plumbing, pero posible si el repo se manipuló externamente) o downgrade de la app después de un upgrade que bumpeó el schema.
+- **Cómo resolver:** restaurar la rama comments al commit anterior desde `/history` (toggle "ver todas las variantes" → buscar el último `auto [comentarios]: …` válido y restaurar). La entidad principal no se toca.
+- **Recuperable:** sí — los comentarios previos al archivo corrupto siguen disponibles en el historial.
+
+### MCB-VER-021 — El anchor del comentario ya no existe
+
+- **Severidad:** warning
+- **Cuándo:** al crear un comentario con `anchorType: 'block'` referenciando un `blockId` que no existe en el doc actual de la entidad, o al re-anclar un huérfano apuntando a un bloque que ya no está.
+- **Causa típica:** el usuario eliminó el bloque al que apuntaba el comentario entre el momento en que abrió la entidad y el momento en que envió el comentario, o el anchor proviene de una versión vieja.
+- **Cómo resolver:** apuntar a otro bloque o usar `anchorType: 'entity'` para anclar al documento completo.
+- **Recuperable:** sí — el comentario nunca se persistió.
