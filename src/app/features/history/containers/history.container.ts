@@ -86,6 +86,9 @@ export class HistoryContainer implements OnInit {
   protected isFacetEnabled(f: Facet): boolean {
     return this.enabledFacetsSignal().has(f);
   }
+  protected facetLabelKey(f: Facet): `versioning.history.facet.${Facet}` {
+    return `versioning.history.facet.${f}`;
+  }
   protected toggleFacet(f: Facet): void {
     this.enabledFacetsSignal.update((s) => {
       const next = new Set(s);

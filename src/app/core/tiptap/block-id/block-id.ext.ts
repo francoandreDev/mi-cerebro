@@ -22,7 +22,7 @@ export const BLOCK_ID_EXTENSION_NAME = 'mcBlockId';
 //      teaches StarterKit's nodes to round-trip `data-block-id` to/from
 //      JSON; the plugin patches the doc on every transaction so newly
 //      created or duplicated blocks always end up with a fresh UUID.
-export const createBlockIdExtension = (gen: () => string = crypto.randomUUID) =>
+export const createBlockIdExtension = (gen: () => string = () => crypto.randomUUID()) =>
   Extension.create({
     name: BLOCK_ID_EXTENSION_NAME,
 

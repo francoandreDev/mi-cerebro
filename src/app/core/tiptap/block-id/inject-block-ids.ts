@@ -9,7 +9,10 @@ type Gen = () => string;
 // are replaced with a fresh UUID. Non-doc shapes are returned untouched
 // so the same step can be plugged into kinds whose payload sometimes
 // carries a body and sometimes does not (books vs chapters).
-export function injectBlockIds(doc: JSONContent, gen: Gen = crypto.randomUUID): JSONContent {
+export function injectBlockIds(
+  doc: JSONContent,
+  gen: Gen = () => crypto.randomUUID(),
+): JSONContent {
   if (!doc || typeof doc !== 'object' || doc.type !== 'doc') return doc;
   return walk(doc, new Set<string>(), gen);
 }

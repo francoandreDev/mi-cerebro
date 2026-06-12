@@ -55,10 +55,10 @@ export class ErrorService {
   }
 
   private logToConsole(error: AppError): void {
-    console.error(`[${error.code}] ${error.messageKey}`, {
-      severity: error.severity,
-      context: error.context,
-      cause: error.cause,
-    });
+    console.error(
+      `[${error.code}] ${error.messageKey}`,
+      { severity: error.severity, context: error.context, cause: error.cause },
+      error,
+    );
   }
 }
