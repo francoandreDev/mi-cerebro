@@ -45,6 +45,8 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
       [value]="list().body"
       [placeholder]="t('lists.placeholderBody')"
       [editable]="editable()"
+      [entityId]="list().id"
+      [entityTitle]="list().title"
       (valueChange)="bodyChange.emit($event)"
     />
   `,

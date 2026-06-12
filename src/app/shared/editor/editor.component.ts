@@ -5,6 +5,7 @@ import {
   DestroyRef,
   Injector,
   afterNextRender,
+  computed,
   effect,
   inject,
   input,
@@ -20,26 +21,50 @@ import { ImageReaderService } from '@core/images/image-reader.service';
 import { createBlockIdExtension } from '@core/tiptap/block-id/block-id.ext';
 import { IMAGE_REF_NAME, createImageRefNode } from '@core/tiptap/image-ref/image-ref.node';
 
+import { CommentsPanelContainer } from './comments-panel.container';
 import { ImagePickerDialogComponent } from './image-picker-dialog.component';
 
 @Component({
   selector: 'mc-editor',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ImagePickerDialogComponent],
+  imports: [CommentsPanelContainer, ImagePickerDialogComponent],
   template: `
-    @if (editable() && hasGalleries()) {
+    @if (showToolbar()) {
       <div class="toolbar">
-        <button
-          type="button"
-          class="ghost"
-          (click)="openPicker()"
-          [attr.aria-label]="t('editor.insertImage')"
-        >
-          🖼 {{ t('editor.insertImage') }}
-        </button>
+        @if (editable() && hasGalleries()) {
+          <button
+            type="button"
+            class="ghost"
+            (click)="openPicker()"
+            [attr.aria-label]="t('editor.insertImage')"
+          >
+            🖼 {{ t('editor.insertImage') }}
+          </button>
+        }
+        @if (commentsAvailable()) {
+          <button
+            type="button"
+            class="ghost"
+            (click)="togglePanel()"
+            [attr.aria-pressed]="panelOpen()"
+            [attr.aria-label]="panelOpen() ? t('comments.toggle.close') : t('comments.toggle.open')"
+          >
+            💬 {{ t('comments.toggle.label') }}
+          </button>
+        }
       </div>
     }
-    <div #host class="editor-host" data-testid="editor-host"></div>
+    <div class="shell" [class.has-panel]="panelOpen()">
+      <div #host class="editor-host" data-testid="editor-host"></div>
+      @if (commentsAvailable() && panelOpen()) {
+        <mc-comments-panel
+          [entityId]="entityId()"
+          [entityTitle]="entityTitle()"
+          [value]="value()"
+          (closed)="closePanel()"
+        />
+      }
+    </div>
     @if (pickerOpen()) {
       <mc-image-picker-dialog (picked)="onPicked($event)" (dismiss)="closePicker()" />
     }
@@ -66,6 +91,19 @@ import { ImagePickerDialogComponent } from './image-picker-dialog.component';
       color: var(--mc-fg-primary);
       background: var(--mc-bg-elevated);
     }
+    .ghost[aria-pressed='true'] {
+      color: var(--mc-fg-primary);
+      background: var(--mc-bg-selected);
+    }
+    .shell {
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+    }
+    .shell.has-panel .editor-host {
+      flex: 1;
+      min-width: 0;
+    }
     .editor-host :global(.mc-image-ref) {
       display: inline-block;
       vertical-align: middle;
@@ -82,6 +120,7 @@ import { ImagePickerDialogComponent } from './image-picker-dialog.component';
       color: var(--mc-fg-muted);
     }
     .editor-host {
+      flex: 1;
       min-height: 200px;
       padding: var(--mc-space-3);
       border: 1px solid var(--mc-border-default);
@@ -111,6 +150,11 @@ export class EditorComponent {
   readonly value = input.required<JSONContent>();
   readonly placeholder = input<string>('');
   readonly editable = input<boolean>(true);
+  // why: comments panel is gated on a non-empty entityId — keeps the
+  //      shared editor usable in transient contexts (preview dialogs,
+  //      etc.) without dragging the comments stack along.
+  readonly entityId = input<string>('');
+  readonly entityTitle = input<string>('');
   readonly valueChange = output<JSONContent>();
 
   private readonly host = viewChild.required<ElementRef<HTMLElement>>('host');
@@ -120,6 +164,11 @@ export class EditorComponent {
   private readonly i18n = inject(I18nService);
 
   protected readonly pickerOpen = signal(false);
+  protected readonly panelOpen = signal(false);
+  protected readonly commentsAvailable = computed(() => this.entityId().length > 0);
+  protected readonly showToolbar = computed(
+    () => (this.editable() && this.hasGalleries()) || this.commentsAvailable(),
+  );
   protected readonly hasGalleries = (): boolean => this.reader.summaries().length > 0;
 
   protected t(key: Parameters<I18nService['t']>[0]): string {
@@ -132,6 +181,14 @@ export class EditorComponent {
 
   protected closePicker(): void {
     this.pickerOpen.set(false);
+  }
+
+  protected togglePanel(): void {
+    this.panelOpen.update((v) => !v);
+  }
+
+  protected closePanel(): void {
+    this.panelOpen.set(false);
   }
 
   protected onPicked(payload: { galleryId: string; imageId: string; alt: string }): void {

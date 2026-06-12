@@ -1,0 +1,127 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-2);
+  width: 320px;
+  max-width: 100%;
+  padding: var(--mc-space-3);
+  border-left: 1px solid var(--mc-border-default);
+  background: var(--mc-bg-surface);
+  color: var(--mc-fg-primary);
+  overflow-y: auto;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mc-space-2);
+
+  h3 {
+    margin: 0;
+    font-size: var(--mc-font-size-md);
+    color: var(--mc-fg-primary);
+  }
+}
+
+.muted {
+  color: var(--mc-fg-muted);
+}
+
+.small {
+  font-size: var(--mc-font-size-sm);
+}
+
+.empty {
+  text-align: center;
+  padding: var(--mc-space-3) var(--mc-space-2);
+  color: var(--mc-fg-muted);
+
+  strong {
+    display: block;
+    color: var(--mc-fg-primary);
+    margin-bottom: var(--mc-space-1);
+  }
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-2);
+}
+
+.row {
+  border: 1px solid var(--mc-border-default);
+  border-radius: var(--mc-radius-md);
+  background: var(--mc-bg-elevated);
+  padding: var(--mc-space-2);
+
+  &.orphan {
+    border-color: var(--mc-fg-warning, #d97706);
+  }
+}
+
+.orphans {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-1);
+  padding-top: var(--mc-space-2);
+  border-top: 1px dashed var(--mc-border-default);
+
+  h4 {
+    margin: 0;
+    font-size: var(--mc-font-size-sm);
+    color: var(--mc-fg-muted);
+  }
+}
+
+button.icon {
+  background: transparent;
+  border: 0;
+  color: var(--mc-fg-muted);
+  cursor: pointer;
+  font-size: var(--mc-font-size-sm);
+  border-radius: var(--mc-radius-sm);
+  padding: var(--mc-space-1);
+
+  &:hover {
+    color: var(--mc-fg-primary);
+    background: var(--mc-bg-hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--mc-accent-primary);
+    outline-offset: 1px;
+  }
+}
+
+button.primary {
+  background: var(--mc-accent-primary);
+  color: var(--mc-bg-base);
+  border: 0;
+  padding: var(--mc-space-2) var(--mc-space-3);
+  border-radius: var(--mc-radius-md);
+  cursor: pointer;
+  font-weight: 500;
+
+  &:hover {
+    background: var(--mc-accent-hover);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--mc-fg-primary);
+    outline-offset: 2px;
+  }
+}
+
+button.primary.new {
+  align-self: flex-start;
+}

@@ -45,6 +45,8 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
       [value]="note().body"
       [placeholder]="t('notes.placeholderBody')"
       [editable]="editable()"
+      [entityId]="note().id"
+      [entityTitle]="note().title"
       (valueChange)="bodyChange.emit($event)"
     />
   `,

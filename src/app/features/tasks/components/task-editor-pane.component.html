@@ -46,5 +46,7 @@
   [value]="task().body"
   [placeholder]="t('tasks.placeholderBody')"
   [editable]="editable()"
+  [entityId]="task().id"
+  [entityTitle]="task().title"
   (valueChange)="bodyChange.emit($event)"
 />

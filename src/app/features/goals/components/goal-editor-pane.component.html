@@ -45,5 +45,7 @@
   [value]="goal().body"
   [placeholder]="t('goals.placeholderBody')"
   [editable]="editable()"
+  [entityId]="goal().id"
+  [entityTitle]="goal().title"
   (valueChange)="bodyChange.emit($event)"
 />

@@ -30,6 +30,8 @@ import type { BookSaveStatus } from './book-meta-bar.component';
       [value]="chapter().body"
       [placeholder]="t('books.chapters.placeholderBody')"
       [editable]="editable()"
+      [entityId]="chapter().id"
+      [entityTitle]="chapter().title"
       (valueChange)="bodyChange.emit($event)"
     />
   `,
