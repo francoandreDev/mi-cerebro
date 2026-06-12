@@ -51,7 +51,8 @@ export class CommentsService {
   // unchanged). The commit message follows the `auto [comentarios]:` prefix
   // documented in PROYECTO §12 so /history can group these visually.
   async save(entityId: string, entityTitle: string, comments: readonly Comment[]): Promise<void> {
-    const ref = this.activeCommentsRef();
+    const active = this.requireActive();
+    const ref = active.refs.comments;
     const fs = this.requireAdapter();
     const file: CommentsFile = {
       schemaVersion: COMMENTS_FILE_SCHEMA_VERSION,
@@ -69,6 +70,7 @@ export class CommentsService {
           content,
           message,
           author: DEFAULT_GIT_AUTHOR,
+          seedFrom: active.refs.main,
         });
       } catch (cause) {
         throw this.io(cause, entityId, 'save');
@@ -94,6 +96,10 @@ export class CommentsService {
   }
 
   private activeCommentsRef(): string {
+    return this.requireActive().refs.comments;
+  }
+
+  private requireActive() {
     const active = this.variants.getActive();
     if (!active) {
       throw new AppError(ERROR_CODES.VER_019, {
@@ -102,7 +108,7 @@ export class CommentsService {
         recoverable: true,
       });
     }
-    return active.refs.comments;
+    return active;
   }
 
   private requireAdapter(): GitFsAdapter {

@@ -36,6 +36,11 @@ export interface WriteBranchBlobInput {
   readonly content: Uint8Array;
   readonly message: string;
   readonly author: BranchAuthor;
+  // why: principal's comments/draft branches are never seeded at workspace
+  //      init (forkFamilyAtomic only creates them for new forks). When the
+  //      first write lands on `variant/principal/comments`, lazy-create
+  //      the branch from this seed ref instead of throwing VER_019.
+  readonly seedFrom?: string;
 }
 
 // Returns the blob bytes at `filepath` on `ref`'s HEAD, or null if the
@@ -62,8 +67,21 @@ export async function readBranchBlob(
 // same content twice). The destination ref is force-updated; callers
 // holding `FsLockService` guarantee no other writer races on it.
 export async function writeBranchBlob(input: WriteBranchBlobInput): Promise<string | null> {
-  const { fs, ref, filepath, content, message, author } = input;
-  const headOid = await resolveOrNull(fs, ref);
+  const { fs, ref, filepath, content, message, author, seedFrom } = input;
+  let headOid = await resolveOrNull(fs, ref);
+  if (!headOid && seedFrom) {
+    const seedOid = await resolveOrNull(fs, seedFrom);
+    if (seedOid) {
+      await git.writeRef({
+        fs,
+        dir: REPO_DIR,
+        ref: `refs/heads/${stripHeadsPrefix(ref)}`,
+        value: seedOid,
+        force: false,
+      });
+      headOid = seedOid;
+    }
+  }
   if (!headOid) throw new MissingBranchRefError(ref);
   const newBlobOid = await git.writeBlob({ fs, dir: REPO_DIR, blob: content });
   const existingOid = await blobOidAt(fs, headOid, filepath);
