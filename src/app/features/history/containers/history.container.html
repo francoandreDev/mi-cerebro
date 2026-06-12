@@ -34,6 +34,23 @@
         <input type="checkbox" [checked]="onlyMilestones()" (change)="toggleOnlyMilestones()" />
         {{ i18n.t('versioning.history.milestone.onlyMilestones') }}
       </label>
+      <div
+        class="facet-chips"
+        role="group"
+        [attr.aria-label]="i18n.t('versioning.history.facet.label')"
+      >
+        @for (f of allFacets; track f) {
+          <button
+            type="button"
+            class="facet-chip"
+            [attr.data-facet]="f"
+            [attr.aria-pressed]="isFacetEnabled(f)"
+            (click)="toggleFacet(f)"
+          >
+            {{ i18n.t('versioning.history.facet.' + f) }}
+          </button>
+        }
+      </div>
       <span class="pane-collapsed-label">{{ i18n.t('versioning.history.timelineRail') }}</span>
     </div>
     @if (loading()) {

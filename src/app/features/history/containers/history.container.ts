@@ -16,6 +16,7 @@ import { McDatePipe } from '@shared/pipes/mc-date.pipe';
 import { BUCKET_LABEL_KEY } from '../services/bucket-labels';
 import { HistoryDiffService } from '../services/diff.service';
 import type { EntityDiff } from '../services/diff.service';
+import { ALL_FACETS, facetOf, type Facet } from '../services/facet';
 import { HistoryService } from '../services/history.service';
 import type {
   BucketId,
@@ -75,18 +76,45 @@ export class HistoryContainer implements OnInit {
     this.detailCollapsedSignal.set(next);
   }
 
-  // Filter the timeline to commits that have at least one milestone
-  // when the toggle is on. Buckets with zero matching entries are
-  // dropped so the empty-state shows instead of bare headers. Merge
-  // groups are kept only if any member has a milestone.
+  // Faceta filter: chips at the top of the timeline let the user collapse
+  // by branch family (main / comentarios / borrador). Default is all-on.
+  // The set is constrained never to be empty so the user can't accidentally
+  // hide everything by toggling the last chip off.
+  protected readonly allFacets = ALL_FACETS;
+  private readonly enabledFacetsSignal = signal<ReadonlySet<Facet>>(new Set(ALL_FACETS));
+  protected readonly enabledFacets = this.enabledFacetsSignal.asReadonly();
+  protected isFacetEnabled(f: Facet): boolean {
+    return this.enabledFacetsSignal().has(f);
+  }
+  protected toggleFacet(f: Facet): void {
+    this.enabledFacetsSignal.update((s) => {
+      const next = new Set(s);
+      if (next.has(f)) {
+        if (next.size === 1) return s;
+        next.delete(f);
+      } else {
+        next.add(f);
+      }
+      return next;
+    });
+  }
+
+  // Filter the timeline by the "only milestones" toggle and by the
+  // enabled facetas (mutually combinable). Buckets with zero matching
+  // entries are dropped so the empty-state shows instead of bare headers.
+  // Merge groups are kept when any member matches.
   protected readonly buckets = computed<readonly CommitBucket[]>(() => {
     const all = this.history.buckets();
-    if (!this.onlyMilestonesSignal()) return all;
+    const onlyMile = this.onlyMilestonesSignal();
+    const facets = this.enabledFacetsSignal();
     const byOid = this.milestonesByOid();
+    const matches = (entry: CommitEntry): boolean => {
+      if (!facets.has(facetOf(entry.message))) return false;
+      if (onlyMile && !byOid.has(entry.oid)) return false;
+      return true;
+    };
     const hits = (item: TimelineItem): boolean =>
-      item.kind === 'commit'
-        ? byOid.has(item.entry.oid)
-        : item.members.some((m) => byOid.has(m.oid));
+      item.kind === 'commit' ? matches(item.entry) : item.members.some(matches);
     return all
       .map((b) => ({ id: b.id, items: b.items.filter(hits) }))
       .filter((b) => b.items.length > 0);

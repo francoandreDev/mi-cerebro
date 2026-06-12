@@ -353,6 +353,38 @@
   user-select: none;
 }
 
+.facet-chips {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: 8px;
+}
+
+.facet-chip {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--mc-border-default);
+  background: transparent;
+  color: var(--mc-fg-muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.facet-chip[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--mc-accent-primary) 18%, transparent);
+  border-color: var(--mc-accent-primary);
+  color: var(--mc-fg-primary);
+}
+
+.facet-chip:hover {
+  color: var(--mc-fg-primary);
+}
+
+.facet-chip:focus-visible {
+  outline: 2px solid var(--mc-accent-primary);
+  outline-offset: 1px;
+}
+
 .milestone-band {
   display: flex;
   align-items: center;

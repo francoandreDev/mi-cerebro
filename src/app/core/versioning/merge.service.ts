@@ -14,8 +14,10 @@ import { WorkspaceService } from '@core/fs/workspace.service';
 import { blobToText, isLikelyBinary } from '@features/history/services/diff.utils';
 
 import { AutocommitService } from './autocommit.service';
+import { commentsFilepath } from './comments.types';
 import { GitFsAdapter } from './git-fs.adapter';
 import { buildMergeCommit } from './merge-apply';
+import { blobOidAt } from './tree-ops';
 import { VariantsService } from './variants.service';
 import { DEFAULT_GIT_AUTHOR } from './versioning.constants';
 import { stripHeadsPrefix } from './variants.io';
@@ -160,7 +162,54 @@ export class MergeService {
       value: newOid,
       force: true,
     });
+    // why: 13c-iv — comments faceta travels with the entity in a bundle.
+    //      Best-effort: a failure of the comments-side commit does not
+    //      roll back the main commit, but is reported via `failedAt` by
+    //      throwing — the caller wraps that into the partial-fail UX.
+    await this.mergeCommentsFaceta(fs, sel.filepath, fromTip, from, into, groupId);
     return true;
+  }
+
+  // Derives the entityId from the just-merged main blob and, when the
+  // source family has a `comments/<id>.json`, writes the matching merge
+  // commit on the destination's comments ref under the same Merge-Group.
+  // Silently skips non-entity files (no parseable `id`) and entities for
+  // which the source has no comments — additive merge, never deletes.
+  private async mergeCommentsFaceta(
+    fs: GitFsAdapter,
+    filepath: string,
+    fromMainTip: string,
+    from: Variant,
+    into: Variant,
+    groupId: string,
+  ): Promise<void> {
+    const entityId = await readEntityIdAt(fs, fromMainTip, filepath);
+    if (!entityId) return;
+    const fromRef = stripHeadsPrefix(from.refs.comments);
+    const intoRef = stripHeadsPrefix(into.refs.comments);
+    const fromTip = await resolveOrNull(fs, fromRef);
+    if (!fromTip) return;
+    const cPath = commentsFilepath(entityId);
+    const fromBlob = await blobOidAt(fs, fromTip, cPath);
+    if (!fromBlob) return;
+    const intoTip = await resolveOrNull(fs, intoRef);
+    if (!intoTip) return;
+    const newOid = await buildMergeCommit({
+      fs,
+      baseCommitOid: intoTip,
+      fromCommitOid: fromTip,
+      filepath: cPath,
+      message: formatCommentsMessage(entityId, from, into, groupId),
+      author: DEFAULT_GIT_AUTHOR,
+    });
+    if (!newOid) return;
+    await git.writeRef({
+      fs,
+      dir: REPO_DIR,
+      ref: `refs/heads/${intoRef}`,
+      value: newOid,
+      force: true,
+    });
   }
 
   private findVariant(id: string): Variant {
@@ -232,4 +281,38 @@ function computeStatus(fromOid: string | null, intoOid: string | null): MergeSta
   if (fromOid && !intoOid) return 'only-in-from';
   if (!fromOid && intoOid) return 'only-in-into';
   return 'modified';
+}
+
+function formatCommentsMessage(
+  entityId: string,
+  from: Variant,
+  into: Variant,
+  groupId: string,
+): string {
+  const subject = `merge [comentarios]: ${entityId} (from "${from.name}" into "${into.name}")`;
+  return `${subject}\n\nMerge-Group: ${groupId}\nMerge-From: ${from.id}\nMerge-Into: ${into.id}\nMerge-Facet: comments\nMerge-Choice: from\n`;
+}
+
+async function readEntityIdAt(
+  fs: GitFsAdapter,
+  commitOid: string,
+  filepath: string,
+): Promise<string | null> {
+  const oid = await blobOidAt(fs, commitOid, filepath);
+  if (!oid) return null;
+  try {
+    const { blob } = await git.readBlob({ fs, dir: REPO_DIR, oid });
+    const parsed = JSON.parse(new TextDecoder().decode(blob)) as { id?: unknown };
+    return typeof parsed.id === 'string' && parsed.id.length > 0 ? parsed.id : null;
+  } catch {
+    return null;
+  }
+}
+
+async function resolveOrNull(fs: GitFsAdapter, ref: string): Promise<string | null> {
+  try {
+    return await git.resolveRef({ fs, dir: REPO_DIR, ref });
+  } catch {
+    return null;
+  }
 }

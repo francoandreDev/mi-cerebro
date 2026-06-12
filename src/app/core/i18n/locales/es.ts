@@ -212,6 +212,12 @@ export const es = {
   'versioning.history.milestone.collisionMoveHere': 'Mover el milestone existente a este commit',
   'versioning.history.milestone.collisionCancel': 'Cancelar',
   'versioning.history.milestone.onlyMilestones': 'Sólo milestones',
+  'versioning.history.facet.label': 'Facetas',
+  'versioning.history.facet.main': 'Principal',
+  'versioning.history.facet.comments': 'Comentarios',
+  'versioning.history.facet.draft': 'Borrador',
+  'versioning.history.facet.hint':
+    'Comentarios y borrador viven en ramas aparte; las filas aparecen cuando el log abarca varias variantes.',
   'versioning.history.milestone.bandLabel': 'Milestone',
   'versioning.history.collapseTimeline': 'Colapsar timeline',
   'versioning.history.expandTimeline': 'Expandir timeline',

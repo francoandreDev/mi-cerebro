@@ -21,6 +21,7 @@ import { ErrorService } from '@core/errors/error.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { CommentsService } from '@core/versioning/comments.service';
+import { applyOrphanFlags } from '@core/versioning/comments-orphans';
 import type { Comment, CommentAnchorType } from '@core/versioning/comments.types';
 
 import { extractBlockSummaries, type BlockSummary } from './block-summaries';
@@ -138,6 +139,17 @@ export class CommentsPanelContainer {
       },
       { injector: this.injector },
     );
+    // why: position tracking — every time the doc changes the set of
+    //      visible block ids may change, so block-anchored comments need
+    //      their orphan flag re-derived. The helper is a no-op when
+    //      nothing changed, so this effect doesn't ping-pong.
+    effect(
+      () => {
+        const ids = new Set(this.blocks().map((b) => b.blockId));
+        this.all.update((list) => applyOrphanFlags(list, ids));
+      },
+      { injector: this.injector },
+    );
   }
 
   protected t(key: TranslationKey): string {
@@ -205,9 +217,13 @@ export class CommentsPanelContainer {
     this.loading.set(true);
     try {
       const file = await this.comments.read(id);
-      // why: another entity may have started loading while this one was
-      //      still resolving — discard stale results.
-      if (this.entityId() === id) this.all.set(file.comments);
+      if (this.entityId() === id) {
+        // why: persisted orphan flags can be stale (the branch was last
+        //      written before the user's most recent main edits). Apply
+        //      the current doc's block-id set before exposing the list.
+        const ids = new Set(this.blocks().map((b) => b.blockId));
+        this.all.set(applyOrphanFlags(file.comments, ids));
+      }
     } catch (err) {
       this.errors.report(err);
       if (this.entityId() === id) this.all.set([]);
