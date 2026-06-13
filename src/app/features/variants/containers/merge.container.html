@@ -2,35 +2,44 @@
 @let i = into();
 @let p = plan();
 @let c = counts();
+@let fl = fromLabel();
+@let remote = isRemoteSource();
 
 <section class="merge-page">
   <header class="merge-head">
     <button type="button" class="back" (click)="back()">←</button>
     <div class="titles">
       <h1>{{ t('merge.page.title') }}</h1>
-      @if (f && i) {
+      @if ((f || remote) && i) {
         <p class="subtitle">
-          {{ t('merge.page.subtitle', { from: f.name, into: i.name }) }}
+          {{ t('merge.page.subtitle', { from: fl, into: i.name }) }}
         </p>
       }
     </div>
   </header>
 
   <div class="selector-bar">
-    <label>
-      <span class="label">{{ t('merge.selector.from') }}</span>
-      <select [ngModel]="fromId()" (ngModelChange)="onFromChange($event)">
-        <option value="">—</option>
-        @for (v of allVariants(); track v.id) {
-          <option [value]="v.id" [disabled]="v.id === intoId()">{{ v.name }}</option>
-        }
-      </select>
-    </label>
+    @if (remote) {
+      <div class="field">
+        <span class="label">{{ t('merge.selector.from') }}</span>
+        <span class="remote-pill">{{ fl }}</span>
+      </div>
+    } @else {
+      <label>
+        <span class="label">{{ t('merge.selector.from') }}</span>
+        <select [ngModel]="fromId()" (ngModelChange)="onFromChange($event)">
+          <option value="">—</option>
+          @for (v of allVariants(); track v.id) {
+            <option [value]="v.id" [disabled]="v.id === intoId()">{{ v.name }}</option>
+          }
+        </select>
+      </label>
+    }
     <button
       type="button"
       class="swap"
       (click)="swapSides()"
-      [disabled]="!fromId() || !intoId()"
+      [disabled]="remote || !fromId() || !intoId()"
       [title]="t('merge.selector.swap')"
     >
       ⇄
@@ -40,15 +49,15 @@
       <select [ngModel]="intoId()" (ngModelChange)="onIntoChange($event)">
         <option value="">—</option>
         @for (v of allVariants(); track v.id) {
-          <option [value]="v.id" [disabled]="v.id === fromId()">{{ v.name }}</option>
+          <option [value]="v.id" [disabled]="!remote && v.id === fromId()">{{ v.name }}</option>
         }
       </select>
     </label>
   </div>
 
-  @if (!f || !i) {
+  @if (!i || (!remote && !f)) {
     <p class="empty">{{ t('merge.invalid') }}</p>
-  } @else if (f.id === i.id) {
+  } @else if (!remote && f && f.id === i.id) {
     <p class="empty">{{ t('merge.same.variant') }}</p>
   } @else if (loading()) {
     <p class="empty">{{ t('merge.loading') }}</p>
@@ -58,7 +67,7 @@
     <div class="bulk-bar">
       <span class="bulk-label">{{ t('merge.bulk.label') }}</span>
       <button type="button" (click)="applyAll('from')">
-        {{ t('merge.bulk.allFrom', { name: f.name }) }}
+        {{ t('merge.bulk.allFrom', { name: fl }) }}
       </button>
       <button type="button" (click)="applyAll('into')">
         {{ t('merge.bulk.allInto', { name: i.name }) }}
@@ -75,7 +84,7 @@
       <div class="row head">
         <div class="col path">{{ t('merge.col.path') }}</div>
         <div class="col status">{{ t('merge.col.status') }}</div>
-        <div class="col preview">{{ t('merge.col.previewFrom', { name: f.name }) }}</div>
+        <div class="col preview">{{ t('merge.col.previewFrom', { name: fl }) }}</div>
         <div class="col preview">{{ t('merge.col.previewInto', { name: i.name }) }}</div>
         <div class="col choice">{{ t('merge.col.choice') }}</div>
       </div>
@@ -106,9 +115,9 @@
                 type="button"
                 [class.on]="choice === 'from'"
                 (click)="setChoice(entry, 'from')"
-                [title]="t('merge.choice.from', { name: f.name })"
+                [title]="t('merge.choice.from', { name: fl })"
               >
-                ← {{ f.name }}
+                ← {{ fl }}
               </button>
               <button
                 type="button"

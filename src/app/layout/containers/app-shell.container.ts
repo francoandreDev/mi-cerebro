@@ -13,6 +13,8 @@ import { OnboardingContainer } from '@features/onboarding/containers/onboarding.
 import { ReminderToastContainer } from '@features/reminders/containers/reminder-toast.container';
 import { CommandPaletteContainer } from '@features/search/containers/command-palette.container';
 
+import { RemoteDivergenceBannerComponent } from '@layout/components/remote-divergence-banner.component';
+
 import { DevVariantsPanelContainer } from './dev-variants-panel.container';
 import { DevVersioningPanelContainer } from './dev-versioning-panel.container';
 import { VariantSwitchOverlayContainer } from './variant-switch-overlay.container';
@@ -35,9 +37,11 @@ import { WorkspaceSidebarContainer } from './workspace-sidebar.container';
     VariantSwitchOverlayContainer,
     DevVersioningPanelContainer,
     DevVariantsPanelContainer,
+    RemoteDivergenceBannerComponent,
   ],
   template: `
     @if (workspace.isReady()) {
+      <mc-remote-divergence-banner />
       <div class="shell">
         <mc-workspace-sidebar />
         <main class="content">

@@ -839,6 +839,12 @@ export const es = {
   'errors.net.005.title': 'Fetch parcial',
   'errors.net.005.message':
     'Algunas ramas no se pudieron traer del remoto. Mirá la pantalla de sincronización para ver cuáles fallaron y reintentá; tus refs locales no fueron modificadas.',
+  'errors.net.006.title': 'Cambios remotos divergentes',
+  'errors.net.006.message':
+    'Hay ramas en las que el local y el remoto tienen commits distintos sin línea recta entre ellos. Abrí la pantalla de merge para resolver entidad por entidad antes de volver a pushear.',
+  'errors.net.007.title': 'Push rechazado tras merge',
+  'errors.net.007.message':
+    'Después del merge, el remoto avanzó otra vez y rechazó el push. Hacé fetch y volvé a abrir merge — algún otro dispositivo está pusheando al mismo tiempo.',
 
   'settings.remote.section.title': 'Versionado remoto',
   'settings.remote.url.label': 'URL del repositorio',
@@ -886,6 +892,13 @@ export const es = {
   'sync.summary.allOk': 'Todo en orden ({count} refs).',
   'sync.summary.partial': '{errors} de {total} refs fallaron.',
   'sync.summary.never': 'Aún no corrió ninguna operación bulk.',
+  'sync.divergent.disabled': 'Resolvé las divergencias remotas antes de pushear (mirá el banner).',
+
+  'remote.divergence.banner':
+    'Hay cambios remotos divergentes en {count} rama(s). Abrí merge para resolver.',
+  'remote.divergence.openMerge': 'Abrir merge',
+  'merge.remote.label': 'Remoto: {ref}',
+  'merge.remote.into.label': 'Hacia: {variant}',
 } as const;
 
 export type EsDictionary = typeof es;

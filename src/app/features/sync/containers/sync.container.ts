@@ -43,6 +43,7 @@ export class SyncContainer {
   protected readonly isConfigured = this.remote.isConfigured;
   protected readonly isPushing = this.remote.isPushing;
   protected readonly isFetching = this.remote.isFetching;
+  protected readonly hasDivergence = this.remote.hasDivergence;
   protected readonly lastBulkAt = this.remote.lastBulkAt;
   protected readonly lastPushOutcomes = this.remote.lastPushOutcomes;
   protected readonly lastFetchOutcomes = this.remote.lastFetchOutcomes;

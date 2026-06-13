@@ -369,3 +369,19 @@ Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `P
 - **Causa típica:** intermitencia de red, repo remoto sin alguna de las ramas todavía (se reporta como `absent`, no como error), o credenciales revocadas a mitad del fetch.
 - **Cómo resolver:** mirar `/sync` para ver el detalle por-ref y reintentar Fetch todo.
 - **Recuperable:** sí — las refs locales (`refs/heads/...`) no se tocan; sólo se intenta actualizar `refs/remotes/origin/*`.
+
+### MCB-NET-006 — Divergencia detectada entre local y remoto
+
+- **Severidad:** error
+- **Cuándo:** después de `fetchAll`, una o más refs locales y sus pares `refs/remotes/origin/<branch>` no comparten línea recta (ninguno es ancestro del otro). También se lanza si se intenta `pushAll` mientras `divergentRefs` está poblada.
+- **Causa típica:** otra pestaña / otro dispositivo pusheó al mismo remoto con cambios sobre la misma rama mientras este local también seguía evolucionando.
+- **Cómo resolver:** abrir `/variants/merge?incoming=remote&ref=<branch>&into=<variantId>` desde el banner global. Resolver entidad por entidad y reintentar el push.
+- **Recuperable:** sí — la divergencia no muta nada hasta que el usuario decide en la pantalla de merge.
+
+### MCB-NET-007 — Push post-merge rechazado por carrera con otro device
+
+- **Severidad:** error
+- **Cuándo:** después de resolver una divergencia local, el push subsiguiente vuelve a fallar porque el remoto avanzó otra vez entre el merge y el push.
+- **Causa típica:** dos dispositivos editando y pusheando muy seguido. Aparece como un loop NET-006 → merge → NET-007 → fetch → NET-006…
+- **Cómo resolver:** fetchAll y abrir `/variants/merge` con la nueva divergencia. Si pasa repetidamente, coordinar con la otra punta o pausar temporalmente el auto-push del otro lado.
+- **Recuperable:** sí — el merge local queda intacto, sólo la subida fue rechazada.

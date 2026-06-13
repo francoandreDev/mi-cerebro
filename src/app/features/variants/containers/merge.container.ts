@@ -21,6 +21,7 @@ import type {
   MergePlan,
   MergeSelection,
 } from '@core/versioning/merge.types';
+import { RemoteService } from '@core/versioning/remote.service';
 import { VariantsService } from '@core/versioning/variants.service';
 import type { Variant } from '@core/versioning/variants.types';
 
@@ -36,6 +37,7 @@ export class MergeContainer implements OnInit {
   private readonly router = inject(Router);
   private readonly variants = inject(VariantsService);
   private readonly merge = inject(MergeService);
+  private readonly remote = inject(RemoteService);
   private readonly i18n = inject(I18nService);
   private readonly errors = inject(ErrorService);
 
@@ -45,9 +47,17 @@ export class MergeContainer implements OnInit {
   protected readonly plan = signal<MergePlan | null>(null);
   protected readonly selections = signal<Map<string, MergeChoice>>(new Map());
   protected readonly outcome = signal<MergeOutcome | null>(null);
+  // 13e-iii — when set, "from" is a remote tracking ref instead of a variant.
+  protected readonly remoteRefName = signal<string | null>(null);
 
   protected readonly from = computed(() => this.findVariant(this.fromId()));
   protected readonly into = computed(() => this.findVariant(this.intoId()));
+  protected readonly isRemoteSource = computed(() => this.remoteRefName() !== null);
+  protected readonly fromLabel = computed(() => {
+    const ref = this.remoteRefName();
+    if (ref) return this.i18n.t('merge.remote.label', { ref });
+    return this.from()?.name ?? '';
+  });
 
   protected readonly fromId = signal('');
   protected readonly intoId = signal('');
@@ -73,10 +83,17 @@ export class MergeContainer implements OnInit {
 
   async ngOnInit(): Promise<void> {
     const params = this.route.snapshot.queryParamMap;
-    const fromParam = params.get('from') ?? '';
+    const incoming = params.get('incoming');
     const intoParam = params.get('into') ?? '';
-    this.fromId.set(fromParam);
     this.intoId.set(intoParam);
+    if (incoming === 'remote') {
+      const ref = params.get('ref');
+      this.remoteRefName.set(ref && ref.length > 0 ? ref : null);
+      this.fromId.set('');
+    } else {
+      this.remoteRefName.set(null);
+      this.fromId.set(params.get('from') ?? '');
+    }
     await this.loadPlan();
   }
 
@@ -85,15 +102,24 @@ export class MergeContainer implements OnInit {
   }
 
   protected async loadPlan(): Promise<void> {
-    const from = this.from();
     const into = this.into();
-    if (!from || !into || from.id === into.id) {
+    if (!into) {
       this.plan.set(null);
       return;
     }
+    const remoteRef = this.remoteRefName();
+    if (!remoteRef) {
+      const from = this.from();
+      if (!from || from.id === into.id) {
+        this.plan.set(null);
+        return;
+      }
+    }
     this.loading.set(true);
     try {
-      const result = await this.merge.diffMains(from, into);
+      const result = remoteRef
+        ? await this.merge.diffAgainstRemoteMain(into, remoteRef)
+        : await this.merge.diffMains(this.from()!, into);
       this.plan.set(result);
       const initial = new Map<string, MergeChoice>();
       for (const entry of result.entries) initial.set(entry.filepath, 'from');
@@ -186,8 +212,14 @@ export class MergeContainer implements OnInit {
     if (!selections.some((s) => s.choice === 'from')) return;
     this.applying.set(true);
     try {
-      const result = await this.merge.apply(plan, selections);
+      const remoteRef = this.remoteRefName();
+      const into = this.into();
+      const result =
+        remoteRef && into
+          ? await this.merge.applyFromRemoteMainSelections(into, remoteRef, selections)
+          : await this.merge.apply(plan, selections);
       this.outcome.set(result);
+      if (remoteRef && result.failedAt === null) this.remote.clearDivergence();
       await this.loadPlan();
     } catch (e) {
       this.errors.report(e);

@@ -17,6 +17,7 @@ import { AutocommitService } from './autocommit.service';
 import { GitFsAdapter } from './git-fs.adapter';
 import { mergeCommentsFaceta, mergeDraftsFaceta } from './merge-facetas';
 import { buildMergeCommit } from './merge-apply';
+import { applyFromRemoteMain, diffMainAgainstRemote } from './merge-remote';
 import { VariantsService } from './variants.service';
 import { DEFAULT_GIT_AUTHOR } from './versioning.constants';
 import { stripHeadsPrefix } from './variants.io';
@@ -29,6 +30,9 @@ import type {
   MergeSelection,
   MergeStatus,
 } from './merge.types';
+
+export const REMOTE_SOURCE_PREFIX = 'remote:';
+const REMOTE_TRACKING_PREFIX = 'refs/remotes/origin/';
 
 const REPO_DIR = '/';
 const PREVIEW_BYTES = 240;
@@ -73,6 +77,46 @@ export class MergeService {
     }
     entries.sort((x, y) => x.filepath.localeCompare(y.filepath));
     return { fromVariantId: from.id, intoVariantId: into.id, entries };
+  }
+
+  // 13e-iii — diff/apply against a remote tracking ref. fromVariantId
+  // is encoded as `remote:<ref>` so /variants/merge can render the
+  // remote side without faking a Variant.
+  async diffAgainstRemoteMain(into: Variant, remoteRefName: string): Promise<MergePlan> {
+    const entries = await diffMainAgainstRemote(this.remoteCtx(into, remoteRefName));
+    return {
+      fromVariantId: `${REMOTE_SOURCE_PREFIX}${remoteRefName}`,
+      intoVariantId: into.id,
+      entries,
+    };
+  }
+
+  async applyFromRemoteMainSelections(
+    into: Variant,
+    remoteRefName: string,
+    selections: readonly MergeSelection[],
+  ): Promise<MergeOutcome> {
+    await this.autocommit.commitNow('pre-merge');
+    return this.fsLock.withLock(async () => {
+      const outcome = await applyFromRemoteMain(
+        this.remoteCtx(into, remoteRefName),
+        selections,
+        crypto.randomUUID(),
+      );
+      await this.variants
+        .refreshActivity(this.settings.state().variants.dormantThresholdDays)
+        .catch(() => undefined);
+      return outcome;
+    });
+  }
+
+  private remoteCtx(into: Variant, remoteRefName: string) {
+    return {
+      fs: this.requireAdapter(),
+      intoRef: stripHeadsPrefix(into.refs.main),
+      remoteRef: `${REMOTE_TRACKING_PREFIX}${remoteRefName}`,
+      author: DEFAULT_GIT_AUTHOR,
+    };
   }
 
   // Applies a set of per-entity selections on top of `into.main`.

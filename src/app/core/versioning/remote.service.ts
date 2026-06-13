@@ -20,6 +20,7 @@ import {
   writeRemoteSecrets,
 } from './remote.config.io';
 import { gitFetchOne, gitPushOne, listRefTargets, runBulk, summarize } from './remote-bulk';
+import { detectDivergences, type DivergentRef } from './remote-divergence';
 import {
   REMOTE_SECRETS_SCHEMA_VERSION,
   emptyRemoteSecrets,
@@ -46,6 +47,7 @@ export class RemoteService {
   private readonly lastPushOutcomesSignal = signal<readonly RefSyncOutcome[] | null>(null);
   private readonly lastFetchOutcomesSignal = signal<readonly RefSyncOutcome[] | null>(null);
   private readonly lastBulkAtSignal = signal<string | null>(null);
+  private readonly divergentRefsSignal = signal<readonly DivergentRef[]>([]);
   private fileSynced = false;
 
   readonly config = computed(() => this.stateSignal().remote);
@@ -56,6 +58,12 @@ export class RemoteService {
   readonly lastPushOutcomes = this.lastPushOutcomesSignal.asReadonly();
   readonly lastFetchOutcomes = this.lastFetchOutcomesSignal.asReadonly();
   readonly lastBulkAt = this.lastBulkAtSignal.asReadonly();
+  readonly divergentRefs = this.divergentRefsSignal.asReadonly();
+  readonly hasDivergence = computed(() => this.divergentRefsSignal().length > 0);
+
+  clearDivergence(): void {
+    this.divergentRefsSignal.set([]);
+  }
 
   constructor() {
     effect(() => {
@@ -112,6 +120,13 @@ export class RemoteService {
 
   async pushAll(): Promise<BulkSyncResult> {
     const cfg = this.requireConfigured();
+    if (this.divergentRefsSignal().length > 0) {
+      throw new AppError(ERROR_CODES.NET_006, {
+        severity: 'error',
+        context: { reason: 'divergence-pending', refs: this.divergentRefsSignal() },
+        recoverable: true,
+      });
+    }
     const variants = await this.variants.list();
     const targets = listRefTargets(variants);
     return this.fsLock.withLock(async () => {
@@ -140,7 +155,17 @@ export class RemoteService {
         const outcomes = await runBulk(targets, gitFetchOne(adapter, cfg));
         this.lastFetchOutcomesSignal.set(outcomes);
         this.lastBulkAtSignal.set(new Date().toISOString());
-        return this.finalizeBulk(outcomes, ERROR_CODES.NET_005);
+        const divergent = await detectDivergences(adapter, outcomes);
+        this.divergentRefsSignal.set(divergent);
+        const result = this.finalizeBulk(outcomes, ERROR_CODES.NET_005);
+        if (divergent.length > 0) {
+          throw new AppError(ERROR_CODES.NET_006, {
+            severity: 'error',
+            context: { refs: divergent },
+            recoverable: true,
+          });
+        }
+        return result;
       } finally {
         this.fetchingSignal.set(false);
       }
