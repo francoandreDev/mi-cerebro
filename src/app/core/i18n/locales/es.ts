@@ -823,6 +823,37 @@ export const es = {
   'drafts.errors.applyFailed': 'No se pudo aplicar el cambio a main. Reintentá.',
   'drafts.errors.missingBlock':
     'El bloque ya no existe en la entidad — el cambio se marcó como huérfano.',
+
+  'errors.net.001.title': 'Falta configuración del remoto',
+  'errors.net.001.message':
+    'No hay URL del repositorio o el PAT no está cargado. Configurá ambos desde Configuración → Versionado remoto.',
+  'errors.net.002.title': 'GitHub rechazó la autenticación',
+  'errors.net.002.message':
+    'El PAT no es válido, está vencido, o no tiene scope `repo`. Generá uno nuevo en github.com/settings/tokens y volvelo a cargar.',
+  'errors.net.003.title': 'No se pudo conectar con GitHub',
+  'errors.net.003.message':
+    'Falló la operación contra el remoto. Puede ser un corte de red, un problema del proxy, o que el repo no existe. Tus archivos locales no fueron tocados.',
+
+  'settings.remote.section.title': 'Versionado remoto',
+  'settings.remote.url.label': 'URL del repositorio',
+  'settings.remote.url.placeholder': 'https://github.com/usuario/repo.git',
+  'settings.remote.url.hint': 'Tiene que ser un repo HTTPS de GitHub. Privado o público da igual.',
+  'settings.remote.token.label': 'Personal Access Token',
+  'settings.remote.token.placeholder': 'ghp_… o un PAT clásico',
+  'settings.remote.token.hint':
+    'Generalo en github.com/settings/tokens con scope `repo`. Se guarda en .mi-cerebro/secrets.json (fuera de git).',
+  'settings.remote.save': 'Guardar configuración',
+  'settings.remote.clear': 'Borrar configuración',
+  'settings.remote.push': 'Push de main (variante activa)',
+  'settings.remote.pushing': 'Subiendo…',
+  'settings.remote.lastPush': 'Último push: {when}',
+  'settings.remote.notConfigured': 'No configurado todavía.',
+  'settings.remote.configured': 'Configurado: {url}',
+  'settings.remote.errors.invalidUrl':
+    'La URL tiene que apuntar a un repo HTTPS de GitHub (https://github.com/owner/repo[.git]).',
+  'settings.remote.errors.emptyToken': 'El PAT no puede estar vacío.',
+  'settings.remote.confirmClear':
+    '¿Borrar la configuración del remoto? El PAT se va a borrar del disco.',
 } as const;
 
 export type EsDictionary = typeof es;

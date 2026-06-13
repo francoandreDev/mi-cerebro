@@ -1,8 +1,11 @@
 import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
 
+import { ErrorService } from '@core/errors/error.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { SettingsService, isValidTimezone } from '@core/settings/settings.service';
+import { isValidRemoteUrl } from '@core/versioning/remote.config.io';
+import { RemoteService } from '@core/versioning/remote.service';
 
 @Component({
   selector: 'mc-settings',
@@ -13,12 +16,22 @@ import { SettingsService, isValidTimezone } from '@core/settings/settings.servic
 export class SettingsContainer {
   private readonly settings = inject(SettingsService);
   private readonly i18n = inject(I18nService);
+  private readonly remote = inject(RemoteService);
+  private readonly errors = inject(ErrorService);
 
   protected readonly state = this.settings.state;
   protected readonly timezones = listSupportedTimezones();
   protected readonly draft = signal('');
   protected readonly error = signal(false);
   protected readonly dormantDraft = signal(0);
+
+  protected readonly remoteConfig = this.remote.config;
+  protected readonly remoteLastPushAt = this.remote.lastPushAt;
+  protected readonly isPushing = this.remote.isPushing;
+  protected readonly remoteUrlDraft = signal('');
+  protected readonly remoteTokenDraft = signal('');
+  protected readonly remoteUrlError = signal(false);
+  protected readonly remoteTokenError = signal(false);
 
   constructor() {
     // why: keep the input synced when the timezone changes from elsewhere
@@ -60,6 +73,51 @@ export class SettingsContainer {
   protected revert(): void {
     this.draft.set(this.state().timezone);
     this.error.set(false);
+  }
+
+  protected onRemoteUrlInput(event: Event): void {
+    this.remoteUrlDraft.set((event.target as HTMLInputElement).value);
+    this.remoteUrlError.set(false);
+  }
+
+  protected onRemoteTokenInput(event: Event): void {
+    this.remoteTokenDraft.set((event.target as HTMLInputElement).value);
+    this.remoteTokenError.set(false);
+  }
+
+  protected async saveRemote(): Promise<void> {
+    const url = this.remoteUrlDraft().trim();
+    const token = this.remoteTokenDraft().trim();
+    const urlOk = isValidRemoteUrl(url);
+    const tokenOk = token.length > 0;
+    this.remoteUrlError.set(!urlOk);
+    this.remoteTokenError.set(!tokenOk);
+    if (!urlOk || !tokenOk) return;
+    try {
+      await this.remote.configure({ url, token });
+      this.remoteTokenDraft.set('');
+    } catch (e) {
+      this.errors.report(e);
+    }
+  }
+
+  protected async clearRemote(): Promise<void> {
+    if (!confirm(this.t('settings.remote.confirmClear'))) return;
+    try {
+      await this.remote.clear();
+      this.remoteUrlDraft.set('');
+      this.remoteTokenDraft.set('');
+    } catch (e) {
+      this.errors.report(e);
+    }
+  }
+
+  protected async pushRemote(): Promise<void> {
+    try {
+      await this.remote.pushActiveMain();
+    } catch (e) {
+      this.errors.report(e);
+    }
   }
 }
 

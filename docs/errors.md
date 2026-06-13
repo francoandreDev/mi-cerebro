@@ -329,3 +329,27 @@ Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `P
 - **Causa típica:** el bloque al que apuntaba la marca fue eliminado entre el momento de capturarla y el de guardarla, o el anchor proviene de una versión vieja.
 - **Cómo resolver:** apuntar a otro bloque, descartar la marca, o usar `anchorType: 'doc'` si el cambio aplica a toda la entidad.
 - **Recuperable:** sí — la marca nunca se persistió.
+
+### MCB-NET-001 — Remoto no configurado o configuración inválida
+
+- **Severidad:** error
+- **Cuándo:** se intenta `pushActiveMain()` sin haber guardado config; la URL no matchea `https://github.com/<owner>/<repo>[.git]`; el PAT está vacío; o el workspace no está listo todavía.
+- **Causa típica:** primer uso sin pasar por `/settings`, o copy-paste de URL con typo (http vs https, gitlab vs github).
+- **Cómo resolver:** ir a `/settings` → "Versionado remoto" → pegar URL HTTPS de GitHub + PAT con scope `repo`.
+- **Recuperable:** sí — operación local nunca tocó el árbol git.
+
+### MCB-NET-002 — Autenticación rechazada por GitHub
+
+- **Severidad:** error
+- **Cuándo:** GitHub respondió 401/403 al push, o el cuerpo de error contiene "unauthorized"/"forbidden"/"authentication".
+- **Causa típica:** PAT expirado, revocado, sin scope `repo`, o pegado con espacios/recortes; usuario sin permiso de write en el repo destino.
+- **Cómo resolver:** generar un PAT nuevo en github.com/settings/tokens con scope `repo`, reemplazarlo en `/settings` → "Versionado remoto", reintentar Push.
+- **Recuperable:** sí — el push fue rechazado en el servidor; el repo local no fue alterado.
+
+### MCB-NET-003 — Push falló por error de red u otro
+
+- **Severidad:** error
+- **Cuándo:** la promesa de `git.push` rechazó con un error que no clasificó como auth; o `result.error` no nulo (y no es "up-to-date"); o `result.refs[ref].error` reporta un fallo per-ref distinto de up-to-date.
+- **Causa típica:** corte de red, CORS proxy caído, repo destino no existe, push no-fast-forward (cuando se implemente N×3 esto va a `MCB-NET-006`).
+- **Cómo resolver:** verificar conexión, refrescar la página y reintentar; si persiste, revisar que el repo destino exista y que la cuenta del PAT tenga acceso.
+- **Recuperable:** sí — el árbol local no se alteró.

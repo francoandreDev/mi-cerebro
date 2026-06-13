@@ -45,6 +45,69 @@
     </label>
   </section>
 
+  <section class="group">
+    <h3>{{ t('settings.remote.section.title') }}</h3>
+
+    @if (remoteConfig(); as cfg) {
+      <p class="muted">
+        {{ t('settings.remote.configured').replace('{url}', cfg.url) }}
+      </p>
+      @if (remoteLastPushAt(); as when) {
+        <p class="muted">
+          {{ t('settings.remote.lastPush').replace('{when}', when) }}
+        </p>
+      }
+    } @else {
+      <p class="muted">{{ t('settings.remote.notConfigured') }}</p>
+    }
+
+    <label class="field">
+      <span class="label">{{ t('settings.remote.url.label') }}</span>
+      <input
+        type="url"
+        [value]="remoteUrlDraft()"
+        (input)="onRemoteUrlInput($event)"
+        [placeholder]="t('settings.remote.url.placeholder')"
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <span class="hint">{{ t('settings.remote.url.hint') }}</span>
+      @if (remoteUrlError()) {
+        <span class="error">{{ t('settings.remote.errors.invalidUrl') }}</span>
+      }
+    </label>
+
+    <label class="field">
+      <span class="label">{{ t('settings.remote.token.label') }}</span>
+      <input
+        type="password"
+        [value]="remoteTokenDraft()"
+        (input)="onRemoteTokenInput($event)"
+        [placeholder]="t('settings.remote.token.placeholder')"
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <span class="hint">{{ t('settings.remote.token.hint') }}</span>
+      @if (remoteTokenError()) {
+        <span class="error">{{ t('settings.remote.errors.emptyToken') }}</span>
+      }
+    </label>
+
+    <span class="row">
+      <button type="button" class="primary" (click)="saveRemote()">
+        {{ t('settings.remote.save') }}
+      </button>
+      <button type="button" (click)="pushRemote()" [disabled]="!remoteConfig() || isPushing()">
+        {{ isPushing() ? t('settings.remote.pushing') : t('settings.remote.push') }}
+      </button>
+      @if (remoteConfig()) {
+        <button type="button" (click)="clearRemote()">
+          {{ t('settings.remote.clear') }}
+        </button>
+      }
+    </span>
+  </section>
+
   <section class="group placeholder">
     <h3>
       {{ t('settings.section.versioning') }} <span class="soon">{{ t('settings.soon') }}</span>

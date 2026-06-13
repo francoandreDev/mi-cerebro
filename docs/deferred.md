@@ -179,3 +179,15 @@ Formato por entrada:
 - **Por qué se difirió**: las mediciones del validador en 13a (`DevPerfService`) confirmaron el piso de 3 s/commit, pero la decisión de producto fue aceptar pantallas de carga contextuales para las operaciones git disparadas por el usuario (switch de variante, merge, accept de diff-mark, crear/borrar variante) en vez de invertir 2-3 horas y duplicar el modelo de FS clients. Patrón estándar de clientes git; se entiende como aceptable hasta que el uso real demuestre lo contrario.
 - **Implicaciones si se aborda**: el export ZIP (paso 14) tiene que leer también OPFS. Si el usuario limpia datos del sitio, pierde el historial git (pero conserva sus notas y puede recuperar el historial desde GitHub si tenía push configurado en 13e). Riesgo nuevo: races entre main thread (autosave) y posibles workers de git — habría que serializar accesos.
 - **Target**: sin asignar (sólo si la UX con loading screens resulta intolerable en uso real, especialmente en 13b switches frecuentes o 13d accept-spam).
+
+### Crypto-at-rest para PAT en `secrets.json`
+
+- **Qué**: 13e-i persiste el GitHub PAT en plano dentro de `.mi-cerebro/secrets.json` (path agregado a `.gitignore` por default, nunca entra al árbol git). El plan original incluía pasphrase-based crypto (PBKDF2 + AES-GCM) sobre el campo `remote.token` para protegerlo si la carpeta del workspace se respalda/copia a otro lado sin filtros.
+- **Por qué se difirió**: el threat model real al cerrar 13e era "PAT no debe entrar a git push", no "PAT debe sobrevivir leak del filesystem". El gitignore + path bajo `.mi-cerebro/` cubre el primero. Pedir passphrase en cada boot rompe el flujo "abrir la app y editar" que es lo que el usuario hace 99% de las veces; cachear la passphrase en memoria entre boots requiere otro mecanismo (Web Crypto + non-extractable key + IndexedDB) que multiplica la complejidad por 3 sin métricas reales de leak.
+- **Target**: §19.16f.
+
+### CORS proxy propio para push/fetch a GitHub
+
+- **Qué**: 13e-i usa `https://cors.isomorphic-git.org` (proxy público mantenido por la lib) para sortear CORS de GitHub HTTPS. Funciona pero es un single point of failure operado por terceros; el plan a largo plazo es un proxy propio (Cloudflare Worker o similar) que el usuario apunta desde `/settings`.
+- **Por qué se difirió**: levantar y mantener un proxy propio requiere infra externa al repo. Para el smoke push inicial y uso single-user el proxy público sirve; el usuario está advertido en la UI.
+- **Target**: §19.16f.
