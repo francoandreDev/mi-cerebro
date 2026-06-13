@@ -27,3 +27,23 @@ export interface PushOutcome {
   readonly status: 'ok' | 'up-to-date';
   readonly remoteRef: string;
 }
+
+export type Facet = 'main' | 'comments' | 'draft';
+export const FACETS: readonly Facet[] = ['main', 'comments', 'draft'] as const;
+
+export type RefSyncStatus = 'ok' | 'up-to-date' | 'error' | 'absent';
+
+export interface RefSyncOutcome {
+  readonly variantId: string;
+  readonly facet: Facet;
+  readonly ref: string;
+  readonly remoteRef: string;
+  readonly status: RefSyncStatus;
+  readonly error?: string;
+}
+
+export interface BulkSyncResult {
+  readonly outcomes: readonly RefSyncOutcome[];
+  readonly errorCount: number;
+  readonly successCount: number;
+}

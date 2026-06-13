@@ -833,6 +833,12 @@ export const es = {
   'errors.net.003.title': 'No se pudo conectar con GitHub',
   'errors.net.003.message':
     'Falló la operación contra el remoto. Puede ser un corte de red, un problema del proxy, o que el repo no existe. Tus archivos locales no fueron tocados.',
+  'errors.net.004.title': 'Push parcial',
+  'errors.net.004.message':
+    'Algunas ramas no se pudieron subir. Mirá la pantalla de sincronización para ver cuáles fallaron y reintentá; las que sí subieron no se tocan.',
+  'errors.net.005.title': 'Fetch parcial',
+  'errors.net.005.message':
+    'Algunas ramas no se pudieron traer del remoto. Mirá la pantalla de sincronización para ver cuáles fallaron y reintentá; tus refs locales no fueron modificadas.',
 
   'settings.remote.section.title': 'Versionado remoto',
   'settings.remote.url.label': 'URL del repositorio',
@@ -854,6 +860,32 @@ export const es = {
   'settings.remote.errors.emptyToken': 'El PAT no puede estar vacío.',
   'settings.remote.confirmClear':
     '¿Borrar la configuración del remoto? El PAT se va a borrar del disco.',
+  'settings.remote.openSync': 'Abrir sincronización completa',
+
+  'sync.title': 'Sincronización con GitHub',
+  'sync.subtitle': 'Push y fetch de todas las variantes × {main, comments, draft}.',
+  'sync.notConfigured':
+    'Todavía no configuraste el remoto. Andá a Configuración → Versionado remoto.',
+  'sync.openSettings': 'Abrir configuración',
+  'sync.actions.pushAll': 'Push todo',
+  'sync.actions.fetchAll': 'Fetch todo',
+  'sync.actions.pushing': 'Subiendo…',
+  'sync.actions.fetching': 'Bajando…',
+  'sync.lastBulkAt': 'Última operación: {when}',
+  'sync.lastBulk.never': 'Última operación: sin registros aún.',
+  'sync.table.variant': 'Variante',
+  'sync.table.facet': 'Rama',
+  'sync.table.ref': 'Ref local',
+  'sync.table.status': 'Estado',
+  'sync.table.lastSync': 'Última sync',
+  'sync.status.idle': '—',
+  'sync.status.ok': 'OK',
+  'sync.status.upToDate': 'Al día',
+  'sync.status.error': 'Error',
+  'sync.status.absent': 'Sin ref remota',
+  'sync.summary.allOk': 'Todo en orden ({count} refs).',
+  'sync.summary.partial': '{errors} de {total} refs fallaron.',
+  'sync.summary.never': 'Aún no corrió ninguna operación bulk.',
 } as const;
 
 export type EsDictionary = typeof es;

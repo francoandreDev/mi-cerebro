@@ -106,6 +106,10 @@
         </button>
       }
     </span>
+
+    @if (remoteConfig()) {
+      <a class="row" routerLink="/sync">{{ t('settings.remote.openSync') }} →</a>
+    }
   </section>
 
   <section class="group placeholder">

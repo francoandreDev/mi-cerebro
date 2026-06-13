@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { ErrorService } from '@core/errors/error.service';
 import { I18nService } from '@core/i18n/i18n.service';
@@ -10,6 +11,7 @@ import { RemoteService } from '@core/versioning/remote.service';
 @Component({
   selector: 'mc-settings',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink],
   templateUrl: './settings.container.html',
   styleUrl: './settings.container.css',
 })

@@ -353,3 +353,19 @@ Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `P
 - **Causa típica:** corte de red, CORS proxy caído, repo destino no existe, push no-fast-forward (cuando se implemente N×3 esto va a `MCB-NET-006`).
 - **Cómo resolver:** verificar conexión, refrescar la página y reintentar; si persiste, revisar que el repo destino exista y que la cuenta del PAT tenga acceso.
 - **Recuperable:** sí — el árbol local no se alteró.
+
+### MCB-NET-004 — Push parcial (algunas refs fallaron)
+
+- **Severidad:** error
+- **Cuándo:** al ejecutar `RemoteService.pushAll()`, una o más refs entre las variantes × `{main, comments, draft}` quedaron con `status: 'error'`. Las que sí subieron se contaron como éxito.
+- **Causa típica:** push no-fast-forward en una sola variante (otra pestaña pusheó antes), un branch local con un commit corrupto, o intermitencia de red que cortó la mitad del lote.
+- **Cómo resolver:** abrir `/sync`, ver la tabla por-ref con el detalle del error, y reintentar Push todo. Si el error es no-fast-forward, esperar a 13e-iii para que el flujo te lleve a `/variants/merge`.
+- **Recuperable:** sí — el árbol local no se alteró; las refs que sí subieron quedaron arriba.
+
+### MCB-NET-005 — Fetch parcial (algunas refs fallaron)
+
+- **Severidad:** error
+- **Cuándo:** al ejecutar `RemoteService.fetchAll()`, una o más refs no se pudieron traer. Las que sí, quedaron como `refs/remotes/origin/<branch>` locales.
+- **Causa típica:** intermitencia de red, repo remoto sin alguna de las ramas todavía (se reporta como `absent`, no como error), o credenciales revocadas a mitad del fetch.
+- **Cómo resolver:** mirar `/sync` para ver el detalle por-ref y reintentar Fetch todo.
+- **Recuperable:** sí — las refs locales (`refs/heads/...`) no se tocan; sólo se intenta actualizar `refs/remotes/origin/*`.

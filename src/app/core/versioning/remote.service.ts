@@ -1,11 +1,10 @@
 // 13e-i — Remote service for the GitHub bridge. Owns the in-memory copy
-// of `.mi-cerebro/secrets.json` (config + lastPushAt) plus the push
-// operation. Network calls only fire from explicit user actions
-// (`/settings` Save / Push buttons) — regla §4.14.
+// of `.mi-cerebro/secrets.json` (config + lastPushAt) plus push/fetch
+// operations. Network calls only fire from explicit user actions
+// (`/settings` Save/Push, `/sync` Push todo/Fetch todo) — regla §4.14.
+// 13e-ii — pushAll/fetchAll: iterate variants × {main, comments, draft}.
 
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
-import * as git from 'isomorphic-git';
-import http from 'isomorphic-git/http/web';
 
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
@@ -20,42 +19,20 @@ import {
   readRemoteSecrets,
   writeRemoteSecrets,
 } from './remote.config.io';
+import { gitFetchOne, gitPushOne, listRefTargets, runBulk, summarize } from './remote-bulk';
 import {
   REMOTE_SECRETS_SCHEMA_VERSION,
   emptyRemoteSecrets,
+  type BulkSyncResult,
   type PushOutcome,
+  type RefSyncOutcome,
   type RemoteConfig,
   type RemoteSecretsFile,
 } from './remote.types';
 import { VariantsService } from './variants.service';
 import { stripHeadsPrefix } from './variants.io';
 
-const REPO_DIR = '/';
-const CORS_PROXY = 'https://cors.isomorphic-git.org';
 const TEXT_ENCODER = new TextEncoder();
-
-const isUpToDateError = (msg: string | null | undefined): boolean =>
-  typeof msg === 'string' && /up.?to.?date|up to date/i.test(msg);
-
-type ClassifiedPush =
-  | { kind: 'ok'; status: PushOutcome['status'] }
-  | { kind: 'error'; message: string };
-
-const isRealFailure = (msg: string | null): boolean => !!msg && !isUpToDateError(msg);
-
-function classifyPushResult(
-  result: {
-    ok: boolean;
-    error: string | null;
-    refs?: Record<string, { ok: boolean; error: string }>;
-  },
-  ref: string,
-): ClassifiedPush {
-  const refError = result.refs?.[ref]?.error ?? null;
-  const failed = !result.ok || isRealFailure(result.error) || isRealFailure(refError);
-  if (failed) return { kind: 'error', message: result.error ?? refError ?? 'unknown' };
-  return { kind: 'ok', status: isUpToDateError(refError) ? 'up-to-date' : 'ok' };
-}
 
 @Injectable({ providedIn: 'root' })
 export class RemoteService {
@@ -65,12 +42,20 @@ export class RemoteService {
 
   private readonly stateSignal = signal<RemoteSecretsFile>(emptyRemoteSecrets());
   private readonly pushingSignal = signal(false);
+  private readonly fetchingSignal = signal(false);
+  private readonly lastPushOutcomesSignal = signal<readonly RefSyncOutcome[] | null>(null);
+  private readonly lastFetchOutcomesSignal = signal<readonly RefSyncOutcome[] | null>(null);
+  private readonly lastBulkAtSignal = signal<string | null>(null);
   private fileSynced = false;
 
   readonly config = computed(() => this.stateSignal().remote);
   readonly lastPushAt = computed(() => this.stateSignal().lastPushAt ?? null);
   readonly isPushing = this.pushingSignal.asReadonly();
+  readonly isFetching = this.fetchingSignal.asReadonly();
   readonly isConfigured = computed(() => this.stateSignal().remote !== null);
+  readonly lastPushOutcomes = this.lastPushOutcomesSignal.asReadonly();
+  readonly lastFetchOutcomes = this.lastFetchOutcomesSignal.asReadonly();
+  readonly lastBulkAt = this.lastBulkAtSignal.asReadonly();
 
   constructor() {
     effect(() => {
@@ -109,18 +94,10 @@ export class RemoteService {
     this.stateSignal.set(next);
   }
 
-  // 13e-i — manual push of the active variant's main. Errors are mapped
-  // to NET_002 (auth) / NET_003 (other network / git failures); the
-  // local repo state is never mutated by a failed push.
+  // 13e-i — manual push of the active variant's main only. Errors map
+  // to NET_002 (auth) / NET_003 (other) via classifyPushError.
   async pushActiveMain(): Promise<PushOutcome> {
-    const cfg = this.config();
-    if (!cfg) {
-      throw new AppError(ERROR_CODES.NET_001, {
-        severity: 'error',
-        context: { reason: 'not-configured' },
-        recoverable: true,
-      });
-    }
+    const cfg = this.requireConfigured();
     const active = this.variants.getActive();
     if (!active) {
       throw new AppError(ERROR_CODES.NET_001, {
@@ -130,47 +107,98 @@ export class RemoteService {
       });
     }
     const ref = stripHeadsPrefix(active.refs.main);
-    return this.fsLock.withLock(() => this.runPush(cfg, ref));
+    return this.fsLock.withLock(() => this.runSinglePush(cfg, ref));
   }
 
-  private async runPush(cfg: RemoteConfig, ref: string): Promise<PushOutcome> {
+  async pushAll(): Promise<BulkSyncResult> {
+    const cfg = this.requireConfigured();
+    const variants = await this.variants.list();
+    const targets = listRefTargets(variants);
+    return this.fsLock.withLock(async () => {
+      this.pushingSignal.set(true);
+      try {
+        const adapter = this.requireGitFs();
+        const outcomes = await runBulk(targets, gitPushOne(adapter, cfg));
+        this.lastPushOutcomesSignal.set(outcomes);
+        this.lastBulkAtSignal.set(new Date().toISOString());
+        await this.persistLastPushAt();
+        return this.finalizeBulk(outcomes, ERROR_CODES.NET_004);
+      } finally {
+        this.pushingSignal.set(false);
+      }
+    });
+  }
+
+  async fetchAll(): Promise<BulkSyncResult> {
+    const cfg = this.requireConfigured();
+    const variants = await this.variants.list();
+    const targets = listRefTargets(variants);
+    return this.fsLock.withLock(async () => {
+      this.fetchingSignal.set(true);
+      try {
+        const adapter = this.requireGitFs();
+        const outcomes = await runBulk(targets, gitFetchOne(adapter, cfg));
+        this.lastFetchOutcomesSignal.set(outcomes);
+        this.lastBulkAtSignal.set(new Date().toISOString());
+        return this.finalizeBulk(outcomes, ERROR_CODES.NET_005);
+      } finally {
+        this.fetchingSignal.set(false);
+      }
+    });
+  }
+
+  private finalizeBulk(
+    outcomes: readonly RefSyncOutcome[],
+    partialCode: typeof ERROR_CODES.NET_004 | typeof ERROR_CODES.NET_005,
+  ): BulkSyncResult {
+    const { errorCount, successCount } = summarize(outcomes);
+    const result: BulkSyncResult = { outcomes, errorCount, successCount };
+    if (errorCount === 0) return result;
+    const errored = outcomes.filter((o) => o.status === 'error');
+    throw new AppError(partialCode, {
+      severity: 'error',
+      context: {
+        total: outcomes.length,
+        errorCount,
+        successCount,
+        refs: errored.map((o) => ({ ref: o.ref, error: o.error })),
+      },
+      recoverable: true,
+    });
+  }
+
+  private requireConfigured(): RemoteConfig {
+    const cfg = this.config();
+    if (!cfg) {
+      throw new AppError(ERROR_CODES.NET_001, {
+        severity: 'error',
+        context: { reason: 'not-configured' },
+        recoverable: true,
+      });
+    }
+    return cfg;
+  }
+
+  private async runSinglePush(cfg: RemoteConfig, ref: string): Promise<PushOutcome> {
     this.pushingSignal.set(true);
     try {
       const adapter = this.requireGitFs();
-      const result = await git.push({
-        fs: adapter,
-        http,
-        dir: REPO_DIR,
-        url: cfg.url,
-        ref,
-        remoteRef: ref,
-        corsProxy: CORS_PROXY,
-        onAuth: () => ({ username: cfg.token, password: 'x-oauth-basic' }),
-      });
-      const outcome = classifyPushResult(result, ref);
-      if (outcome.kind === 'error') {
-        throw new AppError(ERROR_CODES.NET_003, {
-          severity: 'error',
-          context: { ref, error: outcome.message },
-          recoverable: true,
-        });
+      const result = await gitPushOne(adapter, cfg)(ref);
+      if (result.status === 'error') {
+        throw this.classifyPushError(result.error ?? '', ref);
       }
       await this.persistLastPushAt();
-      return { ref, status: outcome.status, remoteRef: ref };
-    } catch (cause) {
-      if (cause instanceof AppError) throw cause;
-      throw this.classifyPushError(cause, ref);
+      const status = result.status === 'absent' ? 'ok' : result.status;
+      return { ref, status, remoteRef: ref };
     } finally {
       this.pushingSignal.set(false);
     }
   }
 
-  private classifyPushError(cause: unknown, ref: string): AppError {
-    const message = String((cause as Error)?.message ?? cause ?? '');
+  private classifyPushError(message: string, ref: string): AppError {
     const isAuth = /401|403|unauthor|forbid|authentication/i.test(message);
     return new AppError(isAuth ? ERROR_CODES.NET_002 : ERROR_CODES.NET_003, {
       severity: 'error',
-      cause,
       context: { ref, message },
       recoverable: true,
     });

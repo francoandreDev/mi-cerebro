@@ -1,0 +1,101 @@
+<section class="page">
+  <header class="head">
+    <h2>{{ t('sync.title') }}</h2>
+    <p class="subtitle">{{ t('sync.subtitle') }}</p>
+  </header>
+
+  @if (!isConfigured()) {
+    <section class="not-configured" role="alert">
+      <p>{{ t('sync.notConfigured') }}</p>
+      <a class="primary" routerLink="/settings">{{ t('sync.openSettings') }}</a>
+    </section>
+  } @else {
+    <section class="actions">
+      <button
+        type="button"
+        class="primary"
+        [disabled]="isPushing() || isFetching()"
+        (click)="pushAll()"
+      >
+        @if (isPushing()) {
+          {{ t('sync.actions.pushing') }}
+        } @else {
+          {{ t('sync.actions.pushAll') }}
+        }
+      </button>
+      <button type="button" [disabled]="isPushing() || isFetching()" (click)="fetchAll()">
+        @if (isFetching()) {
+          {{ t('sync.actions.fetching') }}
+        } @else {
+          {{ t('sync.actions.fetchAll') }}
+        }
+      </button>
+      @if (lastBulkAt(); as when) {
+        <span class="last">{{ t('sync.lastBulkAt', { when: (when | mcDate) }) }}</span>
+      } @else {
+        <span class="last muted">{{ t('sync.lastBulk.never') }}</span>
+      }
+    </section>
+
+    <section class="summary" [attr.data-kind]="summary().kind">
+      @switch (summary().kind) {
+        @case ('allOk') {
+          <p>{{ t('sync.summary.allOk', { count: summary().count ?? 0 }) }}</p>
+        }
+        @case ('partial') {
+          <p>
+            {{
+              t('sync.summary.partial', {
+                errors: summary().errors ?? 0,
+                total: summary().total ?? 0,
+              })
+            }}
+          </p>
+        }
+        @default {
+          <p class="muted">{{ t('sync.summary.never') }}</p>
+        }
+      }
+    </section>
+
+    <section class="table-wrap" role="region" aria-label="refs">
+      <table class="refs">
+        <thead>
+          <tr>
+            <th>{{ t('sync.table.variant') }}</th>
+            <th>{{ t('sync.table.facet') }}</th>
+            <th>{{ t('sync.table.ref') }}</th>
+            <th>{{ t('sync.table.status') }}</th>
+            <th>{{ t('sync.table.lastSync') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track row.ref) {
+            <tr [attr.data-status]="row.status">
+              <td>{{ row.variantName }}</td>
+              <td>{{ row.facet }}</td>
+              <td>
+                <code>{{ row.ref }}</code>
+              </td>
+              <td>
+                <span class="pill" [attr.data-status]="row.status">{{
+                  statusLabel(row.status)
+                }}</span>
+                @if (row.error) {
+                  <span class="err" [title]="row.error">⚠</span>
+                }
+              </td>
+              <td>
+                @if (row.lastSyncAt) {
+                  {{ row.lastSyncAt | mcDate }}
+                } @else {
+                  <span class="muted">—</span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+  }
+</section>
