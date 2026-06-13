@@ -36,6 +36,7 @@ import { PlaylistsService } from '@features/music/services/playlists.service';
 import { TasksService } from '@features/tasks/services/tasks.service';
 import { WritingsService } from '@features/writings/services/writings.service';
 import { AutocommitStatusComponent } from '@layout/components/autocommit-status.component';
+import { RemoteStatusDotComponent } from '@layout/components/remote-status-dot.component';
 import { BgColorDirective } from '@shared/directives/bg-color.directive';
 import { MenuButtonComponent, type MenuOption } from '@shared/menu-button/menu-button.component';
 import { filterTree } from '@shared/tree/filter';
@@ -73,6 +74,7 @@ interface RailItem {
     TreeComponent,
     MenuButtonComponent,
     AutocommitStatusComponent,
+    RemoteStatusDotComponent,
     BgColorDirective,
   ],
   templateUrl: './workspace-sidebar.container.html',

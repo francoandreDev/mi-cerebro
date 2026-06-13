@@ -6,6 +6,7 @@ import { WorkspaceService } from '@core/fs/workspace.service';
 import { SettingsService } from '@core/settings/settings.service';
 import { ThemeService } from '@core/theme/theme.service';
 import { AutocommitService } from '@core/versioning/autocommit.service';
+import { AutoPushService } from '@core/versioning/auto-push.service';
 import { SwitchVariantService } from '@core/versioning/switch-variant.service';
 import { VariantsService } from '@core/versioning/variants.service';
 import { GoalReminderContainer } from '@features/goals/containers/goal-reminder.container';
@@ -87,11 +88,15 @@ export class AppShellContainer {
   protected readonly isDev = isDevMode();
   private readonly errors = inject(ErrorService);
   private readonly autocommit = inject(AutocommitService);
+  // why: instantiate AutoPushService eagerly so its effect on
+  //      autocommit.lastCommitAt is registered before the first commit.
+  private readonly autoPush = inject(AutoPushService);
   private readonly variantsService = inject(VariantsService);
   private readonly switchVariant = inject(SwitchVariantService);
   private readonly settings = inject(SettingsService);
 
   constructor() {
+    this.autoPush.start();
     this.workspace
       .bootstrap()
       .then(async () => {

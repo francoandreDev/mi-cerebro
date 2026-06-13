@@ -106,3 +106,29 @@ table.refs code {
   margin-left: var(--mc-space-1);
   cursor: help;
 }
+.auto-push {
+  padding: var(--mc-space-3) var(--mc-space-4);
+  border: 1px solid var(--mc-border-default);
+  border-radius: var(--mc-radius-md);
+  background: var(--mc-bg-elevated);
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-2);
+}
+.auto-push h3 {
+  margin: 0;
+  font-size: var(--mc-font-size-md);
+}
+.auto-push .row {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+}
+.auto-push input[type='number'] {
+  width: 5rem;
+}
+.auto-push .hint {
+  margin: 0;
+  font-size: var(--mc-font-size-sm);
+  color: var(--mc-fg-muted);
+}

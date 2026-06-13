@@ -845,6 +845,9 @@ export const es = {
   'errors.net.007.title': 'Push rechazado tras merge',
   'errors.net.007.message':
     'Después del merge, el remoto avanzó otra vez y rechazó el push. Hacé fetch y volvé a abrir merge — algún otro dispositivo está pusheando al mismo tiempo.',
+  'errors.net.008.title': 'Auto-push omitido',
+  'errors.net.008.message':
+    'Se intentó disparar un auto-push mientras ya había uno en vuelo. Se omite — el siguiente trigger lo recupera.',
 
   'settings.remote.section.title': 'Versionado remoto',
   'settings.remote.url.label': 'URL del repositorio',
@@ -899,6 +902,16 @@ export const es = {
   'remote.divergence.openMerge': 'Abrir merge',
   'merge.remote.label': 'Remoto: {ref}',
   'merge.remote.into.label': 'Hacia: {variant}',
+
+  'remote.status.synced': 'Sincronizado con remoto',
+  'remote.status.pending': 'Cambios sin pushear',
+  'remote.status.divergent': 'Divergente con remoto',
+  'remote.status.notConfigured': 'Sin remoto configurado',
+
+  'sync.autoPush.title': 'Auto-push tras autocommit',
+  'sync.autoPush.toggle': 'Pushear automáticamente al commitear',
+  'sync.autoPush.throttle.label': 'Throttle (minutos)',
+  'sync.autoPush.throttle.hint': 'Mínimo de minutos entre auto-pushes consecutivos. 5 por default.',
 } as const;
 
 export type EsDictionary = typeof es;

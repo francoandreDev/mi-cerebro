@@ -10,6 +10,7 @@ import { RouterLink } from '@angular/router';
 import { ErrorService } from '@core/errors/error.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { SettingsService } from '@core/settings/settings.service';
 import { RemoteService } from '@core/versioning/remote.service';
 import { listRefTargets } from '@core/versioning/remote-bulk';
 import type { RefSyncOutcome, RefSyncStatus } from '@core/versioning/remote.types';
@@ -37,8 +38,11 @@ interface Row {
 export class SyncContainer {
   private readonly remote = inject(RemoteService);
   private readonly variants = inject(VariantsService);
+  private readonly settings = inject(SettingsService);
   private readonly i18n = inject(I18nService);
   private readonly errors = inject(ErrorService);
+
+  protected readonly versioningSettings = computed(() => this.settings.state().versioning);
 
   protected readonly isConfigured = this.remote.isConfigured;
   protected readonly isPushing = this.remote.isPushing;
@@ -110,6 +114,15 @@ export class SyncContainer {
     } catch (e) {
       this.errors.report(e);
     }
+  }
+
+  protected onTogglePushAfter(event: Event): void {
+    this.settings.setPushAfterAutocommit((event.target as HTMLInputElement).checked);
+  }
+
+  protected onThrottleInput(event: Event): void {
+    const v = Number((event.target as HTMLInputElement).value);
+    if (Number.isFinite(v)) this.settings.setPushThrottleMinutes(v);
   }
 }
 

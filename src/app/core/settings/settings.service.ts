@@ -50,6 +50,21 @@ export class SettingsService {
     this.update((s) => ({ ...s, variants: { ...s.variants, dormantThresholdDays: clamped } }));
   }
 
+  setPushAfterAutocommit(enabled: boolean): void {
+    this.update((s) => ({
+      ...s,
+      versioning: { ...s.versioning, pushAfterAutocommit: enabled },
+    }));
+  }
+
+  setPushThrottleMinutes(minutes: number): void {
+    const clamped = Math.max(0, Math.min(180, Math.round(minutes)));
+    this.update((s) => ({
+      ...s,
+      versioning: { ...s.versioning, pushThrottleMinutes: clamped },
+    }));
+  }
+
   private update(fn: (current: Settings) => Settings): void {
     this.stateSignal.update(fn);
     this.persistToLocalStorage();

@@ -385,3 +385,11 @@ Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `P
 - **Causa típica:** dos dispositivos editando y pusheando muy seguido. Aparece como un loop NET-006 → merge → NET-007 → fetch → NET-006…
 - **Cómo resolver:** fetchAll y abrir `/variants/merge` con la nueva divergencia. Si pasa repetidamente, coordinar con la otra punta o pausar temporalmente el auto-push del otro lado.
 - **Recuperable:** sí — el merge local queda intacto, sólo la subida fue rechazada.
+
+### MCB-NET-008 — Auto-push omitido (push ya en vuelo)
+
+- **Severidad:** info
+- **Cuándo:** `AutoPushService` detecta un nuevo autocommit pero el `RemoteService.isPushing` indica que otro push ya está corriendo. El nuevo trigger se descarta para evitar el race.
+- **Causa típica:** ráfaga de autocommits muy juntos (3+ ediciones en menos de 1 minuto con throttle bajo) o un push manual del usuario que tardó más de lo esperado.
+- **Cómo resolver:** nada — el siguiente autocommit que pase el throttle dispara la subida pendiente. Si pasa seguido, subir `pushThrottleMinutes` en `/settings`.
+- **Recuperable:** sí — los cambios siguen viajando con el siguiente push.

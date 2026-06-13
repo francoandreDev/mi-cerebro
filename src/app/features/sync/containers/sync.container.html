@@ -59,6 +59,30 @@
       }
     </section>
 
+    <section class="auto-push">
+      <h3>{{ t('sync.autoPush.title') }}</h3>
+      <label class="row">
+        <input
+          type="checkbox"
+          [checked]="versioningSettings().pushAfterAutocommit"
+          (change)="onTogglePushAfter($event)"
+        />
+        <span>{{ t('sync.autoPush.toggle') }}</span>
+      </label>
+      <label class="row">
+        <span>{{ t('sync.autoPush.throttle.label') }}</span>
+        <input
+          type="number"
+          min="0"
+          max="180"
+          step="1"
+          [value]="versioningSettings().pushThrottleMinutes"
+          (input)="onThrottleInput($event)"
+        />
+      </label>
+      <p class="hint">{{ t('sync.autoPush.throttle.hint') }}</p>
+    </section>
+
     <section class="table-wrap" role="region" aria-label="refs">
       <table class="refs">
         <thead>

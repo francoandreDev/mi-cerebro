@@ -49,6 +49,7 @@ export const ERROR_CODES = {
   NET_005: 'MCB-NET-005',
   NET_006: 'MCB-NET-006',
   NET_007: 'MCB-NET-007',
+  NET_008: 'MCB-NET-008',
 } as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
@@ -102,4 +103,5 @@ export const ERROR_CODE_META: Record<ErrorCode, CodeMeta> = {
   'MCB-NET-005': { titleKey: 'errors.net.005.title', messageKey: 'errors.net.005.message' },
   'MCB-NET-006': { titleKey: 'errors.net.006.title', messageKey: 'errors.net.006.message' },
   'MCB-NET-007': { titleKey: 'errors.net.007.title', messageKey: 'errors.net.007.message' },
+  'MCB-NET-008': { titleKey: 'errors.net.008.title', messageKey: 'errors.net.008.message' },
 };
