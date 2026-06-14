@@ -89,6 +89,10 @@ export class MusicContainer {
   }
 
   protected async onPlayTrack(track: Track): Promise<void> {
+    if (this.currentTrackId() === track.id) {
+      await this.player.toggle();
+      return;
+    }
     await this.player.playTrack(track.id);
   }
 

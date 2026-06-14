@@ -156,6 +156,192 @@ export function parseEntityJson(blob: Uint8Array | null): Record<string, unknown
   }
 }
 
+// why: system JSON files (variants.json, config.json, comments/*, drafts/*)
+//      no son entidades de usuario y antes caían al diff de texto crudo. Para
+//      no obligar al usuario a leer JSON, los aplanamos a paths punto-notados
+//      y los renderizamos como tabla "antes → después" (igual que user fields).
+export function flattenJson(value: unknown, prefix = ''): Map<string, string> {
+  const out = new Map<string, string>();
+  walkFlatten(value, prefix, out);
+  return out;
+}
+
+function walkFlatten(value: unknown, prefix: string, out: Map<string, string>): void {
+  const label = prefix === '' ? '(raíz)' : prefix;
+  if (value === undefined) return;
+  if (value === null || typeof value !== 'object') {
+    out.set(label, serializeLeaf(value));
+    return;
+  }
+  if (Array.isArray(value)) {
+    if (value.length === 0) {
+      out.set(label, '[]');
+      return;
+    }
+    value.forEach((item, i) => walkFlatten(item, `${prefix}[${i}]`, out));
+    return;
+  }
+  const obj = value as Record<string, unknown>;
+  const keys = Object.keys(obj);
+  if (keys.length === 0) {
+    out.set(label, '{}');
+    return;
+  }
+  for (const k of keys) walkFlatten(obj[k], prefix === '' ? k : `${prefix}.${k}`, out);
+}
+
+function serializeLeaf(v: unknown): string {
+  if (v === null) return 'null';
+  if (typeof v === 'string') return v;
+  if (typeof v === 'number' || typeof v === 'boolean') return String(v);
+  return JSON.stringify(v);
+}
+
+export function diffFlatJson(before: unknown, after: unknown): readonly FieldDiff[] {
+  const a = flattenJson(before);
+  const b = flattenJson(after);
+  const seen = new Set<string>();
+  const order: string[] = [];
+  for (const k of b.keys()) {
+    if (!seen.has(k)) {
+      seen.add(k);
+      order.push(k);
+    }
+  }
+  for (const k of a.keys()) {
+    if (!seen.has(k)) {
+      seen.add(k);
+      order.push(k);
+    }
+  }
+  const out: FieldDiff[] = [];
+  for (const key of order) {
+    const hasBefore = a.has(key);
+    const hasAfter = b.has(key);
+    const bv = hasBefore ? (a.get(key) ?? null) : null;
+    const av = hasAfter ? (b.get(key) ?? null) : null;
+    let status: FieldChangeStatus = 'unchanged';
+    if (!hasBefore && hasAfter) status = 'added';
+    else if (hasBefore && !hasAfter) status = 'removed';
+    else if (bv !== av) status = 'modified';
+    if (status === 'unchanged') continue;
+    out.push({ key, status, before: bv, after: av });
+  }
+  return out;
+}
+
+// why: drafts/<id>.json y comments/<id>.json llevan structuras conocidas
+//      (marks[] y comments[]). En lugar de aplanar el JSON, mostramos cada
+//      ítem como un cambio de alto nivel: para drafts es "antes → después"
+//      en texto plano; para comments es el body del comentario en texto.
+export type AnchorChangeStatus = 'added' | 'removed' | 'modified';
+
+export interface AnchorChange {
+  readonly id: string;
+  readonly status: AnchorChangeStatus;
+  readonly anchorType: string;
+  readonly anchor: string;
+  readonly before: string | null;
+  readonly after: string | null;
+}
+
+export type AnchorMode = 'drafts' | 'comments';
+
+const ANCHOR_LIST_KEY: Record<AnchorMode, string> = {
+  drafts: 'marks',
+  comments: 'comments',
+};
+
+export function diffAnchoredItems(
+  before: unknown,
+  after: unknown,
+  mode: AnchorMode,
+): readonly AnchorChange[] {
+  const key = ANCHOR_LIST_KEY[mode];
+  const bMap = mapById(extractList(before, key));
+  const aMap = mapById(extractList(after, key));
+  const ids: string[] = [];
+  const seen = new Set<string>();
+  for (const id of aMap.keys()) {
+    if (!seen.has(id)) {
+      seen.add(id);
+      ids.push(id);
+    }
+  }
+  for (const id of bMap.keys()) {
+    if (!seen.has(id)) {
+      seen.add(id);
+      ids.push(id);
+    }
+  }
+  const present = (i: Record<string, unknown> | undefined): string | null =>
+    i ? represent(i, mode) : null;
+  const out: AnchorChange[] = [];
+  for (const id of ids) {
+    const b = bMap.get(id);
+    const a = aMap.get(id);
+    const item = a ?? b;
+    if (!item) continue;
+    const beforeText = present(b);
+    const afterText = present(a);
+    let status: AnchorChangeStatus;
+    if (!b) status = 'added';
+    else if (!a) status = 'removed';
+    else if (beforeText !== afterText) status = 'modified';
+    else continue;
+    out.push({
+      id,
+      status,
+      anchorType: typeof item['anchorType'] === 'string' ? (item['anchorType'] as string) : '',
+      anchor: shortAnchor(typeof item['anchor'] === 'string' ? (item['anchor'] as string) : ''),
+      before: beforeText,
+      after: afterText,
+    });
+  }
+  return out;
+}
+
+function extractList(file: unknown, key: string): readonly Record<string, unknown>[] {
+  if (!file || typeof file !== 'object') return [];
+  const list = (file as Record<string, unknown>)[key];
+  if (!Array.isArray(list)) return [];
+  return list.filter(
+    (x): x is Record<string, unknown> => typeof x === 'object' && x !== null && !Array.isArray(x),
+  );
+}
+
+function mapById(list: readonly Record<string, unknown>[]): Map<string, Record<string, unknown>> {
+  const map = new Map<string, Record<string, unknown>>();
+  for (const item of list) {
+    const id = item['id'];
+    if (typeof id === 'string') map.set(id, item);
+  }
+  return map;
+}
+
+function represent(item: Record<string, unknown>, mode: AnchorMode): string {
+  if (mode === 'drafts') {
+    const before = tipTapToText(item['before']).trim();
+    const after = tipTapToText(item['after']).trim();
+    return `${before || '∅'} → ${after || '∅'}`;
+  }
+  return tipTapToText(item['body']).trim();
+}
+
+function shortAnchor(s: string): string {
+  if (s.length <= 12) return s;
+  return `${s.slice(0, 8)}…`;
+}
+
+export function parseAnyJson(blob: Uint8Array | null): unknown {
+  if (!blob) return undefined;
+  try {
+    return JSON.parse(blobToText(blob)) as unknown;
+  } catch {
+    return undefined;
+  }
+}
+
 export interface InlineTitleDiff {
   readonly status: FieldChangeStatus;
   readonly before: string | null;

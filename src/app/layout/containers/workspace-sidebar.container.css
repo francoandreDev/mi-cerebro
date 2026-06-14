@@ -191,6 +191,9 @@
   flex: 0 0 auto;
 }
 
+.pane > mc-autocommit-status {
+  margin-top: auto;
+}
 .variant-pill-wrapper {
   position: relative;
   margin: var(--mc-space-2) var(--mc-space-3);

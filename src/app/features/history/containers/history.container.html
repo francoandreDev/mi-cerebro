@@ -416,6 +416,66 @@
                       </section>
                     }
                   }
+                  @case ('anchored') {
+                    @if (d.view.items.length === 0) {
+                      <p class="placeholder">{{ i18n.t('versioning.history.diffEmpty') }}</p>
+                    } @else {
+                      <ul class="anchored-list">
+                        @for (item of d.view.items; track item.id) {
+                          <li class="anchored-item anchored-{{ item.status }}">
+                            <header class="anchored-head">
+                              <span class="anchored-badge">{{ anchoredBadge(item.status) }}</span>
+                              <span class="anchored-status">{{
+                                anchoredStatusLabel(d.view.mode, item.status)
+                              }}</span>
+                              <span class="anchored-anchor">
+                                {{ anchoredAnchorLabel(item.anchorType) }}
+                                @if (item.anchor) {
+                                  <code>{{ item.anchor }}</code>
+                                }
+                              </span>
+                            </header>
+                            @if (item.before !== null) {
+                              <div class="anchored-body anchored-body-before">
+                                {{ item.before || i18n.t('versioning.history.anchored.empty') }}
+                              </div>
+                            }
+                            @if (item.after !== null) {
+                              <div class="anchored-body anchored-body-after">
+                                {{ item.after || i18n.t('versioning.history.anchored.empty') }}
+                              </div>
+                            }
+                          </li>
+                        }
+                      </ul>
+                    }
+                  }
+                  @case ('json') {
+                    @if (d.view.fields.length === 0) {
+                      <p class="placeholder">{{ i18n.t('versioning.history.diffEmpty') }}</p>
+                    } @else {
+                      <section class="diff-section">
+                        <table class="fields">
+                          <thead>
+                            <tr>
+                              <th>{{ i18n.t('versioning.history.field.key') }}</th>
+                              <th>{{ i18n.t('versioning.history.field.before') }}</th>
+                              <th>{{ i18n.t('versioning.history.field.after') }}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @for (f of d.view.fields; track f.key) {
+                              <tr class="field-row field-{{ f.status }}">
+                                <td class="field-key">{{ f.key }}</td>
+                                <td class="field-cell field-before">{{ f.before ?? '—' }}</td>
+                                <td class="field-cell field-after">{{ f.after ?? '—' }}</td>
+                              </tr>
+                            }
+                          </tbody>
+                        </table>
+                      </section>
+                    }
+                  }
                   @case ('text') {
                     <pre
                       class="diff"

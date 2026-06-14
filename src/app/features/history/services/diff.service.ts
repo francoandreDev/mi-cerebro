@@ -13,15 +13,25 @@ import * as git from 'isomorphic-git';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { GitFsAdapter } from '@core/versioning/git-fs.adapter';
 
-import type { FieldCategories, FieldChangeStatus, TagsDelta } from './diff.utils';
+import type {
+  AnchorChange,
+  AnchorMode,
+  FieldCategories,
+  FieldChangeStatus,
+  FieldDiff,
+  TagsDelta,
+} from './diff.utils';
 import {
   asTagArray,
   blobToText,
   bodyDiffOf,
   categorizeFields,
+  diffAnchoredItems,
+  diffFlatJson,
   diffTagArrays,
   isEntityPath,
   isLikelyBinary,
+  parseAnyJson,
   parseEntityJson,
   titleDiffOf,
 } from './diff.utils';
@@ -42,6 +52,12 @@ export interface TitleDiff {
 export type EntityDiffView =
   | { readonly kind: 'binary'; readonly beforeSize: number; readonly afterSize: number }
   | { readonly kind: 'text'; readonly chunks: readonly DiffChunk[] }
+  | { readonly kind: 'json'; readonly fields: readonly FieldDiff[] }
+  | {
+      readonly kind: 'anchored';
+      readonly mode: AnchorMode;
+      readonly items: readonly AnchorChange[];
+    }
   | {
       readonly kind: 'entity';
       readonly title: TitleDiff;
@@ -136,6 +152,18 @@ export class HistoryDiffService {
       const view = buildEntityView(before, after);
       if (view) return { ...common, view };
     }
+    if (change.filepath.endsWith('.json')) {
+      const beforeJson = parseAnyJson(before);
+      const afterJson = parseAnyJson(after);
+      if (beforeJson !== undefined || afterJson !== undefined) {
+        const anchored = anchoredModeFor(change.filepath);
+        if (anchored) {
+          const items = diffAnchoredItems(beforeJson, afterJson, anchored);
+          return { ...common, view: { kind: 'anchored', mode: anchored, items } };
+        }
+        return { ...common, view: { kind: 'json', fields: diffFlatJson(beforeJson, afterJson) } };
+      }
+    }
     return {
       ...common,
       view: { kind: 'text', chunks: toChunks(textOrEmpty(before), textOrEmpty(after)) },
@@ -153,6 +181,12 @@ interface RawChange {
   readonly status: DiffStatus;
   readonly beforeOid: string | null;
   readonly afterOid: string | null;
+}
+
+function anchoredModeFor(filepath: string): AnchorMode | null {
+  if (filepath.startsWith('drafts/')) return 'drafts';
+  if (filepath.startsWith('comments/')) return 'comments';
+  return null;
 }
 
 function textOrEmpty(blob: Uint8Array | null): string {

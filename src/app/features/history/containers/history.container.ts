@@ -14,9 +14,12 @@ import { RestoreService } from '@core/versioning/restore.service';
 import { IconComponent } from '@shared/icon/icon.component';
 import { McDatePipe } from '@shared/pipes/mc-date.pipe';
 
+import type { TranslationKey } from '@core/i18n/i18n.types';
+
 import { BUCKET_LABEL_KEY } from '../services/bucket-labels';
 import { HistoryDiffService } from '../services/diff.service';
 import type { EntityDiff } from '../services/diff.service';
+import type { AnchorChangeStatus, AnchorMode } from '../services/diff.utils';
 import { ALL_FACETS, facetOf, type Facet } from '../services/facet';
 import { HistoryService } from '../services/history.service';
 import type {
@@ -215,6 +218,25 @@ export class HistoryContainer implements OnInit {
       else next.add(path);
       return next;
     });
+  }
+
+  protected anchoredBadge(status: AnchorChangeStatus): string {
+    if (status === 'added') return '+';
+    if (status === 'removed') return '−';
+    return '✎';
+  }
+
+  protected anchoredStatusLabel(mode: AnchorMode, status: AnchorChangeStatus): string {
+    const prefix = mode === 'drafts' ? 'draft' : 'comment';
+    const suffix = status === 'added' ? 'Added' : status === 'removed' ? 'Removed' : 'Modified';
+    return this.i18n.t(`versioning.history.anchored.${prefix}${suffix}` as TranslationKey);
+  }
+
+  protected anchoredAnchorLabel(anchorType: string): string {
+    if (anchorType === 'block') return this.i18n.t('versioning.history.anchored.anchorBlock');
+    if (anchorType === 'doc') return this.i18n.t('versioning.history.anchored.anchorDoc');
+    if (anchorType === 'entity') return this.i18n.t('versioning.history.anchored.anchorEntity');
+    return anchorType;
   }
 
   protected formatBytes(n: number): string {
