@@ -81,6 +81,7 @@
                     [class.selected]="selectedOid() === item.entry.oid"
                     [class.is-head]="headOid() === item.entry.oid"
                     [class.has-milestone]="milestonesFor(item.entry.oid).length > 0"
+                    [attr.data-facet]="facetOfMessage(item.entry.message)"
                     (click)="select(item.entry.oid)"
                   >
                     <span class="commit-time">{{ item.entry.date | mcDate }}</span>
@@ -99,6 +100,79 @@
                     }
                     <span class="commit-oid">{{ item.entry.shortOid }}</span>
                   </button>
+                </li>
+              } @else if (item.kind === 'auto-group') {
+                <li class="merge-group auto-group" [class.expanded]="isAutoGroupExpanded(item.id)">
+                  <div class="merge-group-row">
+                    <button
+                      type="button"
+                      class="merge-group-toggle"
+                      [attr.aria-expanded]="isAutoGroupExpanded(item.id)"
+                      [title]="
+                        i18n.t(
+                          isAutoGroupExpanded(item.id)
+                            ? 'versioning.history.autoGroup.collapse'
+                            : 'versioning.history.autoGroup.expand'
+                        )
+                      "
+                      (click)="toggleAutoGroup(item.id)"
+                    >
+                      {{ isAutoGroupExpanded(item.id) ? '▾' : '▸' }}
+                    </button>
+                    <button
+                      type="button"
+                      class="commit merge-leader auto-leader"
+                      [class.selected]="selectedOid() === item.latest.oid"
+                      [class.is-head]="headOid() === item.latest.oid"
+                      [attr.data-facet]="facetOfMessage(item.latest.message)"
+                      (click)="select(item.latest.oid)"
+                    >
+                      <span class="commit-time">{{ item.latest.date | mcDate }}</span>
+                      <span class="commit-message">
+                        {{ autoGroupSubject(item.latest.message) }}
+                        @if (headOid() === item.latest.oid) {
+                          <span class="head-badge">{{
+                            i18n.t('versioning.history.headBadge')
+                          }}</span>
+                        }
+                      </span>
+                      <span class="commit-chips">
+                        <span class="chip chip-auto-group">{{
+                          i18n.t('versioning.history.autoGroup.chip', { n: item.members.length })
+                        }}</span>
+                      </span>
+                      <span class="commit-oid">{{ item.latest.shortOid }}</span>
+                    </button>
+                  </div>
+                  @if (isAutoGroupExpanded(item.id)) {
+                    <ul class="merge-group-members">
+                      @for (m of item.members; track m.oid) {
+                        <li>
+                          @for (ms of milestonesFor(m.oid); track ms.name) {
+                            <div class="milestone-band" role="separator">
+                              <span class="milestone-band-label">{{
+                                i18n.t('versioning.history.milestone.bandLabel')
+                              }}</span>
+                              <span class="milestone-band-name">{{ ms.name }}</span>
+                            </div>
+                          }
+                          <button
+                            type="button"
+                            class="commit commit-nested"
+                            [class.selected]="selectedOid() === m.oid"
+                            [class.is-head]="headOid() === m.oid"
+                            [class.has-milestone]="milestonesFor(m.oid).length > 0"
+                            [attr.data-facet]="facetOfMessage(m.message)"
+                            (click)="select(m.oid)"
+                          >
+                            <span class="commit-time">{{ m.date | mcDate }}</span>
+                            <span class="commit-message">{{ m.message.split('\n')[0] }}</span>
+                            <span class="commit-oid">{{ m.shortOid }}</span>
+                          </button>
+                        </li>
+                      }
+                    </ul>
+                  }
                 </li>
               } @else {
                 <li class="merge-group" [class.expanded]="isMergeGroupExpanded(item.id)">
@@ -123,6 +197,7 @@
                       class="commit merge-leader"
                       [class.selected]="selectedOid() === item.latest.oid"
                       [class.is-head]="headOid() === item.latest.oid"
+                      [attr.data-facet]="facetOfMessage(item.latest.message)"
                       (click)="select(item.latest.oid)"
                     >
                       <span class="commit-time">{{ item.latest.date | mcDate }}</span>
@@ -174,6 +249,7 @@
                             [class.selected]="selectedOid() === m.oid"
                             [class.is-head]="headOid() === m.oid"
                             [class.has-milestone]="milestonesFor(m.oid).length > 0"
+                            [attr.data-facet]="facetOfMessage(m.message)"
                             (click)="select(m.oid)"
                           >
                             <span class="commit-time">{{ m.date | mcDate }}</span>

@@ -66,9 +66,10 @@ export class HistoryService {
       const id = bucketFor(entry.date.getTime(), now);
       groups.get(id)!.push(entry);
     }
-    return BUCKET_ORDER.map((id) => ({ id, items: collapseMergeGroups(groups.get(id)!) })).filter(
-      (b) => b.items.length > 0,
-    );
+    return BUCKET_ORDER.map((id) => ({
+      id,
+      items: collapseAutoGroups(collapseMergeGroups(groups.get(id)!)),
+    })).filter((b) => b.items.length > 0);
   });
 
   async load(depth = DEFAULT_DEPTH): Promise<void> {
@@ -167,6 +168,93 @@ function parseMergeGroup(message: string): MergeGroupInfo | null {
     fromName: subjectMatch?.[1] ?? null,
     intoName: subjectMatch?.[2] ?? null,
   };
+}
+
+// why: ráfagas de autocommits (mismo sujeto, separados por menos de una
+//      hora) inflan el timeline. La huella mezcla faceta + sujeto base
+//      (kinds sin contar para main; título para [comentarios]/[borrador])
+//      así que `auto: 2 books` y `auto: 5 books` se funden, pero
+//      `auto: 2 books, 1 note` no — el sujeto es distinto.
+const AUTO_GROUP_WINDOW_MS = 60 * 60 * 1000;
+
+export function autoFingerprint(message: string): string | null {
+  const m = /^auto(?:\s+\[([^\]]+)\])?:\s*(.+?)\s*(?:\(|$)/.exec(message);
+  if (!m) return null;
+  const facet = m[1] ?? 'main';
+  const body = m[2]!.trim();
+  if (body === '') return null;
+  if (facet === 'main') {
+    const kinds = body
+      .split(',')
+      .map((p) => p.trim().replace(/^\d+\s+/, ''))
+      .map((p) => singularize(p))
+      .filter((p) => p !== '')
+      .sort();
+    if (kinds.length === 0) return null;
+    return `main::${kinds.join(',')}`;
+  }
+  return `${facet}::${body}`;
+}
+
+// why: agrupamos por fingerprint con ventana acotada al ancla (commit más
+//      nuevo del grupo). Iteramos newest→oldest manteniendo un grupo
+//      "abierto" por fingerprint; si llega un commit con el mismo fp y
+//      su ts está a ≤ 1h del ancla, lo absorbe — sin importar qué otros
+//      commits aparezcan en el medio. Cuando un commit cae fuera de la
+//      ventana, abre un grupo nuevo (que reemplaza al abierto previo).
+//      Los commits no auto y los de otros fingerprints conservan su
+//      posición; el grupo se renderiza en la del ancla.
+interface PendingAutoGroup {
+  readonly fingerprint: string;
+  readonly anchorTs: number;
+  readonly anchorIndex: number;
+  members: CommitEntry[];
+}
+
+function collapseAutoGroups(items: readonly TimelineItem[]): readonly TimelineItem[] {
+  const open = new Map<string, PendingAutoGroup>();
+  const groupByIndex = new Map<number, PendingAutoGroup>();
+  items.forEach((item, idx) => {
+    if (item.kind !== 'commit') return;
+    const fp = autoFingerprint(item.entry.message);
+    if (!fp) return;
+    const ts = item.entry.date.getTime();
+    const current = open.get(fp);
+    if (current && current.anchorTs - ts <= AUTO_GROUP_WINDOW_MS) {
+      current.members.push(item.entry);
+      groupByIndex.set(idx, current);
+      return;
+    }
+    const fresh: PendingAutoGroup = {
+      fingerprint: fp,
+      anchorTs: ts,
+      anchorIndex: idx,
+      members: [item.entry],
+    };
+    open.set(fp, fresh);
+    groupByIndex.set(idx, fresh);
+  });
+  const out: TimelineItem[] = [];
+  items.forEach((item, idx) => {
+    const group = groupByIndex.get(idx);
+    if (!group) {
+      out.push(item);
+      return;
+    }
+    if (idx !== group.anchorIndex) return;
+    if (group.members.length < 2) {
+      out.push(item);
+      return;
+    }
+    out.push({
+      kind: 'auto-group',
+      id: `auto:${group.members[0]!.oid}`,
+      fingerprint: group.fingerprint,
+      latest: group.members[0]!,
+      members: group.members,
+    });
+  });
+  return out;
 }
 
 // why: VersioningService.log returns commits newest-first; merge group

@@ -120,8 +120,10 @@ export class HistoryContainer implements OnInit {
       if (onlyMile && !byOid.has(entry.oid)) return false;
       return true;
     };
-    const hits = (item: TimelineItem): boolean =>
-      item.kind === 'commit' ? matches(item.entry) : item.members.some(matches);
+    const hits = (item: TimelineItem): boolean => {
+      if (item.kind === 'commit') return matches(item.entry);
+      return item.members.some(matches);
+    };
     return all
       .map((b) => ({ id: b.id, items: b.items.filter(hits) }))
       .filter((b) => b.items.length > 0);
@@ -138,6 +140,30 @@ export class HistoryContainer implements OnInit {
       else next.add(id);
       return next;
     });
+  }
+
+  private readonly expandedAutoGroupsSignal = signal<Set<string>>(new Set());
+  protected isAutoGroupExpanded(id: string): boolean {
+    return this.expandedAutoGroupsSignal().has(id);
+  }
+  protected toggleAutoGroup(id: string): void {
+    this.expandedAutoGroupsSignal.update((s) => {
+      const next = new Set(s);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  // why: el "asunto" del líder del grupo es el mensaje del último commit
+  //      sin el "(N comentarios)" o "(2026-06-14 17:00) [reason]" final,
+  //      que cambia commit a commit y por eso disminuye legibilidad.
+  protected autoGroupSubject(message: string): string {
+    const m = /^auto(\s+\[[^\]]+\])?:\s*(.+?)\s*(?:\(|$)/.exec(message);
+    if (!m) return message;
+    const facet = m[1] ?? '';
+    const body = m[2]!.trim();
+    return `auto${facet}: ${body}`;
   }
 
   protected milestonesFor(oid: string): readonly MilestoneEntry[] {
@@ -218,6 +244,10 @@ export class HistoryContainer implements OnInit {
       else next.add(path);
       return next;
     });
+  }
+
+  protected facetOfMessage(message: string): Facet {
+    return facetOf(message);
   }
 
   protected anchoredBadge(status: AnchorChangeStatus): string {

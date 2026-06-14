@@ -164,11 +164,33 @@
 
 .commit.selected {
   background: var(--mc-bg-selected, rgba(58, 123, 213, 0.12));
-  border-left-color: var(--mc-accent, #3a7bd5);
 }
 
-.commit.is-head {
-  border-left-color: rgba(60, 200, 90, 0.7);
+/* why: el badge "ACTUAL" ya identifica HEAD en el texto; mantener el
+        color de faceta en el borde-izq evita perder el indicador de
+        rama justo en el commit que más mirás. */
+.commit[data-facet='main'] {
+  border-left-color: var(--facet-color-main);
+}
+
+.commit[data-facet='comments'] {
+  border-left-color: var(--facet-color-comments);
+}
+
+.commit[data-facet='draft'] {
+  border-left-color: var(--facet-color-draft);
+}
+
+.commit.selected[data-facet='main'] {
+  box-shadow: inset 0 0 0 1px var(--facet-color-main);
+}
+
+.commit.selected[data-facet='comments'] {
+  box-shadow: inset 0 0 0 1px var(--facet-color-comments);
+}
+
+.commit.selected[data-facet='draft'] {
+  box-shadow: inset 0 0 0 1px var(--facet-color-draft);
 }
 
 .head-badge {
@@ -374,6 +396,30 @@
   background: color-mix(in srgb, var(--mc-accent-primary) 18%, transparent);
   border-color: var(--mc-accent-primary);
   color: var(--mc-fg-primary);
+}
+
+/* why: tres ramas (main / comentarios / borrador) coexisten en cada hora.
+        Coloreamos chips del filtro + barra lateral de cada commit con la
+        misma paleta para que el usuario asocie un color con una rama. */
+.facet-chip[data-facet='main'][aria-pressed='true'] {
+  background: color-mix(in srgb, var(--facet-color-main) 22%, transparent);
+  border-color: var(--facet-color-main);
+}
+
+.facet-chip[data-facet='comments'][aria-pressed='true'] {
+  background: color-mix(in srgb, var(--facet-color-comments) 22%, transparent);
+  border-color: var(--facet-color-comments);
+}
+
+.facet-chip[data-facet='draft'][aria-pressed='true'] {
+  background: color-mix(in srgb, var(--facet-color-draft) 22%, transparent);
+  border-color: var(--facet-color-draft);
+}
+
+aside.timeline {
+  --facet-color-main: var(--mc-accent-primary);
+  --facet-color-comments: #6b8ce0;
+  --facet-color-draft: #d9923c;
 }
 
 .facet-chip:hover {
@@ -855,6 +901,11 @@
 .chip-merge {
   background: rgba(120, 140, 220, 0.18);
   color: #8aa1e0;
+}
+
+.chip-auto-group {
+  background: rgba(160, 160, 160, 0.18);
+  color: var(--mc-fg-muted);
 }
 
 .merge-group-members {

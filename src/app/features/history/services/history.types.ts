@@ -39,6 +39,13 @@ export type TimelineItem =
       readonly intoName: string | null;
       readonly latest: CommitEntry;
       readonly members: readonly CommitEntry[];
+    }
+  | {
+      readonly kind: 'auto-group';
+      readonly id: string;
+      readonly fingerprint: string;
+      readonly latest: CommitEntry;
+      readonly members: readonly CommitEntry[];
     };
 
 export interface CommitBucket {

@@ -126,16 +126,22 @@ export class VariantsService {
         v.lastActivityAt !== current.variants[i]?.lastActivityAt ||
         v.state !== current.variants[i]?.state,
     );
-    if (changed) await this.writeFile({ ...current, variants: updated });
+    // why: lastActivityAt + state son valores DERIVADOS de los tips git.
+    //      Persistirlos en variants.json hacía que cada refresh generara
+    //      un autocommit "fantasma" cuyo único diff era el timestamp.
+    //      Mantenemos los valores en el signal en memoria; al recargar
+    //      la app, bootstrap llama refreshActivity() antes de mostrar UI.
+    if (changed) this.fileSignal.set({ ...current, variants: updated });
   }
 
   // why: dev-only. Pin lastActivityAt for the dormant validation gate;
-  //      next refreshActivity() will recompute from git.
+  //      next refreshActivity() will recompute from git. En memoria
+  //      porque lastActivityAt no se persiste (ver refreshActivity).
   async setLastActivityAt(id: string, ts: number): Promise<void> {
     await this.ensureLoaded();
     const current = this.fileSignal();
     const next = current.variants.map((v) => (v.id === id ? { ...v, lastActivityAt: ts } : v));
-    await this.writeFile({ ...current, variants: next });
+    this.fileSignal.set({ ...current, variants: next });
   }
 
   async list(): Promise<readonly Variant[]> {
