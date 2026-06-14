@@ -26,6 +26,15 @@
   border-radius: var(--mc-radius-md);
   background: var(--mc-bg-surface);
 }
+mc-drafts-panel.index-popover {
+  width: min(720px, calc(100% - var(--mc-space-3) * 2));
+}
+.editor-host :global(.mc-comment-range) {
+  /* why: subtle dotted underline in the same desaturated accent the cloud
+     uses, so the reader sees which words the comment covers without the
+     run of text fighting with the cloud icon itself. */
+  border-bottom: 1px dotted var(--comment-accent);
+}
 .editor-host :global(.mc-comment-cloud) {
   /* why: visible gap on both sides so the caret has a clickable area
      to land before/after the cloud without hitting the button hitbox. */

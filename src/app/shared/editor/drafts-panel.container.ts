@@ -26,12 +26,13 @@ import { DraftsService } from '@core/versioning/drafts.service';
 import type { DiffMark } from '@core/versioning/drafts.types';
 import { IconComponent } from '@shared/icon/icon.component';
 
-import { DraftMarkItemComponent } from './draft-mark-item.component';
+import { DraftPreviewComponent } from './draft-preview.component';
+import { DraftsListComponent } from './drafts-list.component';
 
 @Component({
   selector: 'mc-drafts-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DraftMarkItemComponent, IconComponent],
+  imports: [DraftPreviewComponent, DraftsListComponent, IconComponent],
   template: `
     <header class="head">
       <h3 id="mc-drafts-title">{{ t('drafts.title') }} ({{ count() }})</h3>
@@ -61,17 +62,21 @@ import { DraftMarkItemComponent } from './draft-mark-item.component';
           <mc-icon name="x" /> {{ t('drafts.actions.rejectAll') }}
         </button>
       </div>
-      <ul class="list" aria-live="polite" aria-labelledby="mc-drafts-title">
-        @for (m of marks(); track m.id) {
-          <li class="row">
-            <mc-draft-mark-item
-              [mark]="m"
-              (accept)="onAccept($event)"
-              (reject)="onReject($event)"
-            />
-          </li>
-        }
-      </ul>
+      <div class="split">
+        <mc-drafts-list
+          class="pane left"
+          [marks]="marks()"
+          [selectedId]="selectedId()"
+          (pick)="onSelect($event)"
+        />
+        <mc-draft-preview
+          class="pane right"
+          [mark]="selectedMark()"
+          [busy]="busy()"
+          (accept)="onAccept($event)"
+          (reject)="onReject($event)"
+        />
+      </div>
     }
   `,
   styleUrl: './drafts-panel.container.scss',
@@ -95,11 +100,18 @@ export class DraftsPanelContainer {
   protected readonly busy = signal(false);
   protected readonly marks = computed(() => this.all());
   protected readonly count = computed(() => this.all().length);
+  protected readonly selectedId = signal<string | null>(null);
+  protected readonly selectedMark = computed<DiffMark | null>(() => {
+    const id = this.selectedId();
+    if (!id) return null;
+    return this.all().find((m) => m.id === id) ?? null;
+  });
 
   constructor() {
     effect(
       () => {
         const id = this.entityId();
+        this.selectedId.set(null);
         if (!id) {
           this.all.set([]);
           this.marksChange.emit([]);
@@ -115,23 +127,22 @@ export class DraftsPanelContainer {
     return this.i18n.t(key);
   }
 
+  protected onSelect(id: string): void {
+    this.selectedId.set(id);
+  }
+
   protected async onAccept(id: string): Promise<void> {
-    if (this.busy()) return;
-    if (!this.confirmIf('drafts.confirm.accept')) return;
     const mark = this.all().find((m) => m.id === id);
     if (!mark) return;
     await this.applyMarks([mark]);
   }
 
   protected async onReject(id: string): Promise<void> {
-    if (this.busy()) return;
-    if (!this.confirmIf('drafts.confirm.reject')) return;
     const next = this.all().filter((m) => m.id !== id);
     await this.persist(next);
   }
 
   protected async onAcceptAll(): Promise<void> {
-    if (this.busy()) return;
     const list = this.all();
     if (list.length === 0) return;
     if (!this.confirmIf('drafts.confirm.acceptAll', list.length)) return;
@@ -139,35 +150,38 @@ export class DraftsPanelContainer {
   }
 
   protected async onRejectAll(): Promise<void> {
-    if (this.busy()) return;
     const list = this.all();
     if (list.length === 0) return;
     if (!this.confirmIf('drafts.confirm.rejectAll', list.length)) return;
     await this.persist([]);
   }
 
-  // why: accept = mutate the doc + persist the trimmed marks file + land
-  //      an `accept-draft:` commit on main. The autocommit service flushes
-  //      autosave before running git.commit, so the host's writer (driven
-  //      by the valueChange we emit) is guaranteed to be on disk before
-  //      the commit captures it.
+  // why: optimistic — update the visible list + emit the mutated doc right
+  //      away so the user sees the change instantly. Persistence and the
+  //      `accept-draft:` autocommit run in background; on failure we revert
+  //      the list (the doc is already in the host's hands, can't undo
+  //      without echoing back) and surface the error.
   private async applyMarks(toApply: readonly DiffMark[]): Promise<void> {
     const baseDoc = this.value();
     if (!baseDoc) return;
+    let nextDoc: JSONContent = baseDoc;
+    for (const m of toApply) {
+      nextDoc = applyMarkToDoc(nextDoc, m);
+    }
+    const previous = this.all();
+    const remaining = previous.filter((m) => !toApply.includes(m));
+    this.applyToDoc.emit(nextDoc);
+    this.all.set(remaining);
+    this.syncSelection(remaining);
+    this.marksChange.emit(remaining);
     this.busy.set(true);
     try {
-      let nextDoc: JSONContent = baseDoc;
-      for (const m of toApply) {
-        nextDoc = applyMarkToDoc(nextDoc, m);
-      }
-      const remaining = this.all().filter((m) => !toApply.includes(m));
-      this.applyToDoc.emit(nextDoc);
       await this.drafts.save(this.entityId(), this.entityTitle(), remaining);
-      this.all.set(remaining);
-      this.marksChange.emit(remaining);
       const message = formatAcceptMessage(this.entityTitle() || this.entityId(), toApply.length);
       await this.autocommit.commitNow('accept-draft', message);
     } catch (err) {
+      this.all.set(previous);
+      this.marksChange.emit(previous);
       this.errors.report(err);
     } finally {
       this.busy.set(false);
@@ -175,12 +189,16 @@ export class DraftsPanelContainer {
   }
 
   private async persist(next: readonly DiffMark[]): Promise<void> {
+    const previous = this.all();
+    this.all.set(next);
+    this.syncSelection(next);
+    this.marksChange.emit(next);
     this.busy.set(true);
     try {
       await this.drafts.save(this.entityId(), this.entityTitle(), next);
-      this.all.set(next);
-      this.marksChange.emit(next);
     } catch (err) {
+      this.all.set(previous);
+      this.marksChange.emit(previous);
       this.errors.report(err);
     } finally {
       this.busy.set(false);
@@ -193,17 +211,24 @@ export class DraftsPanelContainer {
       const file = await this.drafts.read(id);
       if (this.entityId() === id) {
         this.all.set(file.marks);
+        this.syncSelection(file.marks);
         this.marksChange.emit(file.marks);
       }
     } catch (err) {
       this.errors.report(err);
       if (this.entityId() === id) {
         this.all.set([]);
+        this.syncSelection([]);
         this.marksChange.emit([]);
       }
     } finally {
       if (this.entityId() === id) this.loading.set(false);
     }
+  }
+
+  private syncSelection(list: readonly DiffMark[]): void {
+    const id = this.selectedId();
+    if (id && !list.some((m) => m.id === id)) this.selectedId.set(null);
   }
 
   private confirmIf(key: TranslationKey, n?: number): boolean {

@@ -73,19 +73,40 @@ const buildDecorations = (
     if (!id) return true;
     const matches = byBlock.get(id);
     if (!matches || matches.length === 0) return true;
-    const endPos = pos + node.nodeSize - 1;
+    const blockContentStart = pos + 1;
+    const blockContentEnd = pos + node.nodeSize - 1;
     for (const comment of matches) {
+      const range = comment.range;
+      // why: when a range is present we anchor the cloud at the end of the
+      //      selected span (clamped to the block) and add an inline
+      //      decoration so the user can see *which words* were commented.
+      //      Without a range we keep the legacy end-of-block placement.
+      const cloudPos = range
+        ? Math.min(blockContentEnd, blockContentStart + range.to)
+        : blockContentEnd;
       decorations.push(
-        // why: side -1 places the widget *before* the endPos cursor slot
-        //      so pressing End / clicking past the cloud lands the caret
-        //      after it, not before. With side +1 the caret got stuck on
-        //      the wrong side and the cloud's hitbox absorbed the click.
-        Decoration.widget(endPos, () => buildCloudButton(comment.id, handlers), {
+        // why: side -1 places the widget *before* the cursor slot so
+        //      pressing End / clicking past the cloud lands the caret after
+        //      it, not before. With side +1 the caret got stuck on the
+        //      wrong side and the cloud's hitbox absorbed the click.
+        Decoration.widget(cloudPos, () => buildCloudButton(comment.id, handlers), {
           side: -1,
           key: `cloud-${comment.id}`,
           ignoreSelection: true,
         }),
       );
+      if (range) {
+        const fromPos = Math.min(blockContentEnd, blockContentStart + range.from);
+        const toPos = Math.min(blockContentEnd, blockContentStart + range.to);
+        if (toPos > fromPos) {
+          decorations.push(
+            Decoration.inline(fromPos, toPos, {
+              class: 'mc-comment-range',
+              'data-comment-id': comment.id,
+            }),
+          );
+        }
+      }
     }
     return true;
   });

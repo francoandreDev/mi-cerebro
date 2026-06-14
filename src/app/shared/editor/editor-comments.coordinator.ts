@@ -8,7 +8,7 @@ import { signal } from '@angular/core';
 import type { JSONContent } from '@tiptap/core';
 
 import type { CommentsService } from '@core/versioning/comments.service';
-import type { Comment } from '@core/versioning/comments.types';
+import type { Comment, CommentRange } from '@core/versioning/comments.types';
 
 import type { PopoverPosition } from './comment-popover.component';
 
@@ -23,6 +23,7 @@ export interface PopoverState {
   readonly mode: 'new' | 'edit';
   readonly commentId: string | null;
   readonly blockId: string | null;
+  readonly range: CommentRange | null;
   readonly body: string;
   readonly position: PopoverPosition;
   readonly error: string;
@@ -52,11 +53,16 @@ export class EditorCommentsCoordinator {
     }
   }
 
-  openNew(blockId: string | null, position: PopoverPosition): void {
+  openNew(
+    blockId: string | null,
+    position: PopoverPosition,
+    range: CommentRange | null = null,
+  ): void {
     this.popover.set({
       mode: 'new',
       commentId: null,
       blockId,
+      range: blockId ? range : null,
       body: '',
       position,
       error: '',
@@ -72,6 +78,7 @@ export class EditorCommentsCoordinator {
       mode: 'edit',
       commentId,
       blockId: comment.anchorType === 'block' ? comment.anchor : null,
+      range: comment.range ?? null,
       body: extractText(comment.body),
       position,
       error: '',
@@ -90,6 +97,9 @@ export class EditorCommentsCoordinator {
     this.popover.set(null);
   }
 
+  // why: optimistic — close the popover and reflect the new list right
+  //      away. Persistence runs in background; on failure we revert and
+  //      re-open the popover with an error so the user can retry.
   async save(): Promise<void> {
     const current = this.popover();
     if (!current) return;
@@ -98,22 +108,21 @@ export class EditorCommentsCoordinator {
       this.popover.set({ ...current, error: 'El comentario no puede estar vacío.' });
       return;
     }
-    this.popover.set({ ...current, busy: true, error: '' });
+    const previous = this.list();
     const id = this.ctx.entityId();
+    const next =
+      current.mode === 'new'
+        ? this.appendNew(current, body, id)
+        : this.updateExisting(current, body);
+    this.list.set(next);
+    this.ctx.pushClouds(next);
+    this.popover.set(null);
     try {
-      const next =
-        current.mode === 'new'
-          ? this.appendNew(current, body, id)
-          : this.updateExisting(current, body);
       await this.ctx.comments.save(id, this.ctx.entityTitle(), next);
-      this.list.set(next);
-      this.ctx.pushClouds(next);
-      this.popover.set(null);
     } catch (err) {
-      const last = this.popover();
-      if (last) {
-        this.popover.set({ ...last, busy: false, error: 'No se pudo guardar.' });
-      }
+      this.list.set(previous);
+      this.ctx.pushClouds(previous);
+      this.popover.set({ ...current, busy: false, error: 'No se pudo guardar.' });
       throw err;
     }
   }
@@ -121,24 +130,25 @@ export class EditorCommentsCoordinator {
   async remove(): Promise<void> {
     const current = this.popover();
     if (!current || current.mode !== 'edit' || !current.commentId) return;
-    this.popover.set({ ...current, busy: true });
+    const previous = this.list();
+    const next = previous.filter((c) => c.id !== current.commentId);
     const id = this.ctx.entityId();
+    this.list.set(next);
+    this.ctx.pushClouds(next);
+    this.popover.set(null);
     try {
-      const next = this.list().filter((c) => c.id !== current.commentId);
       await this.ctx.comments.save(id, this.ctx.entityTitle(), next);
-      this.list.set(next);
-      this.ctx.pushClouds(next);
-      this.popover.set(null);
     } catch (err) {
-      const last = this.popover();
-      if (last) this.popover.set({ ...last, busy: false, error: 'No se pudo borrar.' });
+      this.list.set(previous);
+      this.ctx.pushClouds(previous);
+      this.popover.set({ ...current, busy: false, error: 'No se pudo borrar.' });
       throw err;
     }
   }
 
   private appendNew(state: PopoverState, body: string, entityId: string): readonly Comment[] {
     const now = new Date().toISOString();
-    const next: Comment = {
+    const base: Comment = {
       id: crypto.randomUUID(),
       anchorType: state.blockId ? 'block' : 'entity',
       anchor: state.blockId ?? entityId,
@@ -147,6 +157,7 @@ export class EditorCommentsCoordinator {
       updatedAt: now,
       orphaned: false,
     };
+    const next: Comment = state.range ? { ...base, range: state.range } : base;
     return [...this.list(), next];
   }
 

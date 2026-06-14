@@ -822,7 +822,13 @@ export const es = {
   'drafts.category.mutate': 'Cambio',
   'drafts.preview.before': 'Antes',
   'drafts.preview.after': 'Después',
+  'drafts.preview.beforeColumn': 'Antes',
+  'drafts.preview.afterColumn': 'Después',
   'drafts.preview.empty': '(bloque vacío)',
+  'drafts.preview.selectOne': 'Elegí un cambio a la izquierda.',
+  'drafts.preview.pickSide': 'Hacé clic en el lado que quieras conservar.',
+  'drafts.preview.keepBefore': 'Conservar el original (descartar el cambio)',
+  'drafts.preview.keepAfter': 'Aplicar el cambio',
   'drafts.errors.saveFailed': 'No se pudo guardar el borrador. Reintentá.',
   'drafts.errors.applyFailed': 'No se pudo aplicar el cambio a main. Reintentá.',
   'drafts.errors.missingBlock':

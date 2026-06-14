@@ -18,10 +18,21 @@ export const commentsFilepath = (entityId: string): string => `${COMMENTS_DIR}/$
 // 'range'  is intentionally absent — diferido a pulido posterior (§19).
 export type CommentAnchorType = 'entity' | 'block';
 
+// 13g-i — Optional offsets *within* the anchor block's content (ProseMirror
+// positions relative to `blockStart + 1`). When present, the cloud is
+// rendered at `range.to` instead of the block end, and an inline decoration
+// underlines [from, to). Backwards-compatible: legacy block-anchored
+// comments simply lack the field and keep their old end-of-block behavior.
+export interface CommentRange {
+  readonly from: number;
+  readonly to: number;
+}
+
 export interface Comment {
   readonly id: string;
   readonly anchorType: CommentAnchorType;
   readonly anchor: string;
+  readonly range?: CommentRange;
   readonly body: JSONContent;
   readonly createdAt: string;
   readonly updatedAt: string;

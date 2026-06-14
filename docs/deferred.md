@@ -101,11 +101,17 @@ Formato por entrada:
 
 ## Versionado y variantes (origen: paso 13)
 
-### Anchor `range` para comentarios
+### Re-mapping de offsets de `range` ante ediciones del bloque
 
-- **Qué**: §12 menciona tres niveles de anchor para comentarios (`entity`, `block`, `range`). 13c implementa sólo `entity` y `block`.
-- **Por qué**: `range` requiere UI de selección de texto + persistencia de offsets dentro del bloque + casos de borde de mapping cuando el texto del bloque cambia parcialmente. Cubre un caso minoritario ("comentario sobre estas 3 palabras") cuando `block` ("comentario sobre este párrafo") cubre el 80%.
+- **Qué**: 13g-i introdujo `Comment.range?: { from, to }` (offsets relativos al contenido del bloque). El renderer los clampa a fin de bloque, pero no aplica `tr.mapping` cuando el texto del bloque se edita — los offsets persistidos quedan congelados al valor de creación. En la práctica funciona porque el usuario edita poco después de comentar y/o el clamp impide que la nube se renderice fuera del bloque; pero un comment sobre "las primeras 3 palabras" puede terminar subrayando algo distinto si se reescribe el inicio del bloque.
+- **Por qué**: el re-mapping requiere un plugin TipTap que aplique cada `tr.mapping` a los anchors persistidos en memoria y los flushee a disk vía `CommentsService` cuando el doc autosaveea. Suma complejidad de orphan-flag (range que se colapsa a `to <= from` debería invalidarse) y un spec dedicado de mapping. Diferido hasta tener uso real que lo justifique.
 - **Target**: §19.16e (pulido del editor).
+
+### Anchor `range` multi-bloque (selección que cruza párrafos)
+
+- **Qué**: hoy `range` queda confinado al bloque donde está `$from`. Selecciones que cruzan dos o más bloques caen al anchor `block` del primero (sin range). Comentar a través de párrafos no se soporta.
+- **Por qué**: requiere un modelo de anchor distinto (lista de `{ blockId, from, to }` o un par `{ startBlockId, startOffset, endBlockId, endOffset }`), nuevo orphan handling (¿qué pasa si se borra el bloque del medio?), y renderer que dibuje la nube en el último bloque del span. El caso es minoritario.
+- **Target**: §19.16e (pulido del editor) o sin asignar.
 
 ### Widget render para diff-marks de tipo "insertion-only"
 

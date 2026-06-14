@@ -33,6 +33,32 @@ export const blockIdAtSelection = (editor: Editor): string | null => {
   return null;
 };
 
+// 13g-i — Offsets of the current selection relative to the start of the
+// block's content. Returns null when the selection is empty or doesn't sit
+// inside a block with an id. Both endpoints are clamped to the block.
+export const rangeWithinBlockAtSelection = (
+  editor: Editor,
+): { from: number; to: number } | null => {
+  const sel = editor.state.selection;
+  if (sel.from === sel.to) return null;
+  const $from = sel.$from;
+  for (let depth = $from.depth; depth >= 0; depth--) {
+    const node = $from.node(depth);
+    const id = node.attrs?.[BLOCK_ID_ATTR] as string | undefined;
+    if (!id) continue;
+    const blockContentStart = $from.start(depth);
+    const blockContentEnd = blockContentStart + node.content.size;
+    const from = Math.max(0, sel.from - blockContentStart);
+    const to = Math.max(
+      from,
+      Math.min(blockContentEnd - blockContentStart, sel.to - blockContentStart),
+    );
+    if (to <= from) return null;
+    return { from, to };
+  }
+  return null;
+};
+
 export const cloudRect = (host: HTMLElement, commentId: string): LocalPosition => {
   const cloud = host.querySelector(`.mc-comment-cloud[data-comment-id="${commentId}"]`);
   if (!cloud) return { top: 0, left: 0 };

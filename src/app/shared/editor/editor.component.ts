@@ -34,7 +34,12 @@ import { EditorCommentsCoordinator } from './editor-comments.coordinator';
 import { EditorToolbarComponent } from './editor-toolbar.component';
 import { I18nService } from '@core/i18n/i18n.service';
 import { ImagePickerDialogComponent } from './image-picker-dialog.component';
-import { blockIdAtSelection, cloudRect, selectionRect } from './editor-selection.utils';
+import {
+  blockIdAtSelection,
+  cloudRect,
+  rangeWithinBlockAtSelection,
+  selectionRect,
+} from './editor-selection.utils';
 import { createEditorInstance, jsonEquals } from './setup-editor';
 
 @Component({
@@ -140,6 +145,7 @@ export class EditorComponent {
     this.commentsCoord.openNew(
       blockIdAtSelection(ed),
       selectionRect(ed, this.host().nativeElement),
+      rangeWithinBlockAtSelection(ed),
     );
   }
 
