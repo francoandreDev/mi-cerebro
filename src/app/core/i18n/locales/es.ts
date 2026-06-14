@@ -732,7 +732,13 @@ export const es = {
   'settings.versioning.push': 'Push tras autocommit',
   'settings.variants.dormant': 'Variantes a reposo tras (días)',
   'settings.goals.dormant': 'Objetivos a reposo tras (días)',
-  'settings.theme.override': 'Tema fijado',
+  'settings.theme.override': 'Tema',
+  'settings.theme.option.auto': 'Automático',
+  'settings.theme.option.light': 'Claro',
+  'settings.theme.option.dark': 'Oscuro',
+  'settings.theme.hint':
+    'Automático sigue la preferencia del sistema. Fijar claro u oscuro la guarda en la carpeta del workspace.',
+  'settings.theme.resolved': 'Activo',
 
   'music.title': 'Música',
   'music.library': 'Biblioteca',

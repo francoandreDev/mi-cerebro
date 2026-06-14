@@ -9,6 +9,7 @@ import {
   SETTINGS_SCHEMA_VERSION,
   SETTINGS_STORAGE_KEY,
   type Settings,
+  type ThemeOverride,
 } from './settings.types';
 
 // why: settings live in `.mi-cerebro/` alongside trash/history so they
@@ -55,6 +56,11 @@ export class SettingsService {
       ...s,
       versioning: { ...s.versioning, pushAfterAutocommit: enabled },
     }));
+  }
+
+  setThemeOverride(override: ThemeOverride): void {
+    if (override !== 'auto' && override !== 'light' && override !== 'dark') return;
+    this.update((s) => ({ ...s, theme: { ...s.theme, override } }));
   }
 
   setPushThrottleMinutes(minutes: number): void {

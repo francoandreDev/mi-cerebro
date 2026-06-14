@@ -1,5 +1,7 @@
 import { DOCUMENT } from '@angular/common';
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, computed, effect, inject, signal } from '@angular/core';
+
+import { SettingsService } from '@core/settings/settings.service';
 
 import type { ResolvedTheme, ThemePreference } from './theme.types';
 import { THEME_STORAGE_KEY } from './theme.types';
@@ -7,13 +9,13 @@ import { THEME_STORAGE_KEY } from './theme.types';
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
   private readonly doc = inject(DOCUMENT);
+  private readonly settings = inject(SettingsService);
 
-  private readonly preferenceSignal = signal<ThemePreference>(this.readStored());
   private readonly systemPrefersDark = signal<boolean>(this.matchSystemDark());
 
-  readonly preference = this.preferenceSignal.asReadonly();
+  readonly preference = computed<ThemePreference>(() => this.settings.state().theme.override);
   readonly resolved = computed<ResolvedTheme>(() => {
-    const pref = this.preferenceSignal();
+    const pref = this.preference();
     if (pref === 'auto') {
       return this.systemPrefersDark() ? 'dark' : 'light';
     }
@@ -21,18 +23,13 @@ export class ThemeService {
   });
 
   constructor() {
+    this.migrateLegacyStorage();
     this.listenToSystemChanges();
-    this.apply(this.preferenceSignal());
+    effect(() => this.apply(this.preference()));
   }
 
   setPreference(next: ThemePreference): void {
-    this.preferenceSignal.set(next);
-    if (next === 'auto') {
-      this.doc.defaultView?.localStorage.removeItem(THEME_STORAGE_KEY);
-    } else {
-      this.doc.defaultView?.localStorage.setItem(THEME_STORAGE_KEY, next);
-    }
-    this.apply(next);
+    this.settings.setThemeOverride(next);
   }
 
   private apply(pref: ThemePreference): void {
@@ -44,9 +41,20 @@ export class ThemeService {
     }
   }
 
-  private readStored(): ThemePreference {
-    const raw = this.doc.defaultView?.localStorage.getItem(THEME_STORAGE_KEY);
-    return raw === 'light' || raw === 'dark' ? raw : 'auto';
+  // why: pre-11bis ThemeService stored its own `mc.theme` key. SettingsService
+  //      now owns the override (so it travels in `.mi-cerebro/settings.json`).
+  //      One-shot migration: if the legacy key exists and settings is still
+  //      at default, lift it in; then drop the key either way.
+  private migrateLegacyStorage(): void {
+    const ls = this.doc.defaultView?.localStorage;
+    if (!ls) return;
+    const raw = ls.getItem(THEME_STORAGE_KEY);
+    if (raw === 'light' || raw === 'dark') {
+      if (this.settings.state().theme.override === 'auto') {
+        this.settings.setThemeOverride(raw);
+      }
+    }
+    ls.removeItem(THEME_STORAGE_KEY);
   }
 
   private matchSystemDark(): boolean {

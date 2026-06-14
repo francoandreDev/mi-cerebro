@@ -164,13 +164,30 @@
     </p>
   </section>
 
-  <section class="group placeholder">
-    <h3>
-      {{ t('settings.section.theme') }} <span class="soon">{{ t('settings.soon') }}</span>
-    </h3>
-    <p class="muted">
-      {{ t('settings.theme.override') }}:
-      <strong>{{ state().theme.override }}</strong>
-    </p>
+  <section class="group">
+    <h3>{{ t('settings.section.theme') }}</h3>
+
+    <fieldset class="field theme-choice">
+      <legend class="label">{{ t('settings.theme.override') }}</legend>
+      <span class="row" role="radiogroup">
+        @for (opt of themeOptions; track opt.value) {
+          <button
+            type="button"
+            class="seg"
+            role="radio"
+            [class.active]="state().theme.override === opt.value"
+            [attr.aria-checked]="state().theme.override === opt.value"
+            (click)="setTheme(opt.value)"
+          >
+            {{ t(opt.labelKey) }}
+          </button>
+        }
+      </span>
+      <span class="hint">
+        {{ t('settings.theme.hint') }}
+        · {{ t('settings.theme.resolved') }}:
+        <strong>{{ t(resolvedThemeKey()) }}</strong>
+      </span>
+    </fieldset>
   </section>
 </section>

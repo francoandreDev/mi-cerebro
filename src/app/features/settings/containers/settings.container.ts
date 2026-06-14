@@ -1,10 +1,19 @@
-import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { ErrorService } from '@core/errors/error.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { SettingsService, isValidTimezone } from '@core/settings/settings.service';
+import type { ThemeOverride } from '@core/settings/settings.types';
+import { ThemeService } from '@core/theme/theme.service';
 import { isValidRemoteUrl } from '@core/versioning/remote.config.io';
 import { RemoteService } from '@core/versioning/remote.service';
 
@@ -20,6 +29,16 @@ export class SettingsContainer {
   private readonly i18n = inject(I18nService);
   private readonly remote = inject(RemoteService);
   private readonly errors = inject(ErrorService);
+  private readonly theme = inject(ThemeService);
+
+  protected readonly themeOptions: readonly { value: ThemeOverride; labelKey: TranslationKey }[] = [
+    { value: 'auto', labelKey: 'settings.theme.option.auto' },
+    { value: 'light', labelKey: 'settings.theme.option.light' },
+    { value: 'dark', labelKey: 'settings.theme.option.dark' },
+  ];
+  protected readonly resolvedThemeKey = computed<TranslationKey>(() =>
+    this.theme.resolved() === 'dark' ? 'settings.theme.option.dark' : 'settings.theme.option.light',
+  );
 
   protected readonly state = this.settings.state;
   protected readonly timezones = listSupportedTimezones();
@@ -112,6 +131,11 @@ export class SettingsContainer {
     } catch (e) {
       this.errors.report(e);
     }
+  }
+
+  protected setTheme(next: ThemeOverride): void {
+    if (next === this.state().theme.override) return;
+    this.settings.setThemeOverride(next);
   }
 
   protected async pushRemote(): Promise<void> {

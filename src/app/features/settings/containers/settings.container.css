@@ -89,6 +89,26 @@
   font-size: var(--mc-font-size-xs, 0.75rem);
   color: var(--mc-fg-warning, #d97706);
 }
+.theme-choice {
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+.seg {
+  flex: 1;
+  padding: var(--mc-space-1) var(--mc-space-3);
+  border: 1px solid var(--mc-border-default);
+  border-radius: var(--mc-radius-md);
+  background: var(--mc-bg-base);
+  color: var(--mc-fg-default);
+  cursor: pointer;
+  font: inherit;
+}
+.seg.active {
+  background: var(--mc-accent-primary);
+  color: var(--mc-bg-base);
+  border-color: var(--mc-accent-primary);
+}
 .muted {
   margin: 0;
   color: var(--mc-fg-muted);

@@ -38,18 +38,18 @@
 // LIGHT — default fallback. Used when no data-theme attr is set
 // and the OS does not request dark.
 :root {
-  --mc-bg-base: #ffffff;
-  --mc-bg-surface: #f6f8fa;
-  --mc-bg-elevated: #ffffff;
-  --mc-bg-hover: #eef1f4;
-  --mc-bg-selected: #ffe8dc;
+  --mc-bg-base: #cfc8b8;
+  --mc-bg-surface: #c2bba9;
+  --mc-bg-elevated: #d8d2c3;
+  --mc-bg-hover: #b8b09d;
+  --mc-bg-selected: #e6c6a8;
 
   --mc-fg-primary: #1f2328;
-  --mc-fg-muted: #59636e;
-  --mc-fg-dim: #818b97;
+  --mc-fg-muted: #4a5058;
+  --mc-fg-dim: #6a7079;
 
-  --mc-border-default: #d0d7de;
-  --mc-border-strong: #8c959f;
+  --mc-border-default: #a39b89;
+  --mc-border-strong: #7d7565;
 
   --mc-accent-primary: #c44616;
   --mc-accent-hover: #a83a0f;
