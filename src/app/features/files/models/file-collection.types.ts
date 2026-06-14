@@ -41,15 +41,17 @@ export const extFromName = (name: string, fallback = 'bin'): string => {
   return ext === '' ? fallback : ext;
 };
 
+import type { IconName } from '@shared/icon/icons.data';
+
 // why: keep this list short — icon is purely a visual hint, not a content-type
-//      registry. Anything unknown falls back to a generic clip glyph.
-export const iconForMime = (mime: string, name: string): string => {
+//      registry. Anything unknown falls back to a generic paperclip.
+export const iconForMime = (mime: string, name: string): IconName => {
   const m = (mime || '').toLowerCase();
-  if (m.startsWith('image/')) return '🖼';
-  if (m.startsWith('audio/')) return '🎵';
-  if (m.startsWith('video/')) return '🎬';
-  if (m === 'application/pdf') return '📄';
-  if (m.startsWith('text/') || m === 'application/json') return '📝';
+  if (m.startsWith('image/')) return 'image';
+  if (m.startsWith('audio/')) return 'music-note';
+  if (m.startsWith('video/')) return 'video-camera';
+  if (m === 'application/pdf') return 'file-pdf';
+  if (m.startsWith('text/') || m === 'application/json') return 'file-text';
   if (
     m === 'application/zip' ||
     m === 'application/x-7z-compressed' ||
@@ -57,17 +59,18 @@ export const iconForMime = (mime: string, name: string): string => {
     m === 'application/gzip' ||
     m === 'application/x-tar'
   )
-    return '📦';
+    return 'package';
   const ext = extFromName(name, '');
-  if (ext === 'pdf') return '📄';
+  if (ext === 'pdf') return 'file-pdf';
   if (ext === 'mp3' || ext === 'wav' || ext === 'ogg' || ext === 'm4a' || ext === 'flac')
-    return '🎵';
+    return 'music-note';
   if (ext === 'mp4' || ext === 'mov' || ext === 'mkv' || ext === 'webm' || ext === 'avi')
-    return '🎬';
-  if (ext === 'zip' || ext === '7z' || ext === 'rar' || ext === 'gz' || ext === 'tar') return '📦';
+    return 'video-camera';
+  if (ext === 'zip' || ext === '7z' || ext === 'rar' || ext === 'gz' || ext === 'tar')
+    return 'package';
   if (ext === 'txt' || ext === 'md' || ext === 'csv' || ext === 'json' || ext === 'log')
-    return '📝';
-  return '📎';
+    return 'file-text';
+  return 'paperclip';
 };
 
 export const formatBytes = (bytes: number): string => {

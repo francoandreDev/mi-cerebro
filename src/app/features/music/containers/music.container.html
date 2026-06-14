@@ -25,7 +25,11 @@
           @for (track of tracks(); track track.id) {
             <li class="row" [class.playing]="currentTrackId() === track.id">
               <button type="button" class="play" (click)="onPlayTrack(track)">
-                {{ currentTrackId() === track.id && isPlaying() ? '⏸' : '▶' }}
+                @if (currentTrackId() === track.id && isPlaying()) {
+                  <mc-icon name="pause" />
+                } @else {
+                  <mc-icon name="play" />
+                }
               </button>
               <span class="title">{{ track.originalName }}</span>
               <button
@@ -34,7 +38,7 @@
                 (click)="onDeleteTrack(track)"
                 [attr.aria-label]="t('common.delete')"
               >
-                ✕
+                <mc-icon name="x" />
               </button>
             </li>
           }
@@ -70,7 +74,11 @@
             [attr.aria-label]="t('music.favoriteToggle')"
             [attr.aria-pressed]="playlist.favorite === true"
           >
-            {{ playlist.favorite === true ? '★' : '☆' }}
+            @if (playlist.favorite === true) {
+              <mc-icon name="star-fill" />
+            } @else {
+              <mc-icon name="star" />
+            }
           </button>
           <button
             type="button"
@@ -80,7 +88,7 @@
             [title]="t('music.playAll')"
             [attr.aria-label]="t('music.playAll')"
           >
-            ▶
+            <mc-icon name="play" />
           </button>
           <button
             type="button"
@@ -89,7 +97,7 @@
             [title]="t('common.delete')"
             [attr.aria-label]="t('common.delete')"
           >
-            🗑
+            <mc-icon name="trash" />
           </button>
         </header>
 
@@ -100,7 +108,11 @@
             @for (track of activeTracks(); track track.id; let i = $index) {
               <li class="row" [class.playing]="currentTrackId() === track.id">
                 <button type="button" class="play" (click)="onPlayTrack(track)">
-                  {{ currentTrackId() === track.id && isPlaying() ? '⏸' : '▶' }}
+                  @if (currentTrackId() === track.id && isPlaying()) {
+                    <mc-icon name="pause" />
+                  } @else {
+                    <mc-icon name="play" />
+                  }
                 </button>
                 <span class="title">{{ track.originalName }}</span>
                 <button
@@ -127,7 +139,7 @@
                   (click)="onRemoveFromPlaylist(track.id)"
                   [attr.aria-label]="t('music.removeFromPlaylist')"
                 >
-                  ✕
+                  <mc-icon name="x" />
                 </button>
               </li>
             }
@@ -182,7 +194,7 @@
               <button type="button" (click)="onSelectPlaylist(p)">
                 <span class="pl-title">
                   @if (p.favorite) {
-                    <span class="fav-icon" aria-hidden="true">★</span>
+                    <mc-icon name="star-fill" />
                   }
                   {{ p.title || t('music.untitledPlaylist') }}
                 </span>

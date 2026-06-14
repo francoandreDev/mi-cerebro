@@ -26,6 +26,7 @@ import {
 import { IMAGE_REF_NAME, createImageRefNode } from '@core/tiptap/image-ref/image-ref.node';
 import { DraftsService } from '@core/versioning/drafts.service';
 import type { DiffMark } from '@core/versioning/drafts.types';
+import { IconComponent } from '@shared/icon/icon.component';
 
 import { CommentsPanelContainer } from './comments-panel.container';
 import { DraftsPanelContainer } from './drafts-panel.container';
@@ -35,7 +36,12 @@ import { ImagePickerDialogComponent } from './image-picker-dialog.component';
 @Component({
   selector: 'mc-editor',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommentsPanelContainer, DraftsPanelContainer, ImagePickerDialogComponent],
+  imports: [
+    CommentsPanelContainer,
+    DraftsPanelContainer,
+    ImagePickerDialogComponent,
+    IconComponent,
+  ],
   template: `
     @if (showToolbar()) {
       <div class="toolbar">
@@ -46,7 +52,7 @@ import { ImagePickerDialogComponent } from './image-picker-dialog.component';
             (click)="openPicker()"
             [attr.aria-label]="t('editor.insertImage')"
           >
-            🖼 {{ t('editor.insertImage') }}
+            <mc-icon name="image" /> {{ t('editor.insertImage') }}
           </button>
         }
         @if (commentsAvailable()) {
@@ -57,7 +63,7 @@ import { ImagePickerDialogComponent } from './image-picker-dialog.component';
             [attr.aria-pressed]="panelOpen()"
             [attr.aria-label]="panelOpen() ? t('comments.toggle.close') : t('comments.toggle.open')"
           >
-            💬 {{ t('comments.toggle.label') }}
+            <mc-icon name="chat-circle" /> {{ t('comments.toggle.label') }}
           </button>
         }
         @if (commentsAvailable() && editable()) {
@@ -68,7 +74,7 @@ import { ImagePickerDialogComponent } from './image-picker-dialog.component';
             [attr.aria-pressed]="draftMode()"
             [attr.aria-label]="draftMode() ? t('editor.draftMode.off') : t('editor.draftMode.on')"
           >
-            📝 {{ t('editor.draftMode.label') }}
+            <mc-icon name="note-pencil" /> {{ t('editor.draftMode.label') }}
           </button>
         }
         @if (draftMode()) {
@@ -78,7 +84,7 @@ import { ImagePickerDialogComponent } from './image-picker-dialog.component';
         }
         @if (lastDraftSaveCount() !== null) {
           <span class="saved-flash" role="status" aria-live="polite">
-            ✓ {{ t('editor.draftMode.saved') }} ({{ lastDraftSaveCount() }})
+            <mc-icon name="check" /> {{ t('editor.draftMode.saved') }} ({{ lastDraftSaveCount() }})
           </span>
         }
         @if (commentsAvailable()) {
@@ -91,7 +97,7 @@ import { ImagePickerDialogComponent } from './image-picker-dialog.component';
               draftsPanelOpen() ? t('drafts.toggle.close') : t('drafts.toggle.open')
             "
           >
-            📋 {{ t('drafts.toggle.label') }}
+            <mc-icon name="clipboard-text" /> {{ t('drafts.toggle.label') }}
           </button>
         }
       </div>

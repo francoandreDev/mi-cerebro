@@ -6,6 +6,7 @@ import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { PlayerService } from '@core/music/player.service';
+import { IconComponent } from '@shared/icon/icon.component';
 
 import type { Playlist, PlaylistSummary, Track } from '../models/music.types';
 import { MusicLibraryService } from '../services/music-library.service';
@@ -14,6 +15,7 @@ import { PlaylistsService } from '../services/playlists.service';
 @Component({
   selector: 'mc-music',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [IconComponent],
   templateUrl: './music.container.html',
   styleUrl: './music.container.css',
 })

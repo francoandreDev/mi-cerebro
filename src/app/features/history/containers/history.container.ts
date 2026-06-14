@@ -11,6 +11,7 @@ import {
 import { ErrorService } from '@core/errors/error.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import { RestoreService } from '@core/versioning/restore.service';
+import { IconComponent } from '@shared/icon/icon.component';
 import { McDatePipe } from '@shared/pipes/mc-date.pipe';
 
 import { BUCKET_LABEL_KEY } from '../services/bucket-labels';
@@ -31,7 +32,7 @@ import { MilestoneController } from '../services/milestone.controller';
   selector: 'mc-history',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [HistoryService, HistoryDiffService, MilestoneController],
-  imports: [McDatePipe],
+  imports: [McDatePipe, IconComponent],
   templateUrl: './history.container.html',
   styleUrl: './history.container.css',
 })

@@ -10,6 +10,7 @@ import {
 
 import { I18nService } from '@core/i18n/i18n.service';
 import { ImageReaderService } from '@core/images/image-reader.service';
+import { IconComponent } from '@shared/icon/icon.component';
 
 interface ThumbEntry {
   readonly galleryId: string;
@@ -24,12 +25,15 @@ interface ThumbEntry {
 @Component({
   selector: 'mc-image-picker-dialog',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [IconComponent],
   template: `
     <div class="backdrop" (click)="dismiss.emit()" role="presentation"></div>
     <div class="dialog" role="dialog" aria-modal="true">
       <header>
         <h3>{{ t('editor.imagePicker.title') }}</h3>
-        <button type="button" class="ghost" (click)="dismiss.emit()" aria-label="Cerrar">✕</button>
+        <button type="button" class="ghost" (click)="dismiss.emit()" aria-label="Cerrar">
+          <mc-icon name="x" />
+        </button>
       </header>
       @if (summaries().length === 0) {
         <p class="empty">{{ t('editor.imagePicker.empty') }}</p>

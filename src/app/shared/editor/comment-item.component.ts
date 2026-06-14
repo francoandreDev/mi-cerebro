@@ -7,10 +7,12 @@ import type { JSONContent } from '@tiptap/core';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import type { Comment } from '@core/versioning/comments.types';
+import { IconComponent } from '@shared/icon/icon.component';
 
 @Component({
   selector: 'mc-comment-item',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [IconComponent],
   template: `
     <header class="row-head">
       <span class="chip" [attr.data-type]="comment().anchorType">{{ chipLabel() }}</span>
@@ -21,7 +23,7 @@ import type { Comment } from '@core/versioning/comments.types';
         (click)="delete.emit(comment().id)"
         [attr.aria-label]="t('comments.actions.delete')"
       >
-        ✕
+        <mc-icon name="x" />
       </button>
     </header>
     <p class="body">{{ bodyText() }}</p>

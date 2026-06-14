@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, input, output, signal } fro
 
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { IconComponent } from '@shared/icon/icon.component';
 import { MC_INTERNAL_DND_TYPE, hasInternalDnd } from '@shared/utils/dnd';
 
 import type { Gallery, GalleryImage } from '../models/gallery.types';
@@ -9,6 +10,7 @@ import type { Gallery, GalleryImage } from '../models/gallery.types';
 @Component({
   selector: 'mc-image-grid',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [IconComponent],
   template: `
     <header class="header">
       <h3>{{ t('images.images.title') }} ({{ gallery().images.length }})</h3>
@@ -88,7 +90,7 @@ import type { Gallery, GalleryImage } from '../models/gallery.types';
                   (click)="remove.emit(img.id)"
                   [attr.aria-label]="t('images.images.delete')"
                 >
-                  ✕
+                  <mc-icon name="x" />
                 </button>
               </div>
             }

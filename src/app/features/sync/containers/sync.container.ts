@@ -15,6 +15,7 @@ import { RemoteService } from '@core/versioning/remote.service';
 import { listRefTargets } from '@core/versioning/remote-bulk';
 import type { RefSyncOutcome, RefSyncStatus } from '@core/versioning/remote.types';
 import { VariantsService } from '@core/versioning/variants.service';
+import { IconComponent } from '@shared/icon/icon.component';
 import { McDatePipe } from '@shared/pipes/mc-date.pipe';
 
 interface Row {
@@ -31,7 +32,7 @@ interface Row {
   selector: 'mc-sync',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, McDatePipe],
+  imports: [RouterLink, McDatePipe, IconComponent],
   templateUrl: './sync.container.html',
   styleUrl: './sync.container.css',
 })

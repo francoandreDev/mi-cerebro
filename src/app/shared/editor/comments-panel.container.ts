@@ -23,6 +23,7 @@ import type { TranslationKey } from '@core/i18n/i18n.types';
 import { CommentsService } from '@core/versioning/comments.service';
 import { applyOrphanFlags } from '@core/versioning/comments-orphans';
 import type { Comment, CommentAnchorType } from '@core/versioning/comments.types';
+import { IconComponent } from '@shared/icon/icon.component';
 
 import { extractBlockSummaries, type BlockSummary } from './block-summaries';
 import { CommentFormComponent } from './comment-form.component';
@@ -31,7 +32,7 @@ import { CommentItemComponent } from './comment-item.component';
 @Component({
   selector: 'mc-comments-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommentFormComponent, CommentItemComponent],
+  imports: [CommentFormComponent, CommentItemComponent, IconComponent],
   template: `
     <header class="head">
       <h3 id="mc-comments-title">{{ t('comments.title') }} ({{ count() }})</h3>
@@ -41,7 +42,7 @@ import { CommentItemComponent } from './comment-item.component';
         (click)="closed.emit()"
         [attr.aria-label]="t('comments.close')"
       >
-        ✕
+        <mc-icon name="x" />
       </button>
     </header>
 

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, input, output, signal } fro
 
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { IconComponent } from '@shared/icon/icon.component';
 import { MC_INTERNAL_DND_TYPE, hasInternalDnd } from '@shared/utils/dnd';
 
 import type { ChapterSummary } from '../models/book.types';
@@ -9,6 +10,7 @@ import type { ChapterSummary } from '../models/book.types';
 @Component({
   selector: 'mc-chapter-list',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [IconComponent],
   template: `
     <header class="header">
       <h3>{{ t('books.chapters.title') }}</h3>
@@ -64,7 +66,7 @@ import type { ChapterSummary } from '../models/book.types';
                 (click)="removeChapter.emit(ch.id)"
                 [attr.aria-label]="t('books.chapters.delete')"
               >
-                ✕
+                <mc-icon name="x" />
               </button>
             </div>
           }

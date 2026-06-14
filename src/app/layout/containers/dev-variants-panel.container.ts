@@ -16,6 +16,7 @@ import { VariantsService } from '@core/versioning/variants.service';
 import type { Variant } from '@core/versioning/variants.types';
 import { NotesService } from '@features/notes/services/notes.service';
 import { BgColorDirective } from '@shared/directives/bg-color.directive';
+import { IconComponent } from '@shared/icon/icon.component';
 
 import {
   testAlignWithGit,
@@ -57,7 +58,7 @@ interface TestState {
 @Component({
   selector: 'mc-dev-variants-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, BgColorDirective],
+  imports: [FormsModule, BgColorDirective, IconComponent],
   templateUrl: './dev-variants-panel.container.html',
   styleUrls: ['./dev-versioning-panel.container.css', './dev-variants-panel.container.css'],
 })

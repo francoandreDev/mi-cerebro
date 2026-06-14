@@ -10,11 +10,14 @@ import {
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 
+import { IconComponent } from '@shared/icon/icon.component';
+
 import type { GalleryImage } from '../models/gallery.types';
 
 @Component({
   selector: 'mc-image-lightbox',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [IconComponent],
   template: `
     <button
       type="button"
@@ -32,7 +35,7 @@ import type { GalleryImage } from '../models/gallery.types';
       </div>
     </div>
     <button type="button" class="x" [attr.aria-label]="t('common.close')" (click)="dismiss.emit()">
-      ✕
+      <mc-icon name="x" />
     </button>
   `,
   styles: `

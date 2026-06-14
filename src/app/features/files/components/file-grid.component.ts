@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, inject, input, output, signal } fro
 
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { IconComponent } from '@shared/icon/icon.component';
+import type { IconName } from '@shared/icon/icons.data';
 import { MC_INTERNAL_DND_TYPE, hasInternalDnd } from '@shared/utils/dnd';
 
 import {
@@ -14,6 +16,7 @@ import {
 @Component({
   selector: 'mc-file-grid',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [IconComponent],
   template: `
     <header class="header">
       <h3>{{ t('files.items.title') }} ({{ collection().items.length }})</h3>
@@ -61,7 +64,7 @@ import {
                   <embed class="preview pdf" [src]="preview.url" type="application/pdf" />
                 }
               } @else {
-                <span class="icon" aria-hidden="true">{{ iconFor(item) }}</span>
+                <mc-icon class="icon" [name]="iconFor(item)" />
               }
               <span class="name" [title]="item.originalName">{{ item.originalName }}</span>
               <span class="bytes">{{ formatSize(item.bytes) }}</span>
@@ -92,7 +95,7 @@ import {
                   (click)="remove.emit(item.id)"
                   [attr.aria-label]="t('files.items.delete')"
                 >
-                  ✕
+                  <mc-icon name="x" />
                 </button>
               </div>
             }
@@ -272,7 +275,7 @@ export class FileGridComponent {
     return ordered;
   }
 
-  protected iconFor(item: FileItem): string {
+  protected iconFor(item: FileItem): IconName {
     return iconForMime(item.mime, item.originalName);
   }
 

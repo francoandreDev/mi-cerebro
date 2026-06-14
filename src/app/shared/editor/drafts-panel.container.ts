@@ -24,13 +24,14 @@ import { AutocommitService } from '@core/versioning/autocommit.service';
 import { applyMarkToDoc } from '@core/versioning/draft-apply';
 import { DraftsService } from '@core/versioning/drafts.service';
 import type { DiffMark } from '@core/versioning/drafts.types';
+import { IconComponent } from '@shared/icon/icon.component';
 
 import { DraftMarkItemComponent } from './draft-mark-item.component';
 
 @Component({
   selector: 'mc-drafts-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DraftMarkItemComponent],
+  imports: [DraftMarkItemComponent, IconComponent],
   template: `
     <header class="head">
       <h3 id="mc-drafts-title">{{ t('drafts.title') }} ({{ count() }})</h3>
@@ -40,7 +41,7 @@ import { DraftMarkItemComponent } from './draft-mark-item.component';
         (click)="closed.emit()"
         [attr.aria-label]="t('drafts.close')"
       >
-        ✕
+        <mc-icon name="x" />
       </button>
     </header>
 
@@ -54,10 +55,10 @@ import { DraftMarkItemComponent } from './draft-mark-item.component';
     } @else {
       <div class="bulk" role="group">
         <button type="button" class="primary small" (click)="onAcceptAll()" [disabled]="busy()">
-          ✓ {{ t('drafts.actions.acceptAll') }}
+          <mc-icon name="check" /> {{ t('drafts.actions.acceptAll') }}
         </button>
         <button type="button" class="ghost small" (click)="onRejectAll()" [disabled]="busy()">
-          ✕ {{ t('drafts.actions.rejectAll') }}
+          <mc-icon name="x" /> {{ t('drafts.actions.rejectAll') }}
         </button>
       </div>
       <ul class="list" aria-live="polite" aria-labelledby="mc-drafts-title">

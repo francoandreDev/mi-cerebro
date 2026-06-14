@@ -11,7 +11,7 @@
         [attr.aria-label]="item.label"
         (click)="goTo(item.key)"
       >
-        {{ item.icon }}
+        <mc-icon [name]="item.icon" />
       </button>
     }
     <div class="rail-spacer"></div>
@@ -23,7 +23,7 @@
       [attr.aria-label]="t('calendar.title')"
       (click)="goTo('calendar')"
     >
-      📅
+      <mc-icon name="calendar-dots" />
     </button>
     <button
       type="button"
@@ -33,7 +33,7 @@
       [attr.aria-label]="t('reminders.title')"
       (click)="goTo('reminders')"
     >
-      ⏰
+      <mc-icon name="bell" />
     </button>
     <button
       type="button"
@@ -43,7 +43,7 @@
       [attr.aria-label]="t('music.title')"
       (click)="goTo('music')"
     >
-      🎵
+      <mc-icon name="music-notes" />
     </button>
     <button
       type="button"
@@ -53,7 +53,7 @@
       [attr.aria-label]="t('versioning.history.title')"
       (click)="goTo('history')"
     >
-      🕐
+      <mc-icon name="clock-counter-clockwise" />
     </button>
     <button
       type="button"
@@ -63,7 +63,7 @@
       [attr.aria-label]="t('variants.page.title')"
       (click)="goTo('variants')"
     >
-      🌿
+      <mc-icon name="git-branch" />
     </button>
     <button
       type="button"
@@ -73,7 +73,7 @@
       [attr.aria-label]="t('trash.title')"
       (click)="goTo('trash')"
     >
-      🗑
+      <mc-icon name="trash" />
     </button>
     <button
       type="button"
@@ -83,7 +83,7 @@
       [attr.aria-label]="t('settings.title')"
       (click)="goTo('settings')"
     >
-      ⚙
+      <mc-icon name="gear" />
     </button>
     <mc-remote-status-dot />
   </aside>
@@ -98,14 +98,14 @@
           [title]="t('palette.openButton')"
           (click)="openPalette()"
         >
-          🔍
+          <mc-icon name="magnifying-glass" />
         </button>
       </header>
       @if (activeKey() === 'music') {
         <div class="music-panel">
           <section class="music-section">
             <h3 class="music-section-title">
-              <span aria-hidden="true">★</span> {{ t('music.sidebar.favorites') }}
+              <mc-icon name="star-fill" /> {{ t('music.sidebar.favorites') }}
             </h3>
             @if (favoritePlaylists().length === 0) {
               <p class="music-empty">{{ t('music.sidebar.emptyFavorites') }}</p>
@@ -132,7 +132,7 @@
           </section>
           <section class="music-section">
             <h3 class="music-section-title">
-              <span aria-hidden="true">🔥</span> {{ t('music.sidebar.topTracks') }}
+              <mc-icon name="fire" /> {{ t('music.sidebar.topTracks') }}
             </h3>
             @if (topTracks().length === 0) {
               <p class="music-empty">{{ t('music.sidebar.emptyTopTracks') }}</p>
@@ -147,7 +147,11 @@
                       (click)="onPlayTopTrack(track.id)"
                     >
                       <span class="music-row-icon" aria-hidden="true">
-                        {{ currentTrackId() === track.id && isPlaying() ? '⏸' : '▶' }}
+                        @if (currentTrackId() === track.id && isPlaying()) {
+                          <mc-icon name="pause" />
+                        } @else {
+                          <mc-icon name="play" />
+                        }
                       </span>
                       <span class="music-row-title">{{ track.originalName }}</span>
                       <span class="music-row-meta">{{ track.playCount ?? 0 }}</span>
@@ -241,7 +245,7 @@
                   class="variant-menu-item variant-menu-manage"
                   (click)="onManageVariants($event)"
                 >
-                  <span class="variant-dot" aria-hidden="true">🌿</span>
+                  <mc-icon name="git-branch" aria-hidden="true" />
                   <span class="variant-menu-name">{{ t('variants.action.manage') }}</span>
                 </button>
               </li>

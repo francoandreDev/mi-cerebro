@@ -5,7 +5,9 @@
         <strong>Variantes · 13b-i</strong>
         <small>Foundation: modelo + creación/borrado atómicos</small>
       </div>
-      <button type="button" class="close" (click)="open.set(false)">✕</button>
+      <button type="button" class="close" (click)="open.set(false)">
+        <mc-icon name="x" />
+      </button>
     </header>
 
     <div class="counts">
@@ -87,7 +89,13 @@
             <ul class="refs">
               @for (r of g.refs; track r.ref) {
                 <li class="ref" [class.absent]="!r.present">
-                  <span class="ref-status">{{ r.present ? '✓' : '✗' }}</span>
+                  <span class="ref-status">
+                    @if (r.present) {
+                      <mc-icon name="check" />
+                    } @else {
+                      <mc-icon name="x" />
+                    }
+                  </span>
                   <span class="ref-label">{{ r.label }}</span>
                   <code class="ref-ref">{{ r.ref }}</code>
                 </li>
@@ -163,10 +171,10 @@
             <span class="test-status">
               @switch (tests()[t.key].status) {
                 @case ('pass') {
-                  ✓
+                  <mc-icon name="check" />
                 }
                 @case ('fail') {
-                  ✗
+                  <mc-icon name="x" />
                 }
                 @case ('running') {
                   ⋯
@@ -193,7 +201,7 @@
           </li>
         }
         <li class="test test-manual">
-          <span class="test-status">⌨</span>
+          <span class="test-status"><mc-icon name="keyboard" /></span>
           <div class="test-body">
             <div class="test-title">④ Tolerancia a edición manual + corrupción</div>
             <div class="test-detail">
@@ -240,10 +248,10 @@
             <span class="test-status">
               @switch (tests()[t.key].status) {
                 @case ('pass') {
-                  ✓
+                  <mc-icon name="check" />
                 }
                 @case ('fail') {
-                  ✗
+                  <mc-icon name="x" />
                 }
                 @case ('running') {
                   ⋯
@@ -285,7 +293,7 @@
       </p>
       <ul class="tests">
         <li class="test test-manual">
-          <span class="test-status">⌨</span>
+          <span class="test-status"><mc-icon name="keyboard" /></span>
           <div class="test-body">
             <div class="test-title">⑨ Merge de ~20 entidades sin fallos</div>
             <div class="test-detail">
@@ -300,7 +308,7 @@
           <span class="test-manual-tag">manual</span>
         </li>
         <li class="test test-manual">
-          <span class="test-status">⌨</span>
+          <span class="test-status"><mc-icon name="keyboard" /></span>
           <div class="test-body">
             <div class="test-title">⑩ Partial-fail reporta y ofrece retry/skip</div>
             <div class="test-detail">
@@ -314,7 +322,7 @@
           <span class="test-manual-tag">manual</span>
         </li>
         <li class="test test-manual">
-          <span class="test-status">⌨</span>
+          <span class="test-status"><mc-icon name="keyboard" /></span>
           <div class="test-body">
             <div class="test-title">⑪ /history agrupa por Merge-Group</div>
             <div class="test-detail">
@@ -328,7 +336,7 @@
           <span class="test-manual-tag">manual</span>
         </li>
         <li class="test test-manual">
-          <span class="test-status">⌨</span>
+          <span class="test-status"><mc-icon name="keyboard" /></span>
           <div class="test-body">
             <div class="test-title">⑫ pre-merge sirve como punto de restauración</div>
             <div class="test-detail">
@@ -346,6 +354,6 @@
   </section>
 } @else {
   <button type="button" class="toggle" title="Validador de variantes (dev)" (click)="openPanel()">
-    🌿
+    <mc-icon name="git-branch" />
   </button>
 }

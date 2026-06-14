@@ -9,10 +9,12 @@ import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { markCategory, type MarkCategory } from '@core/versioning/draft-apply';
 import type { DiffMark } from '@core/versioning/drafts.types';
+import { IconComponent } from '@shared/icon/icon.component';
 
 @Component({
   selector: 'mc-draft-mark-item',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [IconComponent],
   template: `
     <header class="row-head">
       <span class="chip" [attr.data-cat]="category()">{{ chipLabel() }}</span>
@@ -24,7 +26,7 @@ import type { DiffMark } from '@core/versioning/drafts.types';
         (click)="accept.emit(mark().id)"
         [attr.aria-label]="t('drafts.actions.accept')"
       >
-        ✓ {{ t('drafts.actions.accept') }}
+        <mc-icon name="check" /> {{ t('drafts.actions.accept') }}
       </button>
       <button
         type="button"
@@ -32,7 +34,7 @@ import type { DiffMark } from '@core/versioning/drafts.types';
         (click)="reject.emit(mark().id)"
         [attr.aria-label]="t('drafts.actions.reject')"
       >
-        ✕ {{ t('drafts.actions.reject') }}
+        <mc-icon name="x" /> {{ t('drafts.actions.reject') }}
       </button>
     </header>
     @if (category() !== 'insert') {

@@ -8,19 +8,22 @@ import { FormsModule } from '@angular/forms';
 
 import type { PerfReport } from '@core/versioning/dev-perf.service';
 import { DevPerfService } from '@core/versioning/dev-perf.service';
+import { IconComponent } from '@shared/icon/icon.component';
 
 type State = 'idle' | 'running' | 'done';
 
 @Component({
   selector: 'mc-dev-versioning-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule],
+  imports: [FormsModule, IconComponent],
   template: `
     @if (open()) {
       <section class="panel" role="dialog" aria-label="Validador de versionado">
         <header class="head">
           <strong>Validador versionado (13a)</strong>
-          <button type="button" class="close" (click)="open.set(false)">✕</button>
+          <button type="button" class="close" (click)="open.set(false)">
+            <mc-icon name="x" />
+          </button>
         </header>
         <div class="controls">
           <label>
@@ -95,7 +98,13 @@ type State = 'idle' | 'running' | 'done';
                   <td>{{ c.id }}</td>
                   <td>{{ c.name }}</td>
                   <td>{{ ms(c.durationMs) }}</td>
-                  <td>{{ c.status === 'pass' ? '✓' : '✗' }}</td>
+                  <td>
+                    @if (c.status === 'pass') {
+                      <mc-icon name="check" />
+                    } @else {
+                      <mc-icon name="x" />
+                    }
+                  </td>
                 </tr>
                 @if (c.detail) {
                   <tr class="detail">
@@ -117,7 +126,7 @@ type State = 'idle' | 'running' | 'done';
         title="Validador de versionado (dev)"
         (click)="open.set(true)"
       >
-        🧪
+        <mc-icon name="test-tube" />
       </button>
     }
   `,

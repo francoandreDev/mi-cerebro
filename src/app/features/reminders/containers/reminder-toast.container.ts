@@ -4,15 +4,17 @@ import { Router } from '@angular/router';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { ReminderSchedulerService } from '@core/reminders/reminder-scheduler.service';
+import { IconComponent } from '@shared/icon/icon.component';
 
 @Component({
   selector: 'mc-reminder-toast',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [IconComponent],
   template: `
     @if (scheduler.active(); as r) {
       <div role="status" class="toast">
         <div class="body">
-          <strong>⏰ {{ t('reminders.toast.title') }}</strong>
+          <strong><mc-icon name="bell" /> {{ t('reminders.toast.title') }}</strong>
           <span class="title">{{ r.title || t('reminders.untitled') }}</span>
         </div>
         <div class="actions">
@@ -20,7 +22,7 @@ import { ReminderSchedulerService } from '@core/reminders/reminder-scheduler.ser
             {{ t('reminders.toast.open') }}
           </button>
           <button type="button" class="ghost" (click)="scheduler.dismiss()" aria-label="Cerrar">
-            ✕
+            <mc-icon name="x" />
           </button>
         </div>
       </div>

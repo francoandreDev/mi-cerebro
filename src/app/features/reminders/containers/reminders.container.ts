@@ -5,6 +5,7 @@ import { withReauthIfNeeded } from '@core/errors/with-reauth';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { IconComponent } from '@shared/icon/icon.component';
 import { McDatePipe } from '@shared/pipes/mc-date.pipe';
 
 import type { Reminder, ReminderSummary } from '../models/reminder.types';
@@ -19,7 +20,7 @@ interface DraftPatch {
 @Component({
   selector: 'mc-reminders',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [McDatePipe],
+  imports: [McDatePipe, IconComponent],
   templateUrl: './reminders.container.html',
   styleUrl: './reminders.container.css',
 })

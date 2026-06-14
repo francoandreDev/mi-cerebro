@@ -4,19 +4,21 @@ import { Router } from '@angular/router';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { PlayerService } from '@core/music/player.service';
+import { IconComponent } from '@shared/icon/icon.component';
 
 @Component({
   selector: 'mc-mini-player',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [IconComponent],
   template: `
     @if (player.currentTrack(); as track) {
       <div class="bar" [class.expanded]="expanded()">
         <button type="button" class="title" (click)="goToMusic()" [title]="t('music.openLibrary')">
-          🎵 {{ track.originalName }}
+          <mc-icon name="music-note" /> {{ track.originalName }}
         </button>
         <div class="ctrls">
           <button type="button" (click)="player.prev()" [attr.aria-label]="t('music.prev')">
-            ⏮
+            <mc-icon name="skip-back" />
           </button>
           <button
             type="button"
@@ -24,10 +26,14 @@ import { PlayerService } from '@core/music/player.service';
             (click)="player.toggle()"
             [attr.aria-label]="t('music.playPause')"
           >
-            {{ player.isPlaying() ? '⏸' : '▶' }}
+            @if (player.isPlaying()) {
+              <mc-icon name="pause" />
+            } @else {
+              <mc-icon name="play" />
+            }
           </button>
           <button type="button" (click)="player.next()" [attr.aria-label]="t('music.next')">
-            ⏭
+            <mc-icon name="skip-forward" />
           </button>
           <button
             type="button"
@@ -35,10 +41,10 @@ import { PlayerService } from '@core/music/player.service';
             (click)="player.toggleShuffle()"
             [attr.aria-label]="t('music.shuffle')"
           >
-            🔀
+            <mc-icon name="shuffle" />
           </button>
           <button type="button" (click)="player.stop()" [attr.aria-label]="t('music.stop')">
-            ✕
+            <mc-icon name="x" />
           </button>
         </div>
       </div>

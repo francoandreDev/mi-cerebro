@@ -38,6 +38,8 @@ import { WritingsService } from '@features/writings/services/writings.service';
 import { AutocommitStatusComponent } from '@layout/components/autocommit-status.component';
 import { RemoteStatusDotComponent } from '@layout/components/remote-status-dot.component';
 import { BgColorDirective } from '@shared/directives/bg-color.directive';
+import { IconComponent } from '@shared/icon/icon.component';
+import type { IconName } from '@shared/icon/icons.data';
 import { MenuButtonComponent, type MenuOption } from '@shared/menu-button/menu-button.component';
 import { filterTree } from '@shared/tree/filter';
 import { TreeFilterComponent } from '@shared/tree/tree-filter.component';
@@ -63,7 +65,7 @@ type RailKey =
 interface RailItem {
   readonly key: EntityKind;
   readonly label: string;
-  readonly icon: string;
+  readonly icon: IconName;
 }
 
 @Component({
@@ -76,6 +78,7 @@ interface RailItem {
     AutocommitStatusComponent,
     RemoteStatusDotComponent,
     BgColorDirective,
+    IconComponent,
   ],
   templateUrl: './workspace-sidebar.container.html',
   styleUrl: './workspace-sidebar.container.css',
@@ -199,14 +202,14 @@ export class WorkspaceSidebarContainer {
   }
 
   protected readonly railItems = computed<readonly RailItem[]>(() => [
-    { key: 'note', label: this.t('tree.type.notes'), icon: '📝' },
-    { key: 'task', label: this.t('tree.type.tasks'), icon: '✓' },
-    { key: 'goal', label: this.t('tree.type.goals'), icon: '🎯' },
-    { key: 'list', label: this.t('tree.type.lists'), icon: '📋' },
-    { key: 'writing', label: this.t('tree.type.writings'), icon: '✍' },
-    { key: 'book', label: this.t('tree.type.books'), icon: '📚' },
-    { key: 'image', label: this.t('tree.type.images'), icon: '🖼' },
-    { key: 'file', label: this.t('tree.type.files'), icon: '📎' },
+    { key: 'note', label: this.t('tree.type.notes'), icon: 'note' },
+    { key: 'task', label: this.t('tree.type.tasks'), icon: 'check-square' },
+    { key: 'goal', label: this.t('tree.type.goals'), icon: 'target' },
+    { key: 'list', label: this.t('tree.type.lists'), icon: 'list-bullets' },
+    { key: 'writing', label: this.t('tree.type.writings'), icon: 'pen-nib' },
+    { key: 'book', label: this.t('tree.type.books'), icon: 'books' },
+    { key: 'image', label: this.t('tree.type.images'), icon: 'image' },
+    { key: 'file', label: this.t('tree.type.files'), icon: 'paperclip' },
   ]);
 
   protected readonly activeKey = computed<RailKey | null>(() => {
