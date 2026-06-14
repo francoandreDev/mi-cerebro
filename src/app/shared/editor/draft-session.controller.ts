@@ -1,11 +1,10 @@
-// 13d-iii — Draft-mode authoring extracted from EditorComponent to keep
-// the component below the file-size soft cap. Owns the per-session toggle
-// state, the base/buffer snapshots, and the save-to-drafts flow that
-// turns the buffer delta into a DiffMark list via buildBlockDiffMarks.
-//
-// The controller is intentionally framework-light: it takes the bits of
-// editor state it needs as functions, so the component remains the
-// integration point but the bookkeeping doesn't live there.
+// 13f — Draft session controller. Replaces the prior 13d-iii "draft mode"
+// toggle: instead of a per-entity switch, a session is started imperatively
+// (from the bubble menu's "Proponer cambio" action) and ended on Esc / click
+// outside the editor. While active, edits to the editor are captured as
+// diff-marks (one per block touched) and the doc is reverted to its
+// snapshot when the session ends. Reuses the snapshot+revert mechanism
+// from 13d-iii — only the trigger changes.
 
 import { signal } from '@angular/core';
 import type { Editor, JSONContent } from '@tiptap/core';
@@ -13,7 +12,7 @@ import type { Editor, JSONContent } from '@tiptap/core';
 import { buildBlockDiffMarks } from '@core/versioning/draft-capture';
 import type { DraftsService } from '@core/versioning/drafts.service';
 
-export interface EditorDraftModeContext {
+export interface DraftSessionContext {
   readonly drafts: DraftsService;
   readonly editor: () => Editor | null;
   readonly currentValue: () => JSONContent;
@@ -23,25 +22,18 @@ export interface EditorDraftModeContext {
   readonly onSaved: (count: number) => void;
 }
 
-// why: debounce window for autosave. 3s matches the typical "pause to
-//      think" cadence; long enough to avoid a commit per keystroke,
-//      short enough that losing work to a crash/forget-to-save is at
-//      worst that 3s window.
 const DRAFT_AUTOSAVE_DELAY_MS = 3000;
 
-export class EditorDraftModeController {
+export class DraftSessionController {
   readonly active = signal(false);
   readonly saving = signal(false);
-  // why: transient feedback after a successful save. Cleared by setTimeout
-  //      so the toolbar doesn't keep the badge forever — the user just
-  //      needs visual confirmation that the save round-tripped.
   readonly lastSaveCount = signal<number | null>(null);
   private base: JSONContent | null = null;
   private buffer: JSONContent | null = null;
   private clearSaveTimer: ReturnType<typeof setTimeout> | null = null;
   private autosaveTimer: ReturnType<typeof setTimeout> | null = null;
 
-  constructor(private readonly ctx: EditorDraftModeContext) {}
+  constructor(private readonly ctx: DraftSessionContext) {}
 
   isActive(): boolean {
     return this.active();
@@ -54,15 +46,10 @@ export class EditorDraftModeController {
     return true;
   }
 
-  toggle(): void {
-    if (this.active()) {
-      this.cancelAutosave();
-      this.base = null;
-      this.buffer = null;
-      this.active.set(false);
-      this.ctx.restoreView(this.ctx.currentValue());
-      return;
-    }
+  // why: imperative start. Bubble menu calls this after the user picks
+  //      "Proponer cambio"; the selection is implicit in the editor state.
+  start(): void {
+    if (this.active()) return;
     const ed = this.ctx.editor();
     const snapshot = ed ? ed.getJSON() : this.ctx.currentValue();
     this.base = snapshot;
@@ -70,9 +57,30 @@ export class EditorDraftModeController {
     this.active.set(true);
   }
 
-  // why: called by the host when the editor unmounts so a buffered diff
-  //      still in the debounce window is committed instead of being lost
-  //      to navigation/tab close. Mirrors AutosaveService.flushAll.
+  // why: end a live session. Flushes the buffer (if any) and reverts the
+  //      editor view to the snapshot, so accepted/pending marks are the
+  //      only persisted form of the diff.
+  async end(): Promise<void> {
+    if (!this.active()) return;
+    this.cancelAutosave();
+    await this.save();
+    this.base = null;
+    this.buffer = null;
+    this.active.set(false);
+    this.ctx.restoreView(this.ctx.currentValue());
+  }
+
+  // why: discard a session without persisting. Used if the user explicitly
+  //      cancels (future shortcut) — today only end() is wired.
+  cancel(): void {
+    if (!this.active()) return;
+    this.cancelAutosave();
+    this.base = null;
+    this.buffer = null;
+    this.active.set(false);
+    this.ctx.restoreView(this.ctx.currentValue());
+  }
+
   async flushPending(): Promise<void> {
     if (!this.autosaveTimer) return;
     this.cancelAutosave();
@@ -93,6 +101,7 @@ export class EditorDraftModeController {
         now: new Date().toISOString(),
         genId: () => crypto.randomUUID(),
       });
+      if (marks.length === 0) return;
       await this.ctx.drafts.save(id, this.ctx.entityTitle(), marks);
       this.base = this.buffer;
       this.ctx.onSaved(marks.length);

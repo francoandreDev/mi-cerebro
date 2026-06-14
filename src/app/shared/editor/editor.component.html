@@ -1,0 +1,64 @@
+@if (showToolbar()) {
+  <mc-editor-toolbar
+    [editable]="editable()"
+    [hasGalleries]="hasGalleries()"
+    [commentsAvailable]="commentsAvailable()"
+    [view]="view()"
+    [commentsIndexOpen]="commentsIndexOpen()"
+    [draftsIndexOpen]="draftsIndexOpen()"
+    [sessionActive]="draftSession.active()"
+    [lastSaveCount]="draftSession.lastSaveCount()"
+    (openPicker)="pickerOpen.set(true)"
+    (setView)="setView($event)"
+    (toggleCommentsIndex)="commentsIndexOpen.set(!commentsIndexOpen())"
+    (toggleDraftsIndex)="draftsIndexOpen.set(!draftsIndexOpen())"
+  />
+}
+<div class="shell" [class.has-popover]="commentsIndexOpen() || draftsIndexOpen()">
+  <div
+    #host
+    class="editor-host"
+    [class.draft-session]="draftSession.active()"
+    data-testid="editor-host"
+  ></div>
+  @if (bubble(); as b) {
+    <mc-bubble-menu [position]="b" (propose)="triggerPropose()" (comment)="triggerComment()" />
+  }
+  @if (commentPopover(); as p) {
+    <mc-comment-popover
+      [position]="p.position"
+      [body]="p.body"
+      [error]="p.error"
+      [busy]="p.busy"
+      [editing]="p.editing"
+      (bodyChange)="commentsCoord.setBody($event)"
+      (save)="commentsCoord.save()"
+      (dismiss)="commentsCoord.dismiss()"
+      (remove)="commentsCoord.remove()"
+    />
+  }
+  @if (commentsAvailable() && commentsIndexOpen()) {
+    <mc-comments-panel
+      class="index-popover"
+      [entityId]="entityId()"
+      [entityTitle]="entityTitle()"
+      [value]="value()"
+      (closed)="commentsIndexOpen.set(false)"
+      (openComment)="onOpenCommentFromIndex($event)"
+    />
+  }
+  @if (commentsAvailable() && draftsIndexOpen()) {
+    <mc-drafts-panel
+      class="index-popover"
+      [entityId]="entityId()"
+      [entityTitle]="entityTitle()"
+      [value]="value()"
+      (closed)="draftsIndexOpen.set(false)"
+      (applyToDoc)="onAcceptApply($event)"
+      (marksChange)="onDraftMarksChange($event)"
+    />
+  }
+</div>
+@if (pickerOpen()) {
+  <mc-image-picker-dialog (picked)="onPicked($event)" (dismiss)="pickerOpen.set(false)" />
+}

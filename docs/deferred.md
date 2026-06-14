@@ -107,17 +107,11 @@ Formato por entrada:
 - **Por qué**: `range` requiere UI de selección de texto + persistencia de offsets dentro del bloque + casos de borde de mapping cuando el texto del bloque cambia parcialmente. Cubre un caso minoritario ("comentario sobre estas 3 palabras") cuando `block` ("comentario sobre este párrafo") cubre el 80%.
 - **Target**: §19.16e (pulido del editor).
 
-### Ghost rendering inline para inserciones del borrador
+### Widget render para diff-marks de tipo "insertion-only"
 
-- **Qué**: 13d-iii incorporó decoraciones ProseMirror para marks de mutación (tinte amarillo) y eliminación (strikethrough rojo) sobre los bloques existentes en `main`. Las **inserciones** (bloques que existen sólo en el borrador, no en `main`) no tienen anchor visible en el doc y quedaron renderizadas solo en el panel lateral. La versión "rica" — insertar un nodo widget fantasma en el editor con el contenido propuesto — queda fuera del alcance del paso.
-- **Por qué**: para inserciones habría que pintar el JSON del bloque propuesto como widget DOM dentro del ProseMirror sin tocar el doc real. Es factible pero requiere un mini-renderer JSON→DOM consistente con el theme del editor y resuelve un caso que el panel ya cubre. Se evalúa con uso real.
+- **Qué**: los diff-marks que insertan bloques enteros sin anchor en `main` (caso raro: marks heredados pre-rediseño, o resultantes de un merge entre variantes) no tienen punto de inserción inline natural. El renderizado base con decoraciones ProseMirror cubre todos los marks anclados a un punto/rango en `main`; los insertion-only sin anchor quedan listados en el popover de pendientes hasta que se acepten/rechacen.
+- **Por qué**: pintarlos requeriría un mini-renderer JSON→DOM consistente con el theme del editor para un widget fantasma dentro del ProseMirror. Caso minoritario; el popover ya los expone.
 - **Target**: §19.16e (pulido del editor) o sin asignar.
-
-### Renderizado overlay unificado (variante "B" original)
-
-- **Qué**: borrador y comentarios renderizados como overlay sobre `main` en una vista única e integrada, en lugar de paneles laterales separados. Era la opción "B" del diseño original; cerramos en "A con datos anclados".
-- **Por qué**: 13c/13d entregan el modelo de datos correcto (anchored refs + diff-marks). El overlay unificado es una capa de renderizado adicional que no aporta funcionalidad nueva, sólo presentación. Se evalúa una vez que el flujo lateral esté en uso real.
-- **Target**: sin asignar (se considera tras vivir con 13c/13d).
 
 ### Granularidad por faceta dentro del bundle de merge
 

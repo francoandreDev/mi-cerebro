@@ -20,7 +20,7 @@ import { IconComponent } from '@shared/icon/icon.component';
       <button
         type="button"
         class="icon danger"
-        (click)="delete.emit(comment().id)"
+        (click)="onDelete($event)"
         [attr.aria-label]="t('comments.actions.delete')"
       >
         <mc-icon name="x" />
@@ -52,6 +52,11 @@ export class CommentItemComponent {
 
   protected bodyText(): string {
     return docToText(this.comment().body);
+  }
+
+  protected onDelete(event: Event): void {
+    event.stopPropagation();
+    this.delete.emit(this.comment().id);
   }
 }
 

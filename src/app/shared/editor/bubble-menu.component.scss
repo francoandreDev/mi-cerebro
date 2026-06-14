@@ -1,0 +1,44 @@
+.bubble {
+  position: absolute;
+  display: flex;
+  gap: var(--mc-space-1);
+  background: var(--mc-bg-elevated);
+  border: 1px solid var(--mc-border-default);
+  border-radius: var(--mc-radius-md);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+  padding: var(--mc-space-1);
+  z-index: 30;
+  transform: translate(-50%, -100%);
+  margin-top: -6px;
+  animation: mc-bubble-fade 0.12s ease-out;
+}
+
+.action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mc-space-1);
+  background: transparent;
+  border: 0;
+  color: var(--mc-fg-primary);
+  cursor: pointer;
+  font-size: var(--mc-font-size-sm);
+  padding: var(--mc-space-1) var(--mc-space-2);
+  border-radius: var(--mc-radius-sm);
+}
+
+.action:hover,
+.action:focus-visible {
+  background: var(--mc-bg-selected);
+  outline: none;
+}
+
+@keyframes mc-bubble-fade {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-100% + 4px));
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -100%);
+  }
+}
