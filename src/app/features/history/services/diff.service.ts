@@ -88,6 +88,43 @@ export class HistoryDiffService {
     return out.sort((a, b) => a.filepath.localeCompare(b.filepath));
   }
 
+  // why: commits viejos donde el único diff es `lastActivityAt` (o `state`)
+  //      en variants.json son ruido — el fix de la persistencia evita que
+  //      sigan apareciendo, pero los que ya están en la historia siguen
+  //      ahí. Esta sonda los marca para que el timeline los oculte.
+  async findNoiseCommits(
+    entries: readonly { readonly oid: string; readonly message: string }[],
+  ): Promise<ReadonlySet<string>> {
+    const adapter = this.adapter();
+    if (!adapter) return new Set();
+    const noise = new Set<string>();
+    for (const e of entries) {
+      if (!isVariantsAutoCommit(e.message)) continue;
+      try {
+        const parent = await this.parentOidOf(adapter, e.oid);
+        if (!parent) continue;
+        if (await this.isNoiseDelta(adapter, parent, e.oid)) noise.add(e.oid);
+      } catch {
+        // sondas que fallan no se ocultan
+      }
+    }
+    return noise;
+  }
+
+  private async isNoiseDelta(fs: GitFsAdapter, parent: string, oid: string): Promise<boolean> {
+    const changes = await this.collectChanges(fs, oid, parent);
+    if (changes.length !== 1) return false;
+    const change = changes[0]!;
+    if (change.filepath !== '.mi-cerebro/variants.json') return false;
+    const before = await this.readBlob(fs, change.beforeOid);
+    const after = await this.readBlob(fs, change.afterOid);
+    const beforeJson = parseAnyJson(before);
+    const afterJson = parseAnyJson(after);
+    const fields = diffFlatJson(beforeJson, afterJson);
+    if (fields.length === 0) return false;
+    return fields.every((f) => /^variants\[\d+\]\.(lastActivityAt|state)$/.test(f.key));
+  }
+
   private adapter(): GitFsAdapter | null {
     const root = this.workspace.root();
     return root ? new GitFsAdapter(root) : null;
@@ -187,6 +224,10 @@ function anchoredModeFor(filepath: string): AnchorMode | null {
   if (filepath.startsWith('drafts/')) return 'drafts';
   if (filepath.startsWith('comments/')) return 'comments';
   return null;
+}
+
+function isVariantsAutoCommit(message: string): boolean {
+  return /^auto(?:\s+\[[^\]]+\])?:\s.*\.mi-cerebro/.test(message);
 }
 
 function textOrEmpty(blob: Uint8Array | null): string {

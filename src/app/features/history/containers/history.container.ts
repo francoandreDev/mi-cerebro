@@ -110,22 +110,35 @@ export class HistoryContainer implements OnInit {
   // enabled facetas (mutually combinable). Buckets with zero matching
   // entries are dropped so the empty-state shows instead of bare headers.
   // Merge groups are kept when any member matches.
+  private readonly noiseOidsSignal = signal<ReadonlySet<string>>(new Set());
+
   protected readonly buckets = computed<readonly CommitBucket[]>(() => {
     const all = this.history.buckets();
     const onlyMile = this.onlyMilestonesSignal();
     const facets = this.enabledFacetsSignal();
     const byOid = this.milestonesByOid();
+    const noise = this.noiseOidsSignal();
     const matches = (entry: CommitEntry): boolean => {
+      // why: milestones nunca se ocultan aunque sean ruido — el usuario
+      //      decidió marcarlos como puntos relevantes.
+      if (noise.has(entry.oid) && !byOid.has(entry.oid)) return false;
       if (!facets.has(facetOf(entry.message))) return false;
       if (onlyMile && !byOid.has(entry.oid)) return false;
       return true;
     };
-    const hits = (item: TimelineItem): boolean => {
-      if (item.kind === 'commit') return matches(item.entry);
-      return item.members.some(matches);
+    const transformItem = (item: TimelineItem): TimelineItem | null => {
+      if (item.kind === 'commit') return matches(item.entry) ? item : null;
+      const kept = item.members.filter(matches);
+      if (kept.length === 0) return null;
+      if (kept.length === item.members.length) return item;
+      if (kept.length === 1) return { kind: 'commit', entry: kept[0]! };
+      return { ...item, members: kept, latest: kept[0]! };
     };
     return all
-      .map((b) => ({ id: b.id, items: b.items.filter(hits) }))
+      .map((b) => ({
+        id: b.id,
+        items: b.items.map(transformItem).filter((x): x is TimelineItem => x !== null),
+      }))
       .filter((b) => b.items.length > 0);
   });
 
@@ -223,10 +236,32 @@ export class HistoryContainer implements OnInit {
   }
 
   ngOnInit(): void {
-    void this.history.load().then(() => {
-      const first = this.entries()[0];
+    void this.reloadAll(true);
+  }
+
+  // why: el sondeo de "ruido" debe re-ejecutarse después de cada load(),
+  //      incluidos los que disparan los restore. Si el primer commit del
+  //      bucket es ruido, salto al siguiente visible para no abrir vacío.
+  private async reloadAll(selectFirst: boolean): Promise<void> {
+    await this.history.load();
+    const all = this.entries();
+    if (selectFirst) {
+      const first = all[0];
       if (first) this.selectedOidSignal.set(first.oid);
-    });
+    }
+    try {
+      const noise = await this.diff.findNoiseCommits(all);
+      this.noiseOidsSignal.set(noise);
+      if (selectFirst) {
+        const current = this.selectedOidSignal();
+        if (current && noise.has(current)) {
+          const visible = all.find((e) => !noise.has(e.oid));
+          if (visible) this.selectedOidSignal.set(visible.oid);
+        }
+      }
+    } catch (e) {
+      this.errors.report(e);
+    }
   }
 
   protected toggleExpanded(path: string): void {
@@ -306,9 +341,7 @@ export class HistoryContainer implements OnInit {
     this.restoringPathSignal.set(d.filepath);
     try {
       await this.restore.restoreEntity(entry.oid, d.filepath, mode);
-      await this.history.load();
-      const first = this.entries()[0];
-      if (first) this.selectedOidSignal.set(first.oid);
+      await this.reloadAll(true);
     } catch (e) {
       this.errors.report(e);
     } finally {
@@ -338,9 +371,7 @@ export class HistoryContainer implements OnInit {
     this.restoringCommitSignal.set(true);
     try {
       await this.restore.restoreCommit(entry.oid);
-      await this.history.load();
-      const first = this.entries()[0];
-      if (first) this.selectedOidSignal.set(first.oid);
+      await this.reloadAll(true);
     } catch (e) {
       this.errors.report(e);
     } finally {
