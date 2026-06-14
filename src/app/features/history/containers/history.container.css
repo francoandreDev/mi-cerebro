@@ -419,7 +419,7 @@
 aside.timeline {
   --facet-color-main: var(--mc-accent-primary);
   --facet-color-comments: #6b8ce0;
-  --facet-color-draft: #d9923c;
+  --facet-color-draft: #b07ad9;
 }
 
 .facet-chip:hover {
