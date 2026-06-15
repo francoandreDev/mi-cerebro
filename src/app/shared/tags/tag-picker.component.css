@@ -55,3 +55,32 @@
   color: var(--mc-fg-muted);
   font-size: var(--mc-font-size-sm);
 }
+.palette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mc-space-1);
+  margin-top: var(--mc-space-1);
+  padding: var(--mc-space-2);
+  background: var(--mc-bg-elevated);
+  border: 1px solid var(--mc-border-default);
+  border-radius: var(--mc-radius-md);
+}
+.swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid var(--mc-border-default);
+  cursor: pointer;
+  padding: 0;
+}
+.swatch:focus-visible {
+  outline: 2px solid var(--mc-accent-primary);
+  outline-offset: 2px;
+}
+.swatch.default {
+  background: transparent;
+  color: var(--mc-fg-muted);
+  font-size: 11px;
+  line-height: 16px;
+  text-align: center;
+}

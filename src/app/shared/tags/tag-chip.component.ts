@@ -1,6 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 
 import type { Tag } from '@core/tags/tag.types';
+import { tagHexFor } from '@core/theme/theme-palette';
+import { ThemeService } from '@core/theme/theme.service';
 import { BgColorDirective } from '@shared/directives/bg-color.directive';
 
 @Component({
@@ -8,20 +10,43 @@ import { BgColorDirective } from '@shared/directives/bg-color.directive';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [BgColorDirective],
   template: `
-    <span class="chip" [class.small]="size() === 'small'" [class.compact]="compact()">
-      <span class="dot" [mcBgColor]="color()"></span>
-      <span class="label">{{ label() }}</span>
-      @if (removable()) {
+    @if (dotClickable()) {
+      <span class="chip" [class.small]="size() === 'small'" [class.compact]="compact()">
         <button
           type="button"
-          class="remove"
-          [attr.aria-label]="'remove ' + label()"
-          (click)="remove.emit()"
-        >
-          ×
-        </button>
-      }
-    </span>
+          class="dot dot-btn"
+          [mcBgColor]="color()"
+          [attr.aria-label]="'change color for ' + label()"
+          (click)="dotClick.emit()"
+        ></button>
+        <span class="label">{{ label() }}</span>
+        @if (removable()) {
+          <button
+            type="button"
+            class="remove"
+            [attr.aria-label]="'remove ' + label()"
+            (click)="remove.emit()"
+          >
+            ×
+          </button>
+        }
+      </span>
+    } @else {
+      <span class="chip" [class.small]="size() === 'small'" [class.compact]="compact()">
+        <span class="dot" [mcBgColor]="color()"></span>
+        <span class="label">{{ label() }}</span>
+        @if (removable()) {
+          <button
+            type="button"
+            class="remove"
+            [attr.aria-label]="'remove ' + label()"
+            (click)="remove.emit()"
+          >
+            ×
+          </button>
+        }
+      </span>
+    }
   `,
   styles: `
     :host {
@@ -53,6 +78,15 @@ import { BgColorDirective } from '@shared/directives/bg-color.directive';
       border-radius: 50%;
       flex-shrink: 0;
     }
+    .dot-btn {
+      border: 0;
+      padding: 0;
+      cursor: pointer;
+    }
+    .dot-btn:focus-visible {
+      outline: 2px solid var(--mc-focus-ring, currentColor);
+      outline-offset: 1px;
+    }
     .label {
       white-space: nowrap;
       overflow: hidden;
@@ -78,8 +112,17 @@ export class TagChipComponent {
   readonly size = input<'normal' | 'small'>('normal');
   readonly compact = input<boolean>(false);
   readonly removable = input<boolean>(false);
+  readonly dotClickable = input<boolean>(false);
   readonly remove = output<void>();
+  readonly dotClick = output<void>();
+
+  private readonly theme = inject(ThemeService);
 
   protected readonly label = computed(() => this.tag()?.label ?? this.fallbackLabel());
-  protected readonly color = computed(() => this.tag()?.color ?? 'var(--mc-fg-muted)');
+  protected readonly color = computed(() => {
+    const t = this.tag();
+    if (!t) return 'var(--mc-fg-muted)';
+    const swatchHex = tagHexFor(this.theme.resolved(), t.colorSwatchId);
+    return swatchHex ?? t.color;
+  });
 }

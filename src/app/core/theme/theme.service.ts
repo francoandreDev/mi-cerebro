@@ -3,6 +3,13 @@ import { Injectable, computed, effect, inject, signal } from '@angular/core';
 
 import { SettingsService } from '@core/settings/settings.service';
 
+import {
+  ACCENT_FG,
+  BG_SAT_LEVELS,
+  accentHexFor,
+  computeBgHex,
+  deriveBgScale,
+} from './theme-palette';
 import type { ResolvedTheme, ThemePreference } from './theme.types';
 import { THEME_STORAGE_KEY } from './theme.types';
 
@@ -26,6 +33,7 @@ export class ThemeService {
     this.migrateLegacyStorage();
     this.listenToSystemChanges();
     effect(() => this.apply(this.preference()));
+    effect(() => this.applyCustomTokens(this.resolved(), this.settings.state().theme));
   }
 
   setPreference(next: ThemePreference): void {
@@ -57,6 +65,24 @@ export class ThemeService {
     ls.removeItem(THEME_STORAGE_KEY);
   }
 
+  private applyCustomTokens(
+    theme: ResolvedTheme,
+    cfg: {
+      customBgHue?: number;
+      customBgSatLevel?: 'low' | 'mid' | 'high';
+      customAccentId?: string;
+    },
+  ): void {
+    const root = this.doc.documentElement;
+    const props = customCssVars(theme, cfg);
+    if (props === null) {
+      // Reset any previously applied overrides.
+      for (const name of CUSTOM_PROP_NAMES) root.style.removeProperty(name);
+      return;
+    }
+    for (const [k, v] of Object.entries(props)) root.style.setProperty(k, v);
+  }
+
   private matchSystemDark(): boolean {
     return this.doc.defaultView?.matchMedia('(prefers-color-scheme: dark)').matches ?? false;
   }
@@ -65,4 +91,43 @@ export class ThemeService {
     const mql = this.doc.defaultView?.matchMedia('(prefers-color-scheme: dark)');
     mql?.addEventListener('change', (e) => this.systemPrefersDark.set(e.matches));
   }
+}
+
+const CUSTOM_PROP_NAMES = [
+  '--mc-bg-base',
+  '--mc-bg-surface',
+  '--mc-bg-elevated',
+  '--mc-bg-hover',
+  '--mc-bg-selected',
+  '--mc-accent-primary',
+  '--mc-accent-hover',
+  '--mc-accent-active',
+  '--mc-accent-fg',
+] as const;
+
+function customCssVars(
+  theme: ResolvedTheme,
+  cfg: { customBgHue?: number; customBgSatLevel?: 'low' | 'mid' | 'high'; customAccentId?: string },
+): Record<string, string> | null {
+  const out: Record<string, string> = {};
+  if (cfg.customBgHue !== undefined || cfg.customBgSatLevel !== undefined) {
+    const hue = cfg.customBgHue ?? (theme === 'dark' ? 215 : 43);
+    const sat = cfg.customBgSatLevel ?? 'mid';
+    const base = computeBgHex(theme, hue, sat);
+    const scale = deriveBgScale(theme, base, hue, sat);
+    out['--mc-bg-base'] = scale.base;
+    out['--mc-bg-surface'] = scale.surface;
+    out['--mc-bg-elevated'] = scale.elevated;
+    out['--mc-bg-hover'] = scale.hover;
+    out['--mc-bg-selected'] = scale.selected;
+    void BG_SAT_LEVELS;
+  }
+  if (cfg.customAccentId !== undefined) {
+    const accent = accentHexFor(theme, cfg.customAccentId);
+    out['--mc-accent-primary'] = accent;
+    out['--mc-accent-hover'] = accent;
+    out['--mc-accent-active'] = accent;
+    out['--mc-accent-fg'] = ACCENT_FG[theme];
+  }
+  return Object.keys(out).length === 0 ? null : out;
 }

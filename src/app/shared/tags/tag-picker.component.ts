@@ -13,7 +13,11 @@ import type { ElementRef } from '@angular/core';
 
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { TagsService } from '@core/tags/tags.service';
 import type { Tag } from '@core/tags/tag.types';
+import { TAG_SWATCHES, tagHexFor } from '@core/theme/theme-palette';
+import { ThemeService } from '@core/theme/theme.service';
+import { BgColorDirective } from '@shared/directives/bg-color.directive';
 
 import { TagChipComponent } from './tag-chip.component';
 
@@ -22,11 +26,17 @@ const norm = (s: string): string => s.normalize('NFKD').replace(/\p{M}/gu, '').t
 @Component({
   selector: 'mc-tag-picker',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TagChipComponent],
+  imports: [TagChipComponent, BgColorDirective],
   template: `
     <div class="row">
       @for (tag of selectedTags(); track tag.id) {
-        <mc-tag-chip [tag]="tag" [removable]="editable()" (remove)="removeTag.emit(tag.id)" />
+        <mc-tag-chip
+          [tag]="tag"
+          [removable]="editable()"
+          [dotClickable]="editable()"
+          (remove)="removeTag.emit(tag.id)"
+          (dotClick)="toggleRecolor(tag.id)"
+        />
       }
       @if (editable()) {
         <input
@@ -43,6 +53,27 @@ const norm = (s: string): string => s.normalize('NFKD').replace(/\p{M}/gu, '').t
         />
       }
     </div>
+    @if (editable() && recoloringId(); as rid) {
+      <div class="palette" role="group" [attr.aria-label]="t('tags.color.label')">
+        <button
+          type="button"
+          class="swatch default"
+          [attr.aria-label]="t('tags.color.default')"
+          (click)="pickSwatch(rid, null)"
+        >
+          ✕
+        </button>
+        @for (sw of swatches; track sw.id) {
+          <button
+            type="button"
+            class="swatch"
+            [mcBgColor]="swatchHex(sw.id)"
+            [attr.aria-label]="sw.id"
+            (click)="pickSwatch(rid, sw.id)"
+          ></button>
+        }
+      </div>
+    }
     @if (editable() && open() && suggestions().length + (canCreate() ? 1 : 0) > 0) {
       <ul class="menu" role="listbox">
         @for (s of suggestions(); track s.id; let i = $index) {
@@ -82,9 +113,26 @@ export class TagPickerComponent {
   protected readonly query = signal('');
   protected readonly open = signal(false);
   protected readonly cursor = signal(0);
+  protected readonly recoloringId = signal<string | null>(null);
+  protected readonly swatches = TAG_SWATCHES;
 
   private readonly inputEl = viewChild<ElementRef<HTMLInputElement>>('input');
   private readonly i18n = inject(I18nService);
+  private readonly theme = inject(ThemeService);
+  private readonly tags = inject(TagsService);
+
+  protected toggleRecolor(id: string): void {
+    this.recoloringId.set(this.recoloringId() === id ? null : id);
+  }
+
+  protected pickSwatch(id: string, swatchId: string | null): void {
+    void this.tags.setSwatch(id, swatchId);
+    this.recoloringId.set(null);
+  }
+
+  protected swatchHex(id: string): string {
+    return tagHexFor(this.theme.resolved(), id) ?? '#888';
+  }
 
   protected readonly selectedTags = computed(() => {
     const ids = new Set(this.selectedIds());

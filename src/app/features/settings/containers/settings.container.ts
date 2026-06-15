@@ -8,12 +8,23 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { BgColorDirective } from '@shared/directives/bg-color.directive';
+
 import { ErrorService } from '@core/errors/error.service';
 import { ExportZipService } from '@core/export/export-zip.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { SettingsService, isValidTimezone } from '@core/settings/settings.service';
-import type { ThemeOverride } from '@core/settings/settings.types';
+import type { BgSatLevel, ThemeOverride } from '@core/settings/settings.types';
+import {
+  ACCENT_FG,
+  ACCENT_PALETTE,
+  DEFAULT_ACCENT_ID,
+  DEFAULT_BG_HUE,
+  accentHexFor,
+  computeBgHex,
+  reportContrast,
+} from '@core/theme/theme-palette';
 import { ThemeService } from '@core/theme/theme.service';
 import { isValidRemoteUrl } from '@core/versioning/remote.config.io';
 import { RemoteService } from '@core/versioning/remote.service';
@@ -21,7 +32,7 @@ import { RemoteService } from '@core/versioning/remote.service';
 @Component({
   selector: 'mc-settings',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink],
+  imports: [RouterLink, BgColorDirective],
   templateUrl: './settings.container.html',
   styleUrl: './settings.container.css',
 })
@@ -37,6 +48,28 @@ export class SettingsContainer {
   protected readonly exportIncludeAssets = signal(true);
   protected readonly exportProgress = this.exportZip.progress;
   protected readonly exportRunning = this.exportZip.isRunning;
+
+  protected readonly accentPalette = ACCENT_PALETTE;
+  protected readonly satLevels: readonly BgSatLevel[] = ['low', 'mid', 'high'];
+  protected readonly resolvedTheme = this.theme.resolved;
+  protected readonly currentHue = computed(
+    () => this.state().theme.customBgHue ?? DEFAULT_BG_HUE[this.resolvedTheme()],
+  );
+  protected readonly currentSat = computed<BgSatLevel>(
+    () => this.state().theme.customBgSatLevel ?? 'mid',
+  );
+  protected readonly currentAccentId = computed(
+    () => this.state().theme.customAccentId ?? DEFAULT_ACCENT_ID,
+  );
+  protected readonly previewBg = computed(() =>
+    computeBgHex(this.resolvedTheme(), this.currentHue(), this.currentSat()),
+  );
+  protected readonly previewAccent = computed(() =>
+    accentHexFor(this.resolvedTheme(), this.currentAccentId()),
+  );
+  protected readonly accentContrast = computed(() =>
+    reportContrast(this.previewAccent(), ACCENT_FG[this.resolvedTheme()]),
+  );
 
   protected readonly themeOptions: readonly { value: ThemeOverride; labelKey: TranslationKey }[] = [
     { value: 'auto', labelKey: 'settings.theme.option.auto' },
@@ -151,6 +184,33 @@ export class SettingsContainer {
     } catch (e) {
       this.errors.report(e);
     }
+  }
+
+  protected onHueInput(event: Event): void {
+    const v = Number((event.target as HTMLInputElement).value);
+    if (Number.isFinite(v)) this.settings.setCustomBgHue(v);
+  }
+
+  protected setSat(level: BgSatLevel): void {
+    this.settings.setCustomBgSatLevel(level);
+  }
+
+  protected satLabelKey(level: BgSatLevel): TranslationKey {
+    return `settings.theme.bgSat.${level}` as TranslationKey;
+  }
+
+  protected setAccent(id: string): void {
+    this.settings.setCustomAccentId(id);
+  }
+
+  protected resetTheme(): void {
+    this.settings.setCustomBgHue(undefined);
+    this.settings.setCustomBgSatLevel(undefined);
+    this.settings.setCustomAccentId(undefined);
+  }
+
+  protected formatRatio(r: number): string {
+    return r.toFixed(2);
   }
 
   protected onToggleIncludeVariants(event: Event): void {

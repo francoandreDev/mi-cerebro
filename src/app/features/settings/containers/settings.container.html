@@ -189,6 +189,78 @@
         <strong>{{ t(resolvedThemeKey()) }}</strong>
       </span>
     </fieldset>
+
+    <fieldset class="field">
+      <legend class="label">{{ t('settings.theme.custom.title') }}</legend>
+      <span class="hint">{{ t('settings.theme.custom.hint') }}</span>
+
+      <label class="field">
+        <span class="label">{{ t('settings.theme.bgHue.label') }}</span>
+        <input
+          type="range"
+          min="0"
+          max="360"
+          step="1"
+          [value]="currentHue()"
+          (input)="onHueInput($event)"
+        />
+        <span class="hint">{{ currentHue() }}°</span>
+      </label>
+
+      <fieldset class="field">
+        <legend class="label">{{ t('settings.theme.bgSat.label') }}</legend>
+        <span class="row" role="radiogroup">
+          @for (s of satLevels; track s) {
+            <button
+              type="button"
+              class="seg"
+              role="radio"
+              [class.active]="currentSat() === s"
+              [attr.aria-checked]="currentSat() === s"
+              (click)="setSat(s)"
+            >
+              {{ t(satLabelKey(s)) }}
+            </button>
+          }
+        </span>
+      </fieldset>
+
+      <fieldset class="field">
+        <legend class="label">{{ t('settings.theme.accent.label') }}</legend>
+        <span class="row palette-grid" role="radiogroup">
+          @for (sw of accentPalette; track sw.id) {
+            <button
+              type="button"
+              class="swatch-btn"
+              role="radio"
+              [mcBgColor]="resolvedTheme() === 'dark' ? sw.dark : sw.light"
+              [class.active]="currentAccentId() === sw.id"
+              [attr.aria-checked]="currentAccentId() === sw.id"
+              [attr.aria-label]="sw.id"
+              [title]="sw.id"
+              (click)="setAccent(sw.id)"
+            ></button>
+          }
+        </span>
+        <span class="hint">
+          {{ t('settings.theme.accent.contrast') }}:
+          <strong>{{ formatRatio(accentContrast().ratio) }}:1</strong>
+          @if (accentContrast().passesAAA) {
+            <span class="ok">AAA</span>
+          } @else if (accentContrast().passesAA) {
+            <span class="ok">AA</span>
+          } @else {
+            <span class="fail">{{ t('settings.theme.wcag.fail') }}</span>
+          }
+        </span>
+      </fieldset>
+
+      <div class="field">
+        <button type="button" (click)="resetTheme()">
+          {{ t('settings.theme.reset') }}
+        </button>
+      </div>
+    </fieldset>
   </section>
 
   <section class="group">

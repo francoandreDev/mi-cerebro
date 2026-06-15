@@ -19,8 +19,13 @@ export interface Settings {
   };
   readonly theme: {
     readonly override: ThemeOverride;
+    readonly customBgHue?: number;
+    readonly customBgSatLevel?: BgSatLevel;
+    readonly customAccentId?: string;
   };
 }
+
+export type BgSatLevel = 'low' | 'mid' | 'high';
 
 export const DEFAULT_SETTINGS: Settings = {
   schemaVersion: SETTINGS_SCHEMA_VERSION,

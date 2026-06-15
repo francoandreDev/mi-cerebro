@@ -114,3 +114,33 @@
   color: var(--mc-fg-muted);
   font-size: var(--mc-font-size-sm);
 }
+.palette-grid {
+  flex-wrap: wrap;
+  gap: var(--mc-space-2);
+}
+.swatch-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--mc-border-default);
+  cursor: pointer;
+  padding: 0;
+}
+.swatch-btn.active {
+  border-color: var(--mc-fg-primary);
+  box-shadow: 0 0 0 2px var(--mc-bg-base);
+}
+.swatch-btn:focus-visible {
+  outline: 2px solid var(--mc-accent-primary);
+  outline-offset: 2px;
+}
+.ok {
+  color: var(--mc-state-success);
+  font-weight: 600;
+  margin-left: var(--mc-space-1);
+}
+.fail {
+  color: var(--mc-state-danger);
+  font-weight: 600;
+  margin-left: var(--mc-space-1);
+}

@@ -8,6 +8,7 @@ import {
   DEFAULT_SETTINGS,
   SETTINGS_SCHEMA_VERSION,
   SETTINGS_STORAGE_KEY,
+  type BgSatLevel,
   type Settings,
   type ThemeOverride,
 } from './settings.types';
@@ -61,6 +62,31 @@ export class SettingsService {
   setThemeOverride(override: ThemeOverride): void {
     if (override !== 'auto' && override !== 'light' && override !== 'dark') return;
     this.update((s) => ({ ...s, theme: { ...s.theme, override } }));
+  }
+
+  setCustomBgHue(hue: number | undefined): void {
+    if (hue === undefined) {
+      this.update((s) => ({ ...s, theme: stripKey(s.theme, 'customBgHue') }));
+      return;
+    }
+    const next = ((Math.round(hue) % 360) + 360) % 360;
+    this.update((s) => ({ ...s, theme: { ...s.theme, customBgHue: next } }));
+  }
+
+  setCustomBgSatLevel(level: BgSatLevel | undefined): void {
+    if (level === undefined) {
+      this.update((s) => ({ ...s, theme: stripKey(s.theme, 'customBgSatLevel') }));
+      return;
+    }
+    this.update((s) => ({ ...s, theme: { ...s.theme, customBgSatLevel: level } }));
+  }
+
+  setCustomAccentId(id: string | undefined): void {
+    if (id === undefined) {
+      this.update((s) => ({ ...s, theme: stripKey(s.theme, 'customAccentId') }));
+      return;
+    }
+    this.update((s) => ({ ...s, theme: { ...s.theme, customAccentId: id } }));
   }
 
   setPushThrottleMinutes(minutes: number): void {
@@ -139,6 +165,12 @@ export class SettingsService {
       return DEFAULT_SETTINGS;
     }
   }
+}
+
+function stripKey<T extends object, K extends keyof T>(obj: T, key: K): Omit<T, K> {
+  const out = { ...obj };
+  delete (out as Partial<T>)[key];
+  return out;
 }
 
 export const isValidTimezone = (tz: string): boolean => {

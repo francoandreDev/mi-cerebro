@@ -789,6 +789,20 @@ export const es = {
   'settings.theme.hint':
     'Automático sigue la preferencia del sistema. Fijar claro u oscuro la guarda en la carpeta del workspace.',
   'settings.theme.resolved': 'Activo',
+  'settings.theme.custom.title': 'Personalización',
+  'settings.theme.custom.hint':
+    'El contraste mínimo entre fondo y texto se preserva. Sólo cambia el matiz y el acento.',
+  'settings.theme.bgHue.label': 'Matiz del fondo',
+  'settings.theme.bgSat.label': 'Saturación',
+  'settings.theme.bgSat.low': 'Baja',
+  'settings.theme.bgSat.mid': 'Media',
+  'settings.theme.bgSat.high': 'Alta',
+  'settings.theme.accent.label': 'Acento',
+  'settings.theme.accent.contrast': 'Contraste del acento vs su texto',
+  'settings.theme.wcag.fail': 'No cumple AA',
+  'settings.theme.reset': 'Restaurar tema por defecto',
+  'tags.color.label': 'Color del tag',
+  'tags.color.default': 'Volver al color por defecto',
 
   'music.title': 'Música',
   'music.library': 'Biblioteca',

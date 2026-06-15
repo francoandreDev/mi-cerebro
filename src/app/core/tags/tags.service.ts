@@ -86,6 +86,14 @@ export class TagsService {
     await this.persist(this.tagsSignal().filter((t) => t.id !== id));
   }
 
+  async setSwatch(id: string, swatchId: string | null): Promise<void> {
+    const current = this.byId(id);
+    if (!current) return;
+    const next: Tag =
+      swatchId === null ? withoutSwatch(current) : { ...current, colorSwatchId: swatchId };
+    await this.persist(this.tagsSignal().map((t) => (t.id === id ? next : t)));
+  }
+
   private async persist(next: readonly Tag[]): Promise<void> {
     const root = this.requireRoot();
     const sorted = [...next].sort((a, b) => a.label.localeCompare(b.label));
@@ -99,4 +107,10 @@ export class TagsService {
     if (!root) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
     return root;
   }
+}
+
+function withoutSwatch(tag: Tag): Tag {
+  const next: Record<string, unknown> = { ...tag };
+  delete next['colorSwatchId'];
+  return next as Tag;
 }

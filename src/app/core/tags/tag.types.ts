@@ -6,6 +6,7 @@ export interface Tag {
   readonly id: string;
   readonly label: string;
   readonly color: string;
+  readonly colorSwatchId?: string;
   readonly createdAt: string;
   readonly [key: string]: unknown;
 }
