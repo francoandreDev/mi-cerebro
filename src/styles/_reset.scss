@@ -75,7 +75,35 @@ input,
 textarea,
 select {
   font: inherit;
-  color: inherit;
+  color: var(--mc-fg-primary);
+  background: var(--mc-bg-elevated);
+  border: 1px solid var(--mc-border-default);
+  border-radius: var(--mc-radius-sm);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--mc-fg-dim);
+  opacity: 1;
+}
+
+// why: native checkboxes/radios/range/color/file pick the browser's
+// light field background by default, which clashes with our dark theme.
+// Let the UA paint them with our scheme so the controls stay legible.
+input,
+textarea,
+select {
+  color-scheme: light dark;
+}
+
+input[type='checkbox'],
+input[type='radio'],
+input[type='range'],
+input[type='color'],
+input[type='file'],
+input[type='image'] {
+  background: transparent;
+  border: none;
 }
 
 // Accessible focus ring (rule 29).

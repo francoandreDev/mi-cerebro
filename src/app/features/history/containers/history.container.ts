@@ -7,6 +7,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 
 import { ErrorService } from '@core/errors/error.service';
 import { I18nService } from '@core/i18n/i18n.service';
@@ -46,6 +47,7 @@ export class HistoryContainer implements OnInit {
   protected readonly milestones = inject(MilestoneController);
   private readonly errors = inject(ErrorService);
   protected readonly i18n = inject(I18nService);
+  private readonly route = inject(ActivatedRoute);
 
   protected readonly loading = this.history.loading;
   protected readonly error = this.history.error;
@@ -245,14 +247,29 @@ export class HistoryContainer implements OnInit {
   private async reloadAll(selectFirst: boolean): Promise<void> {
     await this.history.load();
     const all = this.entries();
-    if (selectFirst) {
+    // why: deep-links from /variants (`?oid=<sha>`) and external tools
+    //      hand us a specific commit to focus. If we resolve it, skip
+    //      the "first visible" heuristic so the page lands where the
+    //      caller pointed; otherwise fall through to default behavior.
+    const requested = this.route.snapshot.queryParamMap.get('oid');
+    const matched = requested ? all.find((e) => e.oid === requested) : null;
+    if (matched) {
+      this.selectedOidSignal.set(matched.oid);
+      queueMicrotask(() => {
+        document
+          .getElementById(`commit-${matched.oid}`)
+          ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    } else if (selectFirst) {
       const first = all[0];
       if (first) this.selectedOidSignal.set(first.oid);
     }
     try {
       const noise = await this.diff.findNoiseCommits(all);
       this.noiseOidsSignal.set(noise);
-      if (selectFirst) {
+      // why: don't bump off a commit the user deep-linked to, even if
+      //      it's classified as noise — they asked for that exact one.
+      if (selectFirst && !matched) {
         const current = this.selectedOidSignal();
         if (current && noise.has(current)) {
           const visible = all.find((e) => !noise.has(e.oid));

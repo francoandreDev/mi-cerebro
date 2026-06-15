@@ -20,6 +20,37 @@
   </header>
 
   <section class="group">
+    <h3>{{ t('variants.graph.overview.title') }}</h3>
+    <p class="hint">{{ t('variants.graph.overview.hint') }}</p>
+    <mc-variants-overview-graph
+      [variants]="visibleVariants()"
+      [overviews]="overviews()"
+      [activeId]="file().activeId"
+      (hoverVariant)="onGraphHover($event)"
+      (requestAction)="onGraphAction($event)"
+      (openCommit)="onOpenCommit($event)"
+    />
+  </section>
+
+  <mc-variants-filters
+    [query]="query()"
+    [state]="stateFilter()"
+    [parent]="parentFilter()"
+    [parents]="parentsForFilter()"
+    [hasActive]="hasActiveFilter()"
+    [matched]="filteredCount()"
+    [total]="visibleVariants().length"
+    (queryChange)="query.set($event)"
+    (stateChange)="stateFilter.set($event)"
+    (parentChange)="parentFilter.set($event)"
+    (clear)="clearFilters()"
+  />
+
+  @if (hasActiveFilter() && filteredCount() === 0) {
+    <p class="empty">{{ t('variants.filters.empty') }}</p>
+  }
+
+  <section class="group">
     <h3>{{ t('variants.section.active') }}</h3>
     @if (activeList().length === 0) {
       <p class="empty">{{ t('variants.section.active.empty') }}</p>
@@ -32,14 +63,14 @@
     }
   </section>
 
-  <section class="group">
-    <h3>{{ t('variants.section.principal') }}</h3>
-    @if (principal(); as p) {
+  @if (principalVisible(); as p) {
+    <section class="group">
+      <h3>{{ t('variants.section.principal') }}</h3>
       <ul class="cards">
         <ng-container *ngTemplateOutlet="card; context: { v: p }"></ng-container>
       </ul>
-    }
-  </section>
+    </section>
+  }
 
   <section class="group">
     <h3>{{ t('variants.section.dormant') }}</h3>
@@ -56,7 +87,13 @@
   </section>
 
   <ng-template #card let-v="v">
-    <li class="card" [class.is-active]="isActive(v)" [class.is-dormant]="isDormantNow(v)">
+    <li
+      class="card"
+      [id]="'variant-card-' + v.id"
+      [class.is-active]="isActive(v)"
+      [class.is-dormant]="isDormantNow(v)"
+      [class.is-highlighted]="highlightedId() === v.id"
+    >
       <div class="card-head">
         <label class="color-swatch" [title]="t('variants.form.color')">
           <input
@@ -98,6 +135,71 @@
         }
       </div>
 
+      <dl class="card-lineage">
+        @if (v.parentId) {
+          <div class="row">
+            <dt>{{ t('variants.lineage.origin') }}</dt>
+            <dd>
+              <span class="parent-name">{{ variantNameById()[v.parentId] || v.parentId }}</span>
+              @if (v.forkOid) {
+                <span class="muted">{{ t('variants.lineage.at') }}</span>
+                <code class="sha">{{ shortOid(v.forkOid) }}</code>
+              } @else {
+                <span class="muted">· {{ t('variants.lineage.unknown') }}</span>
+              }
+            </dd>
+          </div>
+        } @else {
+          <div class="row">
+            <dt>{{ t('variants.lineage.origin') }}</dt>
+            <dd class="muted">{{ t('variants.lineage.root') }}</dd>
+          </div>
+        }
+
+        @if (overviews()[v.id]; as ov) {
+          <div class="row">
+            <dt>HEAD</dt>
+            <dd>
+              @if (ov.head; as head) {
+                <span class="head-subject">{{ head.subject }}</span>
+                <code class="sha">{{ shortOid(head.oid) }}</code>
+              } @else {
+                <span class="muted">{{ t('variants.head.empty') }}</span>
+              }
+            </dd>
+          </div>
+
+          <div class="row">
+            <dt>{{ t('variants.milestone.label') }}</dt>
+            <dd>
+              @if (ov.milestone; as m) {
+                <span class="milestone-name">{{ m.name }}</span>
+                <code class="sha">{{ shortOid(m.oid) }}</code>
+              } @else {
+                <span class="muted">{{ t('variants.milestone.none') }}</span>
+              }
+            </dd>
+          </div>
+
+          @if (!v.protected) {
+            <div class="row chips">
+              @if (ov.ahead === 0 && ov.behind === 0) {
+                <span class="chip even">{{ t('variants.compare.even') }}</span>
+              } @else {
+                @if (ov.ahead > 0) {
+                  <span class="chip ahead">{{ t('variants.compare.ahead', { n: ov.ahead }) }}</span>
+                }
+                @if (ov.behind > 0) {
+                  <span class="chip behind">{{
+                    t('variants.compare.behind', { n: ov.behind })
+                  }}</span>
+                }
+              }
+            </div>
+          }
+        }
+      </dl>
+
       <div class="card-actions">
         @if (renamingId() === v.id) {
           <button type="button" class="primary" (click)="submitRename(v)" [disabled]="busy()">
@@ -138,53 +240,15 @@
     </li>
   </ng-template>
 
-  @if (showCreate()) {
-    <button
-      type="button"
-      class="modal-backdrop"
-      [attr.aria-label]="t('variants.form.cancel')"
-      (click)="cancelCreate()"
-    ></button>
-    <div class="modal" role="dialog" aria-modal="true">
-      <h3>{{ t('variants.form.title') }}</h3>
-      <label class="field">
-        <span>{{ t('variants.form.name') }}</span>
-        <input
-          type="text"
-          [ngModel]="createName()"
-          (ngModelChange)="createName.set($event)"
-          [placeholder]="t('variants.form.name.placeholder')"
-        />
-      </label>
-      <label class="field">
-        <span>{{ t('variants.form.color') }}</span>
-        <input type="color" [ngModel]="createColor()" (ngModelChange)="createColor.set($event)" />
-      </label>
-      <label class="field">
-        <span>{{ t('variants.form.from') }}</span>
-        <select [ngModel]="createFrom()" (ngModelChange)="createFrom.set($event)">
-          @for (v of file().variants; track v.id) {
-            @if (!v.pendingDelete) {
-              <option [value]="v.id">{{ v.name }}</option>
-            }
-          }
-        </select>
-      </label>
-      <div class="modal-actions">
-        <button type="button" class="ghost" (click)="cancelCreate()" [disabled]="busy()">
-          {{ t('variants.form.cancel') }}
-        </button>
-        <button
-          type="button"
-          class="primary"
-          (click)="submitCreate()"
-          [disabled]="busy() || !createName().trim()"
-        >
-          {{ t('variants.form.create') }}
-        </button>
-      </div>
-    </div>
-  }
+  <mc-variants-create-modal
+    [visible]="showCreate()"
+    [parents]="visibleVariants()"
+    [overviews]="overviews()"
+    [initialFromId]="file().activeId"
+    [busy]="busy()"
+    (submitted)="submitCreate($event)"
+    (cancelled)="cancelCreate()"
+  />
 
   @if (deleteRequest(); as req) {
     <button

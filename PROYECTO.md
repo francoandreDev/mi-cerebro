@@ -530,10 +530,11 @@ Una variante visible al usuario es internamente una **familia de tres ramas git*
 | Principal        | `main`           | `variant/principal/draft` | `variant/principal/comments` |
 | Variante X       | `variant/<slug>` | `variant/<slug>/draft`    | `variant/<slug>/comments`    |
 
-`.mi-cerebro/variants.json` lleva el registro: id, nombre legible, color, `protected`, `lastActivityAt`, refs de las 3 ramas. Borrador y Comentarios son **facetas permanentes de cada familia**: se crean junto con la variante, se borran con ella, no existen sueltas. Principal nunca se borra.
+`.mi-cerebro/variants.json` lleva el registro: id, nombre legible, color, `protected`, `lastActivityAt`, refs de las 3 ramas, **`parentId` y `forkOid`** (linaje, schema v2). Borrador y Comentarios son **facetas permanentes de cada familia**: se crean junto con la variante, se borran con ella, no existen sueltas. Principal nunca se borra.
 
 - **Crear variante** = bifurcar las 3 ramas a la vez, cada una forkeada de su faceta hermana en la familia origen. No se arranca con borrador/comentarios vacíos: se heredan los actuales. Forkear el contexto entero, no sólo lo definitivo.
 - **Borrar variante** = `git branch -D` sobre las 3 + remover entrada. Una sola acción del usuario; si tenía commits no mergeados, warning con opción de exportar a ZIP antes.
+- **Linaje persistido (schema v2).** Cada variante guarda `parentId` (id del padre; `null` sólo para Principal) y `forkOid` (OID del `main` del padre al momento del fork; `null` cuando es desconocido). Se capturan en `create()` y permiten que `/variants` muestre "Sale de X en `abc1234`" sin recalcular la merge-base contra todos los heads. Migración v1→v2 inline al leer `variants.json`: las variantes preexistentes quedan con `parentId: 'principal'` y `forkOid: null` ("origen desconocido"); a partir de v2 ambos campos se llenan honestamente.
 
 ### Comentarios anclados (rama `comments`)
 

@@ -125,6 +125,8 @@ async function bootstrapWithPrincipal(): Promise<{
     lastActivityAt: 0,
     state: 'active',
     refs: PRINCIPAL_REFS,
+    parentId: null,
+    forkOid: null,
   };
   return { root, activeVariant };
 }

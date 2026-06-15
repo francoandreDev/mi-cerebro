@@ -78,6 +78,7 @@
                   <button
                     type="button"
                     class="commit"
+                    [id]="'commit-' + item.entry.oid"
                     [class.selected]="selectedOid() === item.entry.oid"
                     [class.is-head]="headOid() === item.entry.oid"
                     [class.has-milestone]="milestonesFor(item.entry.oid).length > 0"

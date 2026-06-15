@@ -19,7 +19,19 @@ import { PRINCIPAL_VARIANT_ID, type Variant } from '@core/versioning/variants.ty
 import { BgColorDirective } from '@shared/directives/bg-color.directive';
 import { McDatePipe } from '@shared/pipes/mc-date.pipe';
 
-import { VariantsStatsService } from '../services/variants-stats.service';
+import {
+  VariantsCreateModalComponent,
+  type CreateVariantRequest,
+} from '../components/variants-create-modal.component';
+import {
+  VariantsFiltersComponent,
+  type StateFilter,
+} from '../components/variants-filters.component';
+import {
+  VariantsOverviewGraphComponent,
+  type LaneActionRequest,
+} from '../components/variants-overview-graph.component';
+import { VariantsStatsService, type VariantOverview } from '../services/variants-stats.service';
 
 interface DeleteRequest {
   readonly variant: Variant;
@@ -30,7 +42,15 @@ interface DeleteRequest {
   selector: 'mc-variants-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [VariantsStatsService],
-  imports: [NgTemplateOutlet, FormsModule, BgColorDirective, McDatePipe],
+  imports: [
+    NgTemplateOutlet,
+    FormsModule,
+    BgColorDirective,
+    McDatePipe,
+    VariantsOverviewGraphComponent,
+    VariantsFiltersComponent,
+    VariantsCreateModalComponent,
+  ],
   templateUrl: './variants.container.html',
   styleUrl: './variants.container.css',
 })
@@ -57,48 +77,95 @@ export class VariantsContainer implements OnInit {
   );
 
   // why: compute dormant state live from `lastActivityAt` + the current
-  //      threshold so (a) /settings changes react instantly without
-  //      touching git, and (b) the dev panel's "-31d" backdate sticks
-  //      until the user explicitly clicks "Releer actividad".
+  //      threshold so /settings changes react instantly and the dev
+  //      panel's backdate sticks until "Releer actividad".
   protected readonly isDormantNow = (v: Variant): boolean =>
     isDormant(v.lastActivityAt, this.thresholdDays(), Date.now());
 
+  protected readonly renamingId = signal<string | null>(null);
+  protected readonly renameValue = signal('');
+  protected readonly deleteRequest = signal<DeleteRequest | null>(null);
+  protected readonly overviews = signal<Record<string, VariantOverview>>({});
+  protected readonly showCreate = signal(false);
+  protected readonly highlightedId = signal<string | null>(null);
+
+  protected readonly query = signal('');
+  protected readonly stateFilter = signal<StateFilter>('all');
+  protected readonly parentFilter = signal<string>('all');
+
+  protected readonly visibleVariants = computed(() =>
+    this.file().variants.filter((v) => !v.pendingDelete),
+  );
+
+  protected readonly variantNameById = computed(() => {
+    const out: Record<string, string> = {};
+    for (const v of this.file().variants) out[v.id] = v.name;
+    return out;
+  });
+
+  // Parents available in the "Forkeado desde" filter: anything that
+  // could be a parent (Principal + every existing variant).
+  protected readonly parentsForFilter = computed(() => this.visibleVariants());
+
+  protected readonly hasActiveFilter = computed(
+    () =>
+      this.query().trim() !== '' || this.stateFilter() !== 'all' || this.parentFilter() !== 'all',
+  );
+
+  private readonly matchesFilter = (v: Variant): boolean => {
+    const sf = this.stateFilter();
+    if (sf === 'principal' && v.id !== PRINCIPAL_VARIANT_ID) return false;
+    if (sf === 'active' && (v.id === PRINCIPAL_VARIANT_ID || this.isDormantNow(v))) return false;
+    if (sf === 'dormant' && (v.id === PRINCIPAL_VARIANT_ID || !this.isDormantNow(v))) return false;
+
+    const pf = this.parentFilter();
+    if (pf !== 'all' && v.parentId !== pf) return false;
+
+    const q = this.query().trim().toLowerCase();
+    if (!q) return true;
+    const ov = this.overviews()[v.id] ?? null;
+    const parentName = v.parentId ? (this.variantNameById()[v.parentId] ?? '') : '';
+    const hay = [
+      v.name,
+      v.id,
+      parentName,
+      v.forkOid ?? '',
+      ov?.head?.subject ?? '',
+      ov?.head?.oid ?? '',
+      ov?.milestone?.name ?? '',
+    ]
+      .join(' ')
+      .toLowerCase();
+    return hay.includes(q);
+  };
+
+  protected readonly filteredCount = computed(
+    () => this.visibleVariants().filter((v) => this.matchesFilter(v)).length,
+  );
+
   protected readonly activeList = computed(() =>
-    [...this.file().variants]
-      .filter(
-        (v) =>
-          v.id !== PRINCIPAL_VARIANT_ID &&
-          !v.pendingDelete &&
-          !isDormant(v.lastActivityAt, this.thresholdDays(), Date.now()),
-      )
+    [...this.visibleVariants()]
+      .filter((v) => v.id !== PRINCIPAL_VARIANT_ID && !this.isDormantNow(v))
+      .filter((v) => this.matchesFilter(v))
       .sort((a, b) => b.lastActivityAt - a.lastActivityAt),
   );
 
   protected readonly dormantList = computed(() =>
-    [...this.file().variants]
-      .filter(
-        (v) =>
-          v.id !== PRINCIPAL_VARIANT_ID &&
-          !v.pendingDelete &&
-          isDormant(v.lastActivityAt, this.thresholdDays(), Date.now()),
-      )
+    [...this.visibleVariants()]
+      .filter((v) => v.id !== PRINCIPAL_VARIANT_ID && this.isDormantNow(v))
+      .filter((v) => this.matchesFilter(v))
       .sort((a, b) => b.lastActivityAt - a.lastActivityAt),
   );
 
-  // Modal state.
-  protected readonly showCreate = signal(false);
-  protected readonly createName = signal('');
-  protected readonly createColor = signal('#7aa2ff');
-  protected readonly createFrom = signal(PRINCIPAL_VARIANT_ID);
-
-  protected readonly renamingId = signal<string | null>(null);
-  protected readonly renameValue = signal('');
-
-  protected readonly deleteRequest = signal<DeleteRequest | null>(null);
+  protected readonly principalVisible = computed(() => {
+    const p = this.principal();
+    return p && this.matchesFilter(p) ? p : null;
+  });
 
   async ngOnInit(): Promise<void> {
     try {
       await this.variants.refresh();
+      await this.loadOverviews();
     } catch (e) {
       this.errors.report(e);
     }
@@ -112,15 +179,69 @@ export class VariantsContainer implements OnInit {
     return this.file().activeId === v.id;
   }
 
+  protected shortOid(oid: string | null | undefined): string {
+    return oid ? oid.slice(0, 7) : '';
+  }
+
+  protected clearFilters(): void {
+    this.query.set('');
+    this.stateFilter.set('all');
+    this.parentFilter.set('all');
+  }
+
   protected async refreshActivity(): Promise<void> {
     this.refreshing.set(true);
     try {
       await this.variants.refreshActivity(this.thresholdDays());
+      this.stats.invalidate();
+      await this.loadOverviews();
     } catch (e) {
       this.errors.report(e);
     } finally {
       this.refreshing.set(false);
     }
+  }
+
+  private async loadOverviews(): Promise<void> {
+    const list = this.visibleVariants();
+    const entries = await Promise.all(
+      list.map(async (v) => [v.id, await this.stats.overview(v)] as const),
+    );
+    const next: Record<string, VariantOverview> = {};
+    for (const [id, ov] of entries) next[id] = ov;
+    this.overviews.set(next);
+  }
+
+  protected onGraphHover(id: string | null): void {
+    this.highlightedId.set(id);
+    if (!id) return;
+    queueMicrotask(() => {
+      const el = document.getElementById(`variant-card-${id}`);
+      el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  }
+
+  protected onGraphAction(req: LaneActionRequest): void {
+    const v = this.visibleVariants().find((x) => x.id === req.id);
+    if (!v) return;
+    switch (req.kind) {
+      case 'switch':
+        void this.onSwitch(v);
+        return;
+      case 'rename':
+        this.startRename(v);
+        return;
+      case 'merge':
+        this.onMerge(v);
+        return;
+      case 'delete':
+        void this.requestDelete(v);
+        return;
+    }
+  }
+
+  protected onOpenCommit(oid: string): void {
+    void this.router.navigate(['/history'], { queryParams: { oid } });
   }
 
   protected async onSwitch(v: Variant): Promise<void> {
@@ -133,9 +254,6 @@ export class VariantsContainer implements OnInit {
   }
 
   protected openCreate(): void {
-    this.createName.set('');
-    this.createColor.set('#7aa2ff');
-    this.createFrom.set(this.file().activeId);
     this.showCreate.set(true);
   }
 
@@ -143,17 +261,12 @@ export class VariantsContainer implements OnInit {
     this.showCreate.set(false);
   }
 
-  protected async submitCreate(): Promise<void> {
-    const name = this.createName().trim();
-    if (!name) return;
+  protected async submitCreate(req: CreateVariantRequest): Promise<void> {
     this.busy.set(true);
     try {
-      await this.variants.create({
-        name,
-        color: this.createColor(),
-        fromVariantId: this.createFrom(),
-      });
+      await this.variants.create(req);
       this.showCreate.set(false);
+      await this.loadOverviews();
     } catch (e) {
       this.errors.report(e);
     } finally {
@@ -222,6 +335,8 @@ export class VariantsContainer implements OnInit {
     try {
       await this.variants.delete(req.variant.id);
       this.deleteRequest.set(null);
+      this.stats.invalidate();
+      await this.loadOverviews();
     } catch (e) {
       this.errors.report(e);
     } finally {

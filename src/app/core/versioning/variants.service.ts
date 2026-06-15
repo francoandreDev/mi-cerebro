@@ -183,7 +183,7 @@ export class VariantsService {
       });
     }
     const newRefs = refsForSlug(slug);
-    await forkFamilyAtomic(this.requireAdapter(), parent.refs, newRefs);
+    const { forkOid } = await forkFamilyAtomic(this.requireAdapter(), parent.refs, newRefs);
     const variant: Variant = {
       id: slug,
       name: opts.name.trim(),
@@ -192,6 +192,8 @@ export class VariantsService {
       lastActivityAt: Date.now(),
       state: 'active',
       refs: newRefs,
+      parentId: parent.id,
+      forkOid,
     };
     await this.writeFile({ ...current, variants: [...current.variants, variant] });
     return variant;
@@ -232,7 +234,7 @@ export class VariantsService {
     if (this.loaded) return;
     const dir = await this.metaDir();
     if (!dir) return;
-    let parsed: VariantsFile | null = null;
+    let parsed: { file: VariantsFile; migrated: boolean } | null = null;
     try {
       const raw = await this.fs.readJson<unknown>(dir, VARIANTS_FILE);
       parsed = sanitizeVariantsFile(raw);
@@ -246,11 +248,18 @@ export class VariantsService {
       this.loaded = true;
       return;
     }
-    this.fileSignal.set(parsed);
+    // why: persist the schema bump on read so the on-disk file matches
+    //      the in-memory model and a later crash before any mutation
+    //      doesn't re-run the migration on every load.
+    if (parsed.migrated) {
+      await this.writeFile(parsed.file);
+    } else {
+      this.fileSignal.set(parsed.file);
+    }
     this.loaded = true;
     // why: opportunistically retry deletions left half-applied by a
     //      previous crash; failure is non-fatal (retried next load).
-    for (const v of parsed.variants.filter((p) => p.pendingDelete)) {
+    for (const v of parsed.file.variants.filter((p) => p.pendingDelete)) {
       try {
         await this.completeDelete(v.id);
       } catch {

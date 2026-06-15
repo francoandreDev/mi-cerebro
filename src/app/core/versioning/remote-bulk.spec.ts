@@ -23,6 +23,8 @@ const variant = (id: string, refs: { main: string; comments: string; draft: stri
   lastActivityAt: 0,
   state: 'active',
   refs,
+  parentId: id === 'principal' ? null : 'principal',
+  forkOid: null,
 });
 
 describe('listRefTargets', () => {

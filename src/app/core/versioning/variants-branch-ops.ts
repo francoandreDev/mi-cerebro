@@ -14,19 +14,29 @@ import type { VariantRefs } from './variants.types';
 
 const REPO_DIR = '/';
 
+export interface ForkResult {
+  // why: OID of the parent's main at fork time, captured so Variant
+  //      can persist forkOid (schema v2) and /variants can show "sale
+  //      de X en abc1234" later. null only if both parent.main and
+  //      the Principal fallback resolved to null — kept in the type
+  //      for honesty even though that path also throws.
+  readonly forkOid: string | null;
+}
+
 export async function forkFamilyAtomic(
   fs: GitFsAdapter,
   parent: VariantRefs,
   target: VariantRefs,
-): Promise<void> {
+): Promise<ForkResult> {
   const pairs: readonly [keyof VariantRefs, string, string][] = [
     ['main', parent.main, target.main],
     ['draft', parent.draft, target.draft],
     ['comments', parent.comments, target.comments],
   ];
   const created: string[] = [];
+  let mainOid: string | null = null;
   try {
-    for (const [, parentRef, newRef] of pairs) {
+    for (const [facet, parentRef, newRef] of pairs) {
       const oid = await resolveOrNull(fs, parentRef);
       if (oid === null) {
         // why: parent draft/comments may not exist yet if Principal
@@ -41,11 +51,14 @@ export async function forkFamilyAtomic(
           });
         }
         await git.branch({ fs, dir: REPO_DIR, ref: newRef, object: fallback });
+        if (facet === 'main') mainOid = fallback;
       } else {
         await git.branch({ fs, dir: REPO_DIR, ref: newRef, object: oid });
+        if (facet === 'main') mainOid = oid;
       }
       created.push(newRef);
     }
+    return { forkOid: mainOid };
   } catch (cause) {
     for (const ref of [...created].reverse()) {
       try {
