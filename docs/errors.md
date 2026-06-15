@@ -393,3 +393,27 @@ Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `P
 - **Causa típica:** ráfaga de autocommits muy juntos (3+ ediciones en menos de 1 minuto con throttle bajo) o un push manual del usuario que tardó más de lo esperado.
 - **Cómo resolver:** nada — el siguiente autocommit que pase el throttle dispara la subida pendiente. Si pasa seguido, subir `pushThrottleMinutes` en `/settings`.
 - **Recuperable:** sí — los cambios siguen viajando con el siguiente push.
+
+### MCB-EXP-001 — Falló la lectura del workspace durante el export
+
+- **Severidad:** error
+- **Cuándo:** `ExportZipService.exportToDownload` arroja mientras recorre el FS Access tree (un `getFile()` o `entries()` rechazó).
+- **Causa típica:** permiso del directorio revocado mid-export, archivo bloqueado por otro proceso, o cuota de IndexedDB / disco llena.
+- **Cómo resolver:** revisar permisos de la carpeta (`/onboarding` re-authorize si hace falta), cerrar editores externos sobre la carpeta y reintentar.
+- **Recuperable:** sí — el progreso vuelve a `idle` y el usuario puede reintentar sin perder nada.
+
+### MCB-EXP-002 — fflate falló al comprimir el ZIP
+
+- **Severidad:** error
+- **Cuándo:** fflate retorna error desde el callback de `zip(tree, …)`.
+- **Causa típica:** OOM por workspace muy pesado con todos los assets + .git incluidos.
+- **Cómo resolver:** reintentar con `includeAssets=false` o `includeAllVariants=false` para reducir el set.
+- **Recuperable:** sí — el progreso vuelve a `idle`.
+
+### MCB-EXP-003 — Workspace no disponible para exportar
+
+- **Severidad:** error
+- **Cuándo:** se llama `exportToDownload` sin un `WorkspaceService.root()` listo.
+- **Causa típica:** botón disparado durante el bootstrap o tras un reset de workspace.
+- **Cómo resolver:** ir a `/onboarding`, seleccionar la carpeta y autorizar; luego volver a `/settings` y reintentar.
+- **Recuperable:** sí.

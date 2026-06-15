@@ -9,6 +9,7 @@ import {
 import { RouterLink } from '@angular/router';
 
 import { ErrorService } from '@core/errors/error.service';
+import { ExportZipService } from '@core/export/export-zip.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { SettingsService, isValidTimezone } from '@core/settings/settings.service';
@@ -30,6 +31,12 @@ export class SettingsContainer {
   private readonly remote = inject(RemoteService);
   private readonly errors = inject(ErrorService);
   private readonly theme = inject(ThemeService);
+  private readonly exportZip = inject(ExportZipService);
+
+  protected readonly exportIncludeAllVariants = signal(false);
+  protected readonly exportIncludeAssets = signal(true);
+  protected readonly exportProgress = this.exportZip.progress;
+  protected readonly exportRunning = this.exportZip.isRunning;
 
   protected readonly themeOptions: readonly { value: ThemeOverride; labelKey: TranslationKey }[] = [
     { value: 'auto', labelKey: 'settings.theme.option.auto' },
@@ -71,8 +78,8 @@ export class SettingsContainer {
     this.settings.setVariantsDormantThreshold(this.dormantDraft());
   }
 
-  protected t(key: TranslationKey): string {
-    return this.i18n.t(key);
+  protected t(key: TranslationKey, params?: Record<string, string | number>): string {
+    return this.i18n.t(key, params);
   }
 
   protected onInput(event: Event): void {
@@ -141,6 +148,25 @@ export class SettingsContainer {
   protected async pushRemote(): Promise<void> {
     try {
       await this.remote.pushActiveMain();
+    } catch (e) {
+      this.errors.report(e);
+    }
+  }
+
+  protected onToggleIncludeVariants(event: Event): void {
+    this.exportIncludeAllVariants.set((event.target as HTMLInputElement).checked);
+  }
+
+  protected onToggleIncludeAssets(event: Event): void {
+    this.exportIncludeAssets.set((event.target as HTMLInputElement).checked);
+  }
+
+  protected async runExport(): Promise<void> {
+    try {
+      await this.exportZip.exportToDownload({
+        includeAllVariants: this.exportIncludeAllVariants(),
+        includeAssets: this.exportIncludeAssets(),
+      });
     } catch (e) {
       this.errors.report(e);
     }

@@ -190,4 +190,54 @@
       </span>
     </fieldset>
   </section>
+
+  <section class="group">
+    <h3>{{ t('settings.export.section.title') }}</h3>
+    <p class="hint">{{ t('settings.export.hint') }}</p>
+
+    <label class="field row">
+      <input
+        type="checkbox"
+        [checked]="exportIncludeAllVariants()"
+        (change)="onToggleIncludeVariants($event)"
+      />
+      <span>
+        <span class="label">{{ t('settings.export.option.variants.label') }}</span>
+        <span class="hint">{{ t('settings.export.option.variants.hint') }}</span>
+      </span>
+    </label>
+
+    <label class="field row">
+      <input
+        type="checkbox"
+        [checked]="exportIncludeAssets()"
+        (change)="onToggleIncludeAssets($event)"
+      />
+      <span>
+        <span class="label">{{ t('settings.export.option.assets.label') }}</span>
+        <span class="hint">{{ t('settings.export.option.assets.hint') }}</span>
+      </span>
+    </label>
+
+    <div class="field">
+      <button type="button" class="primary" [disabled]="exportRunning()" (click)="runExport()">
+        @if (exportRunning()) {
+          {{ t('settings.export.button.busy') }}
+        } @else {
+          {{ t('settings.export.button') }}
+        }
+      </button>
+      @if (exportProgress().phase === 'walking') {
+        <span class="hint">{{
+          t('settings.export.progress.walking', { count: exportProgress().count })
+        }}</span>
+      } @else if (exportProgress().phase === 'compressing') {
+        <span class="hint">{{
+          t('settings.export.progress.compressing', { count: exportProgress().count })
+        }}</span>
+      } @else if (exportProgress().phase === 'done') {
+        <span class="hint">{{ t('settings.export.progress.done') }}</span>
+      }
+    </div>
+  </section>
 </section>

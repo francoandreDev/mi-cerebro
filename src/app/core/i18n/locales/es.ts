@@ -914,6 +914,30 @@ export const es = {
   'errors.net.008.title': 'Auto-push omitido',
   'errors.net.008.message':
     'Se intentó disparar un auto-push mientras ya había uno en vuelo. Se omite — el siguiente trigger lo recupera.',
+  'errors.exp.001.title': 'Falló la lectura del workspace',
+  'errors.exp.001.message':
+    'No se pudo leer algún archivo durante el export. Verificá los permisos de la carpeta y volvé a intentar.',
+  'errors.exp.002.title': 'Falló la compresión',
+  'errors.exp.002.message':
+    'fflate no pudo armar el ZIP. Probá con menos archivos (desactivar assets) o reintentá.',
+  'errors.exp.003.title': 'Workspace no disponible',
+  'errors.exp.003.message':
+    'No hay un workspace abierto. Volvé a autorizar la carpeta y reintentá.',
+
+  'settings.export.section.title': 'Exportar workspace',
+  'settings.export.hint':
+    'Generá un ZIP descargable con todo tu workspace. Útil para backup, migración o entrega.',
+  'settings.export.option.variants.label': 'Incluir todas las variantes (.git)',
+  'settings.export.option.variants.hint':
+    'Incluye historial + ramas comments/draft de cada variante. Sin esto, el ZIP es un snapshot plano del main actual.',
+  'settings.export.option.assets.label': 'Incluir assets pesados',
+  'settings.export.option.assets.hint':
+    'Incluye files/, images/ y music/. Desactivá si querés un ZIP livianito con sólo metadata.',
+  'settings.export.button': 'Exportar ZIP',
+  'settings.export.button.busy': 'Exportando…',
+  'settings.export.progress.walking': 'Leyendo archivos ({count})…',
+  'settings.export.progress.compressing': 'Comprimiendo {count} archivos…',
+  'settings.export.progress.done': 'Listo. Descarga lanzada.',
 
   'settings.remote.section.title': 'Versionado remoto',
   'settings.remote.url.label': 'URL del repositorio',
