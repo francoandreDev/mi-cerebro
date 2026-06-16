@@ -14,6 +14,8 @@ import {
 } from '@core/fs/walk';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { MigrationsService } from '@core/migrations/migrations.service';
+import { nextPositionAfter, seedMissingPositions } from '@core/ordering/seed-positions';
+import { positionSeedMigrationStep } from '@core/ordering/position.migration';
 import { SearchIndexService } from '@core/search/search-index.service';
 import { blockIdMigrationStep } from '@core/tiptap/block-id/block-id.migration';
 import type { SearchDoc } from '@core/search/search.types';
@@ -53,7 +55,7 @@ export class WritingsService {
     this.migrations.register({
       kind: WRITING_KIND,
       latest: WRITING_SCHEMA_VERSION,
-      steps: [blockIdMigrationStep(1)],
+      steps: [blockIdMigrationStep(1), positionSeedMigrationStep(2)],
     });
   }
 
@@ -62,18 +64,33 @@ export class WritingsService {
     this.idToPath.clear();
     const summaries: WritingSummary[] = [];
     const indexDocs: SearchDoc[] = [];
+    const writingsById = new Map<string, Writing>();
     for await (const entry of walkEntities(this.fs, dir, WRITING_FILE_SUFFIX)) {
       try {
         const raw = await this.fs.readJson<Writing>(entry.dirHandle, entry.filename);
         const writing = await this.migrations.migrate<Writing>(WRITING_KIND, raw);
         this.idToPath.set(writing.id, entry.relativePath);
+        writingsById.set(writing.id, writing);
         summaries.push(this.toSummary(writing, entry.folder));
         indexDocs.push(this.toSearchDoc(writing));
       } catch (cause) {
         console.warn('[writings] skipped unreadable file', entry.relativePath, cause);
       }
     }
-    summaries.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    summaries.sort(compareLegacy);
+    const seeds = seedMissingPositions(summaries);
+    if (seeds.length > 0) {
+      const positionById = new Map(seeds.map((s) => [s.id, s.position] as const));
+      for (const [id, pos] of positionById) {
+        const writing = writingsById.get(id);
+        if (writing) await this.writePositionInPlace(writing, pos);
+      }
+      for (let i = 0; i < summaries.length; i++) {
+        const seeded = positionById.get(summaries[i]!.id);
+        if (seeded) summaries[i] = { ...summaries[i]!, position: seeded };
+      }
+    }
+    summaries.sort(comparePosition);
     this.summariesSignal.set(summaries);
     const folders = await listFolders(this.fs, dir);
     this.foldersSignal.set(folders.map((f) => f.path));
@@ -85,6 +102,7 @@ export class WritingsService {
     const root = await this.writingsDir();
     const targetDir = await getOrCreateDirByPath(this.fs, root, folder);
     const now = new Date().toISOString();
+    const position = nextPositionAfter(lastPosition(this.summariesSignal()));
     const writing: Writing = {
       id: crypto.randomUUID(),
       title,
@@ -93,11 +111,14 @@ export class WritingsService {
       createdAt: now,
       updatedAt: now,
       schemaVersion: WRITING_SCHEMA_VERSION,
+      position,
     };
     const filename = await this.allocFilename(targetDir, title);
     await this.fs.writeFileAtomic(targetDir, filename, JSON.stringify(writing, null, 2));
     this.idToPath.set(writing.id, joinPath(folder, filename));
-    this.summariesSignal.update((curr) => [this.toSummary(writing, folder), ...curr]);
+    this.summariesSignal.update((curr) =>
+      sortByPosition([...curr, this.toSummary(writing, folder)]),
+    );
     if (folder !== '' && !this.foldersSet().has(folder)) {
       this.foldersSignal.update((curr) => [...curr, folder]);
     }
@@ -123,10 +144,32 @@ export class WritingsService {
     if (!subdir) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
     await this.fs.writeFileAtomic(subdir, filename, JSON.stringify(updated, null, 2));
     this.summariesSignal.update((curr) =>
-      curr.map((s) => (s.id === writing.id ? this.toSummary(updated, folder) : s)),
+      sortByPosition(curr.map((s) => (s.id === writing.id ? this.toSummary(updated, folder) : s))),
     );
     await this.search.upsert(this.toSearchDoc(updated));
     return updated;
+  }
+
+  async setPosition(id: string, position: string): Promise<void> {
+    const writing = await this.read(id);
+    const updated: Writing = { ...writing, position, updatedAt: new Date().toISOString() };
+    const dir = await this.writingsDir();
+    const { folder, filename } = splitRelativePath(await this.findPath(dir, id));
+    const subdir = await getDirByPath(this.fs, dir, folder);
+    if (!subdir) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
+    await this.fs.writeFileAtomic(subdir, filename, JSON.stringify(updated, null, 2));
+    this.summariesSignal.update((curr) =>
+      sortByPosition(curr.map((s) => (s.id === id ? { ...s, position } : s))),
+    );
+  }
+
+  private async writePositionInPlace(writing: Writing, position: string): Promise<void> {
+    const dir = await this.writingsDir();
+    const { folder, filename } = splitRelativePath(await this.findPath(dir, writing.id));
+    const subdir = await getDirByPath(this.fs, dir, folder);
+    if (!subdir) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
+    const seeded: Writing = { ...writing, position };
+    await this.fs.writeFileAtomic(subdir, filename, JSON.stringify(seeded, null, 2));
   }
 
   async deleteToTrash(id: string): Promise<void> {
@@ -234,6 +277,7 @@ export class WritingsService {
       updatedAt: writing.updatedAt,
       tags: writing.tags,
       folder,
+      position: writing.position ?? '',
     };
   }
 
@@ -258,3 +302,24 @@ export class WritingsService {
     return tagIds.filter((id) => this.tags.byId(id) !== undefined);
   }
 }
+
+const compareLegacy = (a: WritingSummary, b: WritingSummary): number =>
+  b.updatedAt.localeCompare(a.updatedAt) || a.id.localeCompare(b.id);
+
+const comparePosition = (a: WritingSummary, b: WritingSummary): number => {
+  if (a.position === '' && b.position === '') return compareLegacy(a, b);
+  if (a.position === '') return 1;
+  if (b.position === '') return -1;
+  return a.position.localeCompare(b.position);
+};
+
+const sortByPosition = (list: readonly WritingSummary[]): WritingSummary[] =>
+  [...list].sort(comparePosition);
+
+const lastPosition = (list: readonly WritingSummary[]): string | null => {
+  let max: string | null = null;
+  for (const s of list) {
+    if (s.position !== '' && (max === null || s.position > max)) max = s.position;
+  }
+  return max;
+};
