@@ -24,6 +24,17 @@ export async function* walkEntities(
   yield* walkInner(fs, root, suffix, '');
 }
 
+// why: meta sidecars live alongside entities (e.g. `_folders.json` at kind
+//      root, `_book.json` inside a book dir). Skip them here so flat-file
+//      entity services don't have to log+skip a malformed entity on every
+//      refresh.
+const META_FILES: ReadonlySet<string> = new Set([
+  '_folders.json',
+  '_book.json',
+  '_gallery.json',
+  '_collection.json',
+]);
+
 async function* walkInner(
   fs: FsService,
   dir: FsDirectoryHandle,
@@ -31,6 +42,7 @@ async function* walkInner(
   folder: string,
 ): AsyncIterable<FsEntityFile> {
   for await (const filename of fs.listFiles(dir, suffix)) {
+    if (META_FILES.has(filename)) continue;
     yield { folder, filename, relativePath: join(folder, filename), dirHandle: dir };
   }
   for await (const sub of fs.listSubdirs(dir)) {

@@ -24,6 +24,13 @@ import { WritingsService } from '@features/writings/services/writings.service';
 import { toSlug } from '@shared/utils/slug';
 
 import type { FolderKind } from './folders.types';
+import {
+  deleteFolderPositions,
+  nextFolderPositionFor,
+  readFolderPositions,
+  renameFolderPositions,
+  writeFolderPositions,
+} from './folder-positions';
 
 const FILE_SUFFIX = '.json';
 
@@ -53,8 +60,34 @@ export class FoldersService {
     }
     await this.fs.getOrCreateDir(parent, slug);
     const newPath = joinPath(parentPath, slug);
+    await this.assignNewFolderPosition(kind, newPath, parentPath);
     await this.refreshKind(kind);
     return newPath;
+  }
+
+  async getFolderPositions(kind: FolderKind): Promise<Readonly<Record<string, string>>> {
+    const root = await this.kindRoot(kind);
+    return (await readFolderPositions(this.fs, root)).positions;
+  }
+
+  async setFolderPosition(kind: FolderKind, path: string, position: string): Promise<void> {
+    const root = await this.kindRoot(kind);
+    const current = await readFolderPositions(this.fs, root);
+    const next = { ...current.positions, [path]: position };
+    await writeFolderPositions(this.fs, root, next);
+  }
+
+  private async assignNewFolderPosition(
+    kind: FolderKind,
+    path: string,
+    parent: string,
+  ): Promise<void> {
+    const root = await this.kindRoot(kind);
+    const current = await readFolderPositions(this.fs, root);
+    if (current.positions[path]) return;
+    const position = nextFolderPositionFor(current.positions, parent);
+    const next = { ...current.positions, [path]: position };
+    await writeFolderPositions(this.fs, root, next);
   }
 
   async renameFolder(kind: FolderKind, path: string, newName: string): Promise<string> {
@@ -95,6 +128,9 @@ export class FoldersService {
         /* already gone */
       }
     }
+    const current = await readFolderPositions(this.fs, root);
+    const pruned = deleteFolderPositions(current.positions, path);
+    await writeFolderPositions(this.fs, root, pruned);
     await this.refreshKind(kind);
   }
 
@@ -119,6 +155,9 @@ export class FoldersService {
         /* not empty / already gone */
       }
     }
+    const current = await readFolderPositions(this.fs, root);
+    const renamed = renameFolderPositions(current.positions, oldPath, newPath);
+    await writeFolderPositions(this.fs, root, renamed);
     await this.refreshKind(kind);
   }
 
