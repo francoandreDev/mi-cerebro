@@ -1,7 +1,9 @@
 // Global branch-topology view for /variants. One lane per family.
-// Hover/focus → highlights the corresponding card; click on a lane →
-// opens a popover with the same actions the card exposes; click on a
-// HEAD or milestone → deep-links to /history at that commit.
+// Hover/focus → dims the non-hovered lanes inside the graph (purely
+// visual, no external side-effect). Click on a lane → scrolls the
+// corresponding card into view and opens a popover with the same
+// actions the card exposes. Click on a HEAD or milestone → deep-links
+// to /history at that commit.
 //
 // Geometry is qualitative — x positions are evenly spaced fork columns,
 // not commit timestamps. The graph answers "who came from whom and
@@ -77,7 +79,7 @@ export class VariantsOverviewGraphComponent {
   readonly overviews = input.required<Record<string, VariantOverview>>();
   readonly activeId = input<string | null>(null);
 
-  readonly hoverVariant = output<string | null>();
+  readonly selectVariant = output<string>();
   readonly requestAction = output<LaneActionRequest>();
   readonly openCommit = output<string>();
 
@@ -109,12 +111,10 @@ export class VariantsOverviewGraphComponent {
 
   protected onLaneEnter(id: string): void {
     this.hoveredId.set(id);
-    this.hoverVariant.emit(id);
   }
 
   protected onLaneLeave(): void {
     this.hoveredId.set(null);
-    this.hoverVariant.emit(null);
   }
 
   protected onLaneClick(lane: LaneNode, ev: MouseEvent): void {
@@ -127,6 +127,7 @@ export class VariantsOverviewGraphComponent {
       x: ev.clientX - rect.left,
       y: ev.clientY - rect.top,
     });
+    this.selectVariant.emit(lane.v.id);
   }
 
   protected onLaneKey(lane: LaneNode, ev: KeyboardEvent): void {
@@ -143,6 +144,7 @@ export class VariantsOverviewGraphComponent {
       x: lane.headX * scaleX - 80,
       y: lane.y * scaleX + 24,
     });
+    this.selectVariant.emit(lane.v.id);
   }
 
   protected closeMenu(): void {

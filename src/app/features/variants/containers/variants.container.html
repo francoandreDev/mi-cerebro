@@ -26,7 +26,7 @@
       [variants]="visibleVariants()"
       [overviews]="overviews()"
       [activeId]="file().activeId"
-      (hoverVariant)="onGraphHover($event)"
+      (selectVariant)="onGraphSelect($event)"
       (requestAction)="onGraphAction($event)"
       (openCommit)="onOpenCommit($event)"
     />

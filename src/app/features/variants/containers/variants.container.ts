@@ -212,9 +212,8 @@ export class VariantsContainer implements OnInit {
     this.overviews.set(next);
   }
 
-  protected onGraphHover(id: string | null): void {
+  protected onGraphSelect(id: string): void {
     this.highlightedId.set(id);
-    if (!id) return;
     queueMicrotask(() => {
       const el = document.getElementById(`variant-card-${id}`);
       el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
