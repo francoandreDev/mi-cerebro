@@ -45,6 +45,10 @@ const PALETTE: readonly string[] = [
   selector: 'mc-variants-create-modal',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [FormsModule],
+  // why: modal renders position:fixed; the host should not occupy any
+  //      box in the parent layout (otherwise it intercepts pointer
+  //      events on siblings as a flex/grid child).
+  host: { style: 'display: contents' },
   template: `
     @if (visible()) {
       <button

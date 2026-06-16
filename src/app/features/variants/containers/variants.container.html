@@ -1,5 +1,5 @@
 <section class="page">
-  <header class="head">
+  <header class="page-head">
     <div>
       <h2>{{ t('variants.page.title') }}</h2>
       <p class="subtitle">{{ t('variants.page.subtitle') }}</p>
@@ -13,232 +13,45 @@
       >
         {{ refreshing() ? t('variants.refreshing') : t('variants.refresh') }}
       </button>
-      <button type="button" class="primary" (click)="openCreate()" [disabled]="busy()">
-        + {{ t('variants.action.new') }}
-      </button>
     </div>
   </header>
 
-  <section class="group">
-    <h3>{{ t('variants.graph.overview.title') }}</h3>
-    <p class="hint">{{ t('variants.graph.overview.hint') }}</p>
-    <mc-variants-overview-graph
-      [variants]="visibleVariants()"
-      [overviews]="overviews()"
+  <div class="split">
+    <mc-variants-tree
+      class="pane-left"
+      [tree]="tree()"
       [activeId]="file().activeId"
-      (selectVariant)="onGraphSelect($event)"
-      (requestAction)="onGraphAction($event)"
+      [selectedId]="selectedId()"
+      [dormantIds]="dormantIds()"
+      [query]="query()"
+      [busy]="busy()"
+      (pick)="onSelect($event)"
+      (queryChange)="query.set($event)"
+      (createNew)="openCreate()"
+    />
+
+    <mc-variant-detail
+      class="pane-right"
+      [variant]="selected()"
+      [overview]="selectedOverview()"
+      [parentName]="selectedParentName()"
+      [isActive]="isActive(selected())"
+      [isDormant]="isDormantNow(selected())"
+      [renaming]="!!selected() && renamingId() === selected()!.id"
+      [renameValue]="renameValue()"
+      [busy]="busy()"
+      [switching]="!!switching()"
+      (switchTo)="onSwitch()"
+      (merge)="onMerge()"
+      (delete_)="requestDelete()"
+      (renameStart)="startRename()"
+      (renameSubmit)="submitRename()"
+      (renameCancel)="cancelRename()"
+      (renameValueChange)="renameValue.set($event)"
+      (colorChange)="onColorChange($event)"
       (openCommit)="onOpenCommit($event)"
     />
-  </section>
-
-  <mc-variants-filters
-    [query]="query()"
-    [state]="stateFilter()"
-    [parent]="parentFilter()"
-    [parents]="parentsForFilter()"
-    [hasActive]="hasActiveFilter()"
-    [matched]="filteredCount()"
-    [total]="visibleVariants().length"
-    (queryChange)="query.set($event)"
-    (stateChange)="stateFilter.set($event)"
-    (parentChange)="parentFilter.set($event)"
-    (clear)="clearFilters()"
-  />
-
-  @if (hasActiveFilter() && filteredCount() === 0) {
-    <p class="empty">{{ t('variants.filters.empty') }}</p>
-  }
-
-  <section class="group">
-    <h3>{{ t('variants.section.active') }}</h3>
-    @if (activeList().length === 0) {
-      <p class="empty">{{ t('variants.section.active.empty') }}</p>
-    } @else {
-      <ul class="cards">
-        @for (v of activeList(); track v.id) {
-          <ng-container *ngTemplateOutlet="card; context: { v: v }"></ng-container>
-        }
-      </ul>
-    }
-  </section>
-
-  @if (principalVisible(); as p) {
-    <section class="group">
-      <h3>{{ t('variants.section.principal') }}</h3>
-      <ul class="cards">
-        <ng-container *ngTemplateOutlet="card; context: { v: p }"></ng-container>
-      </ul>
-    </section>
-  }
-
-  <section class="group">
-    <h3>{{ t('variants.section.dormant') }}</h3>
-    <p class="hint">{{ t('variants.section.dormant.hint', { days: thresholdDays() }) }}</p>
-    @if (dormantList().length === 0) {
-      <p class="empty">{{ t('variants.section.dormant.empty') }}</p>
-    } @else {
-      <ul class="cards">
-        @for (v of dormantList(); track v.id) {
-          <ng-container *ngTemplateOutlet="card; context: { v: v }"></ng-container>
-        }
-      </ul>
-    }
-  </section>
-
-  <ng-template #card let-v="v">
-    <li
-      class="card"
-      [id]="'variant-card-' + v.id"
-      [class.is-active]="isActive(v)"
-      [class.is-dormant]="isDormantNow(v)"
-      [class.is-highlighted]="highlightedId() === v.id"
-    >
-      <div class="card-head">
-        <label class="color-swatch" [title]="t('variants.form.color')">
-          <input
-            type="color"
-            [value]="v.color"
-            [disabled]="v.protected"
-            (change)="onColorInput(v, $event)"
-          />
-          <span class="swatch" [mcBgColor]="v.color"></span>
-        </label>
-        @if (renamingId() === v.id) {
-          <input
-            type="text"
-            class="rename-input"
-            [ngModel]="renameValue()"
-            (ngModelChange)="renameValue.set($event)"
-            (keydown.enter)="submitRename(v)"
-            (keydown.escape)="cancelRename()"
-          />
-        } @else {
-          <span class="card-name">{{ v.name }}</span>
-        }
-        <span class="card-badges">
-          @if (isActive(v)) {
-            <span class="badge">{{ t('variants.badge.active') }}</span>
-          }
-          @if (isDormantNow(v)) {
-            <span class="badge muted">{{ t('variants.badge.dormant') }}</span>
-          }
-        </span>
-      </div>
-
-      <div class="card-meta">
-        @if (v.lastActivityAt > 0) {
-          {{ t('variants.activity.lastAt', { at: '' }) }}
-          <strong>{{ v.lastActivityAt | mcDate }}</strong>
-        } @else {
-          {{ t('variants.activity.never') }}
-        }
-      </div>
-
-      <dl class="card-lineage">
-        @if (v.parentId) {
-          <div class="row">
-            <dt>{{ t('variants.lineage.origin') }}</dt>
-            <dd>
-              <span class="parent-name">{{ variantNameById()[v.parentId] || v.parentId }}</span>
-              @if (v.forkOid) {
-                <span class="muted">{{ t('variants.lineage.at') }}</span>
-                <code class="sha">{{ shortOid(v.forkOid) }}</code>
-              } @else {
-                <span class="muted">· {{ t('variants.lineage.unknown') }}</span>
-              }
-            </dd>
-          </div>
-        } @else {
-          <div class="row">
-            <dt>{{ t('variants.lineage.origin') }}</dt>
-            <dd class="muted">{{ t('variants.lineage.root') }}</dd>
-          </div>
-        }
-
-        @if (overviews()[v.id]; as ov) {
-          <div class="row">
-            <dt>HEAD</dt>
-            <dd>
-              @if (ov.head; as head) {
-                <span class="head-subject">{{ head.subject }}</span>
-                <code class="sha">{{ shortOid(head.oid) }}</code>
-              } @else {
-                <span class="muted">{{ t('variants.head.empty') }}</span>
-              }
-            </dd>
-          </div>
-
-          <div class="row">
-            <dt>{{ t('variants.milestone.label') }}</dt>
-            <dd>
-              @if (ov.milestone; as m) {
-                <span class="milestone-name">{{ m.name }}</span>
-                <code class="sha">{{ shortOid(m.oid) }}</code>
-              } @else {
-                <span class="muted">{{ t('variants.milestone.none') }}</span>
-              }
-            </dd>
-          </div>
-
-          @if (!v.protected) {
-            <div class="row chips">
-              @if (ov.ahead === 0 && ov.behind === 0) {
-                <span class="chip even">{{ t('variants.compare.even') }}</span>
-              } @else {
-                @if (ov.ahead > 0) {
-                  <span class="chip ahead">{{ t('variants.compare.ahead', { n: ov.ahead }) }}</span>
-                }
-                @if (ov.behind > 0) {
-                  <span class="chip behind">{{
-                    t('variants.compare.behind', { n: ov.behind })
-                  }}</span>
-                }
-              }
-            </div>
-          }
-        }
-      </dl>
-
-      <div class="card-actions">
-        @if (renamingId() === v.id) {
-          <button type="button" class="primary" (click)="submitRename(v)" [disabled]="busy()">
-            {{ t('variants.rename.save') }}
-          </button>
-          <button type="button" class="ghost" (click)="cancelRename()">
-            {{ t('variants.form.cancel') }}
-          </button>
-        } @else {
-          @if (!isActive(v)) {
-            <button
-              type="button"
-              class="primary"
-              (click)="onSwitch(v)"
-              [disabled]="busy() || !!switching()"
-            >
-              {{ t('variants.action.switch') }}
-            </button>
-          }
-          @if (!v.protected) {
-            <button type="button" (click)="startRename(v)" [disabled]="busy()">
-              {{ t('variants.action.rename') }}
-            </button>
-            <button type="button" (click)="onMerge(v)" [disabled]="busy()">
-              {{ t('variants.action.merge') }}
-            </button>
-            <button
-              type="button"
-              class="danger"
-              (click)="requestDelete(v)"
-              [disabled]="busy() || isActive(v)"
-            >
-              {{ t('variants.action.delete') }}
-            </button>
-          }
-        }
-      </div>
-    </li>
-  </ng-template>
+  </div>
 
   <mc-variants-create-modal
     [visible]="showCreate()"

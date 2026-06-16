@@ -1,11 +1,21 @@
 // 13b-iii — `/variants` page. UI on top of the safe primitives provided
 // by VariantsService (create / rename / delete / setColor / refreshActivity)
 // and the switch flow owned by SwitchVariantService. No git logic here.
+//
+// Two-pane layout: VariantsTreeComponent on the left (hierarchical list
+// + search + create CTA), VariantDetailComponent on the right (full
+// detail of the selected variant + actions). Selection auto-syncs to
+// the active variant on first load and after any switch.
 
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import type { OnInit } from '@angular/core';
-import { NgTemplateOutlet } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
 import { ErrorService } from '@core/errors/error.service';
@@ -16,22 +26,15 @@ import { SwitchVariantService } from '@core/versioning/switch-variant.service';
 import { isDormant } from '@core/versioning/variants-activity';
 import { VariantsService } from '@core/versioning/variants.service';
 import { PRINCIPAL_VARIANT_ID, type Variant } from '@core/versioning/variants.types';
-import { BgColorDirective } from '@shared/directives/bg-color.directive';
-import { McDatePipe } from '@shared/pipes/mc-date.pipe';
 
+import { VariantDetailComponent } from '../components/variant-detail.component';
 import {
   VariantsCreateModalComponent,
   type CreateVariantRequest,
 } from '../components/variants-create-modal.component';
-import {
-  VariantsFiltersComponent,
-  type StateFilter,
-} from '../components/variants-filters.component';
-import {
-  VariantsOverviewGraphComponent,
-  type LaneActionRequest,
-} from '../components/variants-overview-graph.component';
+import { VariantsTreeComponent } from '../components/variants-tree.component';
 import { VariantsStatsService, type VariantOverview } from '../services/variants-stats.service';
+import { buildVariantTree } from '../utils/variant-tree';
 
 interface DeleteRequest {
   readonly variant: Variant;
@@ -42,15 +45,7 @@ interface DeleteRequest {
   selector: 'mc-variants-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [VariantsStatsService],
-  imports: [
-    NgTemplateOutlet,
-    FormsModule,
-    BgColorDirective,
-    McDatePipe,
-    VariantsOverviewGraphComponent,
-    VariantsFiltersComponent,
-    VariantsCreateModalComponent,
-  ],
+  imports: [VariantsTreeComponent, VariantDetailComponent, VariantsCreateModalComponent],
   templateUrl: './variants.container.html',
   styleUrl: './variants.container.css',
 })
@@ -68,99 +63,67 @@ export class VariantsContainer implements OnInit {
   protected readonly busy = signal(false);
   protected readonly refreshing = signal(false);
 
-  protected readonly principal = computed(
-    () => this.file().variants.find((v) => v.id === PRINCIPAL_VARIANT_ID) ?? null,
-  );
-
   protected readonly thresholdDays = computed(
     () => this.settings.state().variants.dormantThresholdDays,
   );
-
-  // why: compute dormant state live from `lastActivityAt` + the current
-  //      threshold so /settings changes react instantly and the dev
-  //      panel's backdate sticks until "Releer actividad".
-  protected readonly isDormantNow = (v: Variant): boolean =>
-    isDormant(v.lastActivityAt, this.thresholdDays(), Date.now());
-
-  protected readonly renamingId = signal<string | null>(null);
-  protected readonly renameValue = signal('');
-  protected readonly deleteRequest = signal<DeleteRequest | null>(null);
-  protected readonly overviews = signal<Record<string, VariantOverview>>({});
-  protected readonly showCreate = signal(false);
-  protected readonly highlightedId = signal<string | null>(null);
-
-  protected readonly query = signal('');
-  protected readonly stateFilter = signal<StateFilter>('all');
-  protected readonly parentFilter = signal<string>('all');
 
   protected readonly visibleVariants = computed(() =>
     this.file().variants.filter((v) => !v.pendingDelete),
   );
 
-  protected readonly variantNameById = computed(() => {
-    const out: Record<string, string> = {};
-    for (const v of this.file().variants) out[v.id] = v.name;
+  protected readonly tree = computed(() => buildVariantTree(this.visibleVariants()));
+
+  protected readonly dormantIds = computed<ReadonlySet<string>>(() => {
+    const now = Date.now();
+    const days = this.thresholdDays();
+    const out = new Set<string>();
+    for (const v of this.visibleVariants()) {
+      if (v.id === PRINCIPAL_VARIANT_ID) continue;
+      if (isDormant(v.lastActivityAt, days, now)) out.add(v.id);
+    }
     return out;
   });
 
-  // Parents available in the "Forkeado desde" filter: anything that
-  // could be a parent (Principal + every existing variant).
-  protected readonly parentsForFilter = computed(() => this.visibleVariants());
+  protected readonly query = signal('');
+  protected readonly renamingId = signal<string | null>(null);
+  protected readonly renameValue = signal('');
+  protected readonly deleteRequest = signal<DeleteRequest | null>(null);
+  protected readonly overviews = signal<Record<string, VariantOverview>>({});
+  protected readonly showCreate = signal(false);
+  protected readonly selectedId = signal<string | null>(null);
 
-  protected readonly hasActiveFilter = computed(
-    () =>
-      this.query().trim() !== '' || this.stateFilter() !== 'all' || this.parentFilter() !== 'all',
-  );
-
-  private readonly matchesFilter = (v: Variant): boolean => {
-    const sf = this.stateFilter();
-    if (sf === 'principal' && v.id !== PRINCIPAL_VARIANT_ID) return false;
-    if (sf === 'active' && (v.id === PRINCIPAL_VARIANT_ID || this.isDormantNow(v))) return false;
-    if (sf === 'dormant' && (v.id === PRINCIPAL_VARIANT_ID || !this.isDormantNow(v))) return false;
-
-    const pf = this.parentFilter();
-    if (pf !== 'all' && v.parentId !== pf) return false;
-
-    const q = this.query().trim().toLowerCase();
-    if (!q) return true;
-    const ov = this.overviews()[v.id] ?? null;
-    const parentName = v.parentId ? (this.variantNameById()[v.parentId] ?? '') : '';
-    const hay = [
-      v.name,
-      v.id,
-      parentName,
-      v.forkOid ?? '',
-      ov?.head?.subject ?? '',
-      ov?.head?.oid ?? '',
-      ov?.milestone?.name ?? '',
-    ]
-      .join(' ')
-      .toLowerCase();
-    return hay.includes(q);
-  };
-
-  protected readonly filteredCount = computed(
-    () => this.visibleVariants().filter((v) => this.matchesFilter(v)).length,
-  );
-
-  protected readonly activeList = computed(() =>
-    [...this.visibleVariants()]
-      .filter((v) => v.id !== PRINCIPAL_VARIANT_ID && !this.isDormantNow(v))
-      .filter((v) => this.matchesFilter(v))
-      .sort((a, b) => b.lastActivityAt - a.lastActivityAt),
-  );
-
-  protected readonly dormantList = computed(() =>
-    [...this.visibleVariants()]
-      .filter((v) => v.id !== PRINCIPAL_VARIANT_ID && this.isDormantNow(v))
-      .filter((v) => this.matchesFilter(v))
-      .sort((a, b) => b.lastActivityAt - a.lastActivityAt),
-  );
-
-  protected readonly principalVisible = computed(() => {
-    const p = this.principal();
-    return p && this.matchesFilter(p) ? p : null;
+  protected readonly selected = computed<Variant | null>(() => {
+    const id = this.selectedId();
+    if (!id) return null;
+    return this.visibleVariants().find((v) => v.id === id) ?? null;
   });
+
+  protected readonly selectedOverview = computed<VariantOverview | null>(() => {
+    const id = this.selectedId();
+    if (!id) return null;
+    return this.overviews()[id] ?? null;
+  });
+
+  protected readonly selectedParentName = computed<string | null>(() => {
+    const v = this.selected();
+    if (!v?.parentId) return null;
+    return this.visibleVariants().find((p) => p.id === v.parentId)?.name ?? null;
+  });
+
+  private lastActiveId = '';
+
+  constructor() {
+    // why: keep selection pinned to the active variant on first load and
+    //      after every switch. Manual clicks in the tree override until
+    //      the next switch flips activeId again.
+    effect(() => {
+      const aid = this.file().activeId;
+      if (aid && aid !== this.lastActiveId) {
+        this.lastActiveId = aid;
+        this.selectedId.set(aid);
+      }
+    });
+  }
 
   async ngOnInit(): Promise<void> {
     try {
@@ -175,18 +138,12 @@ export class VariantsContainer implements OnInit {
     return this.i18n.t(key, params);
   }
 
-  protected isActive(v: Variant): boolean {
-    return this.file().activeId === v.id;
+  protected isActive(v: Variant | null): boolean {
+    return !!v && this.file().activeId === v.id;
   }
 
-  protected shortOid(oid: string | null | undefined): string {
-    return oid ? oid.slice(0, 7) : '';
-  }
-
-  protected clearFilters(): void {
-    this.query.set('');
-    this.stateFilter.set('all');
-    this.parentFilter.set('all');
+  protected isDormantNow(v: Variant | null): boolean {
+    return !!v && this.dormantIds().has(v.id);
   }
 
   protected async refreshActivity(): Promise<void> {
@@ -212,39 +169,18 @@ export class VariantsContainer implements OnInit {
     this.overviews.set(next);
   }
 
-  protected onGraphSelect(id: string): void {
-    this.highlightedId.set(id);
-    queueMicrotask(() => {
-      const el = document.getElementById(`variant-card-${id}`);
-      el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    });
-  }
-
-  protected onGraphAction(req: LaneActionRequest): void {
-    const v = this.visibleVariants().find((x) => x.id === req.id);
-    if (!v) return;
-    switch (req.kind) {
-      case 'switch':
-        void this.onSwitch(v);
-        return;
-      case 'rename':
-        this.startRename(v);
-        return;
-      case 'merge':
-        this.onMerge(v);
-        return;
-      case 'delete':
-        void this.requestDelete(v);
-        return;
-    }
+  protected onSelect(id: string): void {
+    this.selectedId.set(id);
+    if (this.renamingId() && this.renamingId() !== id) this.renamingId.set(null);
   }
 
   protected onOpenCommit(oid: string): void {
     void this.router.navigate(['/history'], { queryParams: { oid } });
   }
 
-  protected async onSwitch(v: Variant): Promise<void> {
-    if (this.isActive(v) || this.switching()) return;
+  protected async onSwitch(): Promise<void> {
+    const v = this.selected();
+    if (!v || this.isActive(v) || this.switching()) return;
     try {
       await this.switcher.switchTo(v.id);
     } catch (e) {
@@ -273,7 +209,9 @@ export class VariantsContainer implements OnInit {
     }
   }
 
-  protected startRename(v: Variant): void {
+  protected startRename(): void {
+    const v = this.selected();
+    if (!v) return;
     this.renamingId.set(v.id);
     this.renameValue.set(v.name);
   }
@@ -282,7 +220,9 @@ export class VariantsContainer implements OnInit {
     this.renamingId.set(null);
   }
 
-  protected async submitRename(v: Variant): Promise<void> {
+  protected async submitRename(): Promise<void> {
+    const v = this.selected();
+    if (!v) return;
     const next = this.renameValue().trim();
     if (!next || next === v.name) {
       this.renamingId.set(null);
@@ -299,21 +239,23 @@ export class VariantsContainer implements OnInit {
     }
   }
 
-  protected onColorInput(v: Variant, event: Event): void {
-    const color = (event.target as HTMLInputElement).value;
-    if (color === v.color) return;
+  protected onColorChange(color: string): void {
+    const v = this.selected();
+    if (!v || color === v.color) return;
     void this.variants.setColor(v.id, color).catch((e) => this.errors.report(e));
   }
 
-  protected onMerge(v: Variant): void {
-    if (v.protected) return;
+  protected onMerge(): void {
+    const v = this.selected();
+    if (!v || v.protected) return;
     void this.router.navigate(['/variants/merge'], {
       queryParams: { from: v.id, into: PRINCIPAL_VARIANT_ID },
     });
   }
 
-  protected async requestDelete(v: Variant): Promise<void> {
-    if (this.isActive(v)) return;
+  protected async requestDelete(): Promise<void> {
+    const v = this.selected();
+    if (!v || this.isActive(v)) return;
     this.busy.set(true);
     try {
       const unmerged = await this.stats.unmergedAgainstPrincipal(v);
