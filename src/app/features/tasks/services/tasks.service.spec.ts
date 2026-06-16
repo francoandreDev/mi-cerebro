@@ -28,7 +28,8 @@ describe('TasksService', () => {
     const task = await svc.create('Comprar pan');
     expect(task.done).toBe(false);
     expect(task.dueDates).toEqual([]);
-    expect(task.schemaVersion).toBe(2);
+    expect(task.schemaVersion).toBe(3);
+    expect(task.position).toBeTypeOf('string');
     const tasks = fs.root.dirs.get('tasks')!;
     expect(tasks.files.has('comprar-pan.json')).toBe(true);
   });
@@ -45,7 +46,7 @@ describe('TasksService', () => {
     expect(saved.updatedAt > original).toBe(true);
   });
 
-  it('summaries: pending first ordered by next due, done last', async () => {
+  it('refresh sorts by position ascending (creation order by default)', async () => {
     const a = await svc.create('A');
     const b = await svc.create('B');
     const c = await svc.create('C');
@@ -53,7 +54,15 @@ describe('TasksService', () => {
     await svc.save({ ...b, dueDates: ['2026-06-20'] });
     await svc.save({ ...c, done: true });
     const list = await svc.refresh();
-    expect(list.map((s) => s.title)).toEqual(['B', 'A', 'C']);
+    expect(list.map((s) => s.title)).toEqual(['A', 'B', 'C']);
+  });
+
+  it('setPosition reorders summaries', async () => {
+    const a = await svc.create('A');
+    const b = await svc.create('B');
+    await svc.setPosition(b.id, '0A');
+    const list = await svc.refresh();
+    expect(list.map((s) => s.id)).toEqual([b.id, a.id]);
   });
 
   it('deleteToTrash moves the file under .mi-cerebro/trash/YYYY/MM/DD/', async () => {

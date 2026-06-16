@@ -14,6 +14,8 @@ import {
 } from '@core/fs/walk';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { MigrationsService } from '@core/migrations/migrations.service';
+import { nextPositionAfter, seedMissingPositions } from '@core/ordering/seed-positions';
+import { positionSeedMigrationStep } from '@core/ordering/position.migration';
 import { SearchIndexService } from '@core/search/search-index.service';
 import { blockIdMigrationStep } from '@core/tiptap/block-id/block-id.migration';
 import type { SearchDoc } from '@core/search/search.types';
@@ -54,7 +56,7 @@ export class TasksService {
     this.migrations.register({
       kind: TASK_KIND,
       latest: TASK_SCHEMA_VERSION,
-      steps: [blockIdMigrationStep(1)],
+      steps: [blockIdMigrationStep(1), positionSeedMigrationStep(2)],
     });
   }
 
@@ -63,11 +65,13 @@ export class TasksService {
     this.idToPath.clear();
     const summaries: TaskSummary[] = [];
     const indexDocs: SearchDoc[] = [];
+    const tasksById = new Map<string, Task>();
     for await (const entry of walkEntities(this.fs, dir, TASK_FILE_SUFFIX)) {
       try {
         const raw = await this.fs.readJson<Task>(entry.dirHandle, entry.filename);
         const task = await this.migrations.migrate<Task>(TASK_KIND, raw);
         this.idToPath.set(task.id, entry.relativePath);
+        tasksById.set(task.id, task);
         summaries.push(this.toSummary(task, entry.folder));
         indexDocs.push(this.toSearchDoc(task));
       } catch (cause) {
@@ -75,6 +79,19 @@ export class TasksService {
       }
     }
     summaries.sort(compareSummaries);
+    const seeds = seedMissingPositions(summaries);
+    if (seeds.length > 0) {
+      const positionById = new Map(seeds.map((s) => [s.id, s.position] as const));
+      for (const [id, pos] of positionById) {
+        const task = tasksById.get(id);
+        if (task) await this.writePositionInPlace(task, pos);
+      }
+      for (let i = 0; i < summaries.length; i++) {
+        const seeded = positionById.get(summaries[i]!.id);
+        if (seeded) summaries[i] = { ...summaries[i]!, position: seeded };
+      }
+    }
+    summaries.sort(comparePosition);
     this.summariesSignal.set(summaries);
     const folders = await listFolders(this.fs, dir);
     this.foldersSignal.set(folders.map((f) => f.path));
@@ -86,6 +103,7 @@ export class TasksService {
     const root = await this.tasksDir();
     const targetDir = await getOrCreateDirByPath(this.fs, root, folder);
     const now = new Date().toISOString();
+    const position = nextPositionAfter(lastPosition(this.summariesSignal()));
     const task: Task = {
       id: crypto.randomUUID(),
       title,
@@ -96,11 +114,12 @@ export class TasksService {
       createdAt: now,
       updatedAt: now,
       schemaVersion: TASK_SCHEMA_VERSION,
+      position,
     };
     const filename = await this.allocFilename(targetDir, title);
     await this.fs.writeFileAtomic(targetDir, filename, JSON.stringify(task, null, 2));
     this.idToPath.set(task.id, joinPath(folder, filename));
-    this.summariesSignal.update((list) => sortSummaries([this.toSummary(task, folder), ...list]));
+    this.summariesSignal.update((list) => sortByPosition([...list, this.toSummary(task, folder)]));
     if (folder !== '' && !this.foldersSet().has(folder)) {
       this.foldersSignal.update((list) => [...list, folder]);
     }
@@ -131,10 +150,32 @@ export class TasksService {
     if (!subdir) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
     await this.fs.writeFileAtomic(subdir, filename, JSON.stringify(updated, null, 2));
     this.summariesSignal.update((list) =>
-      sortSummaries(list.map((s) => (s.id === task.id ? this.toSummary(updated, folder) : s))),
+      sortByPosition(list.map((s) => (s.id === task.id ? this.toSummary(updated, folder) : s))),
     );
     await this.search.upsert(this.toSearchDoc(updated));
     return updated;
+  }
+
+  async setPosition(id: string, position: string): Promise<void> {
+    const task = await this.read(id);
+    const updated: Task = { ...task, position, updatedAt: new Date().toISOString() };
+    const dir = await this.tasksDir();
+    const { folder, filename } = splitRelativePath(await this.findPath(dir, id));
+    const subdir = await getDirByPath(this.fs, dir, folder);
+    if (!subdir) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
+    await this.fs.writeFileAtomic(subdir, filename, JSON.stringify(updated, null, 2));
+    this.summariesSignal.update((list) =>
+      sortByPosition(list.map((s) => (s.id === id ? { ...s, position } : s))),
+    );
+  }
+
+  private async writePositionInPlace(task: Task, position: string): Promise<void> {
+    const dir = await this.tasksDir();
+    const { folder, filename } = splitRelativePath(await this.findPath(dir, task.id));
+    const subdir = await getDirByPath(this.fs, dir, folder);
+    if (!subdir) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
+    const seeded: Task = { ...task, position };
+    await this.fs.writeFileAtomic(subdir, filename, JSON.stringify(seeded, null, 2));
   }
 
   async deleteToTrash(id: string): Promise<void> {
@@ -162,7 +203,7 @@ export class TasksService {
     await this.fs.moveFile(src, filename, dest, destName);
     this.idToPath.set(id, joinPath(newFolder, destName));
     this.summariesSignal.update((list) =>
-      sortSummaries(list.map((s) => (s.id === id ? { ...s, folder: newFolder } : s))),
+      sortByPosition(list.map((s) => (s.id === id ? { ...s, folder: newFolder } : s))),
     );
     if (newFolder !== '' && !this.foldersSet().has(newFolder)) {
       this.foldersSignal.update((list) => [...list, newFolder]);
@@ -245,6 +286,7 @@ export class TasksService {
       updatedAt: task.updatedAt,
       tags: task.tags,
       folder,
+      position: task.position ?? '',
     };
   }
 
@@ -275,10 +317,25 @@ const compareSummaries = (a: TaskSummary, b: TaskSummary): number => {
   if (!a.done) {
     const aKey = a.dueDates[0] ?? `~${a.updatedAt}`;
     const bKey = b.dueDates[0] ?? `~${b.updatedAt}`;
-    return aKey.localeCompare(bKey);
+    return aKey.localeCompare(bKey) || a.id.localeCompare(b.id);
   }
-  return b.updatedAt.localeCompare(a.updatedAt);
+  return b.updatedAt.localeCompare(a.updatedAt) || a.id.localeCompare(b.id);
 };
 
-const sortSummaries = (list: readonly TaskSummary[]): readonly TaskSummary[] =>
-  [...list].sort(compareSummaries);
+const comparePosition = (a: TaskSummary, b: TaskSummary): number => {
+  if (a.position === '' && b.position === '') return compareSummaries(a, b);
+  if (a.position === '') return 1;
+  if (b.position === '') return -1;
+  return a.position.localeCompare(b.position);
+};
+
+const sortByPosition = (list: readonly TaskSummary[]): TaskSummary[] =>
+  [...list].sort(comparePosition);
+
+const lastPosition = (list: readonly TaskSummary[]): string | null => {
+  let max: string | null = null;
+  for (const s of list) {
+    if (s.position !== '' && (max === null || s.position > max)) max = s.position;
+  }
+  return max;
+};
