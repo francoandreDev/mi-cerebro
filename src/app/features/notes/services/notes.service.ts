@@ -14,6 +14,8 @@ import {
 } from '@core/fs/walk';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { MigrationsService } from '@core/migrations/migrations.service';
+import { nextPositionAfter, seedMissingPositions } from '@core/ordering/seed-positions';
+import { positionSeedMigrationStep } from '@core/ordering/position.migration';
 import { SearchIndexService } from '@core/search/search-index.service';
 import { blockIdMigrationStep } from '@core/tiptap/block-id/block-id.migration';
 import type { SearchDoc } from '@core/search/search.types';
@@ -56,7 +58,7 @@ export class NotesService {
     this.migrations.register({
       kind: NOTE_KIND,
       latest: NOTE_SCHEMA_VERSION,
-      steps: [blockIdMigrationStep(1)],
+      steps: [blockIdMigrationStep(1), positionSeedMigrationStep(2)],
     });
   }
 
@@ -65,18 +67,33 @@ export class NotesService {
     this.idToPath.clear();
     const summaries: NoteSummary[] = [];
     const indexDocs: SearchDoc[] = [];
+    const notesById = new Map<string, Note>();
     for await (const entry of walkEntities(this.fs, dir, NOTE_FILE_SUFFIX)) {
       try {
         const raw = await this.fs.readJson<Note>(entry.dirHandle, entry.filename);
         const note = await this.migrations.migrate<Note>(NOTE_KIND, raw);
         this.idToPath.set(note.id, entry.relativePath);
+        notesById.set(note.id, note);
         summaries.push(this.toSummary(note, entry.folder));
         indexDocs.push(this.toSearchDoc(note));
       } catch (cause) {
         console.warn('[notes] skipped unreadable file', entry.relativePath, cause);
       }
     }
-    summaries.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    summaries.sort(compareLegacy);
+    const seeds = seedMissingPositions(summaries);
+    if (seeds.length > 0) {
+      const positionById = new Map(seeds.map((s) => [s.id, s.position] as const));
+      for (const [id, pos] of positionById) {
+        const note = notesById.get(id);
+        if (note) await this.writePositionInPlace(note, pos);
+      }
+      for (let i = 0; i < summaries.length; i++) {
+        const seeded = positionById.get(summaries[i]!.id);
+        if (seeded) summaries[i] = { ...summaries[i]!, position: seeded };
+      }
+    }
+    summaries.sort(comparePosition);
     this.summariesSignal.set(summaries);
     const folders = await listFolders(this.fs, dir);
     this.foldersSignal.set(folders.map((f) => f.path));
@@ -88,6 +105,7 @@ export class NotesService {
     const root = await this.notesDir();
     const targetDir = await getOrCreateDirByPath(this.fs, root, folder);
     const now = new Date().toISOString();
+    const position = nextPositionAfter(lastPosition(this.summariesSignal()));
     const note: Note = {
       id: crypto.randomUUID(),
       title,
@@ -96,12 +114,13 @@ export class NotesService {
       createdAt: now,
       updatedAt: now,
       schemaVersion: NOTE_SCHEMA_VERSION,
+      position,
     };
     const filename = await this.allocFilename(targetDir, title);
     await this.fs.writeFileAtomic(targetDir, filename, JSON.stringify(note, null, 2));
     const relativePath = joinPath(folder, filename);
     this.idToPath.set(note.id, relativePath);
-    this.summariesSignal.update((list) => [this.toSummary(note, folder), ...list]);
+    this.summariesSignal.update((list) => sortByPosition([...list, this.toSummary(note, folder)]));
     if (folder !== '' && !this.foldersSet().has(folder)) {
       this.foldersSignal.update((list) => [...list, folder]);
     }
@@ -131,6 +150,28 @@ export class NotesService {
     );
     await this.search.upsert(this.toSearchDoc(updated));
     return updated;
+  }
+
+  async setPosition(id: string, position: string): Promise<void> {
+    const note = await this.read(id);
+    const updated: Note = { ...note, position, updatedAt: new Date().toISOString() };
+    const dir = await this.notesDir();
+    const { folder, filename } = splitRelativePath(await this.findPath(dir, id));
+    const subdir = await getDirByPath(this.fs, dir, folder);
+    if (!subdir) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
+    await this.fs.writeFileAtomic(subdir, filename, JSON.stringify(updated, null, 2));
+    this.summariesSignal.update((list) =>
+      sortByPosition(list.map((s) => (s.id === id ? { ...s, position } : s))),
+    );
+  }
+
+  private async writePositionInPlace(note: Note, position: string): Promise<void> {
+    const dir = await this.notesDir();
+    const { folder, filename } = splitRelativePath(await this.findPath(dir, note.id));
+    const subdir = await getDirByPath(this.fs, dir, folder);
+    if (!subdir) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
+    const seeded: Note = { ...note, position };
+    await this.fs.writeFileAtomic(subdir, filename, JSON.stringify(seeded, null, 2));
   }
 
   async deleteToTrash(id: string): Promise<void> {
@@ -240,6 +281,7 @@ export class NotesService {
       updatedAt: note.updatedAt,
       tags: note.tags,
       folder,
+      position: note.position ?? '',
     };
   }
 
@@ -264,3 +306,24 @@ export class NotesService {
     return tagIds.filter((id) => this.tags.byId(id) !== undefined);
   }
 }
+
+const compareLegacy = (a: NoteSummary, b: NoteSummary): number =>
+  b.updatedAt.localeCompare(a.updatedAt) || a.id.localeCompare(b.id);
+
+const comparePosition = (a: NoteSummary, b: NoteSummary): number => {
+  if (a.position === '' && b.position === '') return compareLegacy(a, b);
+  if (a.position === '') return 1;
+  if (b.position === '') return -1;
+  return a.position.localeCompare(b.position);
+};
+
+const sortByPosition = (list: readonly NoteSummary[]): NoteSummary[] =>
+  [...list].sort(comparePosition);
+
+const lastPosition = (list: readonly NoteSummary[]): string | null => {
+  let max: string | null = null;
+  for (const s of list) {
+    if (s.position !== '' && (max === null || s.position > max)) max = s.position;
+  }
+  return max;
+};

@@ -1,6 +1,6 @@
 import type { JSONContent } from '@tiptap/core';
 
-export const NOTE_SCHEMA_VERSION = 2;
+export const NOTE_SCHEMA_VERSION = 3;
 export const NOTE_KIND = 'note';
 export const NOTES_DIR = 'notes';
 export const NOTE_FILE_SUFFIX = '.json';
@@ -13,6 +13,7 @@ export interface Note {
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly schemaVersion: number;
+  readonly position?: string;
   readonly [key: string]: unknown;
 }
 
@@ -22,6 +23,7 @@ export interface NoteSummary {
   readonly updatedAt: string;
   readonly tags: readonly string[];
   readonly folder: string;
+  readonly position: string;
 }
 
 export const emptyDoc = (): JSONContent => ({

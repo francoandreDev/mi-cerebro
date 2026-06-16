@@ -28,7 +28,9 @@ describe('NotesService', () => {
     const note = await svc.create('Hola');
     expect(note.id).toMatch(/[0-9a-f-]{36}/);
     expect(note.title).toBe('Hola');
-    expect(note.schemaVersion).toBe(2);
+    expect(note.schemaVersion).toBe(3);
+    expect(note.position).toBeTypeOf('string');
+    expect(note.position).not.toBe('');
     const notes = fs.root.dirs.get('notes')!;
     expect(notes.files.has('hola.json')).toBe(true);
     const stored = JSON.parse(notes.files.get('hola.json')!) as { id: string };
@@ -44,12 +46,21 @@ describe('NotesService', () => {
     expect(notes.files.has('hola-2.json')).toBe(true);
   });
 
-  it('refresh lists summaries sorted by updatedAt desc', async () => {
-    await svc.create('Uno');
+  it('refresh lists summaries sorted by position ascending', async () => {
+    const first = await svc.create('Uno');
     await new Promise((r) => setTimeout(r, 5));
     const second = await svc.create('Dos');
     const summaries = await svc.refresh();
-    expect(summaries.map((s) => s.id)[0]).toBe(second.id);
+    expect(summaries.map((s) => s.id)).toEqual([first.id, second.id]);
+    expect(summaries.every((s) => s.position !== '')).toBe(true);
+  });
+
+  it('setPosition updates the entry and re-sorts', async () => {
+    const a = await svc.create('A');
+    const b = await svc.create('B');
+    await svc.setPosition(b.id, '0A');
+    const summaries = await svc.refresh();
+    expect(summaries.map((s) => s.id)).toEqual([b.id, a.id]);
   });
 
   it('save updates updatedAt and rewrites the file', async () => {
