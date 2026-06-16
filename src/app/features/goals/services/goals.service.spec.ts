@@ -28,7 +28,8 @@ describe('GoalsService', () => {
     const goal = await svc.create('Aprender ruso');
     expect(goal.completed).toBe(false);
     expect(goal.deadline).toBeNull();
-    expect(goal.schemaVersion).toBe(2);
+    expect(goal.schemaVersion).toBe(3);
+    expect(goal.position).toBeTypeOf('string');
     const goals = fs.root.dirs.get('goals')!;
     expect(goals.files.has('aprender-ruso.json')).toBe(true);
   });
@@ -42,7 +43,7 @@ describe('GoalsService', () => {
     expect(saved.updatedAt > original).toBe(true);
   });
 
-  it('summaries: pending first ordered by deadline, completed last', async () => {
+  it('refresh sorts by position ascending (creation order by default)', async () => {
     const a = await svc.create('A');
     const b = await svc.create('B');
     const c = await svc.create('C');
@@ -50,7 +51,15 @@ describe('GoalsService', () => {
     await svc.save({ ...b, deadline: '2026-06-20' });
     await svc.save({ ...c, completed: true });
     const list = await svc.refresh();
-    expect(list.map((s) => s.title)).toEqual(['B', 'A', 'C']);
+    expect(list.map((s) => s.title)).toEqual(['A', 'B', 'C']);
+  });
+
+  it('setPosition reorders summaries', async () => {
+    const a = await svc.create('A');
+    const b = await svc.create('B');
+    await svc.setPosition(b.id, '0A');
+    const list = await svc.refresh();
+    expect(list.map((s) => s.id)).toEqual([b.id, a.id]);
   });
 
   it('deleteToTrash moves the file under .mi-cerebro/trash/YYYY/MM/DD/', async () => {

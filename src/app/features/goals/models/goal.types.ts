@@ -1,6 +1,6 @@
 import type { JSONContent } from '@tiptap/core';
 
-export const GOAL_SCHEMA_VERSION = 2;
+export const GOAL_SCHEMA_VERSION = 3;
 export const GOAL_KIND = 'goal';
 export const GOALS_DIR = 'goals';
 export const GOAL_FILE_SUFFIX = '.json';
@@ -17,6 +17,7 @@ export interface Goal {
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly schemaVersion: number;
+  readonly position?: string;
   readonly [key: string]: unknown;
 }
 
@@ -28,6 +29,7 @@ export interface GoalSummary {
   readonly updatedAt: string;
   readonly tags: readonly string[];
   readonly folder: string;
+  readonly position: string;
 }
 
 export const emptyDoc = (): JSONContent => ({
