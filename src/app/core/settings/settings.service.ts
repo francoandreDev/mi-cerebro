@@ -47,6 +47,15 @@ export class SettingsService {
     this.update((s) => ({ ...s, timezone: tz }));
   }
 
+  setAutocommitMinutes(minutes: number): void {
+    if (!Number.isFinite(minutes)) return;
+    const clamped = Math.max(1, Math.min(180, Math.round(minutes)));
+    this.update((s) => ({
+      ...s,
+      versioning: { ...s.versioning, autocommitMinutes: clamped },
+    }));
+  }
+
   setVariantsDormantThreshold(days: number): void {
     const clamped = Math.max(1, Math.min(365, Math.round(days)));
     this.update((s) => ({ ...s, variants: { ...s.variants, dormantThresholdDays: clamped } }));

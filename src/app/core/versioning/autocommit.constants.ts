@@ -1,8 +1,21 @@
 // Constants and helpers for AutocommitService. Kept here so the
 // service file stays focused on orchestration.
 
-export const AUTOCOMMIT_TIMER_MS = 5 * 60 * 1000;
+// Default timer interval; the live value comes from
+// `SettingsService.state().versioning.autocommitMinutes` and is reapplied
+// by `AutocommitService` on change.
+export const DEFAULT_AUTOCOMMIT_TIMER_MS = 5 * 60 * 1000;
+export const AUTOCOMMIT_MINUTES_MIN = 1;
+export const AUTOCOMMIT_MINUTES_MAX = 180;
 export const AUTOCOMMIT_THROTTLE_MS = 60 * 1000;
+
+export function autocommitMinutesToMs(minutes: number): number {
+  const clamped = Math.max(
+    AUTOCOMMIT_MINUTES_MIN,
+    Math.min(AUTOCOMMIT_MINUTES_MAX, Math.round(minutes)),
+  );
+  return clamped * 60 * 1000;
+}
 
 // Pretty-name per kind for the commit message. Anything not listed
 // falls back to the raw kind. Singular form; the count is prefixed.

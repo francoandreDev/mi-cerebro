@@ -112,19 +112,38 @@
     }
   </section>
 
-  <section class="group placeholder">
-    <h3>
-      {{ t('settings.section.versioning') }} <span class="soon">{{ t('settings.soon') }}</span>
-    </h3>
-    <p class="muted">
-      {{ t('settings.versioning.autocommit') }}:
-      <strong>{{ state().versioning.autocommitMinutes }} min</strong>
-    </p>
+  <section class="group">
+    <h3>{{ t('settings.section.versioning') }}</h3>
+
+    <label class="field">
+      <span class="label">{{ t('settings.versioning.autocommit') }}</span>
+      <span class="row">
+        <input
+          type="number"
+          min="1"
+          max="180"
+          [value]="autocommitDraft()"
+          (input)="onAutocommitInput($event)"
+          (keydown.enter)="applyAutocommit()"
+        />
+        <button
+          type="button"
+          class="primary"
+          [disabled]="autocommitDraft() === state().versioning.autocommitMinutes"
+          (click)="applyAutocommit()"
+        >
+          {{ t('settings.versioning.autocommit.apply') }}
+        </button>
+      </span>
+      <span class="hint">{{ t('settings.versioning.autocommit.hint') }}</span>
+    </label>
+
     <p class="muted">
       {{ t('settings.versioning.push') }}:
       <strong>{{
         state().versioning.pushAfterAutocommit ? t('common.on') : t('common.off')
       }}</strong>
+      · <a routerLink="/sync">{{ t('settings.versioning.push.configure') }} →</a>
     </p>
   </section>
 

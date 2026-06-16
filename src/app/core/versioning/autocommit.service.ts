@@ -5,7 +5,7 @@
 // ready and stopped on workspace reset. Exposes state and lastCommitAt
 // signals for the sidebar footer.
 
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, effect, inject, signal } from '@angular/core';
 import * as git from 'isomorphic-git';
 import { NavigationStart, Router } from '@angular/router';
 
@@ -15,10 +15,11 @@ import { ERROR_CODES } from '@core/errors/error.codes';
 import { ErrorService } from '@core/errors/error.service';
 import { FsLockService } from '@core/fs/fs-lock.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
+import { SettingsService } from '@core/settings/settings.service';
 
 import {
   AUTOCOMMIT_THROTTLE_MS,
-  AUTOCOMMIT_TIMER_MS,
+  autocommitMinutesToMs,
   deriveAutocommitMessage,
 } from './autocommit.constants';
 import { GitFsAdapter } from './git-fs.adapter';
@@ -34,6 +35,7 @@ export class AutocommitService {
   private readonly workspace = inject(WorkspaceService);
   private readonly router = inject(Router);
   private readonly errors = inject(ErrorService);
+  private readonly settings = inject(SettingsService);
 
   private readonly stateSignal = signal<AutocommitState>('idle');
   private readonly lastCommitAtSignal = signal<Date | null>(null);
@@ -41,7 +43,20 @@ export class AutocommitService {
   readonly lastCommitAt = this.lastCommitAtSignal.asReadonly();
 
   private timerHandle: ReturnType<typeof setInterval> | null = null;
+  private timerIntervalMs = 0;
   private lastAttemptAt = 0;
+
+  constructor() {
+    // why: react to live changes of `versioning.autocommitMinutes` from
+    //      /settings. The timer is only active between start()/stop(),
+    //      so guard on `timerHandle` to avoid spawning one early.
+    effect(() => {
+      const ms = autocommitMinutesToMs(this.settings.state().versioning.autocommitMinutes);
+      if (this.timerHandle !== null && ms !== this.timerIntervalMs) {
+        this.resetTimer(ms);
+      }
+    });
+  }
   private currentFeature = '';
   private currentEntityId = '';
   private routerSub: { unsubscribe(): void } | null = null;
@@ -59,7 +74,10 @@ export class AutocommitService {
     void this.bootstrap().catch((cause: unknown) => {
       this.errors.report(this.wrapError(cause, 'ensureRepo'));
     });
-    this.timerHandle = setInterval(() => void this.tryCommit('timer'), AUTOCOMMIT_TIMER_MS);
+    this.timerIntervalMs = autocommitMinutesToMs(
+      this.settings.state().versioning.autocommitMinutes,
+    );
+    this.timerHandle = setInterval(() => void this.tryCommit('timer'), this.timerIntervalMs);
     this.routerSub = this.router.events.subscribe((e) => {
       if (e instanceof NavigationStart) this.onNavigation(e.url);
     });
@@ -73,6 +91,7 @@ export class AutocommitService {
     if (this.timerHandle !== null) {
       clearInterval(this.timerHandle);
       this.timerHandle = null;
+      this.timerIntervalMs = 0;
     }
     this.routerSub?.unsubscribe();
     this.routerSub = null;
@@ -80,6 +99,13 @@ export class AutocommitService {
       document.removeEventListener('visibilitychange', this.hiddenHandler);
       window.removeEventListener('beforeunload', this.beforeUnloadHandler);
     }
+  }
+
+  private resetTimer(ms: number): void {
+    if (this.timerHandle === null) return;
+    clearInterval(this.timerHandle);
+    this.timerIntervalMs = ms;
+    this.timerHandle = setInterval(() => void this.tryCommit('timer'), ms);
   }
 
   // Manual entry point for explicit user actions or future triggers.

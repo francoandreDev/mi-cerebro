@@ -798,8 +798,12 @@ export const es = {
   'settings.timezone.apply': 'Aplicar',
   'settings.timezone.invalid':
     'Zona horaria inválida. Usá formato Continent/City (ej. America/Lima).',
-  'settings.versioning.autocommit': 'Autocommit cada',
+  'settings.versioning.autocommit': 'Autocommit cada (minutos)',
+  'settings.versioning.autocommit.apply': 'Aplicar',
+  'settings.versioning.autocommit.hint':
+    'Cada N minutos, si hubo cambios, se hace un commit automático. Mínimo 1, máximo 180.',
   'settings.versioning.push': 'Push tras autocommit',
+  'settings.versioning.push.configure': 'Configurar en /sync',
   'settings.variants.dormant': 'Variantes a reposo tras (días)',
   'settings.goals.dormant': 'Objetivos a reposo tras (días)',
   'settings.theme.override': 'Tema',

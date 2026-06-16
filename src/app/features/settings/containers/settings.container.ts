@@ -85,6 +85,7 @@ export class SettingsContainer {
   protected readonly draft = signal('');
   protected readonly error = signal(false);
   protected readonly dormantDraft = signal(0);
+  protected readonly autocommitDraft = signal(0);
 
   protected readonly remoteConfig = this.remote.config;
   protected readonly remoteLastPushAt = this.remote.lastPushAt;
@@ -99,6 +100,17 @@ export class SettingsContainer {
     //      (workspace file load, future cross-tab sync).
     effect(() => this.draft.set(this.state().timezone));
     effect(() => this.dormantDraft.set(this.state().variants.dormantThresholdDays));
+    effect(() => this.autocommitDraft.set(this.state().versioning.autocommitMinutes));
+  }
+
+  protected onAutocommitInput(event: Event): void {
+    const v = parseInt((event.target as HTMLInputElement).value, 10);
+    if (!isNaN(v)) this.autocommitDraft.set(v);
+  }
+
+  protected applyAutocommit(): void {
+    if (this.autocommitDraft() === this.state().versioning.autocommitMinutes) return;
+    this.settings.setAutocommitMinutes(this.autocommitDraft());
   }
 
   protected onDormantInput(event: Event): void {
