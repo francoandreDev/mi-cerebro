@@ -1,6 +1,6 @@
 import type { JSONContent } from '@tiptap/core';
 
-export const BOOK_SCHEMA_VERSION = 2;
+export const BOOK_SCHEMA_VERSION = 3;
 export const CHAPTER_SCHEMA_VERSION = 2;
 export const BOOK_KIND = 'book';
 export const BOOKS_DIR = 'books';
@@ -16,6 +16,7 @@ export interface Book {
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly schemaVersion: number;
+  readonly position?: string;
   readonly [key: string]: unknown;
 }
 
@@ -43,6 +44,7 @@ export interface BookSummary {
   readonly tags: readonly string[];
   readonly folder: string;
   readonly chapterCount: number;
+  readonly position: string;
 }
 
 export interface BookBundle {

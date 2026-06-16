@@ -7,6 +7,8 @@ import type { FsDirectoryHandle } from '@core/fs/fs.types';
 import { getDirByPath, getOrCreateDirByPath, joinPath } from '@core/fs/walk';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { MigrationsService } from '@core/migrations/migrations.service';
+import { nextPositionAfter, seedMissingPositions } from '@core/ordering/seed-positions';
+import { positionSeedMigrationStep } from '@core/ordering/position.migration';
 import { SearchIndexService } from '@core/search/search-index.service';
 import { blockIdMigrationStep } from '@core/tiptap/block-id/block-id.migration';
 import type { SearchDoc } from '@core/search/search.types';
@@ -58,7 +60,7 @@ export class BooksService {
     this.migrations.register({
       kind: BOOK_KIND,
       latest: BOOK_SCHEMA_VERSION,
-      steps: [blockIdMigrationStep(1)],
+      steps: [blockIdMigrationStep(1), positionSeedMigrationStep(2)],
     });
   }
 
@@ -69,8 +71,22 @@ export class BooksService {
     const summaries: BookSummary[] = [];
     const folders: string[] = [];
     const indexDocs: SearchDoc[] = [];
-    await this.walkBooks(root, '', summaries, folders, indexDocs);
-    summaries.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    const booksById = new Map<string, Book>();
+    await this.walkBooks(root, '', summaries, folders, indexDocs, booksById);
+    summaries.sort(compareLegacy);
+    const seeds = seedMissingPositions(summaries);
+    if (seeds.length > 0) {
+      const positionById = new Map(seeds.map((s) => [s.id, s.position] as const));
+      for (const [id, pos] of positionById) {
+        const book = booksById.get(id);
+        if (book) await this.writePositionInPlace(book, pos);
+      }
+      for (let i = 0; i < summaries.length; i++) {
+        const seeded = positionById.get(summaries[i]!.id);
+        if (seeded) summaries[i] = { ...summaries[i]!, position: seeded };
+      }
+    }
+    summaries.sort(comparePosition);
     this.summariesSignal.set(summaries);
     this.foldersSignal.set(folders);
     await this.search.rebuild(indexDocs);
@@ -84,6 +100,7 @@ export class BooksService {
     const bookDir = await this.fs.getOrCreateDir(parent, slug);
     await this.fs.getOrCreateDir(bookDir, CHAPTERS_DIR);
     const now = new Date().toISOString();
+    const position = nextPositionAfter(lastPosition(this.summariesSignal()));
     const book: Book = {
       id: crypto.randomUUID(),
       title,
@@ -92,11 +109,14 @@ export class BooksService {
       createdAt: now,
       updatedAt: now,
       schemaVersion: BOOK_SCHEMA_VERSION,
+      position,
     };
     await this.fs.writeFileAtomic(bookDir, BOOK_META_FILE, JSON.stringify(book, null, 2));
     this.idToLoc.set(book.id, { folder, slug });
     this.chapterCountById.set(book.id, 0);
-    this.summariesSignal.update((curr) => [this.toSummary(book, folder, 0), ...curr]);
+    this.summariesSignal.update((curr) =>
+      sortByPosition([...curr, this.toSummary(book, folder, 0)]),
+    );
     if (folder !== '' && !this.foldersSet().has(folder)) {
       this.foldersSignal.update((curr) => [...curr, folder]);
     }
@@ -119,11 +139,29 @@ export class BooksService {
     if (loc) {
       const count = this.chapterCountById.get(book.id) ?? 0;
       this.summariesSignal.update((curr) =>
-        curr.map((s) => (s.id === book.id ? this.toSummary(updated, loc.folder, count) : s)),
+        sortByPosition(
+          curr.map((s) => (s.id === book.id ? this.toSummary(updated, loc.folder, count) : s)),
+        ),
       );
     }
     await this.search.upsert(this.toSearchDoc(updated, await this.listChaptersText(book.id)));
     return updated;
+  }
+
+  async setPosition(id: string, position: string): Promise<void> {
+    const book = await this.readBook(id);
+    const updated: Book = { ...book, position, updatedAt: new Date().toISOString() };
+    const dir = await this.bookDir(id);
+    await this.fs.writeFileAtomic(dir, BOOK_META_FILE, JSON.stringify(updated, null, 2));
+    this.summariesSignal.update((curr) =>
+      sortByPosition(curr.map((s) => (s.id === id ? { ...s, position } : s))),
+    );
+  }
+
+  private async writePositionInPlace(book: Book, position: string): Promise<void> {
+    const dir = await this.bookDir(book.id);
+    const seeded: Book = { ...book, position };
+    await this.fs.writeFileAtomic(dir, BOOK_META_FILE, JSON.stringify(seeded, null, 2));
   }
 
   async deleteBookToTrash(id: string): Promise<void> {
@@ -183,7 +221,7 @@ export class BooksService {
     }
     this.idToLoc.set(id, { folder: newFolder, slug: destSlug });
     this.summariesSignal.update((curr) =>
-      curr.map((s) => (s.id === id ? { ...s, folder: newFolder } : s)),
+      sortByPosition(curr.map((s) => (s.id === id ? { ...s, folder: newFolder } : s))),
     );
     if (newFolder !== '' && !this.foldersSet().has(newFolder)) {
       this.foldersSignal.update((curr) => [...curr, newFolder]);
@@ -316,6 +354,7 @@ export class BooksService {
     summaries: BookSummary[],
     folders: string[],
     indexDocs: SearchDoc[],
+    booksById: Map<string, Book>,
   ): Promise<void> {
     for await (const name of this.fs.listSubdirs(dir)) {
       const sub = await this.fs.getDir(dir, name);
@@ -325,6 +364,7 @@ export class BooksService {
           const raw = await this.fs.readJson<Book>(sub, BOOK_META_FILE);
           const book = await this.migrations.migrate<Book>(BOOK_KIND, raw);
           this.idToLoc.set(book.id, { folder, slug: name });
+          booksById.set(book.id, book);
           const chaptersDir = await this.fs.getOrCreateDir(sub, CHAPTERS_DIR);
           let count = 0;
           const chTexts: string[] = [];
@@ -348,7 +388,7 @@ export class BooksService {
       } else {
         const path = joinPath(folder, name);
         folders.push(path);
-        await this.walkBooks(sub, path, summaries, folders, indexDocs);
+        await this.walkBooks(sub, path, summaries, folders, indexDocs, booksById);
       }
     }
   }
@@ -462,6 +502,7 @@ export class BooksService {
       tags: book.tags,
       folder,
       chapterCount,
+      position: book.position ?? '',
     };
   }
 
@@ -496,6 +537,27 @@ export class BooksService {
     return tagIds.filter((id) => this.tags.byId(id) !== undefined);
   }
 }
+
+const compareLegacy = (a: BookSummary, b: BookSummary): number =>
+  b.updatedAt.localeCompare(a.updatedAt) || a.id.localeCompare(b.id);
+
+const comparePosition = (a: BookSummary, b: BookSummary): number => {
+  if (a.position === '' && b.position === '') return compareLegacy(a, b);
+  if (a.position === '') return 1;
+  if (b.position === '') return -1;
+  return a.position.localeCompare(b.position);
+};
+
+const sortByPosition = (list: readonly BookSummary[]): BookSummary[] =>
+  [...list].sort(comparePosition);
+
+const lastPosition = (list: readonly BookSummary[]): string | null => {
+  let max: string | null = null;
+  for (const s of list) {
+    if (s.position !== '' && (max === null || s.position > max)) max = s.position;
+  }
+  return max;
+};
 
 const moveBookDir = async (
   fs: FsService,
