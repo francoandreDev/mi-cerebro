@@ -7,6 +7,8 @@ import type { FsDirectoryHandle } from '@core/fs/fs.types';
 import { getDirByPath, getOrCreateDirByPath, joinPath } from '@core/fs/walk';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { MigrationsService } from '@core/migrations/migrations.service';
+import { nextPositionAfter, seedMissingPositions } from '@core/ordering/seed-positions';
+import { positionSeedMigrationStep } from '@core/ordering/position.migration';
 import { SearchIndexService } from '@core/search/search-index.service';
 import type { SearchDoc } from '@core/search/search.types';
 import { TagsService } from '@core/tags/tags.service';
@@ -51,7 +53,7 @@ export class FilesService {
     this.migrations.register({
       kind: FILE_KIND,
       latest: FILE_COLLECTION_SCHEMA_VERSION,
-      steps: [],
+      steps: [positionSeedMigrationStep(1)],
     });
   }
 
@@ -61,8 +63,22 @@ export class FilesService {
     const summaries: FileCollectionSummary[] = [];
     const folders: string[] = [];
     const indexDocs: SearchDoc[] = [];
-    await this.walkCollections(root, '', summaries, folders, indexDocs);
-    summaries.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    const collectionsById = new Map<string, FileCollection>();
+    await this.walkCollections(root, '', summaries, folders, indexDocs, collectionsById);
+    summaries.sort(compareLegacy);
+    const seeds = seedMissingPositions(summaries);
+    if (seeds.length > 0) {
+      const positionById = new Map(seeds.map((s) => [s.id, s.position] as const));
+      for (const [id, pos] of positionById) {
+        const collection = collectionsById.get(id);
+        if (collection) await this.writePositionInPlace(collection, pos);
+      }
+      for (let i = 0; i < summaries.length; i++) {
+        const seeded = positionById.get(summaries[i]!.id);
+        if (seeded) summaries[i] = { ...summaries[i]!, position: seeded };
+      }
+    }
+    summaries.sort(comparePosition);
     this.summariesSignal.set(summaries);
     this.foldersSignal.set(folders);
     for (const doc of indexDocs) await this.search.upsert(doc);
@@ -76,6 +92,7 @@ export class FilesService {
     const collectionDir = await this.fs.getOrCreateDir(parent, slug);
     await this.fs.getOrCreateDir(collectionDir, ITEMS_DIR);
     const now = new Date().toISOString();
+    const position = nextPositionAfter(lastPosition(this.summariesSignal()));
     const collection: FileCollection = {
       id: crypto.randomUUID(),
       title,
@@ -85,6 +102,7 @@ export class FilesService {
       createdAt: now,
       updatedAt: now,
       schemaVersion: FILE_COLLECTION_SCHEMA_VERSION,
+      position,
     };
     await this.fs.writeFileAtomic(
       collectionDir,
@@ -92,7 +110,9 @@ export class FilesService {
       JSON.stringify(collection, null, 2),
     );
     this.idToLoc.set(collection.id, { folder, slug });
-    this.summariesSignal.update((curr) => [this.toSummary(collection, folder), ...curr]);
+    this.summariesSignal.update((curr) =>
+      sortByPosition([...curr, this.toSummary(collection, folder)]),
+    );
     if (folder !== '' && !this.foldersSet().has(folder)) {
       this.foldersSignal.update((curr) => [...curr, folder]);
     }
@@ -118,11 +138,33 @@ export class FilesService {
     const loc = this.idToLoc.get(collection.id);
     if (loc) {
       this.summariesSignal.update((curr) =>
-        curr.map((s) => (s.id === collection.id ? this.toSummary(updated, loc.folder) : s)),
+        sortByPosition(
+          curr.map((s) => (s.id === collection.id ? this.toSummary(updated, loc.folder) : s)),
+        ),
       );
     }
     await this.search.upsert(this.toSearchDoc(updated));
     return updated;
+  }
+
+  async setPosition(id: string, position: string): Promise<void> {
+    const collection = await this.readCollection(id);
+    const updated: FileCollection = {
+      ...collection,
+      position,
+      updatedAt: new Date().toISOString(),
+    };
+    const dir = await this.collectionDir(id);
+    await this.fs.writeFileAtomic(dir, COLLECTION_META_FILE, JSON.stringify(updated, null, 2));
+    this.summariesSignal.update((curr) =>
+      sortByPosition(curr.map((s) => (s.id === id ? { ...s, position } : s))),
+    );
+  }
+
+  private async writePositionInPlace(collection: FileCollection, position: string): Promise<void> {
+    const dir = await this.collectionDir(collection.id);
+    const seeded: FileCollection = { ...collection, position };
+    await this.fs.writeFileAtomic(dir, COLLECTION_META_FILE, JSON.stringify(seeded, null, 2));
   }
 
   async addFile(collectionId: string, blob: Blob, originalName: string): Promise<FileItem> {
@@ -239,7 +281,7 @@ export class FilesService {
     }
     this.idToLoc.set(id, { folder: newFolder, slug: destSlug });
     this.summariesSignal.update((curr) =>
-      curr.map((s) => (s.id === id ? { ...s, folder: newFolder } : s)),
+      sortByPosition(curr.map((s) => (s.id === id ? { ...s, folder: newFolder } : s))),
     );
     if (newFolder !== '' && !this.foldersSet().has(newFolder)) {
       this.foldersSignal.update((curr) => [...curr, newFolder]);
@@ -252,6 +294,7 @@ export class FilesService {
     summaries: FileCollectionSummary[],
     folders: string[],
     indexDocs: SearchDoc[],
+    collectionsById: Map<string, FileCollection>,
   ): Promise<void> {
     for await (const name of this.fs.listSubdirs(dir)) {
       const sub = await this.fs.getDir(dir, name);
@@ -261,6 +304,7 @@ export class FilesService {
           const raw = await this.fs.readJson<FileCollection>(sub, COLLECTION_META_FILE);
           const collection = await this.migrations.migrate<FileCollection>(FILE_KIND, raw);
           this.idToLoc.set(collection.id, { folder, slug: name });
+          collectionsById.set(collection.id, collection);
           summaries.push(this.toSummary(collection, folder));
           indexDocs.push(this.toSearchDoc(collection));
         } catch (cause) {
@@ -269,7 +313,7 @@ export class FilesService {
       } else {
         const path = joinPath(folder, name);
         folders.push(path);
-        await this.walkCollections(sub, path, summaries, folders, indexDocs);
+        await this.walkCollections(sub, path, summaries, folders, indexDocs, collectionsById);
       }
     }
   }
@@ -341,6 +385,7 @@ export class FilesService {
       tags: collection.tags,
       folder,
       itemCount: collection.items.length,
+      position: collection.position ?? '',
     };
   }
 
@@ -365,6 +410,27 @@ export class FilesService {
     return tagIds.filter((id) => this.tags.byId(id) !== undefined);
   }
 }
+
+const compareLegacy = (a: FileCollectionSummary, b: FileCollectionSummary): number =>
+  b.updatedAt.localeCompare(a.updatedAt) || a.id.localeCompare(b.id);
+
+const comparePosition = (a: FileCollectionSummary, b: FileCollectionSummary): number => {
+  if (a.position === '' && b.position === '') return compareLegacy(a, b);
+  if (a.position === '') return 1;
+  if (b.position === '') return -1;
+  return a.position.localeCompare(b.position);
+};
+
+const sortByPosition = (list: readonly FileCollectionSummary[]): FileCollectionSummary[] =>
+  [...list].sort(comparePosition);
+
+const lastPosition = (list: readonly FileCollectionSummary[]): string | null => {
+  let max: string | null = null;
+  for (const s of list) {
+    if (s.position !== '' && (max === null || s.position > max)) max = s.position;
+  }
+  return max;
+};
 
 const moveCollectionDir = async (
   fs: FsService,

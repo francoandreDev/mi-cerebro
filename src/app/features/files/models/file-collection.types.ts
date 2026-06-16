@@ -1,4 +1,4 @@
-export const FILE_COLLECTION_SCHEMA_VERSION = 1;
+export const FILE_COLLECTION_SCHEMA_VERSION = 2;
 export const FILE_KIND = 'file';
 export const FILES_DIR = 'files';
 export const COLLECTION_META_FILE = '_collection.json';
@@ -22,6 +22,7 @@ export interface FileCollection {
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly schemaVersion: number;
+  readonly position?: string;
   readonly [key: string]: unknown;
 }
 
@@ -32,6 +33,7 @@ export interface FileCollectionSummary {
   readonly tags: readonly string[];
   readonly folder: string;
   readonly itemCount: number;
+  readonly position: string;
 }
 
 export const extFromName = (name: string, fallback = 'bin'): string => {
