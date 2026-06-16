@@ -463,7 +463,7 @@ const comparePosition = (a: GallerySummary, b: GallerySummary): number => {
   if (a.position === '' && b.position === '') return compareLegacy(a, b);
   if (a.position === '') return 1;
   if (b.position === '') return -1;
-  return a.position.localeCompare(b.position);
+  return a.position < b.position ? -1 : a.position > b.position ? 1 : 0;
 };
 
 const sortByPosition = (list: readonly GallerySummary[]): GallerySummary[] =>
