@@ -39,6 +39,34 @@
   color: var(--mc-fg-muted);
   margin: 0;
 }
+.section {
+  padding: var(--mc-space-2) var(--mc-space-5);
+  margin: 0;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--mc-fg-muted);
+  border-bottom: 1px solid var(--mc-border-subtle, transparent);
+  list-style: none;
+}
+.hit.query {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mc-space-3);
+}
+.forget {
+  background: transparent;
+  border: 0;
+  color: var(--mc-fg-muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0 var(--mc-space-2);
+  line-height: 1;
+}
+.forget:hover {
+  color: var(--mc-fg-primary);
+}
 .results {
   list-style: none;
   padding: 0;

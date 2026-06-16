@@ -1,0 +1,94 @@
+@if (open()) {
+  <div class="backdrop" (click)="close()" (keydown.enter)="close()" tabindex="-1">
+    <div
+      class="dialog"
+      role="dialog"
+      [attr.aria-label]="t('palette.label')"
+      (click)="$event.stopPropagation()"
+      (keydown)="$event.stopPropagation()"
+    >
+      <input
+        #input
+        type="text"
+        class="input"
+        [placeholder]="t('palette.placeholder')"
+        [attr.aria-label]="t('palette.placeholder')"
+        [value]="query()"
+        (input)="onInput($event)"
+        (keydown)="onKey($event)"
+      />
+      @if (parsed().unknownTags.length > 0) {
+        <p class="warn">{{ t('palette.unknownTag') }} "{{ parsed().unknownTags.join(', ') }}"</p>
+      }
+      @if (mode() === 'recents') {
+        @if (items().length === 0) {
+          <p class="empty">{{ t('palette.recents.empty') }}</p>
+        } @else {
+          <ul class="results" role="listbox">
+            @if (recentsItems().length > 0) {
+              <li class="section" role="presentation">{{ t('palette.recents.title') }}</li>
+              @for (h of recentsItems(); track h.id; let i = $index) {
+                <li
+                  class="hit"
+                  role="option"
+                  [class.highlight]="cursor() === i"
+                  [attr.aria-selected]="cursor() === i"
+                  (mouseenter)="cursor.set(i)"
+                  (mousedown)="pick($event, h)"
+                >
+                  <div class="kind">{{ t(kindKey(h.kind)) }}</div>
+                  <div class="title">{{ h.title || t('notes.untitledTitle') }}</div>
+                </li>
+              }
+            }
+            @if (queryItems().length > 0) {
+              <li class="section" role="presentation">{{ t('palette.queries.title') }}</li>
+              @for (q of queryItems(); track q.id; let j = $index) {
+                <li
+                  class="hit query"
+                  role="option"
+                  [class.highlight]="cursor() === recentsItems().length + j"
+                  [attr.aria-selected]="cursor() === recentsItems().length + j"
+                  (mouseenter)="cursor.set(recentsItems().length + j)"
+                  (mousedown)="pick($event, q)"
+                >
+                  <div class="title">{{ q.text }}</div>
+                  <button
+                    type="button"
+                    class="forget"
+                    [attr.aria-label]="t('palette.queries.forget')"
+                    (mousedown)="forgetQuery($event, q.text)"
+                  >
+                    ✕
+                  </button>
+                </li>
+              }
+            }
+          </ul>
+        }
+      } @else if (items().length === 0) {
+        <p class="empty">{{ t('palette.empty') }}</p>
+      } @else {
+        <ul class="results" role="listbox">
+          @for (h of entityItems(); track h.id; let i = $index) {
+            <li
+              class="hit"
+              role="option"
+              [class.highlight]="cursor() === i"
+              [attr.aria-selected]="cursor() === i"
+              (mouseenter)="cursor.set(i)"
+              (mousedown)="pick($event, h)"
+            >
+              <div class="kind">{{ t(kindKey(h.kind)) }}</div>
+              <div class="title">{{ h.title || t('notes.untitledTitle') }}</div>
+              @if (h.snippet) {
+                <div class="snippet">{{ h.snippet }}</div>
+              }
+            </li>
+          }
+        </ul>
+      }
+      <p class="hint">{{ t('palette.hint') }}</p>
+    </div>
+  </div>
+}

@@ -92,6 +92,10 @@ export class SearchIndexService {
     return this.mini.has(id);
   }
 
+  getTitle(id: string): string | null {
+    return this.metaById.get(id)?.title ?? null;
+  }
+
   size(): number {
     return this.metaById.size;
   }

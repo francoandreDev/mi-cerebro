@@ -4,6 +4,7 @@ import {
   ElementRef,
   HostListener,
   computed,
+  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -17,6 +18,7 @@ import { FoldersService } from '@core/folders/folders.service';
 import type { FolderKind } from '@core/folders/folders.types';
 import { WorkspaceRefreshService } from '@core/fs/workspace-refresh.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
+import { CreationIntentService } from '@core/intents/creation-intent.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { PlayerService } from '@core/music/player.service';
@@ -42,7 +44,7 @@ import { IconComponent } from '@shared/icon/icon.component';
 import type { IconName } from '@shared/icon/icons.data';
 import { MenuButtonComponent, type MenuOption } from '@shared/menu-button/menu-button.component';
 import { filterTree } from '@shared/tree/filter';
-import { TreeFilterComponent } from '@shared/tree/tree-filter.component';
+import { TreeFilterComponent, type FilterMatchEntry } from '@shared/tree/tree-filter.component';
 import { TreeStateService } from '@shared/tree/tree-state.service';
 import { TreeComponent } from '@shared/tree/tree.component';
 import type { FilterDirection, TreeNode } from '@shared/tree/tree.types';
@@ -108,6 +110,7 @@ export class WorkspaceSidebarContainer {
   private readonly palette = inject(CommandPaletteService);
   private readonly player = inject(PlayerService);
   private readonly treeState = inject(TreeStateService);
+  private readonly creationIntent = inject(CreationIntentService);
 
   protected readonly query = signal('');
   protected readonly direction = signal<FilterDirection>('general');
@@ -195,7 +198,17 @@ export class WorkspaceSidebarContainer {
         this.errors.report(e);
       }
     })();
+    effect(() => {
+      const req = this.creationIntent.requestedCreate();
+      if (!req) return;
+      if (req.requestedAt <= this.lastCreationAt) return;
+      if (!SIDEBAR_KINDS.has(req.kind)) return;
+      this.lastCreationAt = req.requestedAt;
+      void this.createForActive(req.kind as EntityKind);
+    });
   }
+
+  private lastCreationAt = 0;
 
   protected t(key: TranslationKey): string {
     return this.i18n.t(key);
@@ -403,6 +416,29 @@ export class WorkspaceSidebarContainer {
 
   protected readonly matchedIds = computed(() => new Set(this.result().matches.map((m) => m.id)));
 
+  protected readonly activeMatchId = computed<string | null>(
+    () => this.result().matches[this.cursor()]?.id ?? null,
+  );
+
+  private readonly nodeLabels = computed<ReadonlyMap<string, string>>(() => {
+    const map = new Map<string, string>();
+    const walk = (node: TreeNode): void => {
+      map.set(node.id, node.label);
+      for (const c of node.children ?? []) walk(c);
+    };
+    for (const r of this.treeRoots()) walk(r);
+    return map;
+  });
+
+  protected readonly filterMatches = computed<readonly FilterMatchEntry[]>(() => {
+    const labels = this.nodeLabels();
+    return this.result().matches.map((m) => ({
+      id: m.id,
+      label: labels.get(m.id) ?? m.id,
+      breadcrumb: m.path.map((id) => labels.get(id) ?? id).join(' / '),
+    }));
+  });
+
   protected readonly emptyKey = computed<TranslationKey>(() => {
     if (this.query().trim() !== '') return 'tree.noMatches';
     const k = this.activeKind();
@@ -471,6 +507,12 @@ export class WorkspaceSidebarContainer {
     if (match) this.choose(match.id);
   }
 
+  protected onChooseMatch(id: string): void {
+    const idx = this.result().matches.findIndex((m) => m.id === id);
+    if (idx >= 0) this.cursor.set(idx);
+    this.choose(id);
+  }
+
   protected onClear(): void {
     if (this.query() === '') return;
     this.query.set('');
@@ -512,8 +554,8 @@ export class WorkspaceSidebarContainer {
     this.treeState.expandAll([`root:${key}`]);
   }
 
-  protected async createForActive(): Promise<void> {
-    const kind = this.activeKind();
+  protected async createForActive(forcedKind?: EntityKind): Promise<void> {
+    const kind = forcedKind ?? this.activeKind();
     if (!kind) return;
     try {
       await this.workspace.ensureWritable();
@@ -603,6 +645,17 @@ const ROUTE_TO_KIND = {
   images: 'image',
   files: 'file',
 } as const;
+
+const SIDEBAR_KINDS: ReadonlySet<string> = new Set([
+  'note',
+  'task',
+  'goal',
+  'list',
+  'writing',
+  'book',
+  'image',
+  'file',
+]);
 
 const KIND_TO_ROUTE: Record<EntityKind, string> = {
   note: '/notes',

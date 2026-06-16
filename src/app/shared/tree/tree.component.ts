@@ -30,6 +30,7 @@ import type { TreeNode } from './tree.types';
             [depth]="0"
             [visible]="visible()"
             [matchedIds]="matchedIds()"
+            [activeMatchId]="activeMatchId()"
             [selectedId]="selectedId()"
             (chooseNode)="chooseNode.emit($event)"
             (nodeAction)="nodeAction.emit($event)"
@@ -59,6 +60,7 @@ export class TreeComponent {
   readonly nodes = input.required<readonly TreeNode[]>();
   readonly visible = input.required<ReadonlySet<string>>();
   readonly matchedIds = input.required<ReadonlySet<string>>();
+  readonly activeMatchId = input<string | null>(null);
   readonly autoExpand = input<ReadonlySet<string>>(new Set());
   readonly selectedId = input<string | null>(null);
   readonly emptyKey = input<TranslationKey>('notes.empty');

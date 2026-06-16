@@ -1,7 +1,17 @@
+import { inject } from '@angular/core';
 import type { Routes } from '@angular/router';
 
+import { ContinuityService } from '@core/continuity/continuity.service';
+
 export const routes: Routes = [
-  { path: '', pathMatch: 'full', redirectTo: 'notes' },
+  {
+    path: '',
+    pathMatch: 'full',
+    redirectTo: () => {
+      const last = inject(ContinuityService).getLastRoute();
+      return last && last !== '/' ? last : '/notes';
+    },
+  },
   {
     path: 'notes',
     loadChildren: () => import('./features/notes/notes.routes').then((m) => m.notesRoutes),

@@ -1,9 +1,11 @@
 import { ChangeDetectionStrategy, Component, inject, isDevMode } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
+import { ContinuityService } from '@core/continuity/continuity.service';
 import { ErrorService } from '@core/errors/error.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { SettingsService } from '@core/settings/settings.service';
+import { KeyboardHelpDialogComponent } from '@core/shortcuts/keyboard-help-dialog.component';
 import { ThemeService } from '@core/theme/theme.service';
 import { AutocommitService } from '@core/versioning/autocommit.service';
 import { AutoPushService } from '@core/versioning/auto-push.service';
@@ -39,6 +41,7 @@ import { WorkspaceSidebarContainer } from './workspace-sidebar.container';
     DevVersioningPanelContainer,
     DevVariantsPanelContainer,
     RemoteDivergenceBannerComponent,
+    KeyboardHelpDialogComponent,
   ],
   template: `
     @if (workspace.isReady()) {
@@ -50,6 +53,7 @@ import { WorkspaceSidebarContainer } from './workspace-sidebar.container';
         </main>
       </div>
       <mc-command-palette />
+      <mc-keyboard-help-dialog />
       <mc-goal-reminder />
       <mc-reminder-toast />
       <mc-mini-player />
@@ -94,8 +98,10 @@ export class AppShellContainer {
   private readonly variantsService = inject(VariantsService);
   private readonly switchVariant = inject(SwitchVariantService);
   private readonly settings = inject(SettingsService);
+  private readonly continuity = inject(ContinuityService);
 
   constructor() {
+    this.continuity.start();
     this.autoPush.start();
     this.workspace
       .bootstrap()

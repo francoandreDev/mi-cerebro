@@ -1,10 +1,18 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 
 import { ErrorService } from '@core/errors/error.service';
 import { withReauthIfNeeded } from '@core/errors/with-reauth';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { CreationIntentService } from '@core/intents/creation-intent.service';
 import { IconComponent } from '@shared/icon/icon.component';
 import { McDatePipe } from '@shared/pipes/mc-date.pipe';
 
@@ -29,6 +37,18 @@ export class RemindersContainer {
   private readonly workspace = inject(WorkspaceService);
   private readonly errors = inject(ErrorService);
   private readonly i18n = inject(I18nService);
+  private readonly creationIntent = inject(CreationIntentService);
+  private lastCreationAt = 0;
+
+  constructor() {
+    effect(() => {
+      const req = this.creationIntent.requestedCreate();
+      if (!req || req.kind !== 'reminder') return;
+      if (req.requestedAt <= this.lastCreationAt) return;
+      this.lastCreationAt = req.requestedAt;
+      void this.onCreate();
+    });
+  }
 
   protected readonly summaries = this.reminders.summaries;
   protected readonly editingId = signal<string | null>(null);

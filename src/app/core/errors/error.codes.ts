@@ -8,6 +8,7 @@ import type { TranslationKey } from '@core/i18n/i18n.types';
 export const ERROR_CODES = {
   SYS_001: 'MCB-SYS-001',
   SYS_002: 'MCB-SYS-002',
+  SYS_003: 'MCB-SYS-003',
   FS_001: 'MCB-FS-001',
   FS_002: 'MCB-FS-002',
   FS_003: 'MCB-FS-003',
@@ -65,6 +66,7 @@ interface CodeMeta {
 export const ERROR_CODE_META: Record<ErrorCode, CodeMeta> = {
   'MCB-SYS-001': { titleKey: 'errors.sys.001.title', messageKey: 'errors.sys.001.message' },
   'MCB-SYS-002': { titleKey: 'errors.sys.002.title', messageKey: 'errors.sys.002.message' },
+  'MCB-SYS-003': { titleKey: 'errors.sys.003.title', messageKey: 'errors.sys.003.message' },
   'MCB-FS-001': { titleKey: 'errors.fs.001.title', messageKey: 'errors.fs.001.message' },
   'MCB-FS-002': { titleKey: 'errors.fs.002.title', messageKey: 'errors.fs.002.message' },
   'MCB-FS-003': { titleKey: 'errors.fs.003.title', messageKey: 'errors.fs.003.message' },

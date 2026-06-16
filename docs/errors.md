@@ -34,6 +34,14 @@ Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `P
 - **Cómo resolver:** vaciar la papelera (`.mi-cerebro/trash/`), exportar y eliminar archivos viejos, liberar espacio del disco.
 - **Recuperable:** sí — el borrador queda en IndexedDB hasta que haya espacio.
 
+### MCB-SYS-003 — Invariante interno violado
+
+- **Severidad:** fatal
+- **Cuándo:** un helper interno detecta una precondición rota (input fuera de rango, ordenamiento inconsistente, key de orden inválido).
+- **Causa típica:** bug de programación o archivo de orden corrupto en disco. Nunca debería disparar en uso normal.
+- **Cómo resolver:** reportar con el contexto que aparece en el toast. Para fallas del índice fraccional (`fractional-position`), una migración o el rebalanceo automático del próximo D&D suele resolver.
+- **Recuperable:** depende — si el helper aborta una operación de UI, el estado en disco queda intacto.
+
 ---
 
 ## FS — File System Access

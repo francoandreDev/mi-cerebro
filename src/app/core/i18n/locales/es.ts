@@ -53,6 +53,10 @@ export const es = {
   'errors.sys.002.message':
     'No hay espacio para guardar este cambio. Probá vaciar la papelera o exportar y limpiar archivos viejos.',
 
+  'errors.sys.003.title': 'Estado interno inconsistente',
+  'errors.sys.003.message':
+    'La app detectó una precondición rota. No se aplicó el cambio. Si persiste, reportá el código y el contexto.',
+
   'errors.fs.001.title': 'Permiso denegado al guardar',
   'errors.fs.001.message':
     'El navegador revocó el permiso a tu carpeta, o el archivo está bloqueado por otro programa.',
@@ -416,6 +420,8 @@ export const es = {
   'tree.filter.placeholderIn': 'Filtrar en {kind}...',
   'tree.noMatches': 'Sin coincidencias.',
   'tree.matches.count': '{n} coincidencias',
+  'tree.filter.matches.listLabel': 'Coincidencias',
+  'tree.filter.matches.noBreadcrumb': 'Raíz',
   'tree.direction.label': 'Dirección de búsqueda',
   'tree.direction.general': 'General (más cerca)',
   'tree.direction.up': 'Hacia arriba',
@@ -432,6 +438,19 @@ export const es = {
   'palette.unknownTag': 'No existe la etiqueta',
   'palette.hint': '↑↓ navegar · enter abrir · esc cerrar',
   'palette.kindUnknown': 'Otro',
+  'palette.recents.title': 'Recientes',
+  'palette.recents.empty': 'Aún no abriste nada en esta sesión. Escribí para buscar.',
+  'palette.queries.title': 'Búsquedas anteriores',
+  'palette.queries.forget': 'Olvidar búsqueda',
+
+  'shortcuts.help.title': 'Atajos de teclado',
+  'shortcuts.help.open': 'Mostrar ayuda de atajos',
+  'shortcuts.help.close': 'Cerrar ayuda',
+  'shortcuts.group.global': 'Globales',
+  'shortcuts.group.editableSafe': 'Fuera de campos de texto',
+  'shortcuts.palette': 'Abrir búsqueda global',
+  'shortcuts.treeFilter': 'Foco al filtro del árbol',
+  'shortcuts.create': 'Crear nueva entidad (según ruta)',
 
   'errors.aut.005.title': 'Esta entidad está abierta en otra pestaña',
   'errors.aut.005.message':

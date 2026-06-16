@@ -1,7 +1,8 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  HostListener,
+  computed,
+  DestroyRef,
   inject,
   input,
   output,
@@ -11,10 +12,19 @@ import type { ElementRef } from '@angular/core';
 
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { ShortcutsService } from '@core/shortcuts/shortcuts.service';
 
 import type { FilterDirection } from './tree.types';
 
 const DIRECTIONS: readonly FilterDirection[] = ['general', 'up', 'down'];
+
+let listboxIdCounter = 0;
+
+export interface FilterMatchEntry {
+  readonly id: string;
+  readonly label: string;
+  readonly breadcrumb: string;
+}
 
 @Component({
   selector: 'mc-tree-filter',
@@ -25,6 +35,11 @@ const DIRECTIONS: readonly FilterDirection[] = ['general', 'up', 'down'];
         #input
         type="text"
         class="input"
+        role="combobox"
+        aria-autocomplete="list"
+        [attr.aria-controls]="hasDropdown() ? listboxId : null"
+        [attr.aria-expanded]="hasDropdown()"
+        [attr.aria-activedescendant]="activeOptionId()"
         [value]="query()"
         [placeholder]="placeholder() || t('tree.filter.placeholder')"
         [attr.aria-label]="placeholder() || t('tree.filter.placeholder')"
@@ -51,6 +66,30 @@ const DIRECTIONS: readonly FilterDirection[] = ['general', 'up', 'down'];
       <p class="count" aria-live="polite">
         {{ t('tree.matches.count').replace('{n}', matchCount().toString()) }}
       </p>
+    }
+    @if (hasDropdown()) {
+      <ul
+        class="matches"
+        role="listbox"
+        [id]="listboxId"
+        [attr.aria-label]="t('tree.filter.matches.listLabel')"
+      >
+        @for (m of matches(); track m.id; let i = $index) {
+          <li
+            class="match-option"
+            role="option"
+            [id]="optionId(m.id)"
+            [attr.aria-selected]="m.id === activeMatchId()"
+            [class.active]="m.id === activeMatchId()"
+            (mousedown)="onMatchMouseDown($event, m.id)"
+          >
+            <span class="match-label">{{ m.label }}</span>
+            <span class="match-breadcrumb">{{
+              m.breadcrumb || t('tree.filter.matches.noBreadcrumb')
+            }}</span>
+          </li>
+        }
+      </ul>
     }
   `,
   styles: `
@@ -98,6 +137,51 @@ const DIRECTIONS: readonly FilterDirection[] = ['general', 'up', 'down'];
       color: var(--mc-fg-muted);
       font-size: var(--mc-font-size-xs);
     }
+    .matches {
+      list-style: none;
+      margin: var(--mc-space-1) 0 0;
+      padding: 0;
+      max-height: 200px;
+      overflow-y: auto;
+      background: var(--mc-bg-elevated);
+      border: 1px solid var(--mc-border-default);
+      border-radius: var(--mc-radius-md);
+    }
+    .match-option {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding: var(--mc-space-1) var(--mc-space-2);
+      cursor: pointer;
+      border-bottom: 1px solid var(--mc-border-subtle, var(--mc-border-default));
+    }
+    .match-option:last-child {
+      border-bottom: 0;
+    }
+    .match-option:hover {
+      background: var(--mc-bg-base);
+    }
+    .match-option.active {
+      background: var(--mc-accent-primary);
+      color: var(--mc-accent-fg);
+    }
+    .match-option.active .match-breadcrumb {
+      color: var(--mc-accent-fg);
+      opacity: 0.85;
+    }
+    .match-label {
+      font-size: var(--mc-font-size-sm);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .match-breadcrumb {
+      font-size: var(--mc-font-size-xs);
+      color: var(--mc-fg-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
   `,
 })
 export class TreeFilterComponent {
@@ -105,16 +189,58 @@ export class TreeFilterComponent {
   readonly direction = input<FilterDirection>('general');
   readonly matchCount = input<number>(0);
   readonly placeholder = input<string>('');
+  readonly matches = input<readonly FilterMatchEntry[]>([]);
+  readonly activeMatchId = input<string | null>(null);
   readonly queryChange = output<string>();
   readonly directionChange = output<FilterDirection>();
   readonly next = output<void>();
   readonly prev = output<void>();
   readonly activateFirst = output<void>();
   readonly clear = output<void>();
+  readonly chooseMatch = output<string>();
 
   protected readonly directions = DIRECTIONS;
+  protected readonly listboxId = `tree-filter-matches-${listboxIdCounter++}`;
   private readonly inputEl = viewChild.required<ElementRef<HTMLInputElement>>('input');
   private readonly i18n = inject(I18nService);
+  private readonly shortcuts = inject(ShortcutsService);
+
+  protected readonly hasDropdown = computed(
+    () => this.query().trim() !== '' && this.matches().length > 0,
+  );
+  protected readonly activeOptionId = computed<string | null>(() => {
+    const id = this.activeMatchId();
+    return id && this.hasDropdown() ? this.optionId(id) : null;
+  });
+
+  protected optionId(id: string): string {
+    return `${this.listboxId}-${id}`;
+  }
+
+  protected onMatchMouseDown(event: MouseEvent, id: string): void {
+    event.preventDefault();
+    this.chooseMatch.emit(id);
+  }
+
+  constructor() {
+    const disposers = [
+      this.shortcuts.register({
+        combo: 'Ctrl+P',
+        labelKey: 'shortcuts.treeFilter',
+        scope: 'global',
+        handler: () => this.focus(),
+      }),
+      this.shortcuts.register({
+        combo: '/',
+        labelKey: 'shortcuts.treeFilter',
+        scope: 'editable-safe',
+        handler: () => this.focus(),
+      }),
+    ];
+    inject(DestroyRef).onDestroy(() => {
+      for (const d of disposers) d();
+    });
+  }
 
   protected t(key: TranslationKey): string {
     return this.i18n.t(key);
@@ -151,25 +277,6 @@ export class TreeFilterComponent {
     } else if (event.key === 'Escape') {
       event.preventDefault();
       this.clear.emit();
-    }
-  }
-
-  // why: global shortcuts to focus the filter ("/" or Ctrl+P). Skip when the
-  //      user is typing into another input/textarea/contenteditable so we
-  //      don't hijack the note editor.
-  @HostListener('window:keydown', ['$event'])
-  protected onGlobalKey(event: KeyboardEvent): void {
-    const target = event.target as HTMLElement | null;
-    const inField =
-      target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA' || target?.isContentEditable;
-    if (event.ctrlKey && event.key.toLowerCase() === 'p') {
-      event.preventDefault();
-      this.focus();
-      return;
-    }
-    if (event.key === '/' && !inField) {
-      event.preventDefault();
-      this.focus();
     }
   }
 }

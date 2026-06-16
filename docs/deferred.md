@@ -35,18 +35,6 @@ Formato por entrada:
 - **Por qué**: sólo existe la entidad Note hoy. El filtro por tag ya está cubierto en 7b.
 - **Target**: §19.9 (resto de entidades).
 
-### Lista de coincidencias visible dentro del árbol
-
-- **Qué**: hoy el árbol muestra un contador "N coincidencias" y se navega con ↑/↓ desde el input. §10 menciona "Lista de coincidencias navegable con teclado" desplegada.
-- **Por qué**: el paso 7b incorporó la paleta global que cumple el rol cuando hay muchos matches. El listado dentro del árbol es UX complementario y menos urgente.
-- **Target**: §19.16b (pulido visual del árbol).
-
-### Scroll automático al match activo
-
-- **Qué**: cuando ↑/↓ desde el filtro mueve la selección a un nodo fuera de viewport, scrollear el árbol para mostrarlo.
-- **Por qué**: con pocas notas no se nota. Vamos a verlo cuando el árbol crezca.
-- **Target**: §19.16b (pulido visual del árbol).
-
 ### Drag & drop / reordenamiento
 
 - **Qué**: arrastrar nodos del árbol para reorganizar.
@@ -85,17 +73,15 @@ Formato por entrada:
 - **Por qué**: requiere índice posicional o un re-scan por hit. La paleta ya muestra preview, pero no contextualizado.
 - **Target**: §19.16d (pulido de búsqueda).
 
-### Historial de últimas búsquedas / accesos recientes
+### ~~Historial de últimas búsquedas / accesos recientes~~ (resuelto en §19.16a-ii + §19.16a-iii)
 
 - **Qué**: al abrir la paleta sin escribir nada, mostrar las últimas entidades visitadas o búsquedas recientes.
-- **Por qué**: requiere persistir un log; no es crítico para la primera versión.
-- **Target**: §19.16a (continuidad de sesión + atajos).
+- **Estado**: cerrado. Entidades recientes en §19.16a-ii (`@core/search/palette-recents.service`, sección "Recientes"). Queries literales en §19.16a-iii (`@core/search/palette-queries.service`, sección "Búsquedas anteriores" con ✕ para olvidar).
 
-### Continuidad: última ruta + scroll al abrir
+### ~~Continuidad: última ruta + scroll al abrir~~ (resuelto en §19.16a-i)
 
 - **Qué**: §10 menciona "vuelve a la última ruta + última entidad abierta + scroll". Hoy se abre en `/notes` sin recordar nada.
-- **Por qué**: requiere infra de `localStorage` y un listener de route changes. Fuera del scope estricto de búsqueda.
-- **Target**: §19.16a (continuidad de sesión + atajos).
+- **Estado**: cerrado en §19.16a-i (`@core/continuity/continuity.service`, redirect funcional desde `/`, scroll restore en `NavigationEnd`).
 
 ---
 

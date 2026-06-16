@@ -1,0 +1,37 @@
+@if (open()) {
+  <div class="backdrop" (click)="close()" (keydown)="onKey($event)" tabindex="-1">
+    <div
+      class="dialog"
+      role="dialog"
+      [attr.aria-label]="t('shortcuts.help.title')"
+      (click)="$event.stopPropagation()"
+      (keydown)="onKey($event)"
+      tabindex="0"
+    >
+      <header class="head">
+        <h2 class="title">{{ t('shortcuts.help.title') }}</h2>
+        <button
+          type="button"
+          class="close"
+          [attr.aria-label]="t('shortcuts.help.close')"
+          (click)="close()"
+        >
+          ✕
+        </button>
+      </header>
+      @for (g of groups(); track g.scope) {
+        <section class="group">
+          <h3 class="group-title">{{ t(g.titleKey) }}</h3>
+          <ul class="list">
+            @for (b of g.items; track b.combo) {
+              <li class="row">
+                <kbd class="combo">{{ b.combo }}</kbd>
+                <span class="label">{{ t(b.labelKey) }}</span>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+    </div>
+  </div>
+}

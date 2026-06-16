@@ -1,4 +1,14 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import type { ElementRef } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  output,
+  viewChild,
+} from '@angular/core';
 
 import { BgColorDirective } from '@shared/directives/bg-color.directive';
 
@@ -12,6 +22,7 @@ import type { TreeNode } from './tree.types';
   template: `
     @if (visible().has(node().id)) {
       <li
+        #row
         role="treeitem"
         [attr.aria-expanded]="hasChildren() ? expanded() : null"
         [attr.aria-selected]="selectedId() === node().id"
@@ -60,6 +71,7 @@ import type { TreeNode } from './tree.types';
             [depth]="depth() + 1"
             [visible]="visible()"
             [matchedIds]="matchedIds()"
+            [activeMatchId]="activeMatchId()"
             [selectedId]="selectedId()"
             (chooseNode)="chooseNode.emit($event)"
             (nodeAction)="nodeAction.emit($event)"
@@ -122,6 +134,10 @@ import type { TreeNode } from './tree.types';
       color: var(--mc-accent-primary);
       font-weight: 600;
     }
+    .row.active-match {
+      outline: 2px solid var(--mc-accent-primary);
+      outline-offset: -2px;
+    }
     .chevron {
       background: transparent;
       border: 0;
@@ -176,11 +192,22 @@ export class TreeNodeComponent {
   readonly depth = input<number>(0);
   readonly visible = input.required<ReadonlySet<string>>();
   readonly matchedIds = input.required<ReadonlySet<string>>();
+  readonly activeMatchId = input<string | null>(null);
   readonly selectedId = input<string | null>(null);
   readonly chooseNode = output<string>();
   readonly nodeAction = output<string>();
 
   private readonly state = inject(TreeStateService);
+  private readonly row = viewChild<ElementRef<HTMLLIElement>>('row');
+
+  constructor() {
+    effect(() => {
+      if (this.activeMatchId() !== this.node().id) return;
+      const el = this.row()?.nativeElement;
+      if (!el) return;
+      queueMicrotask(() => el.scrollIntoView({ block: 'nearest' }));
+    });
+  }
 
   protected readonly hasChildren = computed(() => (this.node().children?.length ?? 0) > 0);
   protected readonly hasActions = computed(() => {
@@ -207,6 +234,7 @@ export class TreeNodeComponent {
     const parts = ['row', `d-${Math.min(this.depth(), 9)}`];
     if (this.selectedId() === this.node().id) parts.push('selected');
     if (this.matchedIds().has(this.node().id)) parts.push('match');
+    if (this.activeMatchId() === this.node().id) parts.push('active-match');
     if (this.hasChildren()) parts.push('group');
     return parts.join(' ');
   });
