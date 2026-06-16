@@ -197,8 +197,11 @@
           [autoExpand]="result().autoExpand"
           [selectedId]="selectedNodeId()"
           [emptyKey]="emptyKey()"
+          [rootParentId]="treeRootParentId()"
+          [announcement]="reorderAnnouncement()"
           (chooseNode)="choose($event)"
           (nodeAction)="onNodeAction($event)"
+          (reorder)="onReorder($event)"
         />
       }
       <mc-autocommit-status />

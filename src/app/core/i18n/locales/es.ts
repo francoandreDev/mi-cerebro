@@ -426,6 +426,7 @@ export const es = {
   'tree.direction.general': 'General (más cerca)',
   'tree.direction.up': 'Hacia arriba',
   'tree.direction.down': 'Hacia abajo',
+  'tree.reorder.moved': 'Movido a la posición {position}.',
 
   'tags.placeholder': 'Agregar etiqueta...',
   'tags.createPrefix': 'Crear',

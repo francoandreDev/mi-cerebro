@@ -22,6 +22,7 @@ import { CreationIntentService } from '@core/intents/creation-intent.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { PlayerService } from '@core/music/player.service';
+import { between } from '@core/ordering/fractional-position';
 import { CommandPaletteService } from '@core/search/command-palette.service';
 import type { Tag } from '@core/tags/tag.types';
 import { TagsService } from '@core/tags/tags.service';
@@ -46,6 +47,7 @@ import { MenuButtonComponent, type MenuOption } from '@shared/menu-button/menu-b
 import { filterTree } from '@shared/tree/filter';
 import { TreeFilterComponent, type FilterMatchEntry } from '@shared/tree/tree-filter.component';
 import { TreeStateService } from '@shared/tree/tree-state.service';
+import type { TreeReorderEvent } from '@shared/tree/tree-node.component';
 import { TreeComponent } from '@shared/tree/tree.component';
 import type { FilterDirection, TreeNode } from '@shared/tree/tree.types';
 
@@ -398,6 +400,14 @@ export class WorkspaceSidebarContainer {
     });
   });
 
+  protected readonly treeRootParentId = computed<string>(() => {
+    const k = this.activeKind();
+    return k ? `root:${k}` : '';
+  });
+
+  private readonly reorderAnnouncementSignal = signal('');
+  protected readonly reorderAnnouncement = this.reorderAnnouncementSignal.asReadonly();
+
   protected readonly selectedNodeId = computed<string | null>(() => {
     const url = this.currentUrl();
     const match = /^\/(notes|tasks|goals|lists|writings|books|images|files)\/([^/?]+)/.exec(url);
@@ -608,6 +618,139 @@ export class WorkspaceSidebarContainer {
     if (match) this.choose(match.id);
   }
 
+  protected async onReorder(event: TreeReorderEvent): Promise<void> {
+    try {
+      await this.workspace.ensureWritable();
+      if (event.movedKind === 'folder') {
+        await this.applyFolderReorder(event);
+      } else {
+        await this.applyEntityReorder(event);
+      }
+    } catch (e: unknown) {
+      this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize()));
+    }
+  }
+
+  private async applyEntityReorder(event: TreeReorderEvent): Promise<void> {
+    const kind = event.movedKind as EntityKind;
+    if (!SIDEBAR_KINDS.has(kind)) return;
+    const movedId = parseEntityNodeId(event.movedNodeId);
+    if (!movedId) return;
+    const newFolder = folderPathFromAnyParentId(event.newParentId, kind);
+    const oldFolder = folderPathFromAnyParentId(event.oldParentId, kind);
+    if (newFolder === null || oldFolder === null) return;
+    if (oldFolder !== newFolder) await this.moveToFolderForKind(kind, movedId, newFolder);
+    const siblings = this.summariesForKind(kind)
+      .filter((s) => s.folder === newFolder)
+      .map((s) => ({ id: s.id, position: s.position ?? '' }))
+      .filter((s) => s.id !== movedId);
+    const targetId = event.edge === 'into' ? null : parseEntityNodeId(event.targetNodeId);
+    const idx = pickInsertIdx(
+      siblings.map((s) => s.id),
+      targetId,
+      event.edge,
+    );
+    if (idx === null) return;
+    const newPosition = positionBetween(siblings, idx);
+    if (newPosition === null) return;
+    await this.setPositionForKind(kind, movedId, newPosition);
+    this.announceMoved(idx);
+  }
+
+  private async applyFolderReorder(event: TreeReorderEvent): Promise<void> {
+    const src = parseFolderNodeId(event.movedNodeId);
+    if (!src) return;
+    const kind = src.family as FolderKind;
+    if (!SIDEBAR_KINDS.has(kind)) return;
+    const newParentPath = this.resolveFolderNewParent(src, event, kind);
+    if (newParentPath === null) return;
+    let finalPath = src.path;
+    if (parentOfPath(src.path) !== newParentPath) {
+      finalPath = await this.foldersService.moveFolder(kind, src.path, newParentPath);
+    }
+    const positions = await this.foldersService.getFolderPositions(kind);
+    const siblings = Object.entries(positions)
+      .filter(([path]) => parentOfPath(path) === newParentPath)
+      .map(([path, position]) => ({ id: path, position }))
+      .sort((a, b) => (a.position < b.position ? -1 : a.position > b.position ? 1 : 0))
+      .filter((s) => s.id !== finalPath);
+    const targetId =
+      event.edge === 'into' ? null : (parseFolderNodeId(event.targetNodeId)?.path ?? null);
+    const idx = pickInsertIdx(
+      siblings.map((s) => s.id),
+      targetId,
+      event.edge,
+    );
+    if (idx === null) return;
+    const newPosition = positionBetween(siblings, idx);
+    if (newPosition === null) return;
+    await this.foldersService.setFolderPosition(kind, finalPath, newPosition);
+    this.announceMoved(idx);
+  }
+
+  private resolveFolderNewParent(
+    src: { readonly path: string; readonly family: string },
+    event: TreeReorderEvent,
+    kind: FolderKind,
+  ): string | null {
+    let newParentPath: string | null;
+    if (event.edge === 'into') {
+      const tgt = parseFolderNodeId(event.targetNodeId);
+      if (!tgt || tgt.family !== kind) return null;
+      newParentPath = tgt.path;
+    } else {
+      newParentPath = folderPathFromAnyParentId(event.newParentId, kind);
+    }
+    if (newParentPath === null) return null;
+    if (newParentPath === src.path || newParentPath.startsWith(`${src.path}/`)) return null;
+    return newParentPath;
+  }
+
+  private announceMoved(idx: number): void {
+    this.reorderAnnouncementSignal.set(
+      this.t('tree.reorder.moved').replace('{position}', String(idx + 1)),
+    );
+  }
+
+  private async moveToFolderForKind(
+    kind: EntityKind,
+    id: string,
+    newFolder: string,
+  ): Promise<void> {
+    if (kind === 'note') return this.notesService.moveToFolder(id, newFolder);
+    if (kind === 'task') return this.tasksService.moveToFolder(id, newFolder);
+    if (kind === 'goal') return this.goalsService.moveToFolder(id, newFolder);
+    if (kind === 'list') return this.listsService.moveToFolder(id, newFolder);
+    if (kind === 'writing') return this.writingsService.moveToFolder(id, newFolder);
+    if (kind === 'book') return this.booksService.moveBookToFolder(id, newFolder);
+    if (kind === 'image') return this.galleriesService.moveGalleryToFolder(id, newFolder);
+    return this.filesService.moveCollectionToFolder(id, newFolder);
+  }
+
+  private summariesForKind(
+    kind: EntityKind,
+  ): readonly { readonly id: string; readonly folder: string; readonly position?: string }[] {
+    if (kind === 'note') return this.notesService.summaries();
+    if (kind === 'task') return this.tasksService.summaries();
+    if (kind === 'goal') return this.goalsService.summaries();
+    if (kind === 'list') return this.listsService.summaries();
+    if (kind === 'writing') return this.writingsService.summaries();
+    if (kind === 'book') return this.booksService.summaries();
+    if (kind === 'image') return this.galleriesService.summaries();
+    return this.filesService.summaries();
+  }
+
+  private async setPositionForKind(kind: EntityKind, id: string, position: string): Promise<void> {
+    if (kind === 'note') return this.notesService.setPosition(id, position);
+    if (kind === 'task') return this.tasksService.setPosition(id, position);
+    if (kind === 'goal') return this.goalsService.setPosition(id, position);
+    if (kind === 'list') return this.listsService.setPosition(id, position);
+    if (kind === 'writing') return this.writingsService.setPosition(id, position);
+    if (kind === 'book') return this.booksService.setPosition(id, position);
+    if (kind === 'image') return this.galleriesService.setPosition(id, position);
+    return this.filesService.setPosition(id, position);
+  }
+
   protected async onNodeAction(nodeId: string): Promise<void> {
     try {
       await this.workspace.ensureWritable();
@@ -666,6 +809,55 @@ const KIND_TO_ROUTE: Record<EntityKind, string> = {
   book: '/books',
   image: '/images',
   file: '/files',
+};
+
+const parseEntityNodeId = (nodeId: string): string | null => {
+  const colon = nodeId.indexOf(':');
+  if (colon < 0) return null;
+  const id = nodeId.slice(colon + 1);
+  return id === '' ? null : id;
+};
+
+const folderPathFromAnyParentId = (parentId: string, kind: string): string | null => {
+  if (parentId === `root:${kind}`) return '';
+  const prefix = `folder:${kind}:`;
+  if (parentId.startsWith(prefix)) return parentId.slice(prefix.length);
+  return null;
+};
+
+const parseFolderNodeId = (nodeId: string): { family: string; path: string } | null => {
+  if (!nodeId.startsWith('folder:')) return null;
+  const rest = nodeId.slice('folder:'.length);
+  const colon = rest.indexOf(':');
+  if (colon < 0) return null;
+  return { family: rest.slice(0, colon), path: rest.slice(colon + 1) };
+};
+
+const parentOfPath = (path: string): string => {
+  const slash = path.lastIndexOf('/');
+  return slash < 0 ? '' : path.slice(0, slash);
+};
+
+const pickInsertIdx = (
+  ids: readonly string[],
+  targetId: string | null,
+  edge: 'before' | 'after' | 'into',
+): number | null => {
+  if (edge === 'into') return ids.length;
+  if (targetId === null) return null;
+  const idx = ids.indexOf(targetId);
+  if (idx < 0) return null;
+  return edge === 'before' ? idx : idx + 1;
+};
+
+const positionBetween = (
+  siblings: readonly { readonly position: string }[],
+  insertIdx: number,
+): string | null => {
+  const prev = siblings[insertIdx - 1]?.position ?? '';
+  const next = siblings[insertIdx]?.position ?? '';
+  if (prev !== '' && next !== '' && prev >= next) return null;
+  return between(prev || null, next || null);
 };
 
 const KIND_TO_TYPE: Record<

@@ -35,12 +35,6 @@ Formato por entrada:
 - **Por qué**: sólo existe la entidad Note hoy. El filtro por tag ya está cubierto en 7b.
 - **Target**: §19.9 (resto de entidades).
 
-### Drag & drop / reordenamiento
-
-- **Qué**: arrastrar nodos del árbol para reorganizar.
-- **Por qué**: el árbol actual sólo lista; no hay concepto de orden custom todavía.
-- **Target**: §19.16b (pulido visual del árbol).
-
 ---
 
 ## Tags (origen: paso 7a)
