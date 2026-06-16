@@ -6,7 +6,7 @@ export {
   THUMB_EXT,
 } from '@core/images/image-paths';
 
-export const GALLERY_SCHEMA_VERSION = 1;
+export const GALLERY_SCHEMA_VERSION = 2;
 export const IMAGE_KIND = 'image';
 export const THUMB_MIME = 'image/webp';
 export const THUMB_MAX_DIM = 320;
@@ -32,6 +32,7 @@ export interface Gallery {
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly schemaVersion: number;
+  readonly position?: string;
   readonly [key: string]: unknown;
 }
 
@@ -42,6 +43,7 @@ export interface GallerySummary {
   readonly tags: readonly string[];
   readonly folder: string;
   readonly imageCount: number;
+  readonly position: string;
 }
 
 export const MIME_TO_EXT: Record<string, string> = {

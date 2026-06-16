@@ -9,6 +9,8 @@ import type { FsDirectoryHandle } from '@core/fs/fs.types';
 import { getDirByPath, getOrCreateDirByPath, joinPath } from '@core/fs/walk';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { MigrationsService } from '@core/migrations/migrations.service';
+import { nextPositionAfter, seedMissingPositions } from '@core/ordering/seed-positions';
+import { positionSeedMigrationStep } from '@core/ordering/position.migration';
 import { SearchIndexService } from '@core/search/search-index.service';
 import type { SearchDoc } from '@core/search/search.types';
 import { TagsService } from '@core/tags/tags.service';
@@ -56,7 +58,11 @@ export class GalleriesService {
   readonly foldersSet = computed(() => new Set(this.foldersSignal()));
 
   constructor() {
-    this.migrations.register({ kind: IMAGE_KIND, latest: GALLERY_SCHEMA_VERSION, steps: [] });
+    this.migrations.register({
+      kind: IMAGE_KIND,
+      latest: GALLERY_SCHEMA_VERSION,
+      steps: [positionSeedMigrationStep(1)],
+    });
   }
 
   async refresh(): Promise<readonly GallerySummary[]> {
@@ -66,8 +72,22 @@ export class GalleriesService {
     const summaries: GallerySummary[] = [];
     const folders: string[] = [];
     const indexDocs: SearchDoc[] = [];
-    await this.walkGalleries(root, '', summaries, folders, indexDocs);
-    summaries.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    const galleriesById = new Map<string, Gallery>();
+    await this.walkGalleries(root, '', summaries, folders, indexDocs, galleriesById);
+    summaries.sort(compareLegacy);
+    const seeds = seedMissingPositions(summaries);
+    if (seeds.length > 0) {
+      const positionById = new Map(seeds.map((s) => [s.id, s.position] as const));
+      for (const [id, pos] of positionById) {
+        const gallery = galleriesById.get(id);
+        if (gallery) await this.writePositionInPlace(gallery, pos);
+      }
+      for (let i = 0; i < summaries.length; i++) {
+        const seeded = positionById.get(summaries[i]!.id);
+        if (seeded) summaries[i] = { ...summaries[i]!, position: seeded };
+      }
+    }
+    summaries.sort(comparePosition);
     this.summariesSignal.set(summaries);
     this.foldersSignal.set(folders);
     for (const doc of indexDocs) await this.search.upsert(doc);
@@ -82,6 +102,7 @@ export class GalleriesService {
     await this.fs.getOrCreateDir(galleryDir, ORIGINAL_DIR);
     await this.fs.getOrCreateDir(galleryDir, THUMBS_DIR);
     const now = new Date().toISOString();
+    const position = nextPositionAfter(lastPosition(this.summariesSignal()));
     const gallery: Gallery = {
       id: crypto.randomUUID(),
       title,
@@ -91,11 +112,14 @@ export class GalleriesService {
       createdAt: now,
       updatedAt: now,
       schemaVersion: GALLERY_SCHEMA_VERSION,
+      position,
     };
     await this.fs.writeFileAtomic(galleryDir, GALLERY_META_FILE, JSON.stringify(gallery, null, 2));
     this.idToLoc.set(gallery.id, { folder, slug });
     this.imageReader.register(gallery.id, folder, slug, this.toReaderGallery(gallery, folder));
-    this.summariesSignal.update((curr) => [this.toSummary(gallery, folder), ...curr]);
+    this.summariesSignal.update((curr) =>
+      sortByPosition([...curr, this.toSummary(gallery, folder)]),
+    );
     if (folder !== '' && !this.foldersSet().has(folder)) {
       this.foldersSignal.update((curr) => [...curr, folder]);
     }
@@ -123,11 +147,29 @@ export class GalleriesService {
         this.toReaderGallery(updated, loc.folder),
       );
       this.summariesSignal.update((curr) =>
-        curr.map((s) => (s.id === gallery.id ? this.toSummary(updated, loc.folder) : s)),
+        sortByPosition(
+          curr.map((s) => (s.id === gallery.id ? this.toSummary(updated, loc.folder) : s)),
+        ),
       );
     }
     await this.search.upsert(this.toSearchDoc(updated));
     return updated;
+  }
+
+  async setPosition(id: string, position: string): Promise<void> {
+    const gallery = await this.readGallery(id);
+    const updated: Gallery = { ...gallery, position, updatedAt: new Date().toISOString() };
+    const dir = await this.galleryDir(id);
+    await this.fs.writeFileAtomic(dir, GALLERY_META_FILE, JSON.stringify(updated, null, 2));
+    this.summariesSignal.update((curr) =>
+      sortByPosition(curr.map((s) => (s.id === id ? { ...s, position } : s))),
+    );
+  }
+
+  private async writePositionInPlace(gallery: Gallery, position: string): Promise<void> {
+    const dir = await this.galleryDir(gallery.id);
+    const seeded: Gallery = { ...gallery, position };
+    await this.fs.writeFileAtomic(dir, GALLERY_META_FILE, JSON.stringify(seeded, null, 2));
   }
 
   async addImage(galleryId: string, blob: Blob, originalName: string): Promise<GalleryImage> {
@@ -269,7 +311,7 @@ export class GalleriesService {
       this.imageReader.register(id, newFolder, destSlug, { ...moved, folder: newFolder });
     }
     this.summariesSignal.update((curr) =>
-      curr.map((s) => (s.id === id ? { ...s, folder: newFolder } : s)),
+      sortByPosition(curr.map((s) => (s.id === id ? { ...s, folder: newFolder } : s))),
     );
     if (newFolder !== '' && !this.foldersSet().has(newFolder)) {
       this.foldersSignal.update((curr) => [...curr, newFolder]);
@@ -282,6 +324,7 @@ export class GalleriesService {
     summaries: GallerySummary[],
     folders: string[],
     indexDocs: SearchDoc[],
+    galleriesById: Map<string, Gallery>,
   ): Promise<void> {
     for await (const name of this.fs.listSubdirs(dir)) {
       const sub = await this.fs.getDir(dir, name);
@@ -291,6 +334,7 @@ export class GalleriesService {
           const raw = await this.fs.readJson<Gallery>(sub, GALLERY_META_FILE);
           const gallery = await this.migrations.migrate<Gallery>(IMAGE_KIND, raw);
           this.idToLoc.set(gallery.id, { folder, slug: name });
+          galleriesById.set(gallery.id, gallery);
           this.imageReader.register(
             gallery.id,
             folder,
@@ -305,7 +349,7 @@ export class GalleriesService {
       } else {
         const path = joinPath(folder, name);
         folders.push(path);
-        await this.walkGalleries(sub, path, summaries, folders, indexDocs);
+        await this.walkGalleries(sub, path, summaries, folders, indexDocs, galleriesById);
       }
     }
   }
@@ -377,6 +421,7 @@ export class GalleriesService {
       tags: gallery.tags,
       folder,
       imageCount: gallery.images.length,
+      position: gallery.position ?? '',
     };
   }
 
@@ -410,6 +455,27 @@ export class GalleriesService {
     return tagIds.filter((id) => this.tags.byId(id) !== undefined);
   }
 }
+
+const compareLegacy = (a: GallerySummary, b: GallerySummary): number =>
+  b.updatedAt.localeCompare(a.updatedAt) || a.id.localeCompare(b.id);
+
+const comparePosition = (a: GallerySummary, b: GallerySummary): number => {
+  if (a.position === '' && b.position === '') return compareLegacy(a, b);
+  if (a.position === '') return 1;
+  if (b.position === '') return -1;
+  return a.position.localeCompare(b.position);
+};
+
+const sortByPosition = (list: readonly GallerySummary[]): GallerySummary[] =>
+  [...list].sort(comparePosition);
+
+const lastPosition = (list: readonly GallerySummary[]): string | null => {
+  let max: string | null = null;
+  for (const s of list) {
+    if (s.position !== '' && (max === null || s.position > max)) max = s.position;
+  }
+  return max;
+};
 
 const moveGalleryDir = async (
   fs: FsService,
