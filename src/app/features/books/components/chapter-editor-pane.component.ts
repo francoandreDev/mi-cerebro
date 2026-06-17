@@ -109,10 +109,15 @@ export class ChapterEditorPaneComponent {
 
   protected onBodyChange(body: JSONContent): void {
     this.bodyChange.emit(body);
-    // why: ResizeObserver no detecta cambios de scrollWidth en .pages
-    //      (su clientWidth no cambia, solo crece el ancho de columnas).
-    //      Re-medimos en cada cambio de contenido.
-    requestAnimationFrame(() => this.updateMetrics());
+    // why: en cada tecla SÓLO actualizamos contentWidth. bandWidth
+    //      depende del layout, no del contenido — si lo recomputáramos
+    //      acá, la lectura de getComputedStyle puede devolver valores
+    //      con micro-diferencias por redondeo y la traducción deriva
+    //      1px por keystroke, dando la sensación de "seguir al cursor".
+    requestAnimationFrame(() => {
+      const pagesEl = this.pagesRef()?.nativeElement;
+      if (pagesEl) this.contentWidth.set(pagesEl.scrollWidth);
+    });
   }
 
   protected prevSpread(): void {

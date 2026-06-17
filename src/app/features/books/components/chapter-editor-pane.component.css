@@ -10,7 +10,9 @@
      auto-scrollea para seguir el cursor cuando entra en una columna
      fuera del viewport del spread, y se ve el contenido "siguiendo"
      al cursor incluso dentro de una página visible. */
-  overflow-x: hidden;
+  /* clip > hidden: bloquea también scroll programático
+     (caret-into-view), no solo el del usuario. */
+  overflow-x: clip;
   overflow-y: auto;
   overflow-anchor: none;
 }
@@ -121,7 +123,7 @@
   box-shadow:
     0 1px 1px rgba(0, 0, 0, 0.15),
     0 14px 36px rgba(0, 0, 0, 0.32);
-  overflow: hidden;
+  overflow: clip;
 }
 
 /* Lomo: banda vertical centrada, fija respecto al spread. */

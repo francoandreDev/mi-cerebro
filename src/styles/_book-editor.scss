@@ -55,16 +55,19 @@
     color: var(--mc-fg-primary);
     hyphens: auto;
   }
-  mc-editor .ProseMirror p {
+  // why: usar el combinador > para que sólo aplique a párrafos
+  //      directos del ProseMirror, no a los <p> dentro de <li>.
+  //      Sin esto cada bullet/list item sale con drop cap gigante.
+  mc-editor .ProseMirror > p {
     text-indent: 1.5em;
     margin: 0;
     orphans: 2;
     widows: 2;
   }
-  mc-editor .ProseMirror p:first-of-type {
+  mc-editor .ProseMirror > p:first-of-type {
     text-indent: 0;
   }
-  mc-editor .ProseMirror p:first-of-type:not(.is-editor-empty)::first-letter {
+  mc-editor .ProseMirror > p:first-of-type:not(.is-editor-empty)::first-letter {
     font-family: var(--mc-font-serif);
     font-weight: 600;
     font-size: 3.4em;
@@ -73,6 +76,11 @@
     padding-right: 0.08em;
     padding-top: 0.05em;
     color: var(--mc-fg-primary);
+  }
+  // Párrafos dentro de listas: sin sangría ni drop cap.
+  mc-editor .ProseMirror li p {
+    text-indent: 0;
+    margin: 0;
   }
   mc-editor .ProseMirror h2,
   mc-editor .ProseMirror h3 {
