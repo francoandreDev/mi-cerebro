@@ -8,7 +8,8 @@ export const booksRoutes: Routes = [
   },
   {
     path: ':id',
-    loadComponent: () => import('./containers/books.container').then((m) => m.BooksContainer),
+    loadComponent: () =>
+      import('./containers/book-desk.container').then((m) => m.BookDeskContainer),
   },
   {
     path: ':id/:chapterId',
