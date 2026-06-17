@@ -6,7 +6,13 @@
   justify-content: center;
   align-items: stretch;
   background: var(--mc-bg-base);
-  overflow: auto;
+  /* why: SOLO scroll vertical. Si dejamos horizontal el navegador
+     auto-scrollea para seguir el cursor cuando entra en una columna
+     fuera del viewport del spread, y se ve el contenido "siguiendo"
+     al cursor incluso dentro de una página visible. */
+  overflow-x: hidden;
+  overflow-y: auto;
+  overflow-anchor: none;
 }
 
 .book-frame {
@@ -262,85 +268,8 @@
   opacity: 0.5;
 }
 
-/* Tipografía del cuerpo. */
-.editor {
-  font-family: var(--mc-font-serif);
-  font-size: 17px;
-  line-height: 1.7;
-  color: var(--mc-fg-primary);
-  hyphens: auto;
-}
-.editor :global(.ProseMirror) {
-  outline: none;
-}
-.editor :global(.ProseMirror p) {
-  text-indent: 1.5em;
-  margin: 0;
-  orphans: 2;
-  widows: 2;
-}
-.editor :global(.ProseMirror p:first-of-type) {
-  text-indent: 0;
-}
-.editor :global(.ProseMirror p:first-of-type:not(.is-editor-empty)::first-letter) {
-  font-family: var(--mc-font-serif);
-  font-weight: 600;
-  font-size: 3.4em;
-  float: left;
-  line-height: 0.9;
-  padding-right: 0.08em;
-  padding-top: 0.05em;
-  color: var(--mc-fg-primary);
-}
-.editor :global(.ProseMirror h2),
-.editor :global(.ProseMirror h3) {
-  font-family: var(--mc-font-serif);
-  font-weight: 600;
-  margin: 1.2em 0 0.3em;
-  text-align: center;
-  font-variant: small-caps;
-  letter-spacing: 0.04em;
-  break-after: avoid;
-}
-.editor :global(.ProseMirror h2) {
-  font-size: 1.35em;
-}
-.editor :global(.ProseMirror h3) {
-  font-size: 1.1em;
-}
-.editor :global(.ProseMirror blockquote) {
-  margin: 1em;
-  font-style: italic;
-  color: var(--mc-fg-muted);
-  border-left: 2px solid var(--mc-border-default);
-  padding-left: 1em;
-}
-.editor :global(.ProseMirror hr) {
-  border: none;
-  text-align: center;
-  margin: 1.2em 0;
-  height: 1.2em;
-  position: relative;
-  break-before: avoid;
-}
-.editor :global(.ProseMirror hr::after) {
-  content: '❦';
-  color: var(--mc-fg-muted);
-  font-size: 1.4em;
-  letter-spacing: 0.5em;
-}
-.editor :global(.ProseMirror ul),
-.editor :global(.ProseMirror ol) {
-  padding-left: 2em;
-  list-style: revert;
-}
-.editor :global(.ProseMirror code) {
-  font-family: var(--mc-font-mono);
-  font-size: 0.9em;
-  background: var(--mc-bg-elevated);
-  padding: 0 0.2em;
-  border-radius: 2px;
-}
+/* Tipografía: ver styles/_book-editor.scss. Vive en global para
+   garantizar el match con el ProseMirror sin scoping de Angular. */
 
 .ui-foot {
   display: grid;

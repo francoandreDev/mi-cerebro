@@ -30,9 +30,9 @@
     outline: none !important;
     border: none;
   }
-  // El ProseMirror también
   mc-editor .editor-host .ProseMirror {
     min-height: 0;
+    outline: none;
   }
   // Los popovers (comments / drafts panel) del editor no caen en
   // columnas: deben quedar como overlays. Forzamos posición fija
@@ -42,5 +42,85 @@
     position: fixed;
     top: var(--mc-space-4);
     right: var(--mc-space-4);
+  }
+
+  // Tipografía del cuerpo. Vive en global porque los selectores con
+  // Angular CSS scoping no llegan al ProseMirror cuando hay capas
+  // con display: contents en el medio. La sangría y el drop cap son
+  // estilo libro y deben aplicar sí o sí.
+  mc-editor .ProseMirror {
+    font-family: var(--mc-font-serif);
+    font-size: 17px;
+    line-height: 1.7;
+    color: var(--mc-fg-primary);
+    hyphens: auto;
+  }
+  mc-editor .ProseMirror p {
+    text-indent: 1.5em;
+    margin: 0;
+    orphans: 2;
+    widows: 2;
+  }
+  mc-editor .ProseMirror p:first-of-type {
+    text-indent: 0;
+  }
+  mc-editor .ProseMirror p:first-of-type:not(.is-editor-empty)::first-letter {
+    font-family: var(--mc-font-serif);
+    font-weight: 600;
+    font-size: 3.4em;
+    float: left;
+    line-height: 0.9;
+    padding-right: 0.08em;
+    padding-top: 0.05em;
+    color: var(--mc-fg-primary);
+  }
+  mc-editor .ProseMirror h2,
+  mc-editor .ProseMirror h3 {
+    font-family: var(--mc-font-serif);
+    font-weight: 600;
+    margin: 1.2em 0 0.3em;
+    text-align: center;
+    font-variant: small-caps;
+    letter-spacing: 0.04em;
+    break-after: avoid;
+  }
+  mc-editor .ProseMirror h2 {
+    font-size: 1.35em;
+  }
+  mc-editor .ProseMirror h3 {
+    font-size: 1.1em;
+  }
+  mc-editor .ProseMirror blockquote {
+    margin: 1em;
+    font-style: italic;
+    color: var(--mc-fg-muted);
+    border-left: 2px solid var(--mc-border-default);
+    padding-left: 1em;
+  }
+  mc-editor .ProseMirror hr {
+    border: none;
+    text-align: center;
+    margin: 1.2em 0;
+    height: 1.2em;
+    position: relative;
+    break-before: avoid;
+  }
+  mc-editor .ProseMirror hr::after {
+    content: '❦';
+    color: var(--mc-fg-muted);
+    font-size: 1.4em;
+    letter-spacing: 0.5em;
+  }
+  mc-editor .ProseMirror ul,
+  mc-editor .ProseMirror ol {
+    padding-left: 2em;
+    list-style: revert;
+  }
+  mc-editor .ProseMirror code {
+    font-family: var(--mc-font-mono);
+    font-size: 0.9em;
+    background: var(--mc-bg-elevated);
+    padding: 0 0.2em;
+    border-radius: 2px;
   }
 }
