@@ -17,6 +17,8 @@ import { TagsService } from '@core/tags/tags.service';
 import { toSlug, withSuffix } from '@shared/utils/slug';
 import { countWords } from '@shared/utils/word-count';
 
+import { buildChapterPreview } from './chapter-preview';
+
 import {
   BOOK_KIND,
   BOOK_META_FILE,
@@ -237,11 +239,13 @@ export class BooksService {
       try {
         const raw = await this.fs.readJson<Chapter>(chaptersDir, filename);
         const ch = await this.migrations.migrate<Chapter>(BOOK_KIND, raw);
+        const plain = extractPlainText(ch.body);
         map.set(ch.id, {
           id: ch.id,
           title: ch.title,
           updatedAt: ch.updatedAt,
-          words: countWords(extractPlainText(ch.body)),
+          words: countWords(plain),
+          preview: buildChapterPreview(plain),
         });
         idToFile.set(ch.id, filename);
       } catch (cause) {

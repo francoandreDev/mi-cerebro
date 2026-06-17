@@ -31,11 +31,17 @@ export interface Chapter {
   readonly [key: string]: unknown;
 }
 
+export interface ChapterPreview {
+  readonly head: string;
+  readonly tail: string;
+}
+
 export interface ChapterSummary {
   readonly id: string;
   readonly title: string;
   readonly updatedAt: string;
   readonly words: number;
+  readonly preview: ChapterPreview;
 }
 
 export interface BookSummary {
