@@ -81,7 +81,7 @@
           [editable]="editable()"
           [entityId]="chapter().id"
           [entityTitle]="chapter().title"
-          (valueChange)="bodyChange.emit($event)"
+          (valueChange)="onBodyChange($event)"
         />
       </div>
     </div>

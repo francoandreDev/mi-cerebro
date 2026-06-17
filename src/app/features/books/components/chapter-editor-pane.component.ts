@@ -31,7 +31,7 @@ import type { BookSaveStatus } from './book-meta-bar.component';
   templateUrl: './chapter-editor-pane.component.html',
   styleUrl: './chapter-editor-pane.component.css',
   host: {
-    '[style.--mc-pages-x]': '(-currentSpread() * spreadWidth()) + "px"',
+    '[style.--mc-pages-x]': '(-currentSpread() * bandWidth()) + "px"',
   },
 })
 export class ChapterEditorPaneComponent {
@@ -52,15 +52,21 @@ export class ChapterEditorPaneComponent {
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly currentSpread = signal<number>(0);
-  protected readonly spreadWidth = signal<number>(0);
+  // why: el ancho real de un spread en término de columnas es
+  //      2*(col-width + column-gap) = spreadClientWidth - 2*pad + gap.
+  //      Traducimos por bandWidth, NO por clientWidth, si no las páginas
+  //      quedan medio desplazadas en cada salto.
+  protected readonly bandWidth = signal<number>(0);
   private readonly contentWidth = signal<number>(0);
+  private readonly extraOffset = signal<number>(0);
   protected readonly turning = signal<'forward' | 'backward' | null>(null);
 
   protected readonly totalSpreads = computed<number>(() => {
-    const w = this.contentWidth();
-    const sw = this.spreadWidth();
-    if (sw === 0) return 1;
-    return Math.max(1, Math.ceil(w / sw));
+    const bw = this.bandWidth();
+    if (bw <= 0) return 1;
+    const cw = this.contentWidth();
+    const off = this.extraOffset();
+    return Math.max(1, Math.ceil((cw - off) / bw));
   });
   protected readonly atLast = computed(() => this.currentSpread() >= this.totalSpreads() - 1);
   protected readonly visiblePages = computed(() => {
@@ -78,9 +84,9 @@ export class ChapterEditorPaneComponent {
 
   constructor() {
     effect(() => {
-      // why: al cambiar de capítulo volvemos a la primera página.
       this.chapter();
       this.currentSpread.set(0);
+      queueMicrotask(() => this.updateMetrics());
     });
     effect(() => {
       const max = this.totalSpreads() - 1;
@@ -90,22 +96,23 @@ export class ChapterEditorPaneComponent {
       const pagesEl = this.pagesRef()?.nativeElement;
       const spreadEl = this.spreadRef()?.nativeElement;
       if (!pagesEl || !spreadEl) return;
-      const update = (): void => {
-        this.contentWidth.set(pagesEl.scrollWidth);
-        this.spreadWidth.set(spreadEl.clientWidth);
-      };
-      const ro = new ResizeObserver(update);
+      const ro = new ResizeObserver(() => this.updateMetrics());
       ro.observe(pagesEl);
       ro.observe(spreadEl);
-      update();
+      this.updateMetrics();
       this.destroyRef.onDestroy(() => ro.disconnect());
     });
-
-    // why: cuando el cursor se mete en una columna fuera del spread visible,
-    //      saltamos a la siguiente/anterior spread automáticamente.
     const onSel = (): void => this.maybeAdvanceForCursor();
     document.addEventListener('selectionchange', onSel);
     this.destroyRef.onDestroy(() => document.removeEventListener('selectionchange', onSel));
+  }
+
+  protected onBodyChange(body: JSONContent): void {
+    this.bodyChange.emit(body);
+    // why: ResizeObserver no detecta cambios de scrollWidth en .pages
+    //      (su clientWidth no cambia, solo crece el ancho de columnas).
+    //      Re-medimos en cada cambio de contenido.
+    requestAnimationFrame(() => this.updateMetrics());
   }
 
   protected prevSpread(): void {
@@ -124,14 +131,29 @@ export class ChapterEditorPaneComponent {
     this.titleRef()?.nativeElement.focus();
   }
 
+  private updateMetrics(): void {
+    const pagesEl = this.pagesRef()?.nativeElement;
+    const spreadEl = this.spreadRef()?.nativeElement;
+    if (!pagesEl || !spreadEl) return;
+    const cs = window.getComputedStyle(pagesEl);
+    const padL = parseFloat(cs.paddingLeft) || 0;
+    const padR = parseFloat(cs.paddingRight) || 0;
+    const colGap = parseFloat(cs.columnGap) || 0;
+    const spreadW = spreadEl.clientWidth;
+    this.bandWidth.set(Math.max(1, spreadW - padL - padR + colGap));
+    this.contentWidth.set(pagesEl.scrollWidth);
+    this.extraOffset.set(padL + padR - colGap);
+  }
+
   private maybeAdvanceForCursor(): void {
+    if (this.turning() !== null) return;
     const spread = this.spreadRef()?.nativeElement;
     if (!spread) return;
     const cursor = readCursorRect(spread);
     if (!cursor) return;
     const sr = spread.getBoundingClientRect();
-    if (cursor.right > sr.right - 4) this.nextSpread();
-    else if (cursor.left < sr.left + 4) this.prevSpread();
+    if (cursor.left > sr.right && !this.atLast()) this.nextSpread();
+    else if (cursor.right < sr.left && this.currentSpread() > 0) this.prevSpread();
   }
 
   private readonly i18n = inject(I18nService);
