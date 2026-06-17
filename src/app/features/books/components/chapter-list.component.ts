@@ -15,8 +15,6 @@ import { MC_INTERNAL_DND_TYPE, hasInternalDnd } from '@shared/utils/dnd';
 import type { ChapterSummary } from '../models/book.types';
 import { ChapterRowComponent } from './chapter-row.component';
 
-const COLLAPSED_KEY = 'mc.books.chapterListCollapsed';
-
 @Component({
   selector: 'mc-chapter-list',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -117,6 +115,7 @@ export class ChapterListComponent {
   readonly chapters = input.required<readonly ChapterSummary[]>();
   readonly activeId = input<string | null>(null);
   readonly editable = input<boolean>(true);
+  readonly collapsed = input<boolean>(false);
 
   readonly selectChapter = output<string>();
   readonly moveUp = output<string>();
@@ -127,7 +126,6 @@ export class ChapterListComponent {
   readonly collapsedChange = output<boolean>();
 
   protected readonly query = signal<string>('');
-  protected readonly collapsed = signal<boolean>(readCollapsed());
   protected readonly draggingId = signal<string | null>(null);
   protected readonly dropTargetId = signal<string | null>(null);
 
@@ -155,10 +153,7 @@ export class ChapterListComponent {
     if (target) this.query.set(target.value);
   }
   protected toggleCollapsed(): void {
-    const next = !this.collapsed();
-    this.collapsed.set(next);
-    writeCollapsed(next);
-    this.collapsedChange.emit(next);
+    this.collapsedChange.emit(!this.collapsed());
   }
 
   protected onDragStart(event: DragEvent, id: string): void {
@@ -193,18 +188,3 @@ export class ChapterListComponent {
     this.dropTargetId.set(null);
   }
 }
-
-const readCollapsed = (): boolean => {
-  try {
-    return localStorage.getItem(COLLAPSED_KEY) === '1';
-  } catch {
-    return false;
-  }
-};
-const writeCollapsed = (v: boolean): void => {
-  try {
-    localStorage.setItem(COLLAPSED_KEY, v ? '1' : '0');
-  } catch {
-    /* ignore */
-  }
-};

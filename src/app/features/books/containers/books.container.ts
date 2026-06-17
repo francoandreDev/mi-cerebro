@@ -26,6 +26,24 @@ import { ChapterEditorPaneComponent } from '../components/chapter-editor-pane.co
 import { ChapterListComponent } from '../components/chapter-list.component';
 import { BOOK_KIND, type Book, type Chapter, type ChapterSummary } from '../models/book.types';
 import { BooksService } from '../services/books.service';
+import { registerBooksShortcuts } from './books-shortcuts.controller';
+
+const COLLAPSED_KEY = 'mc.books.chapterListCollapsed';
+
+const readCollapsed = (): boolean => {
+  try {
+    return localStorage.getItem(COLLAPSED_KEY) === '1';
+  } catch {
+    return false;
+  }
+};
+const writeCollapsed = (v: boolean): void => {
+  try {
+    localStorage.setItem(COLLAPSED_KEY, v ? '1' : '0');
+  } catch {
+    /* ignore */
+  }
+};
 
 @Component({
   selector: 'mc-books',
@@ -61,13 +79,31 @@ export class BooksContainer {
     this.chapters().reduce((acc, c) => acc + c.words, 0),
   );
   protected readonly focusMode = signal<boolean>(false);
+  protected readonly chapterListCollapsed = signal<boolean>(readCollapsed());
   protected readonly lock = new EntityLockController(BOOK_KIND, this.active);
 
   protected onToggleFocus(): void {
     this.focusMode.update((v) => !v);
   }
+  protected onChapterListCollapsedChange(v: boolean): void {
+    this.chapterListCollapsed.set(v);
+    writeCollapsed(v);
+  }
 
   constructor() {
+    registerBooksShortcuts({
+      newChapter: () => void this.onAddChapter(),
+      moveChapterUp: () => {
+        const ch = this.activeChapter();
+        if (ch) void this.onMoveUp(ch.id);
+      },
+      moveChapterDown: () => {
+        const ch = this.activeChapter();
+        if (ch) void this.onMoveDown(ch.id);
+      },
+      toggleChapterList: () => this.onChapterListCollapsedChange(!this.chapterListCollapsed()),
+      toggleFocus: () => this.onToggleFocus(),
+    });
     effect(() => {
       const wanted = this.id();
       const current = this.active();

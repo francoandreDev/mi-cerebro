@@ -39,12 +39,14 @@
           [chapters]="chapters()"
           [activeId]="activeChapter()?.id ?? null"
           [editable]="lock.editable()"
+          [collapsed]="chapterListCollapsed()"
           (selectChapter)="onSelectChapter($event)"
           (addChapter)="onAddChapter()"
           (moveUp)="onMoveUp($event)"
           (moveDown)="onMoveDown($event)"
           (reorder)="onReorder($event)"
           (removeChapter)="onRemoveChapter($event)"
+          (collapsedChange)="onChapterListCollapsedChange($event)"
         />
       }
       @if (activeChapter(); as chapter) {

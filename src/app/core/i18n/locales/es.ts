@@ -625,6 +625,11 @@ export const es = {
   'books.editor.footerChars': '{n} caracteres',
   'books.editor.footerReading': '{n} min de lectura',
   'books.editor.footerReadingZero': 'Lectura corta',
+  'books.shortcuts.newChapter': 'Libros · Nuevo capítulo',
+  'books.shortcuts.moveChapterUp': 'Libros · Subir capítulo',
+  'books.shortcuts.moveChapterDown': 'Libros · Bajar capítulo',
+  'books.shortcuts.toggleChapterList': 'Libros · Mostrar/ocultar lista de capítulos',
+  'books.shortcuts.toggleFocus': 'Libros · Modo foco',
   'books.lock.foreign.title': 'Este libro está abierto en otra pestaña',
   'books.lock.foreign.message':
     'Para evitar pisar cambios, este libro está en modo lectura. Podés tomar control para empezar a editar acá.',
