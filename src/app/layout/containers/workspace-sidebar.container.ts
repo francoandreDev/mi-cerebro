@@ -182,7 +182,10 @@ export class WorkspaceSidebarContainer {
     if (url === '/history' || url.startsWith('/history/') || url.startsWith('/history?')) {
       return true;
     }
-    return url === '/variants' || url.startsWith('/variants/') || url.startsWith('/variants?');
+    if (url === '/variants' || url.startsWith('/variants/') || url.startsWith('/variants?')) {
+      return true;
+    }
+    return url === '/books' || url.startsWith('/books/') || url.startsWith('/books?');
   });
 
   protected onManageVariants(event: Event): void {
