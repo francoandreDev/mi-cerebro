@@ -630,6 +630,11 @@ export const es = {
   'books.shortcuts.moveChapterDown': 'Libros · Bajar capítulo',
   'books.shortcuts.toggleChapterList': 'Libros · Mostrar/ocultar lista de capítulos',
   'books.shortcuts.toggleFocus': 'Libros · Modo foco',
+  'books.confirm.deleteBook.title': 'Mover libro a la papelera',
+  'books.confirm.deleteChapter.title': 'Eliminar capítulo',
+  'books.confirm.cancel': 'Cancelar',
+  'books.confirm.deleteBook.confirm': 'Sí, mover',
+  'books.confirm.deleteChapter.confirm': 'Sí, eliminar',
   'books.lock.foreign.title': 'Este libro está abierto en otra pestaña',
   'books.lock.foreign.message':
     'Para evitar pisar cambios, este libro está en modo lectura. Podés tomar control para empezar a editar acá.',

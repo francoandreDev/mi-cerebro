@@ -1,3 +1,8 @@
+<mc-confirm-dialog
+  [request]="confirmRequest()"
+  (confirmed)="onConfirm()"
+  (cancelled)="onCancel()"
+/>
 <div class="pane" [class.focus-mode]="focusMode()">
   @if (active(); as book) {
     @if (lock.showForeign()) {

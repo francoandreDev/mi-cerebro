@@ -1,0 +1,68 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  z-index: 1000;
+}
+.dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--mc-bg-elevated);
+  color: var(--mc-fg-primary);
+  border: 1px solid var(--mc-border-default);
+  border-radius: var(--mc-radius-lg, 8px);
+  padding: var(--mc-space-4);
+  min-width: 320px;
+  max-width: 480px;
+  z-index: 1001;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-3);
+}
+.dialog h3 {
+  margin: 0;
+  font-size: var(--mc-font-size-lg);
+}
+.dialog p {
+  margin: 0;
+  color: var(--mc-fg-muted);
+  line-height: 1.5;
+}
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--mc-space-2);
+}
+.ghost,
+.primary,
+.danger {
+  border: none;
+  padding: var(--mc-space-2) var(--mc-space-3);
+  border-radius: var(--mc-radius-md);
+  cursor: pointer;
+  font-size: var(--mc-font-size-sm);
+  font-weight: 600;
+}
+.ghost {
+  background: transparent;
+  color: var(--mc-fg-muted);
+  border: 1px solid var(--mc-border-default);
+}
+.ghost:hover {
+  color: var(--mc-fg-primary);
+  background: var(--mc-bg-base);
+}
+.primary {
+  background: var(--mc-accent-primary);
+  color: var(--mc-accent-fg, var(--mc-bg-base));
+}
+.danger {
+  background: var(--mc-fg-warning, #d97706);
+  color: var(--mc-bg-base);
+}

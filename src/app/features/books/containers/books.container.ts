@@ -18,6 +18,10 @@ import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { EntityLockController } from '@core/locks/entity-lock.controller';
 import { TagsService } from '@core/tags/tags.service';
+import {
+  ConfirmDialogComponent,
+  type ConfirmRequest,
+} from '@shared/confirm-dialog/confirm-dialog.component';
 import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
 import { reorderById } from '@shared/utils/reorder';
 
@@ -53,6 +57,7 @@ const writeCollapsed = (v: boolean): void => {
     ChapterListComponent,
     ChapterEditorPaneComponent,
     LockBannerComponent,
+    ConfirmDialogComponent,
   ],
   templateUrl: './books.container.html',
   styleUrl: './books.container.css',
@@ -82,6 +87,8 @@ export class BooksContainer {
   protected readonly chapterListCollapsed = signal<boolean>(readCollapsed());
   protected readonly bookLoading = signal<boolean>(false);
   protected readonly chapterLoading = signal<boolean>(false);
+  protected readonly confirmRequest = signal<ConfirmRequest | null>(null);
+  private confirmHandler: (() => void | Promise<void>) | null = null;
   protected readonly lock = new EntityLockController(BOOK_KIND, this.active);
 
   protected onToggleFocus(): void {
@@ -170,26 +177,31 @@ export class BooksContainer {
     this.scheduleBookSave(next);
   }
 
-  protected async onDeleteBook(): Promise<void> {
+  protected onDeleteBook(): void {
     const current = this.active();
     if (!current || !this.lock.guardWrite()) return;
-    const ok = confirm(
-      this.t('books.deleteConfirm').replace(
-        '{title}',
-        current.title || this.t('books.untitledTitle'),
-      ),
+    const title = current.title || this.t('books.untitledTitle');
+    this.askConfirm(
+      {
+        title: this.t('books.confirm.deleteBook.title'),
+        message: this.t('books.deleteConfirm').replace('{title}', title),
+        confirmLabel: this.t('books.confirm.deleteBook.confirm'),
+        cancelLabel: this.t('books.confirm.cancel'),
+        tone: 'danger',
+      },
+      async () => {
+        try {
+          await this.booksService.deleteBookToTrash(current.id);
+          await this.autosave.clear(current.id);
+          this.active.set(null);
+          this.chapters.set([]);
+          this.activeChapter.set(null);
+          await this.router.navigate(['/books']);
+        } catch (e) {
+          this.errors.report(e);
+        }
+      },
     );
-    if (!ok) return;
-    try {
-      await this.booksService.deleteBookToTrash(current.id);
-      await this.autosave.clear(current.id);
-      this.active.set(null);
-      this.chapters.set([]);
-      this.activeChapter.set(null);
-      await this.router.navigate(['/books']);
-    } catch (e) {
-      this.errors.report(e);
-    }
   }
 
   protected onSelectChapter(chapterId: string): void {
@@ -234,24 +246,49 @@ export class BooksContainer {
     }
   }
 
-  protected async onRemoveChapter(chapterId: string): Promise<void> {
+  protected onRemoveChapter(chapterId: string): void {
     const book = this.active();
     if (!book || !this.lock.guardWrite()) return;
     const ch = this.chapters().find((c) => c.id === chapterId);
     const title = ch?.title || this.t('books.chapters.untitled');
-    if (!confirm(this.t('books.chapters.deleteConfirm').replace('{title}', title))) return;
-    try {
-      await this.booksService.removeChapter(book.id, chapterId);
-      await this.autosave.clear(chapterId);
-      this.chapters.set(await this.booksService.listChapters(book.id));
-      this.active.set(await this.booksService.readBook(book.id));
-      if (this.activeChapter()?.id === chapterId) {
-        this.activeChapter.set(null);
-        await this.router.navigate(['/books', book.id]);
-      }
-    } catch (e) {
-      this.errors.report(e);
-    }
+    this.askConfirm(
+      {
+        title: this.t('books.confirm.deleteChapter.title'),
+        message: this.t('books.chapters.deleteConfirm').replace('{title}', title),
+        confirmLabel: this.t('books.confirm.deleteChapter.confirm'),
+        cancelLabel: this.t('books.confirm.cancel'),
+        tone: 'danger',
+      },
+      async () => {
+        try {
+          await this.booksService.removeChapter(book.id, chapterId);
+          await this.autosave.clear(chapterId);
+          this.chapters.set(await this.booksService.listChapters(book.id));
+          this.active.set(await this.booksService.readBook(book.id));
+          if (this.activeChapter()?.id === chapterId) {
+            this.activeChapter.set(null);
+            await this.router.navigate(['/books', book.id]);
+          }
+        } catch (e) {
+          this.errors.report(e);
+        }
+      },
+    );
+  }
+
+  protected onConfirm(): void {
+    const handler = this.confirmHandler;
+    this.confirmRequest.set(null);
+    this.confirmHandler = null;
+    if (handler) void handler();
+  }
+  protected onCancel(): void {
+    this.confirmRequest.set(null);
+    this.confirmHandler = null;
+  }
+  private askConfirm(req: ConfirmRequest, onAccept: () => void | Promise<void>): void {
+    this.confirmHandler = onAccept;
+    this.confirmRequest.set(req);
   }
 
   protected onChapterTitleChange(title: string): void {
