@@ -80,6 +80,8 @@ export class BooksContainer {
   );
   protected readonly focusMode = signal<boolean>(false);
   protected readonly chapterListCollapsed = signal<boolean>(readCollapsed());
+  protected readonly bookLoading = signal<boolean>(false);
+  protected readonly chapterLoading = signal<boolean>(false);
   protected readonly lock = new EntityLockController(BOOK_KIND, this.active);
 
   protected onToggleFocus(): void {
@@ -291,6 +293,7 @@ export class BooksContainer {
   }
 
   private async loadBook(id: string): Promise<void> {
+    this.bookLoading.set(true);
     try {
       const book = await this.booksService.readBook(id);
       this.active.set(book);
@@ -300,10 +303,13 @@ export class BooksContainer {
       this.errors.report(e);
       this.active.set(null);
       this.chapters.set([]);
+    } finally {
+      this.bookLoading.set(false);
     }
   }
 
   private async loadChapter(bookId: string, chapterId: string): Promise<void> {
+    this.chapterLoading.set(true);
     try {
       const ch = await this.booksService.readChapter(bookId, chapterId);
       this.activeChapter.set(ch);
@@ -311,6 +317,8 @@ export class BooksContainer {
     } catch (e) {
       this.errors.report(e);
       this.activeChapter.set(null);
+    } finally {
+      this.chapterLoading.set(false);
     }
   }
 

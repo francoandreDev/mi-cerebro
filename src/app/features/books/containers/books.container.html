@@ -59,6 +59,14 @@
           (bodyChange)="onChapterBodyChange($event)"
           (toggleFocus)="onToggleFocus()"
         />
+      } @else if (chapterLoading()) {
+        <div class="chapter-skeleton" aria-busy="true" [attr.aria-label]="t('app.loading')">
+          <div class="sk-line sk-title"></div>
+          <div class="sk-line sk-body sk-w-95"></div>
+          <div class="sk-line sk-body sk-w-90"></div>
+          <div class="sk-line sk-body sk-w-80"></div>
+          <div class="sk-line sk-body sk-w-70"></div>
+        </div>
       } @else {
         <div class="empty-chapter">
           <p>{{ t('books.chapters.selectOne') }}</p>
@@ -69,6 +77,27 @@
           }
         </div>
       }
+    </div>
+  } @else if (bookLoading()) {
+    <div class="book-skeleton" aria-busy="true" [attr.aria-label]="t('app.loading')">
+      <div class="sk-line sk-title sk-w-60"></div>
+      <div class="sk-row">
+        <div class="sk-line sk-chip"></div>
+        <div class="sk-line sk-stats sk-w-60"></div>
+      </div>
+      <div class="sk-split">
+        <div class="sk-aside">
+          <div class="sk-line sk-row-sm"></div>
+          <div class="sk-line sk-row-sm sk-w-80"></div>
+          <div class="sk-line sk-row-sm sk-w-70"></div>
+          <div class="sk-line sk-row-sm sk-w-85"></div>
+        </div>
+        <div class="sk-main">
+          <div class="sk-line sk-body sk-w-95"></div>
+          <div class="sk-line sk-body sk-w-90"></div>
+          <div class="sk-line sk-body sk-w-80"></div>
+        </div>
+      </div>
     </div>
   } @else {
     <div class="empty">{{ t('books.selectOne') }}</div>
