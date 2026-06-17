@@ -13,6 +13,7 @@ export const booksRoutes: Routes = [
   },
   {
     path: ':id/:chapterId',
-    loadComponent: () => import('./containers/books.container').then((m) => m.BooksContainer),
+    loadComponent: () =>
+      import('./containers/book-reader.container').then((m) => m.BookReaderContainer),
   },
 ];
