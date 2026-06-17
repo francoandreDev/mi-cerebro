@@ -381,198 +381,237 @@
       } @else if (entityDiffs().length === 0) {
         <p class="placeholder">{{ i18n.t('versioning.history.diffEmpty') }}</p>
       } @else {
+        <div class="diff-summary" aria-live="polite">
+          <span class="diff-summary-total">
+            @if (diffSummary().total === 1) {
+              {{ i18n.t('versioning.history.summary.totalOne') }}
+            } @else {
+              {{ i18n.t('versioning.history.summary.totalMany', { n: diffSummary().total }) }}
+            }
+          </span>
+          @if (diffSummary().added > 0) {
+            <span class="diff-summary-chip diff-summary-added">{{
+              i18n.t('versioning.history.summary.added', { n: diffSummary().added })
+            }}</span>
+          }
+          @if (diffSummary().modified > 0) {
+            <span class="diff-summary-chip diff-summary-modified">{{
+              i18n.t('versioning.history.summary.modified', { n: diffSummary().modified })
+            }}</span>
+          }
+          @if (diffSummary().deleted > 0) {
+            <span class="diff-summary-chip diff-summary-deleted">{{
+              i18n.t('versioning.history.summary.deleted', { n: diffSummary().deleted })
+            }}</span>
+          }
+          <label class="diff-summary-toggle">
+            <input type="checkbox" [checked]="groupByType()" (change)="toggleGroupByType()" />
+            {{ i18n.t('versioning.history.summary.groupByType') }}
+          </label>
+        </div>
         <ul class="entities">
-          @for (d of entityDiffs(); track d.filepath) {
-            <li class="entity entity-{{ d.status }}">
-              <div class="entity-head-row">
-                <button
-                  type="button"
-                  class="entity-head"
-                  [attr.aria-expanded]="expandedPath() === d.filepath"
-                  (click)="toggleExpanded(d.filepath)"
-                >
-                  <span class="entity-status">{{ d.status }}</span>
-                  <span class="entity-path">{{ d.filepath }}</span>
-                  @if (d.view.kind === 'binary') {
-                    <span class="entity-meta">
-                      {{ formatBytes(d.view.beforeSize) }} → {{ formatBytes(d.view.afterSize) }}
-                    </span>
-                  }
-                </button>
-                <button
-                  type="button"
-                  class="entity-restore"
-                  [disabled]="restoringPath() !== null"
-                  (click)="restoreEntity(d, $event)"
-                >
-                  @if (restoringPath() === d.filepath) {
-                    {{ i18n.t('versioning.history.restoring') }}
-                  } @else {
-                    {{ i18n.t('versioning.history.restoreEntity') }}
-                  }
-                </button>
-              </div>
-              @if (expandedPath() === d.filepath) {
-                @switch (d.view.kind) {
-                  @case ('entity') {
-                    @if (d.view.title.status !== 'unchanged') {
-                      <section class="diff-section">
-                        <h4>{{ i18n.t('versioning.history.field.title') }}</h4>
-                        <div class="title-diff title-{{ d.view.title.status }}">
-                          @if (d.view.title.before !== null) {
-                            <div class="title-line title-before">{{ d.view.title.before }}</div>
-                          }
-                          @if (d.view.title.after !== null) {
-                            <div class="title-line title-after">{{ d.view.title.after }}</div>
-                          }
-                        </div>
-                      </section>
-                    }
-                    @if (d.view.body !== null && d.view.body.length > 0) {
-                      <section class="diff-section">
-                        <h4>{{ i18n.t('versioning.history.field.body') }}</h4>
-                        <pre
-                          class="diff"
-                        >@for (chunk of d.view.body; track $index) {<span class="chunk chunk-{{ chunk.kind }}">{{ chunk.value }}</span>}</pre>
-                      </section>
-                    }
-                    @if (d.view.tags.added.length + d.view.tags.removed.length > 0) {
-                      <section class="diff-section">
-                        <h4>{{ i18n.t('versioning.history.field.tags') }}</h4>
-                        <div class="tag-chips">
-                          @for (t of d.view.tags.removed; track t) {
-                            <span class="tag-chip tag-removed">− {{ t }}</span>
-                          }
-                          @for (t of d.view.tags.added; track t) {
-                            <span class="tag-chip tag-added">+ {{ t }}</span>
-                          }
-                          @for (t of d.view.tags.unchanged; track t) {
-                            <span class="tag-chip tag-unchanged">{{ t }}</span>
-                          }
-                        </div>
-                      </section>
-                    }
-                    @if (d.view.fields.user.length > 0) {
-                      <section class="diff-section">
-                        <h4>{{ i18n.t('versioning.history.field.userFields') }}</h4>
-                        <table class="fields">
-                          <thead>
-                            <tr>
-                              <th>{{ i18n.t('versioning.history.field.key') }}</th>
-                              <th>{{ i18n.t('versioning.history.field.before') }}</th>
-                              <th>{{ i18n.t('versioning.history.field.after') }}</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            @for (f of d.view.fields.user; track f.key) {
-                              <tr class="field-row field-{{ f.status }}">
-                                <td class="field-key">{{ f.key }}</td>
-                                <td class="field-cell field-before">{{ f.before ?? '—' }}</td>
-                                <td class="field-cell field-after">{{ f.after ?? '—' }}</td>
-                              </tr>
-                            }
-                          </tbody>
-                        </table>
-                      </section>
-                    }
-                    @if (d.view.fields.system.length > 0) {
-                      <section class="diff-section">
-                        <button
-                          type="button"
-                          class="system-toggle"
-                          [attr.aria-expanded]="isSystemExpanded(d.filepath)"
-                          (click)="toggleSystemExpanded(d.filepath)"
-                        >
-                          {{ isSystemExpanded(d.filepath) ? '▾' : '▸' }}
-                          {{ i18n.t('versioning.history.field.systemFields') }}
-                          ({{ d.view.fields.system.length }})
-                        </button>
-                        @if (isSystemExpanded(d.filepath)) {
-                          <table class="fields fields-system">
-                            <tbody>
-                              @for (f of d.view.fields.system; track f.key) {
-                                <tr class="field-row field-{{ f.status }}">
-                                  <td class="field-key">{{ f.key }}</td>
-                                  <td class="field-cell field-before">{{ f.before ?? '—' }}</td>
-                                  <td class="field-cell field-after">{{ f.after ?? '—' }}</td>
-                                </tr>
-                              }
-                            </tbody>
-                          </table>
-                        }
-                      </section>
-                    }
-                  }
-                  @case ('anchored') {
-                    @if (d.view.items.length === 0) {
-                      <p class="placeholder">{{ i18n.t('versioning.history.diffEmpty') }}</p>
-                    } @else {
-                      <ul class="anchored-list">
-                        @for (item of d.view.items; track item.id) {
-                          <li class="anchored-item anchored-{{ item.status }}">
-                            <header class="anchored-head">
-                              <span class="anchored-badge">{{ anchoredBadge(item.status) }}</span>
-                              <span class="anchored-status">{{
-                                anchoredStatusLabel(d.view.mode, item.status)
-                              }}</span>
-                              <span class="anchored-anchor">
-                                {{ anchoredAnchorLabel(item.anchorType) }}
-                                @if (item.anchor) {
-                                  <code>{{ item.anchor }}</code>
-                                }
-                              </span>
-                            </header>
-                            @if (item.before !== null) {
-                              <div class="anchored-body anchored-body-before">
-                                {{ item.before || i18n.t('versioning.history.anchored.empty') }}
-                              </div>
-                            }
-                            @if (item.after !== null) {
-                              <div class="anchored-body anchored-body-after">
-                                {{ item.after || i18n.t('versioning.history.anchored.empty') }}
-                              </div>
-                            }
-                          </li>
-                        }
-                      </ul>
-                    }
-                  }
-                  @case ('json') {
-                    @if (d.view.fields.length === 0) {
-                      <p class="placeholder">{{ i18n.t('versioning.history.diffEmpty') }}</p>
-                    } @else {
-                      <section class="diff-section">
-                        <table class="fields">
-                          <thead>
-                            <tr>
-                              <th>{{ i18n.t('versioning.history.field.key') }}</th>
-                              <th>{{ i18n.t('versioning.history.field.before') }}</th>
-                              <th>{{ i18n.t('versioning.history.field.after') }}</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            @for (f of d.view.fields; track f.key) {
-                              <tr class="field-row field-{{ f.status }}">
-                                <td class="field-key">{{ f.key }}</td>
-                                <td class="field-cell field-before">{{ f.before ?? '—' }}</td>
-                                <td class="field-cell field-after">{{ f.after ?? '—' }}</td>
-                              </tr>
-                            }
-                          </tbody>
-                        </table>
-                      </section>
-                    }
-                  }
-                  @case ('text') {
-                    <pre
-                      class="diff"
-                    >@for (chunk of d.view.chunks; track $index) {<span class="chunk chunk-{{ chunk.kind }}">{{ chunk.value }}</span>}</pre>
-                  }
-                }
-              }
-            </li>
+          @for (row of entityFeed(); track row.id) {
+            @if (row.kind === 'header') {
+              <li class="entity-group-header">
+                <span>{{ i18n.t(groupLabelKey(row.key)) }}</span>
+                <span class="entity-group-count">({{ row.count }})</span>
+              </li>
+            } @else {
+              <ng-container *ngTemplateOutlet="entityRow; context: { $implicit: row.diff }" />
+            }
           }
         </ul>
+
+        <ng-template #entityRow let-d>
+          <li class="entity entity-{{ d.status }}">
+            <div class="entity-head-row">
+              <button
+                type="button"
+                class="entity-head"
+                [attr.aria-expanded]="expandedPath() === d.filepath"
+                (click)="toggleExpanded(d.filepath)"
+              >
+                <span class="entity-status">{{ d.status }}</span>
+                <span class="entity-path">{{ d.filepath }}</span>
+                @if (d.view.kind === 'binary') {
+                  <span class="entity-meta">
+                    {{ formatBytes(d.view.beforeSize) }} → {{ formatBytes(d.view.afterSize) }}
+                  </span>
+                }
+              </button>
+              <button
+                type="button"
+                class="entity-restore"
+                [disabled]="restoringPath() !== null"
+                (click)="restoreEntity(d, $event)"
+              >
+                @if (restoringPath() === d.filepath) {
+                  {{ i18n.t('versioning.history.restoring') }}
+                } @else {
+                  {{ i18n.t('versioning.history.restoreEntity') }}
+                }
+              </button>
+            </div>
+            @if (expandedPath() === d.filepath) {
+              @switch (d.view.kind) {
+                @case ('entity') {
+                  @if (d.view.title.status !== 'unchanged') {
+                    <section class="diff-section">
+                      <h4>{{ i18n.t('versioning.history.field.title') }}</h4>
+                      <div class="title-diff title-{{ d.view.title.status }}">
+                        @if (d.view.title.before !== null) {
+                          <div class="title-line title-before">{{ d.view.title.before }}</div>
+                        }
+                        @if (d.view.title.after !== null) {
+                          <div class="title-line title-after">{{ d.view.title.after }}</div>
+                        }
+                      </div>
+                    </section>
+                  }
+                  @if (d.view.body !== null && d.view.body.length > 0) {
+                    <section class="diff-section">
+                      <h4>{{ i18n.t('versioning.history.field.body') }}</h4>
+                      <pre
+                        class="diff"
+                      >@for (chunk of d.view.body; track $index) {<span class="chunk chunk-{{ chunk.kind }}">{{ chunk.value }}</span>}</pre>
+                    </section>
+                  }
+                  @if (d.view.tags.added.length + d.view.tags.removed.length > 0) {
+                    <section class="diff-section">
+                      <h4>{{ i18n.t('versioning.history.field.tags') }}</h4>
+                      <div class="tag-chips">
+                        @for (t of d.view.tags.removed; track t) {
+                          <span class="tag-chip tag-removed">− {{ t }}</span>
+                        }
+                        @for (t of d.view.tags.added; track t) {
+                          <span class="tag-chip tag-added">+ {{ t }}</span>
+                        }
+                        @for (t of d.view.tags.unchanged; track t) {
+                          <span class="tag-chip tag-unchanged">{{ t }}</span>
+                        }
+                      </div>
+                    </section>
+                  }
+                  @if (d.view.fields.user.length > 0) {
+                    <section class="diff-section">
+                      <h4>{{ i18n.t('versioning.history.field.userFields') }}</h4>
+                      <table class="fields">
+                        <thead>
+                          <tr>
+                            <th>{{ i18n.t('versioning.history.field.key') }}</th>
+                            <th>{{ i18n.t('versioning.history.field.before') }}</th>
+                            <th>{{ i18n.t('versioning.history.field.after') }}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (f of d.view.fields.user; track f.key) {
+                            <tr class="field-row field-{{ f.status }}">
+                              <td class="field-key">{{ f.key }}</td>
+                              <td class="field-cell field-before">{{ f.before ?? '—' }}</td>
+                              <td class="field-cell field-after">{{ f.after ?? '—' }}</td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </section>
+                  }
+                  @if (d.view.fields.system.length > 0) {
+                    <section class="diff-section">
+                      <button
+                        type="button"
+                        class="system-toggle"
+                        [attr.aria-expanded]="isSystemExpanded(d.filepath)"
+                        (click)="toggleSystemExpanded(d.filepath)"
+                      >
+                        {{ isSystemExpanded(d.filepath) ? '▾' : '▸' }}
+                        {{ i18n.t('versioning.history.field.systemFields') }}
+                        ({{ d.view.fields.system.length }})
+                      </button>
+                      @if (isSystemExpanded(d.filepath)) {
+                        <table class="fields fields-system">
+                          <tbody>
+                            @for (f of d.view.fields.system; track f.key) {
+                              <tr class="field-row field-{{ f.status }}">
+                                <td class="field-key">{{ f.key }}</td>
+                                <td class="field-cell field-before">{{ f.before ?? '—' }}</td>
+                                <td class="field-cell field-after">{{ f.after ?? '—' }}</td>
+                              </tr>
+                            }
+                          </tbody>
+                        </table>
+                      }
+                    </section>
+                  }
+                }
+                @case ('anchored') {
+                  @if (d.view.items.length === 0) {
+                    <p class="placeholder">{{ i18n.t('versioning.history.diffEmpty') }}</p>
+                  } @else {
+                    <ul class="anchored-list">
+                      @for (item of d.view.items; track item.id) {
+                        <li class="anchored-item anchored-{{ item.status }}">
+                          <header class="anchored-head">
+                            <span class="anchored-badge">{{ anchoredBadge(item.status) }}</span>
+                            <span class="anchored-status">{{
+                              anchoredStatusLabel(d.view.mode, item.status)
+                            }}</span>
+                            <span class="anchored-anchor">
+                              {{ anchoredAnchorLabel(item.anchorType) }}
+                              @if (item.anchor) {
+                                <code>{{ item.anchor }}</code>
+                              }
+                            </span>
+                          </header>
+                          @if (item.before !== null) {
+                            <div class="anchored-body anchored-body-before">
+                              {{ item.before || i18n.t('versioning.history.anchored.empty') }}
+                            </div>
+                          }
+                          @if (item.after !== null) {
+                            <div class="anchored-body anchored-body-after">
+                              {{ item.after || i18n.t('versioning.history.anchored.empty') }}
+                            </div>
+                          }
+                        </li>
+                      }
+                    </ul>
+                  }
+                }
+                @case ('json') {
+                  @if (d.view.fields.length === 0) {
+                    <p class="placeholder">{{ i18n.t('versioning.history.diffEmpty') }}</p>
+                  } @else {
+                    <section class="diff-section">
+                      <table class="fields">
+                        <thead>
+                          <tr>
+                            <th>{{ i18n.t('versioning.history.field.key') }}</th>
+                            <th>{{ i18n.t('versioning.history.field.before') }}</th>
+                            <th>{{ i18n.t('versioning.history.field.after') }}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (f of d.view.fields; track f.key) {
+                            <tr class="field-row field-{{ f.status }}">
+                              <td class="field-key">{{ f.key }}</td>
+                              <td class="field-cell field-before">{{ f.before ?? '—' }}</td>
+                              <td class="field-cell field-after">{{ f.after ?? '—' }}</td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </section>
+                  }
+                }
+                @case ('text') {
+                  <pre
+                    class="diff"
+                  >@for (chunk of d.view.chunks; track $index) {<span class="chunk chunk-{{ chunk.kind }}">{{ chunk.value }}</span>}</pre>
+                }
+              }
+            }
+          </li>
+        </ng-template>
       }
     } @else if (!loading() && buckets().length > 0) {
       <p class="placeholder">{{ i18n.t('versioning.history.selectACommit') }}</p>

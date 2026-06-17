@@ -7,6 +7,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 
 import { ErrorService } from '@core/errors/error.service';
@@ -32,11 +33,36 @@ import type {
 } from '../services/history.types';
 import { MilestoneController } from '../services/milestone.controller';
 
+type GroupKey = 'notes' | 'tasks' | 'books' | 'drafts' | 'comments' | 'meta' | 'other';
+type EntityFeedRow =
+  | { readonly kind: 'header'; readonly key: GroupKey; readonly id: string; readonly count: number }
+  | { readonly kind: 'entity'; readonly diff: EntityDiff; readonly id: string };
+
+const GROUP_ORDER: readonly GroupKey[] = [
+  'notes',
+  'tasks',
+  'books',
+  'drafts',
+  'comments',
+  'meta',
+  'other',
+];
+
+function groupKeyForPath(path: string): GroupKey {
+  if (path.startsWith('notes/')) return 'notes';
+  if (path.startsWith('tasks/')) return 'tasks';
+  if (path.startsWith('books/')) return 'books';
+  if (path.startsWith('drafts/')) return 'drafts';
+  if (path.startsWith('comments/')) return 'comments';
+  if (path.startsWith('.mi-cerebro/')) return 'meta';
+  return 'other';
+}
+
 @Component({
   selector: 'mc-history',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [HistoryService, HistoryDiffService, MilestoneController],
-  imports: [McDatePipe, IconComponent],
+  imports: [McDatePipe, IconComponent, NgTemplateOutlet],
   templateUrl: './history.container.html',
   styleUrl: './history.container.css',
 })
@@ -230,6 +256,60 @@ export class HistoryContainer implements OnInit {
   protected readonly entityDiffs = this.entityDiffsSignal.asReadonly();
   protected readonly diffLoading = this.diffLoadingSignal.asReadonly();
   protected readonly expandedPath = this.expandedPathSignal.asReadonly();
+
+  // Summary + group-by-type for the detail pane. Counters from entity status;
+  // groups from the path's first segment so the user can scan "what was
+  // touched" before drilling into individual files.
+  private readonly groupByTypeSignal = signal(false);
+  protected readonly groupByType = this.groupByTypeSignal.asReadonly();
+  protected toggleGroupByType(): void {
+    this.groupByTypeSignal.update((v) => !v);
+  }
+  protected readonly diffSummary = computed(() => {
+    const diffs = this.entityDiffsSignal();
+    let added = 0;
+    let modified = 0;
+    let deleted = 0;
+    for (const d of diffs) {
+      if (d.status === 'added') added++;
+      else if (d.status === 'deleted') deleted++;
+      else modified++;
+    }
+    return { total: diffs.length, added, modified, deleted };
+  });
+  protected readonly groupedDiffs = computed<
+    readonly { key: GroupKey; items: readonly EntityDiff[] }[]
+  >(() => {
+    const diffs = this.entityDiffsSignal();
+    const buckets = new Map<GroupKey, EntityDiff[]>();
+    for (const d of diffs) {
+      const key = groupKeyForPath(d.filepath);
+      const arr = buckets.get(key) ?? [];
+      arr.push(d);
+      buckets.set(key, arr);
+    }
+    return GROUP_ORDER.filter((k) => buckets.has(k)).map((k) => ({
+      key: k,
+      items: buckets.get(k)!,
+    }));
+  });
+  // why: flat list of "headers + entities" so the template iterates with a
+  //      single @for and avoids duplicating the entity row markup. When
+  //      groupByType is off we just emit entities back-to-back.
+  protected readonly entityFeed = computed<readonly EntityFeedRow[]>(() => {
+    if (!this.groupByTypeSignal()) {
+      return this.entityDiffsSignal().map((d) => ({ kind: 'entity', diff: d, id: d.filepath }));
+    }
+    const rows: EntityFeedRow[] = [];
+    for (const g of this.groupedDiffs()) {
+      rows.push({ kind: 'header', key: g.key, id: `h:${g.key}`, count: g.items.length });
+      for (const d of g.items) rows.push({ kind: 'entity', diff: d, id: d.filepath });
+    }
+    return rows;
+  });
+  protected groupLabelKey(k: GroupKey): TranslationKey {
+    return `versioning.history.summary.group.${k}`;
+  }
 
   constructor() {
     effect(() => {
