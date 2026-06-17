@@ -15,6 +15,7 @@ import type { SearchDoc } from '@core/search/search.types';
 import { extractPlainText } from '@core/search/tiptap-text';
 import { TagsService } from '@core/tags/tags.service';
 import { toSlug, withSuffix } from '@shared/utils/slug';
+import { countWords } from '@shared/utils/word-count';
 
 import {
   BOOK_KIND,
@@ -236,7 +237,12 @@ export class BooksService {
       try {
         const raw = await this.fs.readJson<Chapter>(chaptersDir, filename);
         const ch = await this.migrations.migrate<Chapter>(BOOK_KIND, raw);
-        map.set(ch.id, { id: ch.id, title: ch.title, updatedAt: ch.updatedAt });
+        map.set(ch.id, {
+          id: ch.id,
+          title: ch.title,
+          updatedAt: ch.updatedAt,
+          words: countWords(extractPlainText(ch.body)),
+        });
         idToFile.set(ch.id, filename);
       } catch (cause) {
         console.warn('[books] skipped chapter', filename, cause);

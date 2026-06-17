@@ -599,6 +599,15 @@ export const es = {
   'books.chapters.delete': 'Eliminar',
   'books.chapters.deleteConfirm':
     '¿Eliminar el capítulo "{title}"? Esta acción no va a la papelera y es irreversible.',
+  'books.chapters.countOne': '1 capítulo',
+  'books.chapters.countMany': '{count} capítulos',
+  'books.chapters.filterPlaceholder': 'Buscar capítulo...',
+  'books.chapters.filterNoMatch': 'Ningún capítulo coincide.',
+  'books.chapters.collapse': 'Plegar capítulos',
+  'books.chapters.expand': 'Mostrar capítulos',
+  'books.chapters.dragHandle': 'Arrastrar para reordenar',
+  'books.chapters.wordsShort': '{count} pal',
+  'books.chapters.wordsLong': '{count} palabras',
   'books.lock.foreign.title': 'Este libro está abierto en otra pestaña',
   'books.lock.foreign.message':
     'Para evitar pisar cambios, este libro está en modo lectura. Podés tomar control para empezar a editar acá.',

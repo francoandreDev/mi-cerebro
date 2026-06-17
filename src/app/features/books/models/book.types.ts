@@ -35,6 +35,7 @@ export interface ChapterSummary {
   readonly id: string;
   readonly title: string;
   readonly updatedAt: string;
+  readonly words: number;
 }
 
 export interface BookSummary {
