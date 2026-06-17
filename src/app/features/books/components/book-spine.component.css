@@ -4,6 +4,9 @@
 .spine {
   position: relative;
   width: 42px;
+  height: var(--mc-spine-h, 210px);
+  background: var(--mc-spine-bg, hsl(220deg 30% 30%));
+  color: var(--mc-spine-fg, #efefef);
   border-radius: 2px 4px 4px 2px;
   display: flex;
   align-items: center;
@@ -43,6 +46,7 @@
   right: 0;
   height: 2px;
   top: 18px;
+  background: var(--mc-spine-fg, #efefef);
   opacity: 0.35;
 }
 .band::after {

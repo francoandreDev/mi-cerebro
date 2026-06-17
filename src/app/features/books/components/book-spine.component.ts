@@ -6,17 +6,17 @@ import { hashColor } from '@shared/utils/hash-color';
   selector: 'mc-book-spine',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div
-      class="spine"
-      [style.background]="palette().bg"
-      [style.color]="palette().fg"
-      [style.height.px]="height()"
-    >
+    <div class="spine">
       <span class="title">{{ displayTitle() }}</span>
-      <span class="band" [style.background]="palette().fg"></span>
+      <span class="band"></span>
     </div>
   `,
   styleUrl: './book-spine.component.css',
+  host: {
+    '[style.--mc-spine-bg]': 'palette().bg',
+    '[style.--mc-spine-fg]': 'palette().fg',
+    '[style.--mc-spine-h]': 'height() + "px"',
+  },
 })
 export class BookSpineComponent {
   readonly bookId = input.required<string>();

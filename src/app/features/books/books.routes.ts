@@ -3,7 +3,8 @@ import type { Routes } from '@angular/router';
 export const booksRoutes: Routes = [
   {
     path: '',
-    loadComponent: () => import('./containers/books.container').then((m) => m.BooksContainer),
+    loadComponent: () =>
+      import('./containers/bookshelf.container').then((m) => m.BookshelfContainer),
   },
   {
     path: ':id',

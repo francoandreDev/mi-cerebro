@@ -9,6 +9,7 @@ import { MenuButtonComponent, type MenuOption } from '@shared/menu-button/menu-b
 import { TagPickerComponent } from '@shared/tags/tag-picker.component';
 
 import type { Book } from '../models/book.types';
+import { formatAgo } from '../containers/format-ago';
 
 export type BookSaveStatus = 'saved' | 'saving' | 'unsaved';
 
@@ -69,22 +70,3 @@ export class BookMetaBarComponent {
 }
 
 const formatNumber = (n: number): string => n.toLocaleString('es-AR');
-
-// why: se calcula acá para no fabricar un servicio sólo para relative-time. Es 1 uso, inline.
-const formatAgo = (
-  iso: string,
-  t: (k: TranslationKey, p?: Record<string, string | number>) => string,
-): string => {
-  const then = new Date(iso).getTime();
-  if (!Number.isFinite(then)) return '';
-  const diffMin = Math.max(0, Math.floor((Date.now() - then) / 60000));
-  if (diffMin < 2) return t('books.editedAgo.justNow');
-  if (diffMin < 60) return t('books.editedAgo.minutes', { n: diffMin });
-  const diffH = Math.floor(diffMin / 60);
-  if (diffH < 24) return t('books.editedAgo.hours', { n: diffH });
-  const diffD = Math.floor(diffH / 24);
-  if (diffD < 30) return t('books.editedAgo.days', { n: diffD });
-  const diffMo = Math.floor(diffD / 30);
-  if (diffMo < 12) return t('books.editedAgo.months', { n: diffMo });
-  return t('books.editedAgo.years', { n: Math.floor(diffMo / 12) });
-};
