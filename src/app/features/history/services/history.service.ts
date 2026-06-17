@@ -7,6 +7,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { MilestoneService } from '@core/versioning/milestone.service';
 import { VariantsService } from '@core/versioning/variants.service';
 import { stripHeadsPrefix } from '@core/versioning/variants.io';
+import { PRINCIPAL_VARIANT_ID, type Variant } from '@core/versioning/variants.types';
 import { VersioningService } from '@core/versioning/versioning.service';
 
 import type {
@@ -39,11 +40,19 @@ export class HistoryService {
   private readonly milestonesSignal = signal<readonly MilestoneEntry[]>([]);
   private readonly loadingSignal = signal(false);
   private readonly errorSignal = signal<string | null>(null);
+  private readonly originByOidSignal = signal<ReadonlyMap<string, string>>(new Map());
+  private readonly variantsByIdSignal = signal<ReadonlyMap<string, Variant>>(new Map());
 
   readonly entries = this.entriesSignal.asReadonly();
   readonly milestones = this.milestonesSignal.asReadonly();
   readonly loading = this.loadingSignal.asReadonly();
   readonly error = this.errorSignal.asReadonly();
+  // why: oid → variantId map built BFS-from-principal over family refs. First
+  //      writer wins so original authors (parents) keep credit for OIDs that
+  //      siblings inherit via merge. Used by /history to color each commit
+  //      row by its variant of origin.
+  readonly originByOid = this.originByOidSignal.asReadonly();
+  readonly variantsById = this.variantsByIdSignal.asReadonly();
   readonly milestonesByOid = computed<ReadonlyMap<string, readonly MilestoneEntry[]>>(() => {
     const map = new Map<string, MilestoneEntry[]>();
     for (const m of this.milestonesSignal()) {
@@ -99,6 +108,7 @@ export class HistoryService {
       this.entriesSignal.set(entries);
       const milestones = await this.milestoneService.list();
       this.milestonesSignal.set(milestones);
+      await this.rebuildOriginMap(depth);
     } catch (e) {
       this.errorSignal.set(e instanceof Error ? e.message : String(e));
     } finally {
@@ -106,10 +116,63 @@ export class HistoryService {
     }
   }
 
+  // why: walk every variant's family refs in BFS-from-principal order so the
+  //      original author of each OID claims it before any descendant that
+  //      inherits the OID via merge. The active variant is walked last among
+  //      its tier so siblings that authored the commit keep credit.
+  private async rebuildOriginMap(depth: number): Promise<void> {
+    const variants = await this.variants.list();
+    const byId = new Map<string, Variant>();
+    for (const v of variants) byId.set(v.id, v);
+    this.variantsByIdSignal.set(byId);
+    const order = orderByLineage(variants);
+    const origin = new Map<string, string>();
+    for (const v of order) {
+      const refs = [v.refs.main, v.refs.comments, v.refs.draft].map(stripHeadsPrefix);
+      let oids: readonly string[] = [];
+      try {
+        const summaries = await this.versioning.log(depth, refs);
+        oids = summaries.map((s) => s.oid);
+      } catch {
+        // ref may not exist yet; skip
+      }
+      for (const oid of oids) {
+        if (!origin.has(oid)) origin.set(oid, v.id);
+      }
+    }
+    this.originByOidSignal.set(origin);
+  }
+
   async refreshMilestones(): Promise<void> {
     const milestones = await this.milestoneService.list();
     this.milestonesSignal.set(milestones);
   }
+}
+
+// Variants ordered principal-first then by lineage depth (parents before
+// children). Equal-depth tied by id for determinism. Used to walk refs so
+// the original author of an OID claims it before any descendant inherits it
+// via merge.
+function orderByLineage(variants: readonly Variant[]): readonly Variant[] {
+  const depth = new Map<string, number>();
+  const compute = (v: Variant): number => {
+    const cached = depth.get(v.id);
+    if (cached !== undefined) return cached;
+    if (v.id === PRINCIPAL_VARIANT_ID || !v.parentId) {
+      depth.set(v.id, 0);
+      return 0;
+    }
+    const parent = variants.find((p) => p.id === v.parentId);
+    const d = parent ? compute(parent) + 1 : 1;
+    depth.set(v.id, d);
+    return d;
+  };
+  return [...variants].sort((a, b) => {
+    const da = compute(a);
+    const db = compute(b);
+    if (da !== db) return da - db;
+    return a.id.localeCompare(b.id);
+  });
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;

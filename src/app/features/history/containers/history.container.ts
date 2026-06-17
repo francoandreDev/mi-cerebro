@@ -54,6 +54,22 @@ export class HistoryContainer implements OnInit {
   protected readonly entries = this.history.entries;
   protected readonly headOid = this.history.headOid;
   protected readonly milestonesByOid = this.history.milestonesByOid;
+  private readonly originByOid = this.history.originByOid;
+  private readonly variantsById = this.history.variantsById;
+
+  // Color del borde-izq de cada commit según la variante en la que fue
+  // autoreado. Cuando no podemos atribuirla (raro, refs faltantes), devolvemos
+  // null y la regla CSS por faceta queda como fallback visual.
+  protected commitOriginColor(oid: string): string | null {
+    const id = this.originByOid().get(oid);
+    if (!id) return null;
+    return this.variantsById().get(id)?.color ?? null;
+  }
+  protected commitOriginName(oid: string): string | null {
+    const id = this.originByOid().get(oid);
+    if (!id) return null;
+    return this.variantsById().get(id)?.name ?? id;
+  }
 
   private readonly onlyMilestonesSignal = signal(false);
   protected readonly onlyMilestones = this.onlyMilestonesSignal.asReadonly();

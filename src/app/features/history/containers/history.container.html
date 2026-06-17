@@ -83,6 +83,8 @@
                     [class.is-head]="headOid() === item.entry.oid"
                     [class.has-milestone]="milestonesFor(item.entry.oid).length > 0"
                     [attr.data-facet]="facetOfMessage(item.entry.message)"
+                    [style.borderLeftColor]="commitOriginColor(item.entry.oid)"
+                    [attr.title]="commitOriginName(item.entry.oid)"
                     (click)="select(item.entry.oid)"
                   >
                     <span class="commit-time">{{ item.entry.date | mcDate }}</span>
@@ -126,6 +128,8 @@
                       [class.selected]="selectedOid() === item.latest.oid"
                       [class.is-head]="headOid() === item.latest.oid"
                       [attr.data-facet]="facetOfMessage(item.latest.message)"
+                      [style.borderLeftColor]="commitOriginColor(item.latest.oid)"
+                      [attr.title]="commitOriginName(item.latest.oid)"
                       (click)="select(item.latest.oid)"
                     >
                       <span class="commit-time">{{ item.latest.date | mcDate }}</span>
@@ -164,6 +168,8 @@
                             [class.is-head]="headOid() === m.oid"
                             [class.has-milestone]="milestonesFor(m.oid).length > 0"
                             [attr.data-facet]="facetOfMessage(m.message)"
+                            [style.borderLeftColor]="commitOriginColor(m.oid)"
+                            [attr.title]="commitOriginName(m.oid)"
                             (click)="select(m.oid)"
                           >
                             <span class="commit-time">{{ m.date | mcDate }}</span>
@@ -199,6 +205,8 @@
                       [class.selected]="selectedOid() === item.latest.oid"
                       [class.is-head]="headOid() === item.latest.oid"
                       [attr.data-facet]="facetOfMessage(item.latest.message)"
+                      [style.borderLeftColor]="commitOriginColor(item.latest.oid)"
+                      [attr.title]="commitOriginName(item.latest.oid)"
                       (click)="select(item.latest.oid)"
                     >
                       <span class="commit-time">{{ item.latest.date | mcDate }}</span>
@@ -251,6 +259,8 @@
                             [class.is-head]="headOid() === m.oid"
                             [class.has-milestone]="milestonesFor(m.oid).length > 0"
                             [attr.data-facet]="facetOfMessage(m.message)"
+                            [style.borderLeftColor]="commitOriginColor(m.oid)"
+                            [attr.title]="commitOriginName(m.oid)"
                             (click)="select(m.oid)"
                           >
                             <span class="commit-time">{{ m.date | mcDate }}</span>
