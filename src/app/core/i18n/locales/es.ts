@@ -618,6 +618,13 @@ export const es = {
   'books.editedAgo.years': 'hace {n} años',
   'books.breadcrumb.root': 'Libros',
   'books.menu.delete': 'Mover a papelera',
+  'books.editor.toggleFocus': 'Entrar en modo foco',
+  'books.editor.exitFocus': 'Salir de modo foco',
+  'books.editor.focusLabel': 'Foco',
+  'books.editor.footerWords': '{n} palabras',
+  'books.editor.footerChars': '{n} caracteres',
+  'books.editor.footerReading': '{n} min de lectura',
+  'books.editor.footerReadingZero': 'Lectura corta',
   'books.lock.foreign.title': 'Este libro está abierto en otra pestaña',
   'books.lock.foreign.message':
     'Para evitar pisar cambios, este libro está en modo lectura. Podés tomar control para empezar a editar acá.',

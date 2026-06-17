@@ -1,4 +1,4 @@
-<div class="pane">
+<div class="pane" [class.focus-mode]="focusMode()">
   @if (active(); as book) {
     @if (lock.showForeign()) {
       <mc-lock-banner
@@ -19,37 +19,43 @@
         (dismiss)="lock.dismissEvicted()"
       />
     }
-    <mc-book-meta-bar
-      [book]="book"
-      [status]="bookStatus()"
-      [availableTags]="tags()"
-      [editable]="lock.editable()"
-      [chaptersCount]="chapters().length"
-      [totalWords]="totalWords()"
-      (titleChange)="onTitleChange($event)"
-      (removeBook)="onDeleteBook()"
-      (addTag)="onAddTag($event)"
-      (removeTag)="onRemoveTag($event)"
-    />
-    <div class="split">
-      <mc-chapter-list
-        [chapters]="chapters()"
-        [activeId]="activeChapter()?.id ?? null"
+    @if (!focusMode()) {
+      <mc-book-meta-bar
+        [book]="book"
+        [status]="bookStatus()"
+        [availableTags]="tags()"
         [editable]="lock.editable()"
-        (selectChapter)="onSelectChapter($event)"
-        (addChapter)="onAddChapter()"
-        (moveUp)="onMoveUp($event)"
-        (moveDown)="onMoveDown($event)"
-        (reorder)="onReorder($event)"
-        (removeChapter)="onRemoveChapter($event)"
+        [chaptersCount]="chapters().length"
+        [totalWords]="totalWords()"
+        (titleChange)="onTitleChange($event)"
+        (removeBook)="onDeleteBook()"
+        (addTag)="onAddTag($event)"
+        (removeTag)="onRemoveTag($event)"
       />
+    }
+    <div class="split">
+      @if (!focusMode()) {
+        <mc-chapter-list
+          [chapters]="chapters()"
+          [activeId]="activeChapter()?.id ?? null"
+          [editable]="lock.editable()"
+          (selectChapter)="onSelectChapter($event)"
+          (addChapter)="onAddChapter()"
+          (moveUp)="onMoveUp($event)"
+          (moveDown)="onMoveDown($event)"
+          (reorder)="onReorder($event)"
+          (removeChapter)="onRemoveChapter($event)"
+        />
+      }
       @if (activeChapter(); as chapter) {
         <mc-chapter-editor-pane
           [chapter]="chapter"
           [status]="chapterStatus()"
           [editable]="lock.editable()"
+          [focusMode]="focusMode()"
           (titleChange)="onChapterTitleChange($event)"
           (bodyChange)="onChapterBodyChange($event)"
+          (toggleFocus)="onToggleFocus()"
         />
       } @else {
         <div class="empty-chapter">

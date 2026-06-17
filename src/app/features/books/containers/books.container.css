@@ -8,6 +8,9 @@
   height: 100%;
   min-width: 0;
 }
+.pane.focus-mode {
+  background: var(--mc-bg-base);
+}
 .split {
   display: flex;
   flex: 1;

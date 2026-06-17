@@ -60,7 +60,12 @@ export class BooksContainer {
   protected readonly totalWords = computed(() =>
     this.chapters().reduce((acc, c) => acc + c.words, 0),
   );
+  protected readonly focusMode = signal<boolean>(false);
   protected readonly lock = new EntityLockController(BOOK_KIND, this.active);
+
+  protected onToggleFocus(): void {
+    this.focusMode.update((v) => !v);
+  }
 
   constructor() {
     effect(() => {

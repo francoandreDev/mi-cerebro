@@ -1,9 +1,11 @@
-import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import type { JSONContent } from '@tiptap/core';
 
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { extractPlainText } from '@core/search/tiptap-text';
 import { EditorComponent } from '@shared/editor/editor.component';
+import { countChars, countWords, readingMinutes } from '@shared/utils/word-count';
 
 import type { Chapter } from '../models/book.types';
 import type { BookSaveStatus } from './book-meta-bar.component';
@@ -12,83 +14,37 @@ import type { BookSaveStatus } from './book-meta-bar.component';
   selector: 'mc-chapter-editor-pane',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [EditorComponent],
-  template: `
-    <header class="bar">
-      <input
-        type="text"
-        class="title-input"
-        [value]="chapter().title"
-        [placeholder]="t('books.chapters.placeholderTitle')"
-        [attr.aria-label]="t('books.chapters.placeholderTitle')"
-        [readOnly]="!editable()"
-        (input)="onTitleInput($event)"
-      />
-      <span class="status" [attr.data-status]="status()">{{ statusLabel() }}</span>
-    </header>
-    <mc-editor
-      class="editor"
-      [value]="chapter().body"
-      [placeholder]="t('books.chapters.placeholderBody')"
-      [editable]="editable()"
-      [entityId]="chapter().id"
-      [entityTitle]="chapter().title"
-      (valueChange)="bodyChange.emit($event)"
-    />
-  `,
-  styles: `
-    :host {
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      min-width: 0;
-      padding: var(--mc-space-4);
-      gap: var(--mc-space-3);
-    }
-    .bar {
-      display: flex;
-      align-items: center;
-      gap: var(--mc-space-3);
-    }
-    .title-input {
-      flex: 1;
-      font-size: var(--mc-font-size-lg);
-      background: transparent;
-      border: none;
-      color: var(--mc-fg-primary);
-      padding: var(--mc-space-1) 0;
-    }
-    .title-input:focus {
-      outline: none;
-      border-bottom: 1px solid var(--mc-accent-primary);
-    }
-    .status {
-      font-size: var(--mc-font-size-sm);
-      color: var(--mc-fg-muted);
-    }
-    .status[data-status='saving'] {
-      color: var(--mc-accent-primary);
-    }
-    .status[data-status='unsaved'] {
-      color: var(--mc-fg-warning, #d97706);
-    }
-    .editor {
-      flex: 1;
-    }
-  `,
+  templateUrl: './chapter-editor-pane.component.html',
+  styleUrl: './chapter-editor-pane.component.css',
 })
 export class ChapterEditorPaneComponent {
   readonly chapter = input.required<Chapter>();
   readonly status = input<BookSaveStatus>('saved');
   readonly editable = input<boolean>(true);
+  readonly focusMode = input<boolean>(false);
   readonly titleChange = output<string>();
   readonly bodyChange = output<JSONContent>();
+  readonly toggleFocus = output<void>();
+
+  protected readonly words = computed(() => countWords(extractPlainText(this.chapter().body)));
+  protected readonly chars = computed(() => countChars(extractPlainText(this.chapter().body)));
+  protected readonly readMin = computed(() => readingMinutes(this.words()));
 
   private readonly i18n = inject(I18nService);
-  protected t(key: TranslationKey): string {
-    return this.i18n.t(key);
+  protected t(key: TranslationKey, params?: Record<string, string | number>): string {
+    return this.i18n.t(key, params);
   }
   protected statusLabel(): string {
     return this.t(`books.status.${this.status()}` as TranslationKey);
+  }
+  protected focusLabel(): string {
+    return this.focusMode() ? this.t('books.editor.exitFocus') : this.t('books.editor.toggleFocus');
+  }
+  protected readingLabel(): string {
+    const m = this.readMin();
+    return m === 0
+      ? this.t('books.editor.footerReadingZero')
+      : this.t('books.editor.footerReading', { n: m });
   }
   protected onTitleInput(event: Event): void {
     const target = event.target as HTMLInputElement | null;
