@@ -362,7 +362,51 @@
   padding: 8px 12px;
   border-bottom: 1px solid var(--mc-border-default);
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  gap: 6px;
+}
+
+.timeline-search {
+  position: relative;
+  flex: 1 0 100%;
+  display: flex;
+  align-items: center;
+}
+.timeline-search-input {
+  width: 100%;
+  padding: 6px 28px 6px 10px;
+  font: inherit;
+  font-size: 12px;
+  border: 1px solid var(--mc-border-default);
+  border-radius: 4px;
+  background: var(--mc-bg-elevated, transparent);
+  color: inherit;
+}
+.timeline-search-input:focus {
+  outline: 2px solid color-mix(in srgb, var(--mc-accent-primary) 45%, transparent);
+  outline-offset: -1px;
+  border-color: var(--mc-accent-primary);
+}
+.timeline-search-clear {
+  position: absolute;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--mc-fg-muted);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+}
+.timeline-search-clear:hover {
+  background: var(--mc-bg-hover);
+  color: var(--mc-fg-primary);
 }
 
 .only-milestones {

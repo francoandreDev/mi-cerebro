@@ -30,6 +30,27 @@
       >
         {{ timelineCollapsed() ? '›' : '‹' }}
       </button>
+      <div class="timeline-search">
+        <input
+          type="search"
+          class="timeline-search-input"
+          [value]="query()"
+          (input)="onQueryInput($event)"
+          [placeholder]="i18n.t('versioning.history.search.placeholder')"
+          [attr.aria-label]="i18n.t('versioning.history.search.placeholder')"
+        />
+        @if (query()) {
+          <button
+            type="button"
+            class="timeline-search-clear"
+            [attr.aria-label]="i18n.t('versioning.history.search.clear')"
+            [title]="i18n.t('versioning.history.search.clear')"
+            (click)="clearQuery()"
+          >
+            ×
+          </button>
+        }
+      </div>
       <label class="only-milestones">
         <input type="checkbox" [checked]="onlyMilestones()" (change)="toggleOnlyMilestones()" />
         {{ i18n.t('versioning.history.milestone.onlyMilestones') }}
@@ -58,7 +79,13 @@
     } @else if (error(); as err) {
       <p class="error">{{ err }}</p>
     } @else if (buckets().length === 0) {
-      <p class="placeholder">{{ i18n.t('versioning.history.empty') }}</p>
+      @if (query()) {
+        <p class="placeholder">
+          {{ i18n.t('versioning.history.search.noMatches', { q: query() }) }}
+        </p>
+      } @else {
+        <p class="placeholder">{{ i18n.t('versioning.history.empty') }}</p>
+      }
     } @else {
       @for (b of buckets(); track b.id) {
         <section class="bucket">
