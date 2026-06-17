@@ -1,19 +1,28 @@
-<div class="page" [class.focus-mode]="focusMode()">
-  <header class="page-head">
-    @if (roman(); as r) {
-      <div class="roman" aria-hidden="true">{{ r }}</div>
-    }
-    <input
-      type="text"
-      class="title-input"
-      [value]="chapter().title"
-      [placeholder]="t('books.chapters.placeholderTitle')"
-      [attr.aria-label]="t('books.chapters.placeholderTitle')"
-      [readOnly]="!editable()"
-      (input)="onTitleInput($event)"
-    />
-    <span class="rule" aria-hidden="true"></span>
-    <div class="head-side">
+<div class="book-frame" [class.focus-mode]="focusMode()">
+  <button
+    type="button"
+    class="page-nav prev"
+    [disabled]="currentSpread() === 0"
+    [attr.aria-label]="t('books.editor.pageTurnPrev')"
+    [title]="t('books.editor.pageTurnPrev')"
+    (click)="prevSpread()"
+  >
+    ‹
+  </button>
+
+  <div class="book">
+    <header class="ui-bar">
+      @if (editable()) {
+        <button
+          type="button"
+          class="primary"
+          (click)="addChapter.emit()"
+          [title]="t('books.editor.newChapter')"
+        >
+          + {{ t('books.editor.newChapter') }}
+        </button>
+      }
+      <span class="spacer"></span>
       <span class="status" [attr.data-status]="status()">{{ statusLabel() }}</span>
       <button
         type="button"
@@ -26,28 +35,82 @@
       >
         {{ t('books.editor.focusLabel') }}
       </button>
+    </header>
+
+    <div
+      #spreadEl
+      class="spread"
+      [class.turning-forward]="turning() === 'forward'"
+      [class.turning-backward]="turning() === 'backward'"
+    >
+      <div class="spine" aria-hidden="true"></div>
+      <div #pagesEl class="pages">
+        <div class="opener" [class.editable]="editable()">
+          @if (roman(); as r) {
+            <div class="roman">{{ r }}</div>
+          }
+          <div class="title-row">
+            <input
+              #titleEl
+              type="text"
+              class="title-input"
+              [value]="chapter().title"
+              [placeholder]="t('books.chapters.placeholderTitle')"
+              [attr.aria-label]="t('books.chapters.placeholderTitle')"
+              [readOnly]="!editable()"
+              (input)="onTitleInput($event)"
+            />
+            @if (editable()) {
+              <button
+                type="button"
+                class="title-edit"
+                [attr.aria-label]="t('books.editor.editTitle')"
+                [title]="t('books.editor.editTitle')"
+                (click)="focusTitle()"
+              >
+                <mc-icon name="pencil-simple" />
+              </button>
+            }
+          </div>
+          <span class="rule" aria-hidden="true"></span>
+        </div>
+        <mc-editor
+          class="editor"
+          [value]="chapter().body"
+          [placeholder]="t('books.chapters.placeholderBody')"
+          [editable]="editable()"
+          [entityId]="chapter().id"
+          [entityTitle]="chapter().title"
+          (valueChange)="bodyChange.emit($event)"
+        />
+      </div>
     </div>
-  </header>
-  <div class="page-body">
-    <mc-editor
-      class="editor"
-      [value]="chapter().body"
-      [placeholder]="t('books.chapters.placeholderBody')"
-      [editable]="editable()"
-      [entityId]="chapter().id"
-      [entityTitle]="chapter().title"
-      (valueChange)="bodyChange.emit($event)"
-    />
+
+    <footer class="ui-foot" aria-hidden="true">
+      <span class="foot-side">{{ t('books.editor.footerWords', { n: words() }) }}</span>
+      <span class="folio">
+        {{
+          t('books.editor.pageCounter', {
+            left: visiblePages().left,
+            right: visiblePages().right,
+            total: visiblePages().total,
+          })
+        }}
+      </span>
+      <span class="foot-side right">
+        {{ t('books.editor.footerChars', { n: chars() }) }} · {{ readingLabel() }}
+      </span>
+    </footer>
   </div>
-  <footer class="page-foot" aria-hidden="true">
-    <span class="foot-side">{{ t('books.editor.footerWords', { n: words() }) }}</span>
-    @if (roman(); as r) {
-      <span class="folio">— {{ r }} —</span>
-    } @else {
-      <span class="folio">·</span>
-    }
-    <span class="foot-side right">
-      {{ t('books.editor.footerChars', { n: chars() }) }} · {{ readingLabel() }}
-    </span>
-  </footer>
+
+  <button
+    type="button"
+    class="page-nav next"
+    [disabled]="atLast()"
+    [attr.aria-label]="t('books.editor.pageTurnNext')"
+    [title]="t('books.editor.pageTurnNext')"
+    (click)="nextSpread()"
+  >
+    ›
+  </button>
 </div>

@@ -14,6 +14,7 @@ import { AutosaveService } from '@core/autosave/autosave.service';
 import { ErrorService } from '@core/errors/error.service';
 import { withReauthIfNeeded } from '@core/errors/with-reauth';
 import { WorkspaceService } from '@core/fs/workspace.service';
+// why: addChapter desde el editor pane usa el mismo flujo que en el desk.
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { EntityLockController } from '@core/locks/entity-lock.controller';
@@ -143,6 +144,20 @@ export class BookReaderContainer {
     const next = { ...current, body };
     this.chapter.set(next);
     this.scheduleChapterSave(next);
+  }
+
+  protected async onAddChapter(): Promise<void> {
+    const b = this.book();
+    if (!b || !this.lock.guardWrite()) return;
+    try {
+      await this.workspace.ensureWritable();
+      const ch = await this.booksService.addChapter(b.id, '');
+      this.book.set(await this.booksService.readBook(b.id));
+      this.chapters.set(await this.booksService.listChapters(b.id));
+      await this.router.navigate(['/books', b.id, ch.id]);
+    } catch (e) {
+      this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize()));
+    }
   }
 
   private async loadBook(id: string): Promise<void> {

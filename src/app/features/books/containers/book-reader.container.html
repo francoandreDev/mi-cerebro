@@ -54,6 +54,7 @@
       (titleChange)="onChapterTitleChange($event)"
       (bodyChange)="onChapterBodyChange($event)"
       (toggleFocus)="onToggleFocus()"
+      (addChapter)="onAddChapter()"
     />
   } @else if (chapterLoading()) {
     <div class="chapter-skeleton" aria-busy="true" [attr.aria-label]="t('app.loading')">
