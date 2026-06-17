@@ -57,6 +57,10 @@ export class ChapterEditorPaneComponent {
   //      Traducimos por bandWidth, NO por clientWidth, si no las páginas
   //      quedan medio desplazadas en cada salto.
   protected readonly bandWidth = signal<number>(0);
+  // why: ancho real de UNA página (margen exterior + columna).
+  //      Excluye la mitad de column-gap que pertenece al canalón/lomo
+  //      — esa zona NO debe rotar con la página.
+  private readonly pageWidth = signal<number>(0);
   private readonly contentWidth = signal<number>(0);
   private readonly extraOffset = signal<number>(0);
   protected readonly turning = signal<'forward' | 'backward' | null>(null);
@@ -81,10 +85,17 @@ export class ChapterEditorPaneComponent {
     const i = this.chapterIndex();
     return i >= 0 ? toRoman(i + 1) : '';
   });
+  // why: el padre actualiza el signal del capítulo en CADA keystroke
+  //      (body cambia → nuevo objeto Chapter). Si el effect dependiera
+  //      de this.chapter() resetearíamos currentSpread a 0 con cada
+  //      tecla y el auto-advance lo llevaría a 1 de nuevo: bounce
+  //      alternado. Acá nos atamos sólo al id, que sólo cambia al
+  //      navegar a otro capítulo.
+  private readonly chapterId = computed(() => this.chapter().id);
 
   constructor() {
     effect(() => {
-      this.chapter();
+      this.chapterId();
       this.currentSpread.set(0);
       queueMicrotask(() => this.updateMetrics());
     });
@@ -122,15 +133,57 @@ export class ChapterEditorPaneComponent {
 
   protected prevSpread(): void {
     if (this.currentSpread() === 0) return;
-    this.turning.set('backward');
-    this.currentSpread.update((v) => v - 1);
-    setTimeout(() => this.turning.set(null), 520);
+    this.startTurn('backward');
   }
   protected nextSpread(): void {
     if (this.atLast()) return;
-    this.turning.set('forward');
-    this.currentSpread.update((v) => v + 1);
-    setTimeout(() => this.turning.set(null), 520);
+    this.startTurn('forward');
+  }
+
+  private startTurn(direction: 'forward' | 'backward'): void {
+    if (this.turning() !== null) return;
+    const pagesEl = this.pagesRef()?.nativeElement;
+    const spreadEl = this.spreadRef()?.nativeElement;
+    if (!pagesEl || !spreadEl) return;
+    const cur = this.currentSpread();
+    const dest = direction === 'forward' ? cur + 1 : cur - 1;
+    const bw = this.bandWidth();
+    if (bw <= 0) {
+      this.currentSpread.set(dest);
+      return;
+    }
+    this.turning.set(direction);
+    const overlay = buildFlipOverlay({
+      direction,
+      innerHtml: pagesEl.innerHTML,
+      curSpread: cur,
+      destSpread: dest,
+      bandWidth: bw,
+      spreadWidth: spreadEl.clientWidth,
+      pageWidth: this.pageWidth(),
+    });
+    // why: Angular ViewEncapsulation.Emulated scope-ea el CSS con un
+    //      atributo _ngcontent-XX. Los elementos creados por JS no lo
+    //      heredan automáticamente; sin él, las reglas de .flip-root /
+    //      .flip-page / animaciones NO matchean y el flip no anima.
+    applyScopeAttr(spreadEl, overlay);
+    spreadEl.appendChild(overlay);
+    void overlay.getBoundingClientRect();
+    overlay.classList.add('active');
+
+    let done = false;
+    const finish = (): void => {
+      if (done) return;
+      done = true;
+      this.currentSpread.set(dest);
+      requestAnimationFrame(() => {
+        overlay.remove();
+        this.turning.set(null);
+      });
+    };
+    const arriving = overlay.querySelector('.flip-page.arriving');
+    arriving?.addEventListener('animationend', finish, { once: true });
+    setTimeout(finish, 950);
   }
   protected focusTitle(): void {
     this.titleRef()?.nativeElement.focus();
@@ -145,7 +198,10 @@ export class ChapterEditorPaneComponent {
     const padR = parseFloat(cs.paddingRight) || 0;
     const colGap = parseFloat(cs.columnGap) || 0;
     const spreadW = spreadEl.clientWidth;
+    const innerW = Math.max(0, spreadW - padL - padR);
+    const colW = Math.max(0, (innerW - colGap) / 2);
     this.bandWidth.set(Math.max(1, spreadW - padL - padR + colGap));
+    this.pageWidth.set(Math.max(1, padL + colW));
     this.contentWidth.set(pagesEl.scrollWidth);
     this.extraOffset.set(padL + padR - colGap);
   }
@@ -182,6 +238,82 @@ export class ChapterEditorPaneComponent {
     if (target) this.titleChange.emit(target.value);
   }
 }
+
+interface FlipOpts {
+  direction: 'forward' | 'backward';
+  innerHtml: string;
+  curSpread: number;
+  destSpread: number;
+  bandWidth: number;
+  spreadWidth: number;
+  pageWidth: number;
+}
+
+const buildFlipOverlay = (opts: FlipOpts): HTMLElement => {
+  const { direction, innerHtml, curSpread, destSpread, bandWidth, spreadWidth, pageWidth } = opts;
+  const fwd = direction === 'forward';
+  const movingSide: 'left' | 'right' = fwd ? 'right' : 'left';
+  const arrivingSide: 'left' | 'right' = fwd ? 'left' : 'right';
+
+  const makeSnapshot = (spread: number, align: 'left' | 'right'): HTMLElement => {
+    const wrap = document.createElement('div');
+    wrap.className = 'pages book-editor flip-snapshot';
+    wrap.innerHTML = innerHtml;
+    wrap.style.position = 'absolute';
+    wrap.style.top = '0';
+    wrap.style.bottom = '0';
+    wrap.style.width = `${spreadWidth}px`;
+    wrap.style.transform = `translateX(${-spread * bandWidth}px)`;
+    wrap.style.transition = 'none';
+    // why: el snapshot vive dentro de un .flip-page más angosto que
+    //      el spread. Anclar por el borde exterior hace que la
+    //      columna visible caiga exactamente sobre el .flip-page,
+    //      con su margen exterior incluido.
+    wrap.style[align] = '0';
+    return wrap;
+  };
+
+  const sizePane = (el: HTMLElement, side: 'left' | 'right'): void => {
+    el.style.width = `${pageWidth}px`;
+    el.style[side] = '0';
+  };
+
+  const root = document.createElement('div');
+  root.className = `flip-root ${direction}`;
+
+  const underlay = document.createElement('div');
+  underlay.className = `flip-underlay ${movingSide}`;
+  sizePane(underlay, movingSide);
+  underlay.appendChild(makeSnapshot(destSpread, movingSide));
+  root.appendChild(underlay);
+
+  const leaving = document.createElement('div');
+  leaving.className = `flip-page leaving ${movingSide}`;
+  sizePane(leaving, movingSide);
+  leaving.appendChild(makeSnapshot(curSpread, movingSide));
+  root.appendChild(leaving);
+
+  const arriving = document.createElement('div');
+  arriving.className = `flip-page arriving ${arrivingSide}`;
+  sizePane(arriving, arrivingSide);
+  arriving.appendChild(makeSnapshot(destSpread, arrivingSide));
+  root.appendChild(arriving);
+
+  return root;
+};
+
+const applyScopeAttr = (sample: HTMLElement, target: HTMLElement): void => {
+  let attr: string | null = null;
+  for (const a of Array.from(sample.attributes)) {
+    if (a.name.startsWith('_ngcontent-')) {
+      attr = a.name;
+      break;
+    }
+  }
+  if (!attr) return;
+  target.setAttribute(attr, '');
+  target.querySelectorAll('*').forEach((el) => el.setAttribute(attr as string, ''));
+};
 
 const readCursorRect = (spread: HTMLElement): DOMRect | null => {
   const sel = document.getSelection();

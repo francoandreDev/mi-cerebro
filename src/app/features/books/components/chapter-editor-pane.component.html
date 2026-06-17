@@ -42,6 +42,7 @@
       class="spread"
       [class.turning-forward]="turning() === 'forward'"
       [class.turning-backward]="turning() === 'backward'"
+      [class.is-turning]="turning() !== null"
     >
       <div class="spine" aria-hidden="true"></div>
       <div #pagesEl class="pages book-editor">

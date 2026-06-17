@@ -30,9 +30,32 @@
     outline: none !important;
     border: none;
   }
+  // why: el modo draft-session pinta un outline naranja punteado y un
+  //      inset box-shadow para marcar la sesión de borrador. Dentro
+  //      del libro rompe la metáfora de hoja — lo aplastamos. El
+  //      estado sigue activo (lógica y otras señales visuales).
+  mc-editor .editor-host.draft-session {
+    outline: none !important;
+    border: none;
+    background: transparent;
+  }
+  mc-editor .editor-host.draft-session::before {
+    display: none;
+  }
   mc-editor .editor-host .ProseMirror {
     min-height: 0;
     outline: none;
+  }
+  // why: _reset.scss aplica un outline naranja global a :focus-visible.
+  //      Al tipear, el ProseMirror lo gana y aparece como halo naranja
+  //      sobre la página. En modo libro el caret + tipografía ya marcan
+  //      el foco; no queremos contorno encima de la hoja.
+  mc-editor .editor-host:focus-visible,
+  mc-editor .editor-host .ProseMirror:focus,
+  mc-editor .editor-host .ProseMirror:focus-visible {
+    outline: none !important;
+    outline-offset: 0 !important;
+    box-shadow: none !important;
   }
   // Los popovers (comments / drafts panel) del editor no caen en
   // columnas: deben quedar como overlays. Forzamos posición fija
