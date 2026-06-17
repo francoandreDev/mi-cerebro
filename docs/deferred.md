@@ -187,3 +187,15 @@ Formato por entrada:
 - **Qué**: opciones "Duplicar libro", "Exportar libro a .md", "Exportar capítulo activo a .md" en el menú overflow del meta bar. Hoy sólo hay "Mover a papelera".
 - **Por qué se difirió**: duplicar requiere lógica nueva en `BooksService` (copiar dir + reasignar IDs + reindexar) y exportar a MD requiere un converter de ProseMirror→Markdown que toca `@core/tiptap/`. Ambos son features de tamaño propio, no parte del rediseño visual.
 - **Target**: sin asignar.
+
+### Subset + conversión a woff2 de Crimson Pro
+
+- **Qué**: las tres variantes de Crimson Pro viven en `public/fonts/` como `.ttf` (~98KB c/u, ~294KB total). Convertirlas a `.woff2` recortaría ~50% y un subset latin-extended bajaría otro ~30%.
+- **Por qué se difirió**: `woff2_compress` no está en el entorno de desarrollo; bajar las versiones woff2 oficiales de Google Fonts requiere ajustar `User-Agent`. Funcionalmente las ttf funcionan idéntico y los 300KB son aceptables para una PWA (se cachean por el SW en el primer boot).
+- **Target**: §19.16f.
+
+### Typewriter focus línea-por-línea
+
+- **Qué**: en modo foco actualmente se aplica una máscara CSS que oscurece arriba y abajo de la página. El target ideal es resaltar exactamente la línea/párrafo donde está el cursor (TipTap selectionUpdate → marca block actual con clase, el resto baja a opacity 0.3).
+- **Por qué se difirió**: requiere extensión de ProseMirror que actualice el atributo en cada movimiento de cursor. La máscara CSS captura ~70% del efecto sin tocar el editor. Si en uso real se sienta corto, se hace.
+- **Target**: §19.16f.

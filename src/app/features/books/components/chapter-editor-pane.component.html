@@ -1,41 +1,53 @@
-<header class="bar">
-  <input
-    type="text"
-    class="title-input"
-    [value]="chapter().title"
-    [placeholder]="t('books.chapters.placeholderTitle')"
-    [attr.aria-label]="t('books.chapters.placeholderTitle')"
-    [readOnly]="!editable()"
-    (input)="onTitleInput($event)"
-  />
-  <span class="status" [attr.data-status]="status()">{{ statusLabel() }}</span>
-  <button
-    type="button"
-    class="focus-toggle"
-    [class.active]="focusMode()"
-    [attr.aria-pressed]="focusMode()"
-    [attr.aria-label]="focusLabel()"
-    [title]="focusLabel()"
-    (click)="toggleFocus.emit()"
-  >
-    {{ t('books.editor.focusLabel') }}
-  </button>
-</header>
-<div class="reading-area">
-  <mc-editor
-    class="editor"
-    [value]="chapter().body"
-    [placeholder]="t('books.chapters.placeholderBody')"
-    [editable]="editable()"
-    [entityId]="chapter().id"
-    [entityTitle]="chapter().title"
-    (valueChange)="bodyChange.emit($event)"
-  />
+<div class="page" [class.focus-mode]="focusMode()">
+  <header class="page-head">
+    @if (roman(); as r) {
+      <div class="roman" aria-hidden="true">{{ r }}</div>
+    }
+    <input
+      type="text"
+      class="title-input"
+      [value]="chapter().title"
+      [placeholder]="t('books.chapters.placeholderTitle')"
+      [attr.aria-label]="t('books.chapters.placeholderTitle')"
+      [readOnly]="!editable()"
+      (input)="onTitleInput($event)"
+    />
+    <span class="rule" aria-hidden="true"></span>
+    <div class="head-side">
+      <span class="status" [attr.data-status]="status()">{{ statusLabel() }}</span>
+      <button
+        type="button"
+        class="focus-toggle"
+        [class.active]="focusMode()"
+        [attr.aria-pressed]="focusMode()"
+        [attr.aria-label]="focusLabel()"
+        [title]="focusLabel()"
+        (click)="toggleFocus.emit()"
+      >
+        {{ t('books.editor.focusLabel') }}
+      </button>
+    </div>
+  </header>
+  <div class="page-body">
+    <mc-editor
+      class="editor"
+      [value]="chapter().body"
+      [placeholder]="t('books.chapters.placeholderBody')"
+      [editable]="editable()"
+      [entityId]="chapter().id"
+      [entityTitle]="chapter().title"
+      (valueChange)="bodyChange.emit($event)"
+    />
+  </div>
+  <footer class="page-foot" aria-hidden="true">
+    <span class="foot-side">{{ t('books.editor.footerWords', { n: words() }) }}</span>
+    @if (roman(); as r) {
+      <span class="folio">— {{ r }} —</span>
+    } @else {
+      <span class="folio">·</span>
+    }
+    <span class="foot-side right">
+      {{ t('books.editor.footerChars', { n: chars() }) }} · {{ readingLabel() }}
+    </span>
+  </footer>
 </div>
-<footer class="footer" aria-hidden="true">
-  <span>{{ t('books.editor.footerWords', { n: words() }) }}</span>
-  <span class="dot">·</span>
-  <span>{{ t('books.editor.footerChars', { n: chars() }) }}</span>
-  <span class="dot">·</span>
-  <span>{{ readingLabel() }}</span>
-</footer>

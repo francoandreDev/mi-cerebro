@@ -49,6 +49,8 @@
       [status]="chapterStatus()"
       [editable]="lock.editable()"
       [focusMode]="focusMode()"
+      [chapterIndex]="activeIndex()"
+      [chapterTotal]="chapters().length"
       (titleChange)="onChapterTitleChange($event)"
       (bodyChange)="onChapterBodyChange($event)"
       (toggleFocus)="onToggleFocus()"

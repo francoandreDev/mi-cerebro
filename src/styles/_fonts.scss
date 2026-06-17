@@ -1,0 +1,27 @@
+// why: Crimson Pro local para el editor de capítulos. PROYECTO §4.14
+//      prohíbe llamadas de red sin acción explícita del usuario, así que
+//      la fuente vive en public/fonts/ y se carga desde el mismo origen.
+
+@font-face {
+  font-family: 'Crimson Pro';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/CrimsonPro-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Crimson Pro';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/CrimsonPro-SemiBold.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Crimson Pro';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/CrimsonPro-Italic.ttf') format('truetype');
+}
