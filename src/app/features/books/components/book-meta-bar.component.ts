@@ -1,8 +1,10 @@
-import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import type { Tag } from '@core/tags/tag.types';
+import { IconComponent } from '@shared/icon/icon.component';
 import { MenuButtonComponent, type MenuOption } from '@shared/menu-button/menu-button.component';
 import { TagPickerComponent } from '@shared/tags/tag-picker.component';
 
@@ -13,104 +15,49 @@ export type BookSaveStatus = 'saved' | 'saving' | 'unsaved';
 @Component({
   selector: 'mc-book-meta-bar',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TagPickerComponent, MenuButtonComponent],
-  template: `
-    <input
-      type="text"
-      class="title-input"
-      [value]="book().title"
-      [placeholder]="t('books.placeholderTitle')"
-      [attr.aria-label]="t('books.placeholderTitle')"
-      [readOnly]="!editable()"
-      (input)="onTitleInput($event)"
-    />
-    <mc-tag-picker
-      class="tags"
-      [availableTags]="availableTags()"
-      [selectedIds]="book().tags"
-      [editable]="editable()"
-      (addTag)="addTag.emit($event)"
-      (removeTag)="removeTag.emit($event)"
-    />
-    <span
-      class="status"
-      [attr.data-status]="status()"
-      [attr.aria-label]="statusLabel()"
-      [title]="statusLabel()"
-      >{{ statusGlyph() }}</span
-    >
-    @if (editable()) {
-      <mc-menu-button
-        variant="ghost"
-        [label]="'⋯'"
-        [options]="menuOptions()"
-        (choose)="onMenuChoose($event)"
-      />
-    }
-  `,
-  styles: `
-    :host {
-      display: flex;
-      align-items: center;
-      gap: var(--mc-space-3);
-      padding: var(--mc-space-3) var(--mc-space-4);
-      border-bottom: 1px solid var(--mc-border-default);
-    }
-    .title-input {
-      flex: 1;
-      min-width: 0;
-      font-size: var(--mc-font-size-lg);
-      background: transparent;
-      border: none;
-      color: var(--mc-fg-primary);
-      padding: var(--mc-space-1) 0;
-    }
-    .title-input:focus {
-      outline: none;
-      border-bottom: 1px solid var(--mc-accent-primary);
-    }
-    .tags {
-      flex-shrink: 0;
-    }
-    .status {
-      font-size: var(--mc-font-size-md);
-      color: var(--mc-fg-muted);
-      width: 1.2rem;
-      text-align: center;
-    }
-    .status[data-status='saving'] {
-      color: var(--mc-accent-primary);
-    }
-    .status[data-status='unsaved'] {
-      color: var(--mc-fg-warning, #d97706);
-    }
-  `,
+  imports: [TagPickerComponent, MenuButtonComponent, IconComponent, RouterLink],
+  templateUrl: './book-meta-bar.component.html',
+  styleUrl: './book-meta-bar.component.css',
 })
 export class BookMetaBarComponent {
   readonly book = input.required<Book>();
   readonly status = input<BookSaveStatus>('saved');
   readonly availableTags = input.required<readonly Tag[]>();
   readonly editable = input<boolean>(true);
+  readonly chaptersCount = input<number>(0);
+  readonly totalWords = input<number>(0);
   readonly titleChange = output<string>();
   readonly removeBook = output<void>();
   readonly addTag = output<string>();
   readonly removeTag = output<string>();
 
+  protected readonly statsLabel = computed<string>(() => {
+    const chapters = this.chaptersCount();
+    const words = this.totalWords();
+    if (chapters === 0) return this.t('books.bookStats.zero');
+    const chaptersText =
+      chapters === 1
+        ? this.t('books.chapters.countOne')
+        : this.t('books.chapters.countMany', { count: chapters });
+    const ago = formatAgo(this.book().updatedAt, (k, p) => this.t(k, p));
+    return this.t('books.bookStats', { chapters: chaptersText, words: formatNumber(words), ago });
+  });
+
   private readonly i18n = inject(I18nService);
-  protected t(key: TranslationKey): string {
-    return this.i18n.t(key);
+  protected t(key: TranslationKey, params?: Record<string, string | number>): string {
+    return this.i18n.t(key, params);
   }
   protected statusLabel(): string {
     return this.t(`books.status.${this.status()}` as TranslationKey);
   }
-  protected statusGlyph(): string {
+  protected statusIcon(): 'check' | 'clock-counter-clockwise' | 'warning' {
     const s = this.status();
-    if (s === 'saving') return '↻';
-    if (s === 'unsaved') return '●';
-    return '✓';
+    if (s === 'saving') return 'clock-counter-clockwise';
+    if (s === 'unsaved') return 'warning';
+    return 'check';
   }
   protected menuOptions(): readonly MenuOption[] {
-    return [{ key: 'delete', label: this.t('books.delete') }];
+    return [{ key: 'delete', label: this.t('books.menu.delete') }];
   }
   protected onMenuChoose(key: string): void {
     if (key === 'delete') this.removeBook.emit();
@@ -120,3 +67,24 @@ export class BookMetaBarComponent {
     if (target) this.titleChange.emit(target.value);
   }
 }
+
+const formatNumber = (n: number): string => n.toLocaleString('es-AR');
+
+// why: se calcula acá para no fabricar un servicio sólo para relative-time. Es 1 uso, inline.
+const formatAgo = (
+  iso: string,
+  t: (k: TranslationKey, p?: Record<string, string | number>) => string,
+): string => {
+  const then = new Date(iso).getTime();
+  if (!Number.isFinite(then)) return '';
+  const diffMin = Math.max(0, Math.floor((Date.now() - then) / 60000));
+  if (diffMin < 2) return t('books.editedAgo.justNow');
+  if (diffMin < 60) return t('books.editedAgo.minutes', { n: diffMin });
+  const diffH = Math.floor(diffMin / 60);
+  if (diffH < 24) return t('books.editedAgo.hours', { n: diffH });
+  const diffD = Math.floor(diffH / 24);
+  if (diffD < 30) return t('books.editedAgo.days', { n: diffD });
+  const diffMo = Math.floor(diffD / 30);
+  if (diffMo < 12) return t('books.editedAgo.months', { n: diffMo });
+  return t('books.editedAgo.years', { n: Math.floor(diffMo / 12) });
+};

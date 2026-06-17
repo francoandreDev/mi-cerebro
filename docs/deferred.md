@@ -171,3 +171,19 @@ Formato por entrada:
 - **Qué**: 13e-i usa `https://cors.isomorphic-git.org` (proxy público mantenido por la lib) para sortear CORS de GitHub HTTPS. Funciona pero es un single point of failure operado por terceros; el plan a largo plazo es un proxy propio (Cloudflare Worker o similar) que el usuario apunta desde `/settings`.
 - **Por qué se difirió**: levantar y mantener un proxy propio requiere infra externa al repo. Para el smoke push inicial y uso single-user el proxy público sirve; el usuario está advertido en la UI.
 - **Target**: §19.16f.
+
+---
+
+## Books / UI (origen: rediseño de /books)
+
+### Subtítulo opcional en `Book`
+
+- **Qué**: campo `subtitle?: string` editable en la meta bar, para "Crónica del asesino de reyes · Libro 1" abajo del título principal.
+- **Por qué se difirió**: agregar un campo al schema persistido implica `BOOK_SCHEMA_VERSION` bump + step de migración (§4.15) que no aporta a la UX hasta que el resto del rediseño cierre. Lo metemos cuando haya otra razón para bumpear o si el usuario lo pide.
+- **Target**: sin asignar.
+
+### Menú ⋯ con duplicar / exportar a Markdown
+
+- **Qué**: opciones "Duplicar libro", "Exportar libro a .md", "Exportar capítulo activo a .md" en el menú overflow del meta bar. Hoy sólo hay "Mover a papelera".
+- **Por qué se difirió**: duplicar requiere lógica nueva en `BooksService` (copiar dir + reasignar IDs + reindexar) y exportar a MD requiere un converter de ProseMirror→Markdown que toca `@core/tiptap/`. Ambos son features de tamaño propio, no parte del rediseño visual.
+- **Target**: sin asignar.

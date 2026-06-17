@@ -1,0 +1,38 @@
+<div class="top">
+  <a routerLink="/books" class="back" [title]="t('books.breadcrumb.root')">
+    ‹ {{ t('books.breadcrumb.root') }}
+  </a>
+  <span class="spacer"></span>
+  <span class="status" [attr.data-status]="status()" [attr.aria-label]="statusLabel()">
+    <mc-icon [name]="statusIcon()" />
+    <span class="status-text">{{ statusLabel() }}</span>
+  </span>
+  @if (editable()) {
+    <mc-menu-button
+      variant="ghost"
+      [label]="'⋯'"
+      [options]="menuOptions()"
+      (choose)="onMenuChoose($event)"
+    />
+  }
+</div>
+<input
+  type="text"
+  class="title-input"
+  [value]="book().title"
+  [placeholder]="t('books.placeholderTitle')"
+  [attr.aria-label]="t('books.placeholderTitle')"
+  [readOnly]="!editable()"
+  (input)="onTitleInput($event)"
+/>
+<div class="bottom">
+  <mc-tag-picker
+    class="tags"
+    [availableTags]="availableTags()"
+    [selectedIds]="book().tags"
+    [editable]="editable()"
+    (addTag)="addTag.emit($event)"
+    (removeTag)="removeTag.emit($event)"
+  />
+  <span class="stats">{{ statsLabel() }}</span>
+</div>

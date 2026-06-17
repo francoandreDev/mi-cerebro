@@ -24,6 +24,8 @@
       [status]="bookStatus()"
       [availableTags]="tags()"
       [editable]="lock.editable()"
+      [chaptersCount]="chapters().length"
+      [totalWords]="totalWords()"
       (titleChange)="onTitleChange($event)"
       (removeBook)="onDeleteBook()"
       (addTag)="onAddTag($event)"

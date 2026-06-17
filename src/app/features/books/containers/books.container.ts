@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import type { JSONContent } from '@tiptap/core';
 
@@ -49,6 +57,9 @@ export class BooksContainer {
   protected readonly activeChapter = signal<Chapter | null>(null);
   protected readonly bookStatus = signal<BookSaveStatus>('saved');
   protected readonly chapterStatus = signal<BookSaveStatus>('saved');
+  protected readonly totalWords = computed(() =>
+    this.chapters().reduce((acc, c) => acc + c.words, 0),
+  );
   protected readonly lock = new EntityLockController(BOOK_KIND, this.active);
 
   constructor() {
