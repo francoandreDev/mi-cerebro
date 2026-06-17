@@ -2,6 +2,7 @@ import type { OnInit } from '@angular/core';
 import {
   ChangeDetectionStrategy,
   Component,
+  HostListener,
   computed,
   effect,
   inject,
@@ -47,6 +48,58 @@ const GROUP_ORDER: readonly GroupKey[] = [
   'meta',
   'other',
 ];
+
+interface ParsedQuery {
+  readonly facet: Facet | null;
+  readonly sinceMs: number | null;
+  readonly sha: string | null;
+  readonly text: readonly string[];
+}
+
+function parseSearchQuery(raw: string): ParsedQuery {
+  const trimmed = raw.trim();
+  if (!trimmed) return { facet: null, sinceMs: null, sha: null, text: [] };
+  let facet: Facet | null = null;
+  let sinceMs: number | null = null;
+  let sha: string | null = null;
+  const text: string[] = [];
+  for (const tok of trimmed.split(/\s+/)) {
+    const lc = tok.toLowerCase();
+    const facetMatch = /^facet:(main|comments|draft)$/.exec(lc);
+    if (facetMatch) {
+      facet = facetMatch[1] as Facet;
+      continue;
+    }
+    const sinceMatch = /^since:(\d+)([dhw])$/.exec(lc);
+    if (sinceMatch) {
+      const n = Number(sinceMatch[1]);
+      const unit = sinceMatch[2];
+      const ms = unit === 'h' ? n * 3_600_000 : unit === 'w' ? n * 604_800_000 : n * 86_400_000;
+      sinceMs = Date.now() - ms;
+      continue;
+    }
+    const shaMatch = /^(?:sha:)?([0-9a-f]{4,40})$/i.exec(tok);
+    if (shaMatch) {
+      sha = shaMatch[1]!.toLowerCase();
+      continue;
+    }
+    text.push(lc);
+  }
+  return { facet, sinceMs, sha, text };
+}
+
+function matchesQuery(entry: CommitEntry, q: ParsedQuery): boolean {
+  if (q.facet && facetOf(entry.message) !== q.facet) return false;
+  if (q.sinceMs !== null && entry.date.getTime() < q.sinceMs) return false;
+  if (q.sha && !entry.oid.toLowerCase().startsWith(q.sha)) return false;
+  if (q.text.length > 0) {
+    const haystack = entry.message.toLowerCase();
+    for (const term of q.text) {
+      if (!haystack.includes(term)) return false;
+    }
+  }
+  return true;
+}
 
 function groupKeyForPath(path: string): GroupKey {
   if (path.startsWith('notes/')) return 'notes';
@@ -102,6 +155,20 @@ export class HistoryContainer implements OnInit {
   protected toggleOnlyMilestones(): void {
     this.onlyMilestonesSignal.update((v) => !v);
   }
+
+  // Free-text search over the timeline. Tokens:
+  //  - facet:main|comments|draft  → faceta filter (also AND'd with chips)
+  //  - since:Nd                    → solo commits con date ≥ ahora − N días
+  //  - sha o sha:abc1234           → match por shortOid
+  //  - cualquier otro token        → substring case-insensitive en el mensaje
+  protected readonly query = signal('');
+  protected onQueryInput(ev: Event): void {
+    this.query.set((ev.target as HTMLInputElement).value);
+  }
+  protected clearQuery(): void {
+    this.query.set('');
+  }
+  private readonly parsedQuery = computed<ParsedQuery>(() => parseSearchQuery(this.query()));
 
   // Collapsing either pane gives the other one the full /history width.
   // State is ephemeral on purpose: leaving and re-entering /history
@@ -162,12 +229,14 @@ export class HistoryContainer implements OnInit {
     const facets = this.enabledFacetsSignal();
     const byOid = this.milestonesByOid();
     const noise = this.noiseOidsSignal();
+    const q = this.parsedQuery();
     const matches = (entry: CommitEntry): boolean => {
       // why: milestones nunca se ocultan aunque sean ruido — el usuario
       //      decidió marcarlos como puntos relevantes.
       if (noise.has(entry.oid) && !byOid.has(entry.oid)) return false;
       if (!facets.has(facetOf(entry.message))) return false;
       if (onlyMile && !byOid.has(entry.oid)) return false;
+      if (!matchesQuery(entry, q)) return false;
       return true;
     };
     const transformItem = (item: TimelineItem): TimelineItem | null => {
@@ -429,6 +498,50 @@ export class HistoryContainer implements OnInit {
 
   protected select(oid: string): void {
     this.selectedOidSignal.set(oid);
+  }
+
+  // Keyboard nav between milestones: '[' previous, ']' next. Bracket-keys are
+  // a stable choice across keyboard layouts and don't collide with the inputs
+  // inside the timeline head.
+  @HostListener('document:keydown', ['$event'])
+  protected onKeydown(ev: KeyboardEvent): void {
+    if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
+    const target = ev.target as HTMLElement | null;
+    if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
+    if (target?.isContentEditable) return;
+    if (ev.key !== '[' && ev.key !== ']') return;
+    const direction = ev.key === ']' ? 1 : -1;
+    const target_ = this.findAdjacentMilestone(direction);
+    if (!target_) return;
+    ev.preventDefault();
+    this.selectedOidSignal.set(target_);
+    queueMicrotask(() => {
+      document
+        .getElementById(`commit-${target_}`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  }
+
+  private findAdjacentMilestone(direction: 1 | -1): string | null {
+    const entries = this.entries();
+    const byOid = this.milestonesByOid();
+    const oids = entries.map((e) => e.oid);
+    const milestoneIndices: number[] = [];
+    oids.forEach((oid, idx) => {
+      if (byOid.has(oid)) milestoneIndices.push(idx);
+    });
+    if (milestoneIndices.length === 0) return null;
+    const current = this.selectedOidSignal();
+    const currentIdx = current ? oids.indexOf(current) : -1;
+    if (currentIdx === -1) {
+      return oids[direction === 1 ? milestoneIndices[0]! : milestoneIndices.at(-1)!]!;
+    }
+    if (direction === 1) {
+      const next = milestoneIndices.find((i) => i > currentIdx);
+      return next !== undefined ? oids[next]! : null;
+    }
+    const prev = [...milestoneIndices].reverse().find((i) => i < currentIdx);
+    return prev !== undefined ? oids[prev]! : null;
   }
 
   private readonly restoringPathSignal = signal<string | null>(null);

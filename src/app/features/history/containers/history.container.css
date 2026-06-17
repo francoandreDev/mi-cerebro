@@ -431,32 +431,36 @@ aside.timeline {
   outline-offset: 1px;
 }
 
+/* why: rail-style milestone marker — ★ + nombre, alineado a la izquierda
+        del row, sin banner horizontal que rompa el scan vertical. */
 .milestone-band {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  margin: 6px 0 2px 0;
-  padding: 4px 8px;
-  border-left: 3px solid var(--mc-accent-primary);
-  background: color-mix(in srgb, var(--mc-accent-primary) 12%, transparent);
-  border-radius: 2px;
-}
-
-.milestone-band-label {
-  font-size: 10px;
+  gap: 6px;
+  margin: 2px 0 0 4px;
+  padding: 0;
+  font-size: 11px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
   color: var(--mc-accent-primary);
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+.milestone-band::before {
+  content: '★';
+  font-size: 13px;
+  line-height: 1;
+}
+.milestone-band-label {
+  display: none;
 }
 
 .milestone-band-name {
-  font-size: 12px;
-  font-weight: 600;
   color: var(--mc-fg-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  max-width: 220px;
 }
 
 .commit.has-milestone {
