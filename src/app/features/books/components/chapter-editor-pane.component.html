@@ -44,7 +44,7 @@
       [class.turning-backward]="turning() === 'backward'"
     >
       <div class="spine" aria-hidden="true"></div>
-      <div #pagesEl class="pages">
+      <div #pagesEl class="pages book-editor">
         <div class="opener" [class.editable]="editable()">
           @if (roman(); as r) {
             <div class="roman">{{ r }}</div>

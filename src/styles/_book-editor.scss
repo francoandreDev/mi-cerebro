@@ -1,0 +1,46 @@
+// why: cuando mc-editor se monta dentro de la vista de libro
+//      (clase .book-editor) hay que aplastar su layout interno para
+//      que el flujo de columnas CSS pueda atravesarlo. Sin esto, su
+//      shell flex + el editor-host con borde/padding/min-height
+//      propios se comportan como bloques no fragmentables y el
+//      contenido cae fuera del spread.
+
+.book-editor {
+  mc-editor {
+    display: contents;
+  }
+  mc-editor-toolbar {
+    display: none;
+  }
+  // Los wrappers internos del editor pasan a "contents" para que
+  // el ProseMirror sea hijo directo del column container.
+  mc-editor .shell {
+    display: contents;
+  }
+  mc-editor .editor-host {
+    flex: none;
+    display: block;
+    min-height: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    outline: none !important;
+  }
+  mc-editor .editor-host:focus-within {
+    outline: none !important;
+    border: none;
+  }
+  // El ProseMirror también
+  mc-editor .editor-host .ProseMirror {
+    min-height: 0;
+  }
+  // Los popovers (comments / drafts panel) del editor no caen en
+  // columnas: deben quedar como overlays. Forzamos posición fija
+  // para que ignoren el flujo de columnas.
+  mc-editor mc-comments-panel.index-popover,
+  mc-editor mc-drafts-panel.index-popover {
+    position: fixed;
+    top: var(--mc-space-4);
+    right: var(--mc-space-4);
+  }
+}
