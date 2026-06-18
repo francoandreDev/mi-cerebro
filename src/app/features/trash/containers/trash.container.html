@@ -1,89 +1,145 @@
 <header class="bar">
   <h1>{{ t('trash.title') }}</h1>
-  @if (!isEmpty()) {
-    <button type="button" class="danger" (click)="empty()">
-      {{ t('trash.empty') }}
-    </button>
-  }
-</header>
-@if (isEmpty()) {
-  <div class="empty">{{ t('trash.emptyState') }}</div>
-} @else {
-  <ul class="list">
-    @for (entry of entries(); track entryKey(entry)) {
-      <li class="item" [class.expanded]="isExpanded(entry)">
-        <div
-          class="row"
-          role="button"
-          tabindex="0"
-          [attr.aria-expanded]="isExpanded(entry)"
-          (click)="toggle(entry)"
-          (keydown.enter)="toggle(entry)"
-          (keydown.space)="$event.preventDefault(); toggle(entry)"
+  <div class="bar-tools">
+    <div class="search">
+      <input
+        type="search"
+        class="search-input"
+        [value]="query()"
+        [attr.aria-label]="t('trash.search.aria')"
+        [placeholder]="t('trash.search.placeholder')"
+        (input)="onQueryInput($event)"
+      />
+      @if (query()) {
+        <button
+          type="button"
+          class="search-clear"
+          [attr.aria-label]="t('trash.search.clear')"
+          (click)="clearQuery()"
         >
-          <span class="chevron" aria-hidden="true">{{ isExpanded(entry) ? '▾' : '▸' }}</span>
-          <span class="kind" [attr.data-kind]="entry.kind">{{ kindLabel(entry) }}</span>
-          <span class="title">{{ entry.title || t('trash.untitledTitle') }}</span>
-          <span class="date">{{ entry.deletedAt | mcDate }}</span>
-          <span class="actions">
-            <button type="button" class="primary" (click)="restore(entry, $event)">
-              {{ t('trash.restore') }}
-            </button>
-            <button type="button" class="ghost" (click)="purge(entry, $event)">
-              {{ t('trash.purge') }}
-            </button>
-          </span>
-        </div>
-        @if (isExpanded(entry)) {
-          @let state = previewState(entry);
-          <div class="preview">
-            @if (!state || state.status === 'loading') {
-              <div class="preview-status">{{ t('trash.preview.loading') }}</div>
-            } @else if (state.status === 'missing') {
-              <div class="preview-status">{{ t('trash.preview.unavailable') }}</div>
-            } @else {
-              @if (state.preview.facts.length) {
-                <dl class="facts">
-                  @for (fact of state.preview.facts; track fact.labelKey) {
-                    <div class="fact">
-                      <dt>{{ factLabel(fact.labelKey) }}</dt>
-                      <dd>{{ factValue(fact.value) }}</dd>
-                    </div>
-                  }
-                </dl>
-              }
-              @if (state.preview.tags.length) {
-                <div class="tags">
-                  @for (tag of state.preview.tags; track tag) {
-                    <span class="tag">#{{ tag }}</span>
-                  }
-                </div>
-              }
-              @if (state.preview.excerpt) {
-                <p class="excerpt">{{ state.preview.excerpt }}</p>
-              } @else if (!state.preview.facts.length && !state.preview.tags.length) {
-                <div class="preview-status">{{ t('trash.preview.noContent') }}</div>
-              }
-              @if (state.preview.createdAt || state.preview.updatedAt) {
-                <div class="stamps">
-                  @if (state.preview.createdAt) {
-                    <span
-                      >{{ t('trash.preview.createdAt') }}:
-                      {{ state.preview.createdAt | mcDate: true }}</span
-                    >
-                  }
-                  @if (state.preview.updatedAt) {
-                    <span
-                      >{{ t('trash.preview.updatedAt') }}:
-                      {{ state.preview.updatedAt | mcDate: true }}</span
-                    >
-                  }
-                </div>
-              }
+          ×
+        </button>
+      }
+    </div>
+    @if (!isEmpty()) {
+      <button type="button" class="danger" (click)="onEmpty()">
+        {{ t('trash.empty') }}
+      </button>
+    }
+  </div>
+</header>
+
+@if (isEmpty()) {
+  <div class="empty">
+    <div class="empty-icon" aria-hidden="true">🗑</div>
+    <h2 class="empty-title">{{ t('trash.empty.title') }}</h2>
+    <p class="empty-body">{{ t('trash.empty.body') }}</p>
+  </div>
+} @else {
+  <mc-trash-filter-bar
+    class="filters"
+    [counts]="counts()"
+    [total]="entries().length"
+    [active]="activeKind()"
+    (kindChange)="onSelectKind($event)"
+  />
+
+  @if (noMatch()) {
+    <div class="empty soft">{{ t('trash.noMatch') }}</div>
+  } @else {
+    <div class="grid">
+      @for (entry of visible(); track entryKey(entry)) {
+        <mc-trash-card
+          [kind]="entry.kind"
+          [kindLabel]="kindLabel(entry)"
+          [title]="entryTitle(entry)"
+          [deletedAt]="entry.deletedAt"
+          (view)="onView(entry)"
+          (restore)="onRestore(entry)"
+          (purge)="onPurge(entry)"
+        >
+          <mc-trash-card-content
+            [kind]="entry.kind"
+            [title]="entryTitle(entry)"
+            [state]="cardState(entry)"
+          />
+        </mc-trash-card>
+      }
+    </div>
+  }
+}
+
+@if (viewing(); as v) {
+  @let state = cardState(v);
+  <button
+    type="button"
+    class="modal-backdrop"
+    [attr.aria-label]="t('trash.viewClose')"
+    (click)="closeView()"
+  ></button>
+  <div class="modal" role="dialog" aria-modal="true" [attr.aria-label]="entryTitle(v)">
+    <header class="modal-head">
+      <span class="modal-chip" [attr.data-kind]="v.kind">{{ kindLabel(v) }}</span>
+      <h2 class="modal-title">{{ entryTitle(v) }}</h2>
+      <button
+        type="button"
+        class="modal-close"
+        [attr.aria-label]="t('trash.viewClose')"
+        (click)="closeView()"
+      >
+        ×
+      </button>
+    </header>
+    <div class="modal-meta">
+      <span>{{ t('trash.details.deletedAt') }}: {{ v.deletedAt | mcDate }}</span>
+      @if (state.status === 'ready' && state.preview?.createdAt) {
+        <span
+          >{{ t('trash.preview.createdAt') }}: {{ state.preview!.createdAt | mcDate: true }}</span
+        >
+      }
+      @if (state.status === 'ready' && state.preview?.updatedAt) {
+        <span
+          >{{ t('trash.preview.updatedAt') }}: {{ state.preview!.updatedAt | mcDate: true }}</span
+        >
+      }
+    </div>
+    <div class="modal-body">
+      @if (state.status === 'loading') {
+        <p class="modal-status">{{ t('trash.preview.loading') }}</p>
+      } @else if (state.status === 'missing' || !state.preview) {
+        <p class="modal-status">{{ t('trash.preview.unavailable') }}</p>
+      } @else {
+        @if (state.preview.facts.length) {
+          <dl class="modal-facts">
+            @for (fact of state.preview.facts; track fact.labelKey) {
+              <div class="modal-fact">
+                <dt>{{ factLabel(fact.labelKey) }}</dt>
+                <dd>{{ factValue(fact.value) }}</dd>
+              </div>
+            }
+          </dl>
+        }
+        @if (state.preview.tags.length) {
+          <div class="modal-tags">
+            @for (tag of state.preview.tags; track tag) {
+              <span class="modal-tag">#{{ tag }}</span>
             }
           </div>
         }
-      </li>
-    }
-  </ul>
+        @if (state.preview.excerpt) {
+          <p class="modal-excerpt">{{ state.preview.excerpt }}</p>
+        } @else if (!state.preview.facts.length && !state.preview.tags.length) {
+          <p class="modal-status">{{ t('trash.preview.noContent') }}</p>
+        }
+      }
+    </div>
+    <footer class="modal-foot">
+      <button type="button" class="op restore" (click)="onRestore(v)">
+        {{ t('trash.restore') }}
+      </button>
+      <button type="button" class="op purge" (click)="onPurge(v)">
+        {{ t('trash.purgeForever') }}
+      </button>
+    </footer>
+  </div>
 }

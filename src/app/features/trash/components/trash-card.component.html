@@ -1,0 +1,50 @@
+<article
+  class="card"
+  [attr.data-kind]="kind()"
+  [class.imminent]="countdown().imminent"
+  [class.urgent]="countdown().urgent"
+>
+  <header class="head">
+    <span class="chip">
+      <mc-icon [name]="icon()" />
+      <span>{{ kindLabel() }}</span>
+    </span>
+    <h3 class="title" [title]="title()">{{ title() }}</h3>
+  </header>
+
+  <div class="content">
+    <ng-content />
+  </div>
+
+  <footer class="foot">
+    <div
+      class="progress"
+      role="meter"
+      [attr.aria-valuemin]="0"
+      [attr.aria-valuemax]="retention"
+      [attr.aria-valuenow]="countdown().daysLeft"
+      [attr.aria-label]="countdownAria()"
+    >
+      <span class="track">
+        <!-- eslint-disable-next-line @angular-eslint/template/no-inline-styles -->
+        <span class="fill" [style.width.%]="countdown().ratio * 100"></span>
+      </span>
+    </div>
+    <span class="counter">{{ countdown().daysLeft }}/{{ retention }} d</span>
+  </footer>
+
+  <div class="ops" aria-hidden="false">
+    <button type="button" class="op view" (click)="onView($event)">
+      <span aria-hidden="true">👁</span>
+      <span>{{ t('trash.view') }}</span>
+    </button>
+    <button type="button" class="op restore" (click)="onRestore($event)">
+      <span aria-hidden="true">↩</span>
+      <span>{{ t('trash.restore') }}</span>
+    </button>
+    <button type="button" class="op purge" (click)="onPurge($event)">
+      <mc-icon name="x" />
+      <span>{{ t('trash.purgeForever') }}</span>
+    </button>
+  </div>
+</article>

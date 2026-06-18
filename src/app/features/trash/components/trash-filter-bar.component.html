@@ -1,0 +1,27 @@
+<div class="bar" role="radiogroup" [attr.aria-label]="t('trash.filter.aria')">
+  <button
+    type="button"
+    role="radio"
+    class="chip"
+    [class.active]="active() === null"
+    [attr.aria-checked]="active() === null"
+    (click)="onSelect(null)"
+  >
+    <span class="label">{{ t('trash.filter.all') }}</span>
+    <span class="count">{{ total() }}</span>
+  </button>
+  @for (chip of chips(); track chip.kind) {
+    <button
+      type="button"
+      role="radio"
+      class="chip"
+      [attr.data-kind]="chip.kind"
+      [class.active]="active() === chip.kind"
+      [attr.aria-checked]="active() === chip.kind"
+      (click)="onSelect(chip.kind)"
+    >
+      <span class="label">{{ chip.label }}</span>
+      <span class="count">{{ chip.count }}</span>
+    </button>
+  }
+</div>

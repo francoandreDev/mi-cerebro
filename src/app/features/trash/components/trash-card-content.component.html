@@ -1,0 +1,77 @@
+@let s = state();
+@if (s.status === 'loading') {
+  <div class="status">{{ t('trash.preview.loading') }}</div>
+} @else if (s.status === 'missing' || !s.preview) {
+  <div class="status">{{ t('trash.preview.unavailable') }}</div>
+} @else {
+  @switch (kind()) {
+    @case ('image') {
+      <div class="gallery">
+        <div class="mosaic" aria-hidden="true">
+          <span class="tile"><span class="icon">📷</span></span>
+          <span class="tile"><span class="icon">📷</span></span>
+          <span class="tile"><span class="icon">📷</span></span>
+          <span class="tile"><span class="icon">📷</span></span>
+        </div>
+        <span class="caption">{{ galleryLabel() }}</span>
+      </div>
+    }
+    @case ('book') {
+      <div class="spine" aria-hidden="true">
+        <span class="initial">{{ bookInitial() }}</span>
+        <span class="byline">{{ t('trash.bookByline') }}</span>
+      </div>
+    }
+    @case ('list') {
+      <ul class="list">
+        @for (item of listItems(); track $index) {
+          <li>{{ item }}</li>
+        }
+        @if (!listItems().length) {
+          <li class="status">{{ t('trash.preview.noContent') }}</li>
+        }
+      </ul>
+    }
+    @case ('task') {
+      <div class="task">
+        <div class="task-head">
+          <span class="check" aria-hidden="true">☐</span>
+          <span>{{ t('trash.taskPending') }}</span>
+        </div>
+        @if (s.preview.facts.length) {
+          <dl class="facts">
+            @for (fact of s.preview.facts; track fact.labelKey) {
+              <div class="fact">
+                <dt>{{ factLabel(fact.labelKey) }}</dt>
+                <dd>{{ factValue(fact.value) }}</dd>
+              </div>
+            }
+          </dl>
+        }
+      </div>
+    }
+    @default {
+      @if (s.preview.excerpt) {
+        <p class="excerpt">{{ s.preview.excerpt }}</p>
+      } @else if (s.preview.facts.length) {
+        <dl class="facts">
+          @for (fact of s.preview.facts; track fact.labelKey) {
+            <div class="fact">
+              <dt>{{ factLabel(fact.labelKey) }}</dt>
+              <dd>{{ factValue(fact.value) }}</dd>
+            </div>
+          }
+        </dl>
+      } @else {
+        <div class="status">{{ t('trash.preview.noContent') }}</div>
+      }
+    }
+  }
+  @if (s.preview.tags.length) {
+    <div class="tags">
+      @for (tag of s.preview.tags; track tag) {
+        <span class="tag">#{{ tag }}</span>
+      }
+    </div>
+  }
+}

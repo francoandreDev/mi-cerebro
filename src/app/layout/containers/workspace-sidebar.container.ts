@@ -777,7 +777,13 @@ export class WorkspaceSidebarContainer {
   }
 }
 
-const PANE_HIDDEN_PREFIXES: readonly string[] = ['/history', '/variants', '/books', '/images'];
+const PANE_HIDDEN_PREFIXES: readonly string[] = [
+  '/history',
+  '/variants',
+  '/books',
+  '/images',
+  '/trash',
+];
 
 const ROUTE_TO_KIND = {
   notes: 'note',
