@@ -783,6 +783,7 @@ const PANE_HIDDEN_PREFIXES: readonly string[] = [
   '/books',
   '/images',
   '/trash',
+  '/settings',
 ];
 
 const ROUTE_TO_KIND = {

@@ -71,6 +71,26 @@ export class SettingsContainer {
     reportContrast(this.previewAccent(), ACCENT_FG[this.resolvedTheme()]),
   );
 
+  protected readonly sections: readonly { id: SectionId; labelKey: TranslationKey }[] = [
+    { id: 'general', labelKey: 'settings.section.general' },
+    { id: 'theme', labelKey: 'settings.section.theme' },
+    { id: 'remote', labelKey: 'settings.remote.section.title' },
+    { id: 'versioning', labelKey: 'settings.section.versioning' },
+    { id: 'variants', labelKey: 'settings.section.variants' },
+    { id: 'export', labelKey: 'settings.export.section.title' },
+    { id: 'goals', labelKey: 'settings.section.goals' },
+  ];
+  protected readonly activeSection = signal<SectionId>(readStoredSection());
+
+  protected selectSection(id: SectionId): void {
+    this.activeSection.set(id);
+    try {
+      sessionStorage.setItem(SECTION_STORAGE_KEY, id);
+    } catch {
+      // why: sessionStorage can throw in private modes; selection is non-critical.
+    }
+  }
+
   protected readonly themeOptions: readonly { value: ThemeOverride; labelKey: TranslationKey }[] = [
     { value: 'auto', labelKey: 'settings.theme.option.auto' },
     { value: 'light', labelKey: 'settings.theme.option.light' },
@@ -244,6 +264,29 @@ export class SettingsContainer {
     }
   }
 }
+
+type SectionId = 'general' | 'theme' | 'remote' | 'versioning' | 'variants' | 'export' | 'goals';
+
+const SECTION_STORAGE_KEY = 'mc.settings.section';
+const VALID_SECTIONS: ReadonlySet<SectionId> = new Set<SectionId>([
+  'general',
+  'theme',
+  'remote',
+  'versioning',
+  'variants',
+  'export',
+  'goals',
+]);
+
+const readStoredSection = (): SectionId => {
+  try {
+    const v = sessionStorage.getItem(SECTION_STORAGE_KEY);
+    if (v && VALID_SECTIONS.has(v as SectionId)) return v as SectionId;
+  } catch {
+    // why: sessionStorage may throw in private modes; fall back to default.
+  }
+  return 'general';
+};
 
 const listSupportedTimezones = (): readonly string[] => {
   // why: Intl.supportedValuesOf is in all Chromium browsers we support

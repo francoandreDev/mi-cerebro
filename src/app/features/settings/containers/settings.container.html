@@ -3,332 +3,375 @@
     <h2>{{ t('settings.title') }}</h2>
   </header>
 
-  <section class="group">
-    <h3>{{ t('settings.section.general') }}</h3>
-
-    <label class="field">
-      <span class="label">{{ t('settings.timezone.label') }}</span>
-      <span class="row">
-        <input
-          type="text"
-          class="grow"
-          list="mc-tz-list"
-          [value]="draft()"
-          (input)="onInput($event)"
-          (keydown.enter)="apply()"
-          (keydown.escape)="revert()"
-          placeholder="Continent/City"
-          autocomplete="off"
-          spellcheck="false"
-        />
+  <div class="layout">
+    <nav class="nav" role="tablist" aria-orientation="vertical">
+      @for (s of sections; track s.id) {
         <button
           type="button"
-          class="primary"
-          [disabled]="draft().trim() === state().timezone"
-          (click)="apply()"
+          class="nav-item"
+          role="tab"
+          [class.active]="activeSection() === s.id"
+          [attr.aria-selected]="activeSection() === s.id"
+          [attr.aria-controls]="'sect-' + s.id"
+          (click)="selectSection(s.id)"
         >
-          {{ t('settings.timezone.apply') }}
-        </button>
-      </span>
-      <datalist id="mc-tz-list">
-        @for (tz of timezones; track tz) {
-          <option [value]="tz"></option>
-        }
-      </datalist>
-      <span class="hint">
-        {{ t('settings.timezone.hint') }}
-        · {{ t('settings.timezone.current') }}: <strong>{{ state().timezone }}</strong>
-      </span>
-      @if (error()) {
-        <span class="error">{{ t('settings.timezone.invalid') }}</span>
-      }
-    </label>
-  </section>
-
-  <section class="group">
-    <h3>{{ t('settings.remote.section.title') }}</h3>
-
-    @if (remoteConfig(); as cfg) {
-      <p class="muted">
-        {{ t('settings.remote.configured').replace('{url}', cfg.url) }}
-      </p>
-      @if (remoteLastPushAt(); as when) {
-        <p class="muted">
-          {{ t('settings.remote.lastPush').replace('{when}', when) }}
-        </p>
-      }
-    } @else {
-      <p class="muted">{{ t('settings.remote.notConfigured') }}</p>
-    }
-
-    <label class="field">
-      <span class="label">{{ t('settings.remote.url.label') }}</span>
-      <input
-        type="url"
-        [value]="remoteUrlDraft()"
-        (input)="onRemoteUrlInput($event)"
-        [placeholder]="t('settings.remote.url.placeholder')"
-        autocomplete="off"
-        spellcheck="false"
-      />
-      <span class="hint">{{ t('settings.remote.url.hint') }}</span>
-      @if (remoteUrlError()) {
-        <span class="error">{{ t('settings.remote.errors.invalidUrl') }}</span>
-      }
-    </label>
-
-    <label class="field">
-      <span class="label">{{ t('settings.remote.token.label') }}</span>
-      <input
-        type="password"
-        [value]="remoteTokenDraft()"
-        (input)="onRemoteTokenInput($event)"
-        [placeholder]="t('settings.remote.token.placeholder')"
-        autocomplete="off"
-        spellcheck="false"
-      />
-      <span class="hint">{{ t('settings.remote.token.hint') }}</span>
-      @if (remoteTokenError()) {
-        <span class="error">{{ t('settings.remote.errors.emptyToken') }}</span>
-      }
-    </label>
-
-    <span class="row">
-      <button type="button" class="primary" (click)="saveRemote()">
-        {{ t('settings.remote.save') }}
-      </button>
-      <button type="button" (click)="pushRemote()" [disabled]="!remoteConfig() || isPushing()">
-        {{ isPushing() ? t('settings.remote.pushing') : t('settings.remote.push') }}
-      </button>
-      @if (remoteConfig()) {
-        <button type="button" (click)="clearRemote()">
-          {{ t('settings.remote.clear') }}
+          {{ t(s.labelKey) }}
         </button>
       }
-    </span>
+    </nav>
 
-    @if (remoteConfig()) {
-      <a class="row" routerLink="/sync">{{ t('settings.remote.openSync') }} →</a>
-    }
-  </section>
+    <div class="panel">
+      @if (activeSection() === 'general') {
+        <section class="group" id="sect-general" role="tabpanel">
+          <h3>{{ t('settings.section.general') }}</h3>
 
-  <section class="group">
-    <h3>{{ t('settings.section.versioning') }}</h3>
+          <label class="field">
+            <span class="label">{{ t('settings.timezone.label') }}</span>
+            <span class="row">
+              <input
+                type="text"
+                class="grow"
+                list="mc-tz-list"
+                [value]="draft()"
+                (input)="onInput($event)"
+                (keydown.enter)="apply()"
+                (keydown.escape)="revert()"
+                placeholder="Continent/City"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <button
+                type="button"
+                class="primary"
+                [disabled]="draft().trim() === state().timezone"
+                (click)="apply()"
+              >
+                {{ t('settings.timezone.apply') }}
+              </button>
+            </span>
+            <datalist id="mc-tz-list">
+              @for (tz of timezones; track tz) {
+                <option [value]="tz"></option>
+              }
+            </datalist>
+            <span class="hint">
+              {{ t('settings.timezone.hint') }}
+              · {{ t('settings.timezone.current') }}: <strong>{{ state().timezone }}</strong>
+            </span>
+            @if (error()) {
+              <span class="error">{{ t('settings.timezone.invalid') }}</span>
+            }
+          </label>
+        </section>
+      }
 
-    <label class="field">
-      <span class="label">{{ t('settings.versioning.autocommit') }}</span>
-      <span class="row">
-        <input
-          type="number"
-          min="1"
-          max="180"
-          [value]="autocommitDraft()"
-          (input)="onAutocommitInput($event)"
-          (keydown.enter)="applyAutocommit()"
-        />
-        <button
-          type="button"
-          class="primary"
-          [disabled]="autocommitDraft() === state().versioning.autocommitMinutes"
-          (click)="applyAutocommit()"
-        >
-          {{ t('settings.versioning.autocommit.apply') }}
-        </button>
-      </span>
-      <span class="hint">{{ t('settings.versioning.autocommit.hint') }}</span>
-    </label>
+      @if (activeSection() === 'remote') {
+        <section class="group" id="sect-remote" role="tabpanel">
+          <h3>{{ t('settings.remote.section.title') }}</h3>
 
-    <p class="muted">
-      {{ t('settings.versioning.push') }}:
-      <strong>{{
-        state().versioning.pushAfterAutocommit ? t('common.on') : t('common.off')
-      }}</strong>
-      · <a routerLink="/sync">{{ t('settings.versioning.push.configure') }} →</a>
-    </p>
-  </section>
-
-  <section class="group">
-    <h3>{{ t('settings.section.variants') }}</h3>
-    <label class="field">
-      <span class="label">{{ t('settings.variants.dormant') }}</span>
-      <span class="row">
-        <input
-          type="number"
-          min="1"
-          max="365"
-          [value]="dormantDraft()"
-          (input)="onDormantInput($event)"
-          (keydown.enter)="applyDormant()"
-        />
-        <button
-          type="button"
-          class="primary"
-          [disabled]="dormantDraft() === state().variants.dormantThresholdDays"
-          (click)="applyDormant()"
-        >
-          {{ t('settings.variants.dormant.apply') }}
-        </button>
-      </span>
-      <span class="hint">{{ t('settings.variants.dormant.hint') }}</span>
-    </label>
-  </section>
-
-  <section class="group placeholder">
-    <h3>
-      {{ t('settings.section.goals') }} <span class="soon">{{ t('settings.soon') }}</span>
-    </h3>
-    <p class="muted">
-      {{ t('settings.goals.dormant') }}:
-      <strong>{{ state().goals.dormantThresholdDays }}</strong>
-    </p>
-  </section>
-
-  <section class="group">
-    <h3>{{ t('settings.section.theme') }}</h3>
-
-    <fieldset class="field theme-choice">
-      <legend class="label">{{ t('settings.theme.override') }}</legend>
-      <span class="row" role="radiogroup">
-        @for (opt of themeOptions; track opt.value) {
-          <button
-            type="button"
-            class="seg"
-            role="radio"
-            [class.active]="state().theme.override === opt.value"
-            [attr.aria-checked]="state().theme.override === opt.value"
-            (click)="setTheme(opt.value)"
-          >
-            {{ t(opt.labelKey) }}
-          </button>
-        }
-      </span>
-      <span class="hint">
-        {{ t('settings.theme.hint') }}
-        · {{ t('settings.theme.resolved') }}:
-        <strong>{{ t(resolvedThemeKey()) }}</strong>
-      </span>
-    </fieldset>
-
-    <fieldset class="field">
-      <legend class="label">{{ t('settings.theme.custom.title') }}</legend>
-      <span class="hint">{{ t('settings.theme.custom.hint') }}</span>
-
-      <label class="field">
-        <span class="label">{{ t('settings.theme.bgHue.label') }}</span>
-        <input
-          type="range"
-          min="0"
-          max="360"
-          step="1"
-          [value]="currentHue()"
-          (input)="onHueInput($event)"
-        />
-        <span class="hint">{{ currentHue() }}°</span>
-      </label>
-
-      <fieldset class="field">
-        <legend class="label">{{ t('settings.theme.bgSat.label') }}</legend>
-        <span class="row" role="radiogroup">
-          @for (s of satLevels; track s) {
-            <button
-              type="button"
-              class="seg"
-              role="radio"
-              [class.active]="currentSat() === s"
-              [attr.aria-checked]="currentSat() === s"
-              (click)="setSat(s)"
-            >
-              {{ t(satLabelKey(s)) }}
-            </button>
-          }
-        </span>
-      </fieldset>
-
-      <fieldset class="field">
-        <legend class="label">{{ t('settings.theme.accent.label') }}</legend>
-        <span class="row palette-grid" role="radiogroup">
-          @for (sw of accentPalette; track sw.id) {
-            <button
-              type="button"
-              class="swatch-btn"
-              role="radio"
-              [mcBgColor]="resolvedTheme() === 'dark' ? sw.dark : sw.light"
-              [class.active]="currentAccentId() === sw.id"
-              [attr.aria-checked]="currentAccentId() === sw.id"
-              [attr.aria-label]="sw.id"
-              [title]="sw.id"
-              (click)="setAccent(sw.id)"
-            ></button>
-          }
-        </span>
-        <span class="hint">
-          {{ t('settings.theme.accent.contrast') }}:
-          <strong>{{ formatRatio(accentContrast().ratio) }}:1</strong>
-          @if (accentContrast().passesAAA) {
-            <span class="ok">AAA</span>
-          } @else if (accentContrast().passesAA) {
-            <span class="ok">AA</span>
+          @if (remoteConfig(); as cfg) {
+            <p class="muted">
+              {{ t('settings.remote.configured').replace('{url}', cfg.url) }}
+            </p>
+            @if (remoteLastPushAt(); as when) {
+              <p class="muted">
+                {{ t('settings.remote.lastPush').replace('{when}', when) }}
+              </p>
+            }
           } @else {
-            <span class="fail">{{ t('settings.theme.wcag.fail') }}</span>
+            <p class="muted">{{ t('settings.remote.notConfigured') }}</p>
           }
-        </span>
-      </fieldset>
 
-      <div class="field">
-        <button type="button" (click)="resetTheme()">
-          {{ t('settings.theme.reset') }}
-        </button>
-      </div>
-    </fieldset>
-  </section>
+          <label class="field">
+            <span class="label">{{ t('settings.remote.url.label') }}</span>
+            <input
+              type="url"
+              [value]="remoteUrlDraft()"
+              (input)="onRemoteUrlInput($event)"
+              [placeholder]="t('settings.remote.url.placeholder')"
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <span class="hint">{{ t('settings.remote.url.hint') }}</span>
+            @if (remoteUrlError()) {
+              <span class="error">{{ t('settings.remote.errors.invalidUrl') }}</span>
+            }
+          </label>
 
-  <section class="group">
-    <h3>{{ t('settings.export.section.title') }}</h3>
-    <p class="hint">{{ t('settings.export.hint') }}</p>
+          <label class="field">
+            <span class="label">{{ t('settings.remote.token.label') }}</span>
+            <input
+              type="password"
+              [value]="remoteTokenDraft()"
+              (input)="onRemoteTokenInput($event)"
+              [placeholder]="t('settings.remote.token.placeholder')"
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <span class="hint">{{ t('settings.remote.token.hint') }}</span>
+            @if (remoteTokenError()) {
+              <span class="error">{{ t('settings.remote.errors.emptyToken') }}</span>
+            }
+          </label>
 
-    <label class="field row">
-      <input
-        type="checkbox"
-        [checked]="exportIncludeAllVariants()"
-        (change)="onToggleIncludeVariants($event)"
-      />
-      <span>
-        <span class="label">{{ t('settings.export.option.variants.label') }}</span>
-        <span class="hint">{{ t('settings.export.option.variants.hint') }}</span>
-      </span>
-    </label>
+          <span class="row">
+            <button type="button" class="primary" (click)="saveRemote()">
+              {{ t('settings.remote.save') }}
+            </button>
+            <button
+              type="button"
+              (click)="pushRemote()"
+              [disabled]="!remoteConfig() || isPushing()"
+            >
+              {{ isPushing() ? t('settings.remote.pushing') : t('settings.remote.push') }}
+            </button>
+            @if (remoteConfig()) {
+              <button type="button" (click)="clearRemote()">
+                {{ t('settings.remote.clear') }}
+              </button>
+            }
+          </span>
 
-    <label class="field row">
-      <input
-        type="checkbox"
-        [checked]="exportIncludeAssets()"
-        (change)="onToggleIncludeAssets($event)"
-      />
-      <span>
-        <span class="label">{{ t('settings.export.option.assets.label') }}</span>
-        <span class="hint">{{ t('settings.export.option.assets.hint') }}</span>
-      </span>
-    </label>
+          @if (remoteConfig()) {
+            <a class="row" routerLink="/sync">{{ t('settings.remote.openSync') }} →</a>
+          }
+        </section>
+      }
 
-    <div class="field">
-      <button type="button" class="primary" [disabled]="exportRunning()" (click)="runExport()">
-        @if (exportRunning()) {
-          {{ t('settings.export.button.busy') }}
-        } @else {
-          {{ t('settings.export.button') }}
-        }
-      </button>
-      @if (exportProgress().phase === 'walking') {
-        <span class="hint">{{
-          t('settings.export.progress.walking', { count: exportProgress().count })
-        }}</span>
-      } @else if (exportProgress().phase === 'compressing') {
-        <span class="hint">{{
-          t('settings.export.progress.compressing', { count: exportProgress().count })
-        }}</span>
-      } @else if (exportProgress().phase === 'done') {
-        <span class="hint">{{ t('settings.export.progress.done') }}</span>
+      @if (activeSection() === 'versioning') {
+        <section class="group" id="sect-versioning" role="tabpanel">
+          <h3>{{ t('settings.section.versioning') }}</h3>
+
+          <label class="field">
+            <span class="label">{{ t('settings.versioning.autocommit') }}</span>
+            <span class="row">
+              <input
+                type="number"
+                min="1"
+                max="180"
+                [value]="autocommitDraft()"
+                (input)="onAutocommitInput($event)"
+                (keydown.enter)="applyAutocommit()"
+              />
+              <button
+                type="button"
+                class="primary"
+                [disabled]="autocommitDraft() === state().versioning.autocommitMinutes"
+                (click)="applyAutocommit()"
+              >
+                {{ t('settings.versioning.autocommit.apply') }}
+              </button>
+            </span>
+            <span class="hint">{{ t('settings.versioning.autocommit.hint') }}</span>
+          </label>
+
+          <p class="muted">
+            {{ t('settings.versioning.push') }}:
+            <strong>{{
+              state().versioning.pushAfterAutocommit ? t('common.on') : t('common.off')
+            }}</strong>
+            · <a routerLink="/sync">{{ t('settings.versioning.push.configure') }} →</a>
+          </p>
+        </section>
+      }
+
+      @if (activeSection() === 'variants') {
+        <section class="group" id="sect-variants" role="tabpanel">
+          <h3>{{ t('settings.section.variants') }}</h3>
+          <label class="field">
+            <span class="label">{{ t('settings.variants.dormant') }}</span>
+            <span class="row">
+              <input
+                type="number"
+                min="1"
+                max="365"
+                [value]="dormantDraft()"
+                (input)="onDormantInput($event)"
+                (keydown.enter)="applyDormant()"
+              />
+              <button
+                type="button"
+                class="primary"
+                [disabled]="dormantDraft() === state().variants.dormantThresholdDays"
+                (click)="applyDormant()"
+              >
+                {{ t('settings.variants.dormant.apply') }}
+              </button>
+            </span>
+            <span class="hint">{{ t('settings.variants.dormant.hint') }}</span>
+          </label>
+        </section>
+      }
+
+      @if (activeSection() === 'goals') {
+        <section class="group placeholder" id="sect-goals" role="tabpanel">
+          <h3>
+            {{ t('settings.section.goals') }} <span class="soon">{{ t('settings.soon') }}</span>
+          </h3>
+          <p class="muted">
+            {{ t('settings.goals.dormant') }}:
+            <strong>{{ state().goals.dormantThresholdDays }}</strong>
+          </p>
+        </section>
+      }
+
+      @if (activeSection() === 'theme') {
+        <section class="group" id="sect-theme" role="tabpanel">
+          <h3>{{ t('settings.section.theme') }}</h3>
+
+          <fieldset class="field theme-choice">
+            <legend class="label">{{ t('settings.theme.override') }}</legend>
+            <span class="row" role="radiogroup">
+              @for (opt of themeOptions; track opt.value) {
+                <button
+                  type="button"
+                  class="seg"
+                  role="radio"
+                  [class.active]="state().theme.override === opt.value"
+                  [attr.aria-checked]="state().theme.override === opt.value"
+                  (click)="setTheme(opt.value)"
+                >
+                  {{ t(opt.labelKey) }}
+                </button>
+              }
+            </span>
+            <span class="hint">
+              {{ t('settings.theme.hint') }}
+              · {{ t('settings.theme.resolved') }}:
+              <strong>{{ t(resolvedThemeKey()) }}</strong>
+            </span>
+          </fieldset>
+
+          <fieldset class="field">
+            <legend class="label">{{ t('settings.theme.custom.title') }}</legend>
+            <span class="hint">{{ t('settings.theme.custom.hint') }}</span>
+
+            <label class="field">
+              <span class="label">{{ t('settings.theme.bgHue.label') }}</span>
+              <input
+                type="range"
+                min="0"
+                max="360"
+                step="1"
+                [value]="currentHue()"
+                (input)="onHueInput($event)"
+              />
+              <span class="hint">{{ currentHue() }}°</span>
+            </label>
+
+            <fieldset class="field">
+              <legend class="label">{{ t('settings.theme.bgSat.label') }}</legend>
+              <span class="row" role="radiogroup">
+                @for (s of satLevels; track s) {
+                  <button
+                    type="button"
+                    class="seg"
+                    role="radio"
+                    [class.active]="currentSat() === s"
+                    [attr.aria-checked]="currentSat() === s"
+                    (click)="setSat(s)"
+                  >
+                    {{ t(satLabelKey(s)) }}
+                  </button>
+                }
+              </span>
+            </fieldset>
+
+            <fieldset class="field">
+              <legend class="label">{{ t('settings.theme.accent.label') }}</legend>
+              <span class="row palette-grid" role="radiogroup">
+                @for (sw of accentPalette; track sw.id) {
+                  <button
+                    type="button"
+                    class="swatch-btn"
+                    role="radio"
+                    [mcBgColor]="resolvedTheme() === 'dark' ? sw.dark : sw.light"
+                    [class.active]="currentAccentId() === sw.id"
+                    [attr.aria-checked]="currentAccentId() === sw.id"
+                    [attr.aria-label]="sw.id"
+                    [title]="sw.id"
+                    (click)="setAccent(sw.id)"
+                  ></button>
+                }
+              </span>
+              <span class="hint">
+                {{ t('settings.theme.accent.contrast') }}:
+                <strong>{{ formatRatio(accentContrast().ratio) }}:1</strong>
+                @if (accentContrast().passesAAA) {
+                  <span class="ok">AAA</span>
+                } @else if (accentContrast().passesAA) {
+                  <span class="ok">AA</span>
+                } @else {
+                  <span class="fail">{{ t('settings.theme.wcag.fail') }}</span>
+                }
+              </span>
+            </fieldset>
+
+            <div class="field">
+              <button type="button" (click)="resetTheme()">
+                {{ t('settings.theme.reset') }}
+              </button>
+            </div>
+          </fieldset>
+        </section>
+      }
+
+      @if (activeSection() === 'export') {
+        <section class="group" id="sect-export" role="tabpanel">
+          <h3>{{ t('settings.export.section.title') }}</h3>
+          <p class="hint">{{ t('settings.export.hint') }}</p>
+
+          <label class="field row">
+            <input
+              type="checkbox"
+              [checked]="exportIncludeAllVariants()"
+              (change)="onToggleIncludeVariants($event)"
+            />
+            <span>
+              <span class="label">{{ t('settings.export.option.variants.label') }}</span>
+              <span class="hint">{{ t('settings.export.option.variants.hint') }}</span>
+            </span>
+          </label>
+
+          <label class="field row">
+            <input
+              type="checkbox"
+              [checked]="exportIncludeAssets()"
+              (change)="onToggleIncludeAssets($event)"
+            />
+            <span>
+              <span class="label">{{ t('settings.export.option.assets.label') }}</span>
+              <span class="hint">{{ t('settings.export.option.assets.hint') }}</span>
+            </span>
+          </label>
+
+          <div class="field">
+            <button
+              type="button"
+              class="primary"
+              [disabled]="exportRunning()"
+              (click)="runExport()"
+            >
+              @if (exportRunning()) {
+                {{ t('settings.export.button.busy') }}
+              } @else {
+                {{ t('settings.export.button') }}
+              }
+            </button>
+            @if (exportProgress().phase === 'walking') {
+              <span class="hint">{{
+                t('settings.export.progress.walking', { count: exportProgress().count })
+              }}</span>
+            } @else if (exportProgress().phase === 'compressing') {
+              <span class="hint">{{
+                t('settings.export.progress.compressing', { count: exportProgress().count })
+              }}</span>
+            } @else if (exportProgress().phase === 'done') {
+              <span class="hint">{{ t('settings.export.progress.done') }}</span>
+            }
+          </div>
+        </section>
       }
     </div>
-  </section>
+  </div>
 </section>
