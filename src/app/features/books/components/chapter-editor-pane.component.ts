@@ -45,6 +45,10 @@ export class ChapterEditorPaneComponent {
   readonly bodyChange = output<JSONContent>();
   readonly toggleFocus = output<void>();
   readonly addChapter = output<void>();
+  // why: persistimos páginas (totalSpreads * 2) en el archivo del capítulo
+  //      para que el índice pueda mostrar el rango "X–Y" sin abrir cada
+  //      capítulo. Se emite cada vez que el cálculo cambia.
+  readonly pageCountChange = output<number>();
 
   private readonly pagesRef = viewChild<ElementRef<HTMLElement>>('pagesEl');
   private readonly spreadRef = viewChild<ElementRef<HTMLElement>>('spreadEl');
@@ -102,6 +106,10 @@ export class ChapterEditorPaneComponent {
     effect(() => {
       const max = this.totalSpreads() - 1;
       if (this.currentSpread() > max) this.currentSpread.set(Math.max(0, max));
+    });
+    effect(() => {
+      const pages = this.totalSpreads() * 2;
+      this.pageCountChange.emit(pages);
     });
     effect(() => {
       const pagesEl = this.pagesRef()?.nativeElement;

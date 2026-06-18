@@ -22,7 +22,6 @@ import { CreationIntentService } from '@core/intents/creation-intent.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { PlayerService } from '@core/music/player.service';
-import { between } from '@core/ordering/fractional-position';
 import { CommandPaletteService } from '@core/search/command-palette.service';
 import type { Tag } from '@core/tags/tag.types';
 import { TagsService } from '@core/tags/tags.service';
@@ -51,8 +50,14 @@ import type { TreeReorderEvent } from '@shared/tree/tree-node.component';
 import { TreeComponent } from '@shared/tree/tree.component';
 import type { FilterDirection, TreeNode } from '@shared/tree/tree.types';
 
+import { buildFolderTree } from '@shared/folder-tree/folder-tree';
+import {
+  applyEntityReorder,
+  applyFolderReorder,
+  type EntityReorderAdapter,
+} from '@shared/folder-tree/tree-reorder';
+
 import { handleCreateFolder, handleEntityAction, handleFolderAction } from './folder-actions';
-import { buildFolderTree } from './folder-tree';
 import { goalBadges, tagBadges, taskBadges } from './tree-badges';
 
 type EntityKind = 'note' | 'task' | 'goal' | 'list' | 'writing' | 'book' | 'image' | 'file';
@@ -473,7 +478,7 @@ export class WorkspaceSidebarContainer {
   protected async onPlayFavoritePlaylist(id: string): Promise<void> {
     try {
       const pl = await this.playlistsService.read(id);
-      if (pl.trackIds.length > 0) await this.player.playPlaylist(pl.trackIds, 0);
+      if (pl.trackIds.length > 0) await this.player.playPlaylist(pl.trackIds, 0, pl.id);
     } catch (e) {
       this.errors.report(e);
     }
@@ -633,76 +638,24 @@ export class WorkspaceSidebarContainer {
   private async applyEntityReorder(event: TreeReorderEvent): Promise<void> {
     const kind = event.movedKind as EntityKind;
     if (!SIDEBAR_KINDS.has(kind)) return;
-    const movedId = parseEntityNodeId(event.movedNodeId);
-    if (!movedId) return;
-    const newFolder = folderPathFromAnyParentId(event.newParentId, kind);
-    const oldFolder = folderPathFromAnyParentId(event.oldParentId, kind);
-    if (newFolder === null || oldFolder === null) return;
-    if (oldFolder !== newFolder) await this.moveToFolderForKind(kind, movedId, newFolder);
-    const siblings = this.summariesForKind(kind)
-      .filter((s) => s.folder === newFolder)
-      .map((s) => ({ id: s.id, position: s.position ?? '' }))
-      .filter((s) => s.id !== movedId);
-    const targetId = event.edge === 'into' ? null : parseEntityNodeId(event.targetNodeId);
-    const idx = pickInsertIdx(
-      siblings.map((s) => s.id),
-      targetId,
-      event.edge,
-    );
-    if (idx === null) return;
-    const newPosition = positionBetween(siblings, idx);
-    if (newPosition === null) return;
-    await this.setPositionForKind(kind, movedId, newPosition);
-    this.announceMoved(idx);
+    const adapter: EntityReorderAdapter = {
+      kind,
+      summaries: () => this.summariesForKind(kind),
+      moveToFolder: (id, folder) => this.moveToFolderForKind(kind, id, folder),
+      setPosition: (id, position) => this.setPositionForKind(kind, id, position),
+    };
+    const outcome = await applyEntityReorder(event, adapter);
+    if (outcome) this.announceMoved(outcome.idx);
   }
 
   private async applyFolderReorder(event: TreeReorderEvent): Promise<void> {
-    const src = parseFolderNodeId(event.movedNodeId);
-    if (!src) return;
-    const kind = src.family as FolderKind;
-    if (!SIDEBAR_KINDS.has(kind)) return;
-    const newParentPath = this.resolveFolderNewParent(src, event, kind);
-    if (newParentPath === null) return;
-    let finalPath = src.path;
-    if (parentOfPath(src.path) !== newParentPath) {
-      finalPath = await this.foldersService.moveFolder(kind, src.path, newParentPath);
-    }
-    const positions = await this.foldersService.getFolderPositions(kind);
-    const siblings = Object.entries(positions)
-      .filter(([path]) => parentOfPath(path) === newParentPath)
-      .map(([path, position]) => ({ id: path, position }))
-      .sort((a, b) => (a.position < b.position ? -1 : a.position > b.position ? 1 : 0))
-      .filter((s) => s.id !== finalPath);
-    const targetId =
-      event.edge === 'into' ? null : (parseFolderNodeId(event.targetNodeId)?.path ?? null);
-    const idx = pickInsertIdx(
-      siblings.map((s) => s.id),
-      targetId,
-      event.edge,
-    );
-    if (idx === null) return;
-    const newPosition = positionBetween(siblings, idx);
-    if (newPosition === null) return;
-    await this.foldersService.setFolderPosition(kind, finalPath, newPosition);
-    this.announceMoved(idx);
-  }
-
-  private resolveFolderNewParent(
-    src: { readonly path: string; readonly family: string },
-    event: TreeReorderEvent,
-    kind: FolderKind,
-  ): string | null {
-    let newParentPath: string | null;
-    if (event.edge === 'into') {
-      const tgt = parseFolderNodeId(event.targetNodeId);
-      if (!tgt || tgt.family !== kind) return null;
-      newParentPath = tgt.path;
-    } else {
-      newParentPath = folderPathFromAnyParentId(event.newParentId, kind);
-    }
-    if (newParentPath === null) return null;
-    if (newParentPath === src.path || newParentPath.startsWith(`${src.path}/`)) return null;
-    return newParentPath;
+    if (!event.movedNodeId.startsWith('folder:')) return;
+    const rest = event.movedNodeId.slice('folder:'.length);
+    const colon = rest.indexOf(':');
+    const family = colon < 0 ? rest : rest.slice(0, colon);
+    if (!SIDEBAR_KINDS.has(family)) return;
+    const outcome = await applyFolderReorder(event, family as FolderKind, this.foldersService);
+    if (outcome) this.announceMoved(outcome.idx);
   }
 
   private announceMoved(idx: number): void {
@@ -784,6 +737,8 @@ const PANE_HIDDEN_PREFIXES: readonly string[] = [
   '/images',
   '/trash',
   '/settings',
+  '/music',
+  '/files',
 ];
 
 const ROUTE_TO_KIND = {
@@ -817,55 +772,6 @@ const KIND_TO_ROUTE: Record<EntityKind, string> = {
   book: '/books',
   image: '/images',
   file: '/files',
-};
-
-const parseEntityNodeId = (nodeId: string): string | null => {
-  const colon = nodeId.indexOf(':');
-  if (colon < 0) return null;
-  const id = nodeId.slice(colon + 1);
-  return id === '' ? null : id;
-};
-
-const folderPathFromAnyParentId = (parentId: string, kind: string): string | null => {
-  if (parentId === `root:${kind}`) return '';
-  const prefix = `folder:${kind}:`;
-  if (parentId.startsWith(prefix)) return parentId.slice(prefix.length);
-  return null;
-};
-
-const parseFolderNodeId = (nodeId: string): { family: string; path: string } | null => {
-  if (!nodeId.startsWith('folder:')) return null;
-  const rest = nodeId.slice('folder:'.length);
-  const colon = rest.indexOf(':');
-  if (colon < 0) return null;
-  return { family: rest.slice(0, colon), path: rest.slice(colon + 1) };
-};
-
-const parentOfPath = (path: string): string => {
-  const slash = path.lastIndexOf('/');
-  return slash < 0 ? '' : path.slice(0, slash);
-};
-
-const pickInsertIdx = (
-  ids: readonly string[],
-  targetId: string | null,
-  edge: 'before' | 'after' | 'into',
-): number | null => {
-  if (edge === 'into') return ids.length;
-  if (targetId === null) return null;
-  const idx = ids.indexOf(targetId);
-  if (idx < 0) return null;
-  return edge === 'before' ? idx : idx + 1;
-};
-
-const positionBetween = (
-  siblings: readonly { readonly position: string }[],
-  insertIdx: number,
-): string | null => {
-  const prev = siblings[insertIdx - 1]?.position ?? '';
-  const next = siblings[insertIdx]?.position ?? '';
-  if (prev !== '' && next !== '' && prev >= next) return null;
-  return between(prev || null, next || null);
 };
 
 const KIND_TO_TYPE: Record<

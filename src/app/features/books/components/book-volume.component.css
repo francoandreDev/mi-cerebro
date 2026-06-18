@@ -1,0 +1,282 @@
+:host {
+  display: inline-block;
+  perspective: 1600px;
+  width: var(--mc-vol-w, 60px);
+  height: var(--mc-vol-h, 280px);
+}
+
+.volume {
+  position: relative;
+  width: var(--mc-vol-w, 60px);
+  height: var(--mc-vol-h, 280px);
+  transform-style: preserve-3d;
+  transform: rotateY(0deg) translateZ(0);
+  transition:
+    transform 0.55s cubic-bezier(0.4, 0, 0.2, 1),
+    filter 0.3s ease;
+  filter: drop-shadow(0 8px 8px rgba(0, 0, 0, 0.4));
+}
+
+/* why: hover sutil — el libro sube 4px sin rotar. La info "rica" la da el
+   caption (tooltip propio) que vive en el bookshelf. */
+:host(:hover) .volume,
+:host(:focus-within) .volume {
+  transform: translateY(-4px) translateZ(0);
+  filter: drop-shadow(0 14px 14px rgba(0, 0, 0, 0.5));
+}
+
+.cover-face,
+.spine,
+.edge,
+.pages-edge {
+  position: absolute;
+  backface-visibility: hidden;
+}
+
+/* SPINE — cara visible por defecto */
+.spine {
+  inset: 0;
+  width: var(--mc-vol-w, 60px);
+  height: 100%;
+  background:
+    linear-gradient(
+      to right,
+      rgba(0, 0, 0, 0.45) 0%,
+      rgba(0, 0, 0, 0.18) 8%,
+      rgba(255, 255, 255, 0.06) 22%,
+      rgba(255, 255, 255, 0.04) 50%,
+      rgba(0, 0, 0, 0.18) 78%,
+      rgba(0, 0, 0, 0.45) 100%
+    ),
+    var(--mc-vol-bg, hsl(220deg 30% 30%));
+  color: var(--mc-vol-fg, #efefef);
+  border-radius: 3px 1px 1px 3px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 0;
+  box-shadow:
+    inset -1px 0 0 rgba(0, 0, 0, 0.35),
+    inset 1px 0 0 rgba(255, 255, 255, 0.1);
+  transform: translateZ(0px);
+}
+
+.band {
+  width: 78%;
+  height: 5px;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--mc-vol-fg, #efefef) 80%, #000 20%) 0%,
+      var(--mc-vol-fg, #efefef) 50%,
+      color-mix(in srgb, var(--mc-vol-fg, #efefef) 80%, #000 20%) 100%
+    );
+  border-radius: 1px;
+  box-shadow:
+    inset 0 1px 0 rgba(0, 0, 0, 0.25),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.25);
+  opacity: 0.85;
+}
+.band.top {
+  margin-top: 6px;
+}
+.band.bottom {
+  margin-bottom: 6px;
+}
+
+.spine-title {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  max-height: 100%;
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.65),
+    0 0 8px rgba(0, 0, 0, 0.25);
+  padding: 0 4px;
+  /* why: foil-like — el título "dorado" se logra mezclando el fg con un
+     reflejo cálido. */
+  background: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--mc-vol-fg, #efefef) 70%, #d4af37 30%) 0%,
+      var(--mc-vol-fg, #efefef) 50%,
+      color-mix(in srgb, var(--mc-vol-fg, #efefef) 70%, #d4af37 30%) 100%
+    );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* COVER FRONT — sale al hover (rotada 90° respecto al spine) */
+.cover-face.front {
+  top: 0;
+  right: 0;
+  width: var(--mc-vol-d, 180px);
+  height: 100%;
+  background:
+    radial-gradient(
+      circle at 28% 22%,
+      rgba(255, 255, 255, 0.18) 0%,
+      rgba(255, 255, 255, 0) 55%
+    ),
+    linear-gradient(
+      150deg,
+      var(--mc-vol-bg, hsl(220deg 30% 30%)) 0%,
+      color-mix(in srgb, var(--mc-vol-bg, hsl(220deg 30% 30%)) 65%, #000 35%) 100%
+    );
+  color: var(--mc-vol-fg, #efefef);
+  border-radius: 1px 5px 5px 1px;
+  transform-origin: left center;
+  transform: rotateY(90deg) translateZ(0px) translateX(var(--mc-vol-w, 60px));
+  padding: 28px 22px 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow:
+    inset 8px 0 14px -8px rgba(0, 0, 0, 0.55),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+    inset 0 0 0 6px transparent,
+    inset 0 0 0 7px rgba(255, 255, 255, 0.08);
+}
+.cover-stripe {
+  display: block;
+  height: 2px;
+  background: var(--mc-vol-fg, #efefef);
+  opacity: 0.4;
+  border-radius: 1px;
+}
+.cover-stripe.top {
+  margin-top: 22px;
+}
+.cover-stripe.bottom {
+  margin-bottom: 22px;
+}
+.cover-title {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.18;
+  letter-spacing: 0.02em;
+  text-align: center;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.45);
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.cover-sub {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  opacity: 0.75;
+  text-align: center;
+  font-family: Georgia, serif;
+  font-style: italic;
+}
+.cover-marque {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  font-size: 13px;
+  opacity: 0.55;
+}
+
+/* COVER BACK */
+.cover-face.back {
+  top: 0;
+  left: 0;
+  width: var(--mc-vol-d, 180px);
+  height: 100%;
+  background:
+    linear-gradient(
+      225deg,
+      color-mix(in srgb, var(--mc-vol-bg, hsl(220deg 30% 30%)) 75%, #000 25%) 0%,
+      color-mix(in srgb, var(--mc-vol-bg, hsl(220deg 30% 30%)) 50%, #000 50%) 100%
+    );
+  transform-origin: right center;
+  transform: rotateY(-90deg) translateZ(0px);
+  border-radius: 5px 1px 1px 5px;
+  box-shadow:
+    inset -8px 0 14px -8px rgba(0, 0, 0, 0.55),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+.back-grain {
+  position: absolute;
+  inset: 16px;
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.04) 0,
+      rgba(255, 255, 255, 0.04) 1px,
+      transparent 1px,
+      transparent 7px
+    );
+  opacity: 0.65;
+}
+
+/* EDGES — top y bottom (canto superior e inferior del libro) */
+.edge {
+  left: 0;
+  width: var(--mc-vol-w, 60px);
+  height: var(--mc-vol-d, 180px);
+  background:
+    linear-gradient(
+      to bottom,
+      #f8f1de 0%,
+      #ece1c2 60%,
+      #d4c499 100%
+    );
+  transform-origin: center top;
+}
+.edge.top {
+  top: 0;
+  transform: rotateX(-90deg) translateZ(0px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+}
+.edge.bottom {
+  bottom: 0;
+  transform-origin: center bottom;
+  transform: rotateX(90deg) translateZ(0px);
+  background: linear-gradient(
+    to top,
+    #d4c499 0%,
+    #ece1c2 40%,
+    #f8f1de 100%
+  );
+}
+
+/* PAGES-EDGE — pila de hojas vista de canto (lado opuesto al lomo) */
+.pages-edge {
+  top: 7px;
+  bottom: 7px;
+  right: 0;
+  width: 3px;
+  background: repeating-linear-gradient(
+    to bottom,
+    #f8f1de 0,
+    #f8f1de 1px,
+    #d4c499 1px,
+    #d4c499 2px
+  );
+  transform: translateX(1px);
+  opacity: 0.9;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+/* Tallness tweaks */
+.volume[data-tallness='short'] .cover-title {
+  font-size: 17px;
+}
+.volume[data-tallness='tall'] .cover-title {
+  font-size: 21px;
+  -webkit-line-clamp: 5;
+}

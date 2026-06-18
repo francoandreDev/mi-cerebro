@@ -6,6 +6,15 @@
   justify-content: center;
   align-items: stretch;
   background: var(--mc-bg-base);
+  /* why: tokens locales del "papel". Mismo patrón que book-open.container.
+     En modo oscuro caen a la superficie del tema; en modo claro se pisan
+     con cream/sepia para que el capítulo se sienta una hoja real de libro
+     en lugar del beige gris del tema claro general. */
+  --mc-book-paper-bg: var(--mc-bg-surface);
+  --mc-book-paper-fg: var(--mc-fg-primary);
+  --mc-book-paper-muted: var(--mc-fg-muted);
+  --mc-book-paper-border: var(--mc-border-default);
+  --mc-book-paper-accent: var(--mc-bg-elevated);
   /* why: SOLO scroll vertical. Si dejamos horizontal el navegador
      auto-scrollea para seguir el cursor cuando entra en una columna
      fuera del viewport del spread, y se ve el contenido "siguiendo"
@@ -15,6 +24,23 @@
   overflow-x: clip;
   overflow-y: auto;
   overflow-anchor: none;
+}
+
+:host-context(:root[data-theme='light']) {
+  --mc-book-paper-bg: #f7efdc;
+  --mc-book-paper-fg: #2a1c0c;
+  --mc-book-paper-muted: #6e5430;
+  --mc-book-paper-border: rgba(110, 70, 30, 0.35);
+  --mc-book-paper-accent: rgba(110, 70, 30, 0.08);
+}
+@media (prefers-color-scheme: light) {
+  :host-context(:root:not([data-theme='dark'])) {
+    --mc-book-paper-bg: #f7efdc;
+    --mc-book-paper-fg: #2a1c0c;
+    --mc-book-paper-muted: #6e5430;
+    --mc-book-paper-border: rgba(110, 70, 30, 0.35);
+    --mc-book-paper-accent: rgba(110, 70, 30, 0.08);
+  }
 }
 
 .book-frame {
@@ -117,7 +143,8 @@
 .spread {
   position: relative;
   height: min(78vh, 880px);
-  background: var(--mc-bg-surface);
+  background: var(--mc-book-paper-bg);
+  color: var(--mc-book-paper-fg);
   border-radius: 4px;
   box-shadow:
     0 1px 1px rgba(0, 0, 0, 0.15),
@@ -202,7 +229,7 @@
 .roman {
   font-variant: small-caps;
   letter-spacing: 0.2em;
-  color: var(--mc-fg-muted);
+  color: var(--mc-book-paper-muted);
   font-size: var(--mc-font-size-sm);
   margin-bottom: 0.3em;
 }
@@ -216,7 +243,7 @@
 .title-input {
   background: transparent;
   border: none;
-  color: var(--mc-fg-primary);
+  color: var(--mc-book-paper-fg);
   font-family: var(--mc-font-serif);
   font-size: clamp(1.35rem, 2.4vw, 1.75rem);
   font-weight: 600;
@@ -232,16 +259,16 @@
     background 0.15s ease;
 }
 .opener.editable .title-input {
-  border-bottom-color: var(--mc-border-default);
+  border-bottom-color: var(--mc-book-paper-border);
 }
 .opener.editable .title-input:hover {
-  border-bottom-color: var(--mc-fg-muted);
-  background: var(--mc-bg-elevated);
+  border-bottom-color: var(--mc-book-paper-muted);
+  background: var(--mc-book-paper-accent);
 }
 .title-input:focus {
   outline: none;
   border-bottom: 1px solid var(--mc-accent-primary);
-  background: var(--mc-bg-elevated);
+  background: var(--mc-book-paper-accent);
 }
 .title-edit {
   background: transparent;
@@ -265,7 +292,7 @@
   height: 1px;
   width: 60px;
   margin: var(--mc-space-2) auto 0;
-  background: var(--mc-fg-muted);
+  background: var(--mc-book-paper-muted);
   opacity: 0.5;
 }
 
@@ -277,7 +304,7 @@
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   padding-top: var(--mc-space-1);
-  color: var(--mc-fg-muted);
+  color: var(--mc-book-paper-muted);
   font-family: var(--mc-font-sans);
   font-size: var(--mc-font-size-sm);
   font-variant-numeric: tabular-nums;
@@ -339,7 +366,7 @@
      (margen exterior + columna). El canalón/lomo queda fuera y no
      rota con la página. */
   overflow: hidden;
-  background: var(--mc-bg-surface);
+  background: var(--mc-book-paper-bg);
 }
 .flip-underlay {
   z-index: 1;

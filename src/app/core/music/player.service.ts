@@ -23,6 +23,10 @@ export class PlayerService {
   readonly isPlaying = this.playingSignal.asReadonly();
   private readonly shuffleSignal = signal(true);
   readonly shuffle = this.shuffleSignal.asReadonly();
+  private readonly currentSourceSignal = signal<string | null>(null);
+  // why: identifies which playlist (if any) owns the active queue so the UI
+  //      can mark the source as "playing now". null = ad-hoc / single track.
+  readonly currentSourceId = this.currentSourceSignal.asReadonly();
 
   readonly currentTrackId = computed<string | null>(() => {
     const q = this.queueSignal();
@@ -43,11 +47,17 @@ export class PlayerService {
   }
 
   async playTrack(trackId: string): Promise<void> {
+    this.currentSourceSignal.set(null);
     await this.loadQueue([trackId], 0);
   }
 
-  async playPlaylist(trackIds: readonly string[], startIndex = 0): Promise<void> {
+  async playPlaylist(
+    trackIds: readonly string[],
+    startIndex = 0,
+    sourceId: string | null = null,
+  ): Promise<void> {
     if (trackIds.length === 0) return;
+    this.currentSourceSignal.set(sourceId);
     const order = this.shuffleSignal() ? shuffleFrom(trackIds, startIndex) : [...trackIds];
     await this.loadQueue(order, this.shuffleSignal() ? 0 : startIndex);
   }
@@ -78,11 +88,30 @@ export class PlayerService {
     this.shuffleSignal.update((v) => !v);
   }
 
+  async jumpTo(index: number): Promise<void> {
+    const q = this.queueSignal();
+    if (index < 0 || index >= q.trackIds.length || index === q.index) return;
+    this.queueSignal.set({ ...q, index });
+    await this.loadCurrent(true);
+  }
+
+  removeAt(index: number): void {
+    const q = this.queueSignal();
+    if (index < 0 || index >= q.trackIds.length) return;
+    // why: removing the currently-playing entry would force a reload; skip it,
+    //      callers gate the button on `current` and use stop()/next() instead.
+    if (index === q.index) return;
+    const trackIds = q.trackIds.filter((_, i) => i !== index);
+    const newIndex = index < q.index ? q.index - 1 : q.index;
+    this.queueSignal.set({ trackIds, index: newIndex });
+  }
+
   stop(): void {
     this.audio.pause();
     this.audio.removeAttribute('src');
     this.revokeUrl();
     this.queueSignal.set({ trackIds: [], index: 0 });
+    this.currentSourceSignal.set(null);
   }
 
   private async loadQueue(trackIds: readonly string[], index: number): Promise<void> {

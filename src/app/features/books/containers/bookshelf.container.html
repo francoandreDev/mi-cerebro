@@ -33,30 +33,49 @@
 } @else if (views().length === 0) {
   <p class="empty-soft">{{ t('books.shelf.filterNoMatch') }}</p>
 } @else if (mode() === 'shelf') {
-  <div class="shelves">
-    @for (row of shelves(); track $index) {
-      <div class="shelf">
-        <div class="row">
-          @for (v of row; track v.summary.id) {
-            <button
-              type="button"
-              class="slot"
-              [attr.aria-label]="v.summary.title || t('books.untitledTitle')"
-              [title]="v.tooltip"
-              (click)="openBook(v.summary.id)"
-            >
-              <mc-book-spine
-                [bookId]="v.summary.id"
-                [title]="v.summary.title"
-                [untitledLabel]="t('books.untitledTitle')"
-                [tallness]="v.tallness"
-              />
-            </button>
-          }
+  <div class="bookcase" aria-label="Estantería de libros">
+    <div class="bookcase-top" aria-hidden="true"></div>
+    <div class="shelves">
+      @for (row of shelves(); track $index) {
+        <div class="shelf">
+          <div class="bookend left" aria-hidden="true"></div>
+          <div class="row">
+            @for (v of row; track v.summary.id) {
+              <button
+                type="button"
+                class="slot"
+                [class.opening]="opening() === v.summary.id"
+                [class.dimmed]="opening() !== null && opening() !== v.summary.id"
+                [attr.aria-label]="v.summary.title || t('books.untitledTitle')"
+                (click)="openBook(v.summary.id)"
+              >
+                <mc-book-volume
+                  [bookId]="v.summary.id"
+                  [title]="v.summary.title"
+                  [subtitle]="v.summary.subtitle"
+                  [untitledLabel]="t('books.untitledTitle')"
+                  [tallness]="v.tallness"
+                  [chapterCount]="v.summary.chapterCount"
+                  [accent]="v.summary.accent"
+                />
+                <span class="caption" aria-hidden="true">
+                  <span class="caption-title">{{
+                    v.summary.title || t('books.untitledTitle')
+                  }}</span>
+                  <span class="caption-meta">{{ v.tooltip }}</span>
+                </span>
+              </button>
+            }
+          </div>
+          <div class="bookend right" aria-hidden="true"></div>
+          <div class="plank">
+            <span class="plank-grain" aria-hidden="true"></span>
+            <span class="plank-edge" aria-hidden="true"></span>
+          </div>
         </div>
-        <div class="plank"></div>
-      </div>
-    }
+      }
+    </div>
+    <div class="bookcase-bottom" aria-hidden="true"></div>
   </div>
 } @else {
   <ul class="list">
@@ -64,11 +83,13 @@
       <li>
         <button type="button" class="row-btn" (click)="openBook(v.summary.id)">
           <span class="bullet">
-            <mc-book-spine
+            <mc-book-volume
               [bookId]="v.summary.id"
               [title]="''"
               [untitledLabel]="''"
               [tallness]="'short'"
+              [chapterCount]="v.summary.chapterCount"
+              [accent]="v.summary.accent"
             />
           </span>
           <span class="row-title">

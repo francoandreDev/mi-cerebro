@@ -9,6 +9,8 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 
+import type { JSONContent } from '@tiptap/core';
+
 import { AutosaveService } from '@core/autosave/autosave.service';
 import { ErrorService } from '@core/errors/error.service';
 import { withReauthIfNeeded } from '@core/errors/with-reauth';
@@ -21,27 +23,49 @@ import {
   ConfirmDialogComponent,
   type ConfirmRequest,
 } from '@shared/confirm-dialog/confirm-dialog.component';
+import { EditorComponent } from '@shared/editor/editor.component';
 import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
 import { reorderById } from '@shared/utils/reorder';
 
 import { BookMetaBarComponent, type BookSaveStatus } from '../components/book-meta-bar.component';
-import { ChapterCardComponent } from '../components/chapter-card.component';
-import { BOOK_KIND, type Book, type ChapterSummary } from '../models/book.types';
+import { ChapterIndexCardComponent } from '../components/chapter-index-card.component';
+import { BOOK_KIND, emptyBackNoteDoc, type Book, type ChapterSummary } from '../models/book.types';
 import { BooksService } from '../services/books.service';
 
+interface IndexPage {
+  readonly kind: 'index';
+  readonly chapters: readonly ChapterSummary[];
+  readonly pageNumber: number;
+}
+interface CoverPage {
+  readonly kind: 'cover';
+}
+interface BackPage {
+  readonly kind: 'back';
+}
+type Page = CoverPage | IndexPage | BackPage;
+
+interface Spread {
+  readonly left: Page | null;
+  readonly right: Page | null;
+}
+
+const CHAPTERS_PER_INDEX_PAGE = 4;
+
 @Component({
-  selector: 'mc-book-desk',
+  selector: 'mc-book-open',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     BookMetaBarComponent,
-    ChapterCardComponent,
+    ChapterIndexCardComponent,
     LockBannerComponent,
     ConfirmDialogComponent,
+    EditorComponent,
   ],
-  templateUrl: './book-desk.container.html',
-  styleUrl: './book-desk.container.css',
+  templateUrl: './book-open.container.html',
+  styleUrl: './book-open.container.css',
 })
-export class BookDeskContainer {
+export class BookOpenContainer {
   readonly id = input<string | undefined>(undefined);
 
   private readonly booksService = inject(BooksService);
@@ -59,10 +83,45 @@ export class BookDeskContainer {
   protected readonly bookLoading = signal<boolean>(false);
   protected readonly confirmRequest = signal<ConfirmRequest | null>(null);
   private confirmHandler: (() => void | Promise<void>) | null = null;
+  protected readonly currentSpread = signal<number>(0);
   protected readonly totalWords = computed(() =>
     this.chapters().reduce((acc, c) => acc + c.words, 0),
   );
+  protected readonly totalPages = computed(() =>
+    this.chapters().reduce((acc, c) => acc + Math.max(1, c.pageCount), 0),
+  );
   protected readonly lock = new EntityLockController(BOOK_KIND, this.active);
+
+  protected readonly indexPages = computed<readonly IndexPage[]>(() => {
+    const list = this.chapters();
+    const pages: IndexPage[] = [];
+    for (let i = 0; i < list.length; i += CHAPTERS_PER_INDEX_PAGE) {
+      pages.push({
+        kind: 'index',
+        chapters: list.slice(i, i + CHAPTERS_PER_INDEX_PAGE),
+        pageNumber: Math.floor(i / CHAPTERS_PER_INDEX_PAGE) + 1,
+      });
+    }
+    if (pages.length === 0) {
+      pages.push({ kind: 'index', chapters: [], pageNumber: 1 });
+    }
+    return pages;
+  });
+
+  protected readonly spreads = computed<readonly Spread[]>(() => {
+    const slots: Page[] = [{ kind: 'cover' }, ...this.indexPages(), { kind: 'back' }];
+    const out: Spread[] = [];
+    for (let i = 0; i < slots.length; i += 2) {
+      out.push({ left: slots[i] ?? null, right: slots[i + 1] ?? null });
+    }
+    return out;
+  });
+
+  protected readonly atFirst = computed(() => this.currentSpread() === 0);
+  protected readonly atLast = computed(() => this.currentSpread() >= this.spreads().length - 1);
+  protected readonly current = computed<Spread>(
+    () => this.spreads()[this.currentSpread()] ?? { left: null, right: null },
+  );
 
   constructor() {
     effect(() => {
@@ -77,16 +136,58 @@ export class BookDeskContainer {
       }
       if (current?.id !== wanted) void this.loadBook(wanted);
     });
+    effect(() => {
+      const max = this.spreads().length - 1;
+      if (this.currentSpread() > max) this.currentSpread.set(Math.max(0, max));
+    });
   }
 
-  protected t(key: TranslationKey): string {
-    return this.i18n.t(key);
+  protected t(key: TranslationKey, params?: Record<string, string | number>): string {
+    return this.i18n.t(key, params);
+  }
+  protected isCover(p: Page | null): p is CoverPage {
+    return p !== null && p.kind === 'cover';
+  }
+  protected isIndex(p: Page | null): p is IndexPage {
+    return p !== null && p.kind === 'index';
+  }
+  protected isBack(p: Page | null): p is BackPage {
+    return p !== null && p.kind === 'back';
+  }
+
+  protected prevSpread(): void {
+    this.currentSpread.update((v) => Math.max(0, v - 1));
+  }
+  protected nextSpread(): void {
+    const max = this.spreads().length - 1;
+    this.currentSpread.update((v) => Math.min(max, v + 1));
   }
 
   protected onTitleChange(title: string): void {
     const current = this.active();
     if (!current || !this.lock.guardWrite()) return;
     const next = { ...current, title };
+    this.active.set(next);
+    this.scheduleBookSave(next);
+  }
+
+  protected onSubtitleInput(event: Event): void {
+    const current = this.active();
+    if (!current || !this.lock.guardWrite()) return;
+    const target = event.target as HTMLInputElement | null;
+    if (!target) return;
+    const next = { ...current, subtitle: target.value };
+    this.active.set(next);
+    this.scheduleBookSave(next);
+  }
+
+  protected backNote(): JSONContent {
+    return this.active()?.backNote ?? emptyBackNoteDoc();
+  }
+  protected onBackNoteChange(body: JSONContent): void {
+    const current = this.active();
+    if (!current || !this.lock.guardWrite()) return;
+    const next = { ...current, backNote: body };
     this.active.set(next);
     this.scheduleBookSave(next);
   }
@@ -102,10 +203,9 @@ export class BookDeskContainer {
       this.active.set(next);
       this.scheduleBookSave(next);
     } catch (e) {
-      this.errors.report(this.withReauthIfNeeded(e));
+      this.errors.report(this.withReauth(e));
     }
   }
-
   protected onRemoveTag(id: string): void {
     const current = this.active();
     if (!current || !this.lock.guardWrite()) return;
@@ -155,7 +255,7 @@ export class BookDeskContainer {
       this.active.set(await this.booksService.readBook(book.id));
       await this.router.navigate(['/books', book.id, ch.id]);
     } catch (e) {
-      this.errors.report(this.withReauthIfNeeded(e));
+      this.errors.report(this.withReauth(e));
     }
   }
 
@@ -164,19 +264,6 @@ export class BookDeskContainer {
   }
   protected async onMoveDown(chapterId: string): Promise<void> {
     await this.swapChapter(chapterId, +1);
-  }
-  protected async onReorder(payload: { from: string; to: string }): Promise<void> {
-    const book = this.active();
-    if (!book || !this.lock.guardWrite()) return;
-    const order = reorderById(book.order, payload.from, payload.to);
-    if (order === book.order) return;
-    try {
-      await this.booksService.reorderChapters(book.id, order);
-      this.active.set(await this.booksService.readBook(book.id));
-      this.chapters.set(await this.booksService.listChapters(book.id));
-    } catch (e) {
-      this.errors.report(e);
-    }
   }
 
   protected onRemoveChapter(chapterId: string): void {
@@ -228,13 +315,9 @@ export class BookDeskContainer {
     if (idx < 0) return;
     const target = idx + delta;
     if (target < 0 || target >= order.length) return;
-    const a = order[idx];
-    const b = order[target];
-    if (a === undefined || b === undefined) return;
-    order[idx] = b;
-    order[target] = a;
+    const reordered = reorderById(book.order, order[idx]!, order[target]!);
     try {
-      await this.booksService.reorderChapters(book.id, order);
+      await this.booksService.reorderChapters(book.id, reordered);
       this.active.set(await this.booksService.readBook(book.id));
       this.chapters.set(await this.booksService.listChapters(book.id));
     } catch (e) {
@@ -249,6 +332,7 @@ export class BookDeskContainer {
       this.active.set(book);
       this.bookStatus.set('saved');
       this.chapters.set(await this.booksService.listChapters(id));
+      this.currentSpread.set(0);
     } catch (e) {
       this.errors.report(e);
       this.active.set(null);
@@ -268,14 +352,14 @@ export class BookDeskContainer {
           await this.autosave.clear(payload.id);
           this.bookStatus.set('saved');
         } catch (e) {
-          this.errors.report(this.withReauthIfNeeded(e, () => this.scheduleBookSave(payload)));
+          this.errors.report(this.withReauth(e, () => this.scheduleBookSave(payload)));
           this.bookStatus.set('unsaved');
         }
       },
     });
   }
 
-  private withReauthIfNeeded(error: unknown, retry?: () => void): unknown {
+  private withReauth(error: unknown, retry?: () => void): unknown {
     return withReauthIfNeeded(error, () => this.workspace.reauthorize(), retry);
   }
 }

@@ -182,20 +182,26 @@ Formato por entrada:
 - **Por qué se difirió**: requiere extender `TrashService` (o `GalleriesService`) con un método que, dado un `TrashEntry` de kind `image`, lea el `meta.json` del dir borrado y devuelva blobs de las primeras N imágenes, más gestión del lifecycle de object URLs en la container (createObjectURL/revokeObjectURL al cambiar visibilidad o desmontar). Es un trabajo cross-feature no trivial para una vista de baja frecuencia. El v1 da el salto visual con cards por kind + countdown + filtros + ops jerarquizadas; la fidelidad fotográfica queda como pulido posterior.
 - **Target**: sin asignar.
 
-### Spine real del `BookSpineComponent` para libros en la papelera
+### Volumen real (`BookVolumeComponent`) para libros en la papelera
 
-- **Qué**: la card de libro en `/trash` muestra hoy un tratamiento tipográfico estilizado (inicial grande + byline) en una caja con aspect-ratio 3/4. El objetivo es reusar el `BookSpineComponent` real con el `accent` color del bundle del libro borrado.
-- **Por qué se difirió**: requiere leer el `BookBundle` desde el archivo de la papelera para extraer `accent` + cualquier otro metadato necesario por el spine. Mismo razonamiento que los thumbs: baja frecuencia, no bloquea la UX nueva.
+- **Qué**: la card de libro en `/trash` muestra hoy un tratamiento tipográfico estilizado (inicial grande + byline) en una caja con aspect-ratio 3/4. El objetivo es reusar el `BookVolumeComponent` real con `accent` del bundle del libro borrado.
+- **Por qué se difirió**: requiere leer el `BookBundle` desde el archivo de la papelera para extraer `accent` + cualquier otro metadato necesario por el volumen. Mismo razonamiento que los thumbs: baja frecuencia, no bloquea la UX nueva.
 - **Target**: sin asignar.
 
 ---
 
 ## Books / UI (origen: rediseño de /books)
 
-### Subtítulo opcional en `Book`
+### Override de imágenes para portada/reverso de libro y miniaturas de capítulo
 
-- **Qué**: campo `subtitle?: string` editable en la meta bar, para "Crónica del asesino de reyes · Libro 1" abajo del título principal.
-- **Por qué se difirió**: agregar un campo al schema persistido implica `BOOK_SCHEMA_VERSION` bump + step de migración (§4.15) que no aporta a la UX hasta que el resto del rediseño cierre. Lo metemos cuando haya otra razón para bumpear o si el usuario lo pide.
+- **Qué**: los modelos `Book.cover/back` y `Chapter.image` admiten `kind: 'image'` con ref a un archivo blob en disco. Hoy sólo se usa `kind: 'auto'` (procedural: gradiente + glyph derivados del id) y el usuario no puede subir imagen propia.
+- **Por qué se difirió**: implementar el picker + storage (`books/<book>/cover.{jpg,png}`, `back.*`, `chapters/<chId>.img.*`), generación de miniaturas (cacheo en IndexedDB tipo `GalleriesService.renderThumb`) y un nuevo código `MCB-IMG-*` para "blob ilegible" es una feature de tamaño propio. Los faces procedurales ya dan identidad visual al libro y al capítulo. Cuando se aborde, basar el flujo en `GalleriesService.addImage` y refactorizar a un helper compartido.
+- **Target**: sin asignar — abrir cuando el usuario lo pida o cuando se haga "biblioteca rica con tapas reales".
+
+### Paginación real persistida fila por fila (no global)
+
+- **Qué**: hoy `Chapter.pageCount` se actualiza cuando el editor abre el capítulo (totalSpreads\*2). Capítulos nunca abiertos caen a `ceil(words/250)`. Esto significa que el rango "pag X–Y" del índice puede mentir hasta la primera apertura.
+- **Por qué se difirió**: para tener páginas exactas sin abrir el capítulo habría que renderizar el editor en headless al cargar el libro (caro) o derivar la métrica de un cálculo de altura puro sobre el JSONContent (frágil, depende del CSS). Es una optimización para libros viejos que nunca pasaron por el editor v4; libros nuevos se autocorrigen apenas el usuario los abre.
 - **Target**: sin asignar.
 
 ### Menú ⋯ con duplicar / exportar a Markdown
@@ -215,3 +221,19 @@ Formato por entrada:
 - **Qué**: en modo foco actualmente se aplica una máscara CSS que oscurece arriba y abajo de la página. El target ideal es resaltar exactamente la línea/párrafo donde está el cursor (TipTap selectionUpdate → marca block actual con clase, el resto baja a opacity 0.3).
 - **Por qué se difirió**: requiere extensión de ProseMirror que actualice el atributo en cada movimiento de cursor. La máscara CSS captura ~70% del efecto sin tocar el editor. Si en uso real se sienta corto, se hace.
 - **Target**: §19.16f.
+
+---
+
+## Música — Cover art / Waveform ID3 (origen: redesign-music Fase 9)
+
+### Cover art y duración leídos de ID3 con `jsmediatags`
+
+- **Qué**: extraer `picture`, `title`, `artist`, `album` y duración real de cada MP3 al subirlo. Mostrar carátula en Now Playing y como pequeña miniatura en la columna de título de la tabla.
+- **Por qué se difirió**: agrega una dependencia npm (~30KB) + decisiones de persistencia (carátula como archivo aparte en `music/covers/<id>.<ext>` vs base64 inline en `_library.json`) + migración del schema de `Track` para nuevos campos opcionales. El layout 3-zonas, drag-and-drop, bulk actions, cola y atajos ya cierran el redesign de UI; las carátulas son enhancement visual, no bloquean uso.
+- **Target**: sin asignar — abrir cuando se planifique fase de "música rica" o cuando el usuario explícitamente lo pida.
+
+### Waveform pre-renderizado
+
+- **Qué**: dibujar la forma de onda en Now Playing y permitir click para seek.
+- **Por qué se difirió**: implica decodificar todo el MP3 en `AudioContext` al subir (costo: ~3-10s por archivo) y persistir el peak array. Bonito pero pesado para una PWA personal.
+- **Target**: sin asignar — junto con cover art si se hace fase de "música rica".

@@ -32,8 +32,16 @@ import {
   type BookBundle,
   type BookSummary,
   type Chapter,
+  type ChapterImageRef,
+  type ChapterPreview,
   type ChapterSummary,
 } from '../models/book.types';
+
+// why: estimación de páginas para capítulos que nunca pasaron por el editor.
+//      250 palabras/página es el estándar de libros impresos (folio).
+const PAGES_PER_WORD_DIVISOR = 250;
+const estimatePageCount = (words: number): number =>
+  Math.max(1, Math.ceil(words / PAGES_PER_WORD_DIVISOR));
 
 const TRASH_DIR = '.mi-cerebro';
 const TRASH_SUBDIR = 'trash';
@@ -63,7 +71,14 @@ export class BooksService {
     this.migrations.register({
       kind: BOOK_KIND,
       latest: BOOK_SCHEMA_VERSION,
-      steps: [blockIdMigrationStep(1), positionSeedMigrationStep(2)],
+      // why: v3→v4 es identidad. Sólo agrega campos opcionales (cover/back/
+      //      accent en Book; pageCount/image en Chapter); los archivos viejos
+      //      quedan válidos y los defaults los resuelve la UI.
+      steps: [
+        blockIdMigrationStep(1),
+        positionSeedMigrationStep(2),
+        { from: 3, to: 4, run: (d) => ({ ...d, schemaVersion: 4 }) },
+      ],
     });
   }
 
@@ -233,19 +248,31 @@ export class BooksService {
 
   async listChapters(bookId: string): Promise<readonly ChapterSummary[]> {
     const chaptersDir = await this.chaptersDir(bookId);
-    const map = new Map<string, ChapterSummary>();
+    interface Draft {
+      readonly id: string;
+      readonly title: string;
+      readonly updatedAt: string;
+      readonly words: number;
+      readonly preview: ChapterPreview;
+      readonly pageCount: number;
+      readonly image: ChapterImageRef;
+    }
+    const map = new Map<string, Draft>();
     const idToFile = new Map<string, string>();
     for await (const filename of this.fs.listFiles(chaptersDir, CHAPTER_FILE_SUFFIX)) {
       try {
         const raw = await this.fs.readJson<Chapter>(chaptersDir, filename);
         const ch = await this.migrations.migrate<Chapter>(BOOK_KIND, raw);
         const plain = extractPlainText(ch.body);
+        const words = countWords(plain);
         map.set(ch.id, {
           id: ch.id,
           title: ch.title,
           updatedAt: ch.updatedAt,
-          words: countWords(plain),
+          words,
           preview: buildChapterPreview(plain),
+          pageCount: ch.pageCount ?? estimatePageCount(words),
+          image: ch.image ?? { kind: 'auto' },
         });
         idToFile.set(ch.id, filename);
       } catch (cause) {
@@ -253,15 +280,22 @@ export class BooksService {
       }
     }
     const book = await this.readBook(bookId);
-    const ordered: ChapterSummary[] = [];
+    const draftsOrdered: Draft[] = [];
     for (const id of book.order) {
       const ch = map.get(id);
       if (ch) {
-        ordered.push(ch);
+        draftsOrdered.push(ch);
         map.delete(id);
       }
     }
-    for (const ch of map.values()) ordered.push(ch);
+    for (const ch of map.values()) draftsOrdered.push(ch);
+    let cursor = 1;
+    const ordered: ChapterSummary[] = draftsOrdered.map((d) => {
+      const pageStart = cursor;
+      const pageEnd = cursor + Math.max(1, d.pageCount) - 1;
+      cursor = pageEnd + 1;
+      return { ...d, pageStart, pageEnd };
+    });
     this.chapterCountById.set(bookId, ordered.length);
     this.chapterFileCache.set(bookId, idToFile);
     return ordered;
@@ -513,6 +547,10 @@ export class BooksService {
       folder,
       chapterCount,
       position: book.position ?? '',
+      cover: book.cover ?? { kind: 'auto' },
+      back: book.back ?? { kind: 'auto' },
+      accent: book.accent ?? null,
+      subtitle: book.subtitle ?? '',
     };
   }
 

@@ -7,7 +7,7 @@ import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 
-import { BookSpineComponent } from '../components/book-spine.component';
+import { BookVolumeComponent } from '../components/book-volume.component';
 import type { BookSummary } from '../models/book.types';
 import { BooksService } from '../services/books.service';
 import { formatAgo } from './format-ago';
@@ -19,11 +19,12 @@ interface SummaryView {
 }
 
 const TALLNESS: readonly ('short' | 'medium' | 'tall')[] = ['short', 'medium', 'tall'];
+const BOOKS_PER_SHELF = 5;
 
 @Component({
   selector: 'mc-bookshelf',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [BookSpineComponent],
+  imports: [BookVolumeComponent],
   templateUrl: './bookshelf.container.html',
   styleUrl: './bookshelf.container.css',
 })
@@ -37,6 +38,9 @@ export class BookshelfContainer {
   protected readonly summaries = this.booksService.summaries;
   protected readonly query = signal<string>('');
   protected readonly mode = signal<'shelf' | 'list'>('shelf');
+  // why: id del libro que se está "abriendo" tras un click. Dispara la
+  //      animación CSS antes de navegar.
+  protected readonly opening = signal<string | null>(null);
 
   protected readonly views = computed<readonly SummaryView[]>(() => {
     const q = this.query().trim().toLowerCase();
@@ -55,7 +59,7 @@ export class BookshelfContainer {
     let row: SummaryView[] = [];
     for (const v of this.views()) {
       row.push(v);
-      if (row.length === 8) {
+      if (row.length === BOOKS_PER_SHELF) {
         out.push(row);
         row = [];
       }
@@ -75,7 +79,14 @@ export class BookshelfContainer {
     this.mode.update((m) => (m === 'shelf' ? 'list' : 'shelf'));
   }
   protected openBook(id: string): void {
-    void this.router.navigate(['/books', id]);
+    if (this.opening() !== null) return;
+    this.opening.set(id);
+    // why: la animación de apertura dura ~520ms (ver .slot.opening en CSS).
+    //      Navegamos al cerrarse para que el usuario vea el libro saliendo
+    //      antes del cambio de ruta.
+    window.setTimeout(() => {
+      void this.router.navigate(['/books', id]);
+    }, 520);
   }
   protected async createBook(): Promise<void> {
     try {

@@ -27,11 +27,17 @@ import {
 import { FileGridComponent } from '../components/file-grid.component';
 import { FILE_KIND, type FileCollection } from '../models/file-collection.types';
 import { FilesService } from '../services/files.service';
+import { FilesIndexRailContainer } from './files-index-rail.container';
 
 @Component({
   selector: 'mc-files',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FileCollectionMetaBarComponent, FileGridComponent, LockBannerComponent],
+  imports: [
+    FileCollectionMetaBarComponent,
+    FileGridComponent,
+    LockBannerComponent,
+    FilesIndexRailContainer,
+  ],
   templateUrl: './files.container.html',
   styleUrl: './files.container.css',
 })

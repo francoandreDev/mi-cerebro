@@ -1,0 +1,342 @@
+:host {
+  display: block;
+  /* why: tokens locales del "papel". Por defecto mapean a la superficie del
+     tema (modo oscuro). En modo claro los pisamos con los tonos cream/sepia.
+     Los hijos heredan estos vars por cascada, así que chapter-index-card y
+     mc-editor adentro también los consumen. */
+  --mc-book-paper-bg: var(--mc-bg-surface);
+  --mc-book-paper-fg: var(--mc-fg-primary);
+  --mc-book-paper-muted: var(--mc-fg-muted);
+  --mc-book-paper-border: var(--mc-border-default);
+  --mc-book-paper-accent: var(--mc-bg-elevated);
+}
+
+/* Modo claro forzado por el usuario en /config */
+:host-context(:root[data-theme='light']) {
+  --mc-book-paper-bg: #f7efdc;
+  --mc-book-paper-fg: #2a1c0c;
+  --mc-book-paper-muted: #6e5430;
+  --mc-book-paper-border: rgba(110, 70, 30, 0.35);
+  --mc-book-paper-accent: rgba(110, 70, 30, 0.08);
+}
+/* Modo claro por preferencia del SO, sin override forzado */
+@media (prefers-color-scheme: light) {
+  :host-context(:root:not([data-theme='dark'])) {
+    --mc-book-paper-bg: #f7efdc;
+    --mc-book-paper-fg: #2a1c0c;
+    --mc-book-paper-muted: #6e5430;
+    --mc-book-paper-border: rgba(110, 70, 30, 0.35);
+    --mc-book-paper-accent: rgba(110, 70, 30, 0.08);
+  }
+}
+.pane {
+  padding: var(--mc-space-4);
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-3);
+}
+
+/* OPEN BOOK — match visual del chapter-editor-pane: misma superficie, mismo
+   sombreado, misma tipografía. La diferencia es que acá hay 2 columnas
+   (left/right) explícitas y no se usa column-fill. */
+.open-book {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: stretch;
+  gap: var(--mc-space-3);
+  font-family: var(--mc-font-serif);
+}
+
+.page-nav {
+  background: transparent;
+  border: 1px solid var(--mc-border-default);
+  color: var(--mc-fg-muted);
+  font-family: var(--mc-font-serif);
+  font-size: 2rem;
+  line-height: 1;
+  width: 36px;
+  align-self: center;
+  height: 80px;
+  border-radius: var(--mc-radius-md);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+.page-nav:hover:not(:disabled) {
+  background: var(--mc-bg-elevated);
+  color: var(--mc-fg-primary);
+  border-color: var(--mc-accent-primary);
+}
+.page-nav:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+.spread {
+  position: relative;
+  height: min(78vh, 880px);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--mc-book-paper-bg);
+  border-radius: 4px;
+  box-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.15),
+    0 14px 36px rgba(0, 0, 0, 0.32);
+  overflow: hidden;
+  color: var(--mc-book-paper-fg);
+}
+
+.spine {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 36px;
+  transform: translateX(-50%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.08) 28%,
+    rgba(0, 0, 0, 0.24) 50%,
+    rgba(0, 0, 0, 0.08) 72%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 3;
+}
+
+.page {
+  position: relative;
+  padding: clamp(36px, 5.5vh, 64px) clamp(28px, 4.5vw, 56px);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+.page.left {
+  padding-right: clamp(40px, 5vw, 72px);
+}
+.page.right {
+  padding-left: clamp(40px, 5vw, 72px);
+}
+
+.page-folio {
+  position: absolute;
+  bottom: 18px;
+  font-family: var(--mc-font-serif);
+  font-variant: small-caps;
+  letter-spacing: 0.18em;
+  font-size: 12px;
+  color: var(--mc-book-paper-muted);
+  opacity: 0.9;
+}
+.page-folio.left {
+  left: clamp(28px, 4.5vw, 56px);
+}
+.page-folio.right {
+  right: clamp(28px, 4.5vw, 56px);
+}
+
+/* COVER PAGE — mismo "papel" que el resto. El marco es serif + reglas */
+.cover-page {
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+}
+.cover-frame {
+  flex: 1;
+  border: 1px solid var(--mc-book-paper-border);
+  border-radius: 4px;
+  padding: clamp(28px, 5vh, 56px) clamp(24px, 4vw, 48px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mc-space-3);
+  text-align: center;
+}
+.cover-stripe {
+  display: block;
+  width: 60px;
+  height: 1px;
+  background: var(--mc-book-paper-muted);
+  opacity: 0.5;
+}
+.cover-eyebrow {
+  font-family: var(--mc-font-serif);
+  font-variant: small-caps;
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  color: var(--mc-book-paper-muted);
+}
+.cover-title {
+  margin: 0;
+  font-family: var(--mc-font-serif);
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--mc-book-paper-fg);
+}
+.cover-subtitle {
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed var(--mc-book-paper-border);
+  font-family: var(--mc-font-serif);
+  font-style: italic;
+  font-size: 15px;
+  color: var(--mc-book-paper-fg);
+  text-align: center;
+  padding: var(--mc-space-1) var(--mc-space-2);
+  width: min(80%, 320px);
+}
+.cover-subtitle::placeholder {
+  color: var(--mc-book-paper-muted);
+}
+.cover-subtitle:hover {
+  border-bottom-color: var(--mc-book-paper-muted);
+}
+.cover-subtitle:focus {
+  outline: none;
+  border-bottom-color: var(--mc-accent-primary);
+  background: var(--mc-book-paper-accent);
+}
+.cover-meta {
+  margin-top: auto;
+  font-family: var(--mc-font-serif);
+  font-variant: small-caps;
+  font-size: 12px;
+  color: var(--mc-book-paper-muted);
+  letter-spacing: 0.18em;
+}
+
+/* INDEX PAGE — listado serif, mismo tono que el cuerpo del libro */
+.index-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-2);
+  min-height: 0;
+}
+.index-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--mc-space-2);
+  border-bottom: 1px solid var(--mc-book-paper-border);
+  padding-bottom: var(--mc-space-1);
+}
+.index-head h3 {
+  margin: 0;
+  font-family: var(--mc-font-serif);
+  font-variant: small-caps;
+  font-size: 1.4rem;
+  letter-spacing: 0.06em;
+  color: var(--mc-book-paper-fg);
+}
+.index-empty {
+  color: var(--mc-book-paper-muted);
+  font-style: italic;
+  padding: var(--mc-space-2) 0;
+}
+.index-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* BACK PAGE — mismo papel + título serif. El mc-editor adentro adopta
+   el .book-editor (mismo flow que en chapter-editor-pane). */
+.back-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-2);
+  min-height: 0;
+}
+.back-title {
+  margin: 0 0 var(--mc-space-2);
+  font-family: var(--mc-font-serif);
+  font-variant: small-caps;
+  font-size: 1.4rem;
+  letter-spacing: 0.06em;
+  color: var(--mc-book-paper-fg);
+  border-bottom: 1px solid var(--mc-book-paper-border);
+  padding-bottom: var(--mc-space-1);
+}
+.back-editor {
+  display: block;
+  flex: 1;
+  min-height: 0;
+}
+
+.blank-page {
+  flex: 1;
+}
+
+.primary {
+  background: var(--mc-accent-primary);
+  color: var(--mc-accent-fg, var(--mc-bg-base));
+  border: none;
+  padding: var(--mc-space-1) var(--mc-space-3);
+  border-radius: var(--mc-radius-md);
+  cursor: pointer;
+  font-size: var(--mc-font-size-sm);
+  font-weight: 600;
+}
+.primary.tiny {
+  font-size: 11px;
+  padding: 4px 10px;
+}
+
+.spread-foot {
+  display: flex;
+  justify-content: center;
+  color: var(--mc-fg-muted);
+  font-family: var(--mc-font-serif);
+  font-variant: small-caps;
+  letter-spacing: 0.18em;
+  font-size: var(--mc-font-size-sm);
+}
+
+.empty {
+  padding: var(--mc-space-5);
+  text-align: center;
+  color: var(--mc-fg-muted);
+}
+
+.book-skeleton {
+  padding: var(--mc-space-4);
+}
+.sk-line {
+  background: var(--mc-bg-elevated);
+  height: 14px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+.sk-title {
+  height: 24px;
+}
+.sk-stats {
+  height: 12px;
+}
+.sk-card {
+  height: 60px;
+}
+.sk-w-60 {
+  width: 60%;
+}
+.sk-w-50 {
+  width: 50%;
+}

@@ -1,0 +1,108 @@
+<header class="zone-head">
+  <h3>{{ t('music.title') }}</h3>
+</header>
+@if (currentTrack(); as np) {
+  <div class="np-card">
+    <div class="np-art" aria-hidden="true">
+      <mc-icon name="music-notes" />
+    </div>
+    <p class="np-title">{{ np.originalName }}</p>
+    @if (sourceTitle(); as src) {
+      <p class="np-source">{{ src }}</p>
+    }
+    <div class="np-controls">
+      <button
+        type="button"
+        class="icon-btn"
+        [class.fav-active]="shuffle()"
+        (click)="onToggleShuffle()"
+        [title]="t('music.shuffle')"
+        [attr.aria-label]="t('music.shuffle')"
+        [attr.aria-pressed]="shuffle()"
+      >
+        <mc-icon name="shuffle" />
+      </button>
+      <button
+        type="button"
+        class="icon-btn"
+        (click)="onPrev()"
+        [title]="t('music.prev')"
+        [attr.aria-label]="t('music.prev')"
+      >
+        <mc-icon name="skip-back" />
+      </button>
+      <button
+        type="button"
+        class="icon-btn np-toggle"
+        (click)="onTogglePlay()"
+        [title]="t('music.playPause')"
+        [attr.aria-label]="t('music.playPause')"
+      >
+        @if (isPlaying()) {
+          <mc-icon name="pause" />
+        } @else {
+          <mc-icon name="play" />
+        }
+      </button>
+      <button
+        type="button"
+        class="icon-btn"
+        (click)="onNext()"
+        [title]="t('music.next')"
+        [attr.aria-label]="t('music.next')"
+      >
+        <mc-icon name="skip-forward" />
+      </button>
+      <button
+        type="button"
+        class="icon-btn"
+        (click)="onStop()"
+        [title]="t('music.stop')"
+        [attr.aria-label]="t('music.stop')"
+      >
+        ✕
+      </button>
+    </div>
+  </div>
+
+  @if (queueTracks().length > 1) {
+    <div class="queue">
+      <header class="queue-head">
+        <h4>{{ t('music.queue.title') }} ({{ queueTracks().length }})</h4>
+        <button type="button" class="ghost" (click)="onClearQueue()">
+          {{ t('music.queue.clear') }}
+        </button>
+      </header>
+      <ul class="queue-list">
+        @for (row of queueTracks(); track row.id + '@' + row.index) {
+          <li class="queue-row" [class.current]="row.isCurrent">
+            <button
+              type="button"
+              class="queue-play"
+              (click)="onJumpTo(row.index)"
+              [attr.aria-label]="t('music.queue.jumpTo')"
+            >
+              @if (row.isCurrent && isPlaying()) {
+                <span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>
+              } @else {
+                <mc-icon name="play" />
+              }
+            </button>
+            <span class="queue-title">{{ row.originalName }}</span>
+            <button
+              type="button"
+              class="ghost"
+              (click)="onRemoveFromQueue(row.index)"
+              [disabled]="row.isCurrent"
+              [attr.aria-label]="t('music.queue.remove')"
+            >
+              <mc-icon name="x" />
+            </button>
+          </li>
+        }
+      </ul>
+    </div>
+  }
+} @else {
+  <p class="empty">{{ t('music.sidebar.emptyTopTracks') }}</p>
+}

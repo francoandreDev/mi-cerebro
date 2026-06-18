@@ -1,0 +1,134 @@
+@if (current(); as playlist) {
+  <header class="zone-head pl-edit-head">
+    <input
+      type="text"
+      class="title-input"
+      [value]="playlist.title"
+      (change)="onTitleInput(asInput($event.target).value)"
+      [placeholder]="t('music.untitledPlaylist')"
+    />
+    <button
+      type="button"
+      class="icon-btn"
+      [class.fav-active]="playlist.favorite === true"
+      (click)="onToggleFavorite()"
+      [title]="t('music.favoriteToggle')"
+      [attr.aria-label]="t('music.favoriteToggle')"
+      [attr.aria-pressed]="playlist.favorite === true"
+    >
+      @if (playlist.favorite === true) {
+        <mc-icon name="star-fill" />
+      } @else {
+        <mc-icon name="star" />
+      }
+    </button>
+    <button
+      type="button"
+      class="icon-btn"
+      (click)="onPlayPlaylist()"
+      [disabled]="activeTracks().length === 0"
+      [title]="t('music.playAll')"
+      [attr.aria-label]="t('music.playAll')"
+    >
+      <mc-icon name="play" />
+    </button>
+    <button
+      type="button"
+      class="icon-btn danger"
+      (click)="onDelete()"
+      [title]="t('common.delete')"
+      [attr.aria-label]="t('common.delete')"
+    >
+      <mc-icon name="trash" />
+    </button>
+    <button
+      type="button"
+      class="ghost back"
+      (click)="onBack()"
+      [attr.aria-label]="t('music.backToPlaylists')"
+      [title]="t('music.backToPlaylists')"
+    >
+      ✕
+    </button>
+  </header>
+
+  @if (activeTracks().length === 0) {
+    <p class="empty">{{ t('music.emptyPlaylist') }}</p>
+  } @else {
+    <ul class="list pl-tracks">
+      @for (track of activeTracks(); track track.id; let i = $index) {
+        <li
+          class="row"
+          draggable="true"
+          [class.playing]="currentTrackId() === track.id"
+          [class.drag-over]="dragOverIdx() === i"
+          (dragstart)="onTrackDragStart(i, $event)"
+          (dragover)="onTrackDragOver(i, $event)"
+          (dragleave)="onTrackDragLeave()"
+          (drop)="onTrackDrop(i, $event)"
+        >
+          <span class="handle" aria-hidden="true">⋮⋮</span>
+          <button type="button" class="play" (click)="onPlayTrack(track)">
+            @if (currentTrackId() === track.id && isPlaying()) {
+              <mc-icon name="pause" />
+            } @else {
+              <mc-icon name="play" />
+            }
+          </button>
+          <span class="title">
+            @if (currentTrackId() === track.id) {
+              <span class="eq" [class.paused]="!isPlaying()" aria-hidden="true">
+                <i></i><i></i><i></i>
+              </span>
+            }
+            {{ track.originalName }}
+          </span>
+          <button
+            type="button"
+            class="ghost"
+            (click)="onRemove(track.id)"
+            [attr.aria-label]="t('music.removeFromPlaylist')"
+          >
+            <mc-icon name="x" />
+          </button>
+        </li>
+      }
+    </ul>
+  }
+
+  <div class="add-section">
+    <button type="button" class="primary add-toggle" (click)="togglePicker()">
+      {{ picking() ? t('music.done') : '+ ' + t('music.addTracks') }}
+    </button>
+    @if (picking()) {
+      <input
+        type="search"
+        class="search-input"
+        [value]="pickerQuery()"
+        (input)="onPickerQueryInput(asInput($event.target).value)"
+        [placeholder]="t('music.searchTracks')"
+      />
+      @if (availableForActive().length === 0) {
+        <p class="empty">{{ t('music.allTracksAdded') }}</p>
+      } @else if (pickerResults().length === 0) {
+        <p class="empty">{{ t('music.noTracksMatch') }}</p>
+      } @else {
+        <ul class="list picker-list">
+          @for (track of pickerResults(); track track.id) {
+            <li class="row picker-row">
+              <button
+                type="button"
+                class="picker-add"
+                (click)="onAdd(track)"
+                [attr.aria-label]="t('music.addToPlaylist')"
+              >
+                <span class="plus">+</span>
+                <span class="title">{{ track.originalName }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    }
+  </div>
+}

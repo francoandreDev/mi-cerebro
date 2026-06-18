@@ -146,6 +146,15 @@ export class BookReaderContainer {
     this.scheduleChapterSave(next);
   }
 
+  protected onChapterPageCountChange(pageCount: number): void {
+    const current = this.chapter();
+    if (!current || !this.lock.editable()) return;
+    if (current.pageCount === pageCount) return;
+    const next = { ...current, pageCount };
+    this.chapter.set(next);
+    this.scheduleChapterSave(next);
+  }
+
   protected async onAddChapter(): Promise<void> {
     const b = this.book();
     if (!b || !this.lock.guardWrite()) return;
