@@ -179,13 +179,9 @@ export class WorkspaceSidebarContainer {
 
   protected readonly hidePane = computed(() => {
     const url = this.currentUrl();
-    if (url === '/history' || url.startsWith('/history/') || url.startsWith('/history?')) {
-      return true;
-    }
-    if (url === '/variants' || url.startsWith('/variants/') || url.startsWith('/variants?')) {
-      return true;
-    }
-    return url === '/books' || url.startsWith('/books/') || url.startsWith('/books?');
+    return PANE_HIDDEN_PREFIXES.some(
+      (p) => url === p || url.startsWith(`${p}/`) || url.startsWith(`${p}?`),
+    );
   });
 
   protected onManageVariants(event: Event): void {
@@ -780,6 +776,8 @@ export class WorkspaceSidebarContainer {
     }
   }
 }
+
+const PANE_HIDDEN_PREFIXES: readonly string[] = ['/history', '/variants', '/books', '/images'];
 
 const ROUTE_TO_KIND = {
   notes: 'note',

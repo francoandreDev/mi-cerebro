@@ -1,0 +1,40 @@
+<div class="top">
+  <a routerLink="/images" class="back" [title]="t('images.breadcrumb.root')">
+    ‹ {{ t('images.breadcrumb.root') }}
+  </a>
+  <span class="spacer"></span>
+  <span
+    class="status"
+    [attr.data-status]="status()"
+    [attr.aria-label]="statusLabel()"
+    [title]="statusLabel()"
+    >{{ statusGlyph() }}</span
+  >
+  @if (editable()) {
+    <mc-menu-button
+      variant="ghost"
+      [label]="'⋯'"
+      [options]="menuOptions()"
+      (choose)="onMenuChoose($event)"
+    />
+  }
+</div>
+<input
+  type="text"
+  class="title-input"
+  [value]="gallery().title"
+  [placeholder]="t('images.placeholderTitle')"
+  [attr.aria-label]="t('images.placeholderTitle')"
+  [readOnly]="!editable()"
+  (input)="onTitleInput($event)"
+/>
+<div class="bottom">
+  <mc-tag-picker
+    class="tags"
+    [availableTags]="availableTags()"
+    [selectedIds]="gallery().tags"
+    [editable]="editable()"
+    (addTag)="addTag.emit($event)"
+    (removeTag)="removeTag.emit($event)"
+  />
+</div>

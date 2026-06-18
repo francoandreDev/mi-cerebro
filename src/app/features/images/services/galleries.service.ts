@@ -422,6 +422,7 @@ export class GalleriesService {
       folder,
       imageCount: gallery.images.length,
       position: gallery.position ?? '',
+      coverImageIds: pickCoverIds(gallery),
     };
   }
 
@@ -455,6 +456,20 @@ export class GalleriesService {
     return tagIds.filter((id) => this.tags.byId(id) !== undefined);
   }
 }
+
+const pickCoverIds = (gallery: Gallery): readonly string[] => {
+  const known = new Set(gallery.images.map((i) => i.id));
+  const picks: string[] = [];
+  for (const id of gallery.order) {
+    if (known.has(id) && !picks.includes(id)) picks.push(id);
+    if (picks.length === 4) return picks;
+  }
+  for (const img of gallery.images) {
+    if (!picks.includes(img.id)) picks.push(img.id);
+    if (picks.length === 4) return picks;
+  }
+  return picks;
+};
 
 const compareLegacy = (a: GallerySummary, b: GallerySummary): number =>
   b.updatedAt.localeCompare(a.updatedAt) || a.id.localeCompare(b.id);

@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
@@ -13,78 +14,9 @@ export type GallerySaveStatus = 'saved' | 'saving' | 'unsaved';
 @Component({
   selector: 'mc-gallery-meta-bar',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TagPickerComponent, MenuButtonComponent],
-  template: `
-    <input
-      type="text"
-      class="title-input"
-      [value]="gallery().title"
-      [placeholder]="t('images.placeholderTitle')"
-      [attr.aria-label]="t('images.placeholderTitle')"
-      [readOnly]="!editable()"
-      (input)="onTitleInput($event)"
-    />
-    <mc-tag-picker
-      class="tags"
-      [availableTags]="availableTags()"
-      [selectedIds]="gallery().tags"
-      [editable]="editable()"
-      (addTag)="addTag.emit($event)"
-      (removeTag)="removeTag.emit($event)"
-    />
-    <span
-      class="status"
-      [attr.data-status]="status()"
-      [attr.aria-label]="statusLabel()"
-      [title]="statusLabel()"
-      >{{ statusGlyph() }}</span
-    >
-    @if (editable()) {
-      <mc-menu-button
-        variant="ghost"
-        [label]="'⋯'"
-        [options]="menuOptions()"
-        (choose)="onMenuChoose($event)"
-      />
-    }
-  `,
-  styles: `
-    :host {
-      display: flex;
-      align-items: center;
-      gap: var(--mc-space-3);
-      padding: var(--mc-space-3) var(--mc-space-4);
-      border-bottom: 1px solid var(--mc-border-default);
-    }
-    .title-input {
-      flex: 1;
-      min-width: 0;
-      font-size: var(--mc-font-size-lg);
-      background: transparent;
-      border: none;
-      color: var(--mc-fg-primary);
-      padding: var(--mc-space-1) 0;
-    }
-    .title-input:focus {
-      outline: none;
-      border-bottom: 1px solid var(--mc-accent-primary);
-    }
-    .tags {
-      flex-shrink: 0;
-    }
-    .status {
-      font-size: var(--mc-font-size-md);
-      color: var(--mc-fg-muted);
-      width: 1.2rem;
-      text-align: center;
-    }
-    .status[data-status='saving'] {
-      color: var(--mc-accent-primary);
-    }
-    .status[data-status='unsaved'] {
-      color: var(--mc-fg-warning, #d97706);
-    }
-  `,
+  imports: [RouterLink, TagPickerComponent, MenuButtonComponent],
+  templateUrl: './gallery-meta-bar.component.html',
+  styleUrl: './gallery-meta-bar.component.css',
 })
 export class GalleryMetaBarComponent {
   readonly gallery = input.required<Gallery>();

@@ -1,0 +1,82 @@
+<header class="header">
+  <h1>{{ t('images.title') }}</h1>
+  <div class="ops">
+    <input
+      type="search"
+      class="filter"
+      [placeholder]="t('images.index.search')"
+      [attr.aria-label]="t('images.index.search')"
+      [value]="query()"
+      (input)="onQuery($event)"
+    />
+    <select
+      class="select"
+      [attr.aria-label]="t('images.index.sort.label')"
+      [value]="sortKey()"
+      (change)="onSort($event)"
+    >
+      <option value="recent">{{ t('images.index.sort.recent') }}</option>
+      <option value="title">{{ t('images.index.sort.title') }}</option>
+    </select>
+    @if (tags().length > 0) {
+      <select
+        class="select"
+        [attr.aria-label]="t('images.index.tagFilter.label')"
+        [value]="tagFilter()"
+        (change)="onTagFilter($event)"
+      >
+        <option value="">{{ t('images.index.tagFilter.all') }}</option>
+        @for (tag of tags(); track tag.id) {
+          <option [value]="tag.id">{{ tag.label }}</option>
+        }
+      </select>
+    }
+    <button type="button" class="primary" (click)="createGallery()">+ {{ t('images.new') }}</button>
+  </div>
+</header>
+
+@if (summaries().length === 0) {
+  <div class="empty">
+    <p>{{ t('images.empty') }}</p>
+    <button type="button" class="primary" (click)="createGallery()">+ {{ t('images.new') }}</button>
+  </div>
+} @else if (views().length === 0) {
+  <p class="empty-soft">{{ t('images.index.noMatch') }}</p>
+} @else {
+  <ul class="wall">
+    @for (v of views(); track v.summary.id) {
+      <li class="card">
+        <button
+          type="button"
+          class="card-btn"
+          [attr.aria-label]="v.summary.title || t('images.untitledTitle')"
+          (click)="openGallery(v.summary.id)"
+        >
+          <mc-gallery-cover
+            [coverImageIds]="v.summary.coverImageIds"
+            [imageCount]="v.summary.imageCount"
+            [urls]="coverUrlsFor(v.summary)"
+            [moreLabel]="moreLabelFor(v.summary)"
+          />
+          <div class="meta">
+            <span class="title">{{ v.summary.title || t('images.untitledTitle') }}</span>
+            <span class="subtitle">{{ v.subtitle }}</span>
+            @if (v.tagLabels.length > 0) {
+              <span class="tags">
+                @for (label of v.tagLabels; track label) {
+                  <span class="tag">#{{ label }}</span>
+                }
+              </span>
+            }
+          </div>
+        </button>
+      </li>
+    }
+    <li class="card new">
+      <button type="button" class="new-btn" (click)="createGallery()">
+        <span class="plus" aria-hidden="true">+</span>
+        <span class="new-label">{{ t('images.index.newCard') }}</span>
+      </button>
+    </li>
+  </ul>
+}

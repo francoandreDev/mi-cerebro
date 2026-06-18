@@ -7,211 +7,20 @@ import { MC_INTERNAL_DND_TYPE, hasInternalDnd } from '@shared/utils/dnd';
 
 import type { Gallery, GalleryImage } from '../models/gallery.types';
 
+type Density = 'compact' | 'cozy' | 'large';
+
+interface DensityOption {
+  readonly value: Density;
+  readonly glyph: string;
+  readonly labelKey: TranslationKey;
+}
+
 @Component({
   selector: 'mc-image-grid',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [IconComponent],
-  template: `
-    <header class="header">
-      <h3>{{ t('images.images.title') }} ({{ gallery().images.length }})</h3>
-      @if (editable()) {
-        <div class="actions">
-          <button type="button" class="primary" (click)="onPick()">
-            + {{ t('images.images.add') }}
-          </button>
-        </div>
-      }
-    </header>
-    @if (editable()) {
-      <div
-        class="dropzone"
-        [class.over]="dragOver()"
-        (dragover)="onDragOver($event)"
-        (dragleave)="onDragLeave()"
-        (drop)="onDrop($event)"
-      >
-        {{ t('images.images.dropHint') }}
-      </div>
-      <input
-        #picker
-        type="file"
-        accept="image/*"
-        multiple
-        hidden
-        (change)="onPickerChange($event)"
-      />
-    }
-    @if (orderedImages().length === 0) {
-      <p class="empty">{{ t('images.images.empty') }}</p>
-    } @else {
-      <ul class="grid">
-        @for (img of orderedImages(); track img.id; let i = $index) {
-          <li
-            class="cell"
-            [class.drop-target]="dropTargetId() === img.id"
-            [class.dragging]="draggingId() === img.id"
-            [attr.draggable]="editable() ? true : null"
-            (dragstart)="onItemDragStart($event, img.id)"
-            (dragover)="onItemDragOver($event, img.id)"
-            (dragleave)="onItemDragLeave(img.id)"
-            (drop)="onItemDrop($event, img.id)"
-            (dragend)="onItemDragEnd()"
-          >
-            <button type="button" class="thumb" (click)="open.emit(img.id)">
-              @if (urls()[img.id]; as url) {
-                <img [src]="url" [alt]="img.originalName" />
-              } @else {
-                <span class="placeholder">…</span>
-              }
-            </button>
-            @if (editable()) {
-              <div class="ops">
-                <button
-                  type="button"
-                  class="ghost"
-                  [disabled]="i === 0"
-                  (click)="moveUp.emit(img.id)"
-                  [attr.aria-label]="t('images.images.moveUp')"
-                >
-                  ↑
-                </button>
-                <button
-                  type="button"
-                  class="ghost"
-                  [disabled]="i === orderedImages().length - 1"
-                  (click)="moveDown.emit(img.id)"
-                  [attr.aria-label]="t('images.images.moveDown')"
-                >
-                  ↓
-                </button>
-                <button
-                  type="button"
-                  class="ghost"
-                  (click)="remove.emit(img.id)"
-                  [attr.aria-label]="t('images.images.delete')"
-                >
-                  <mc-icon name="x" />
-                </button>
-              </div>
-            }
-          </li>
-        }
-      </ul>
-    }
-  `,
-  styles: `
-    :host {
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      padding: var(--mc-space-3);
-      gap: var(--mc-space-3);
-      overflow-y: auto;
-    }
-    .header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .header h3 {
-      margin: 0;
-      font-size: var(--mc-font-size-md);
-      color: var(--mc-fg-muted);
-    }
-    .primary {
-      background: var(--mc-accent-primary);
-      color: var(--mc-accent-fg);
-      border: none;
-      padding: var(--mc-space-1) var(--mc-space-3);
-      border-radius: var(--mc-radius-md);
-      cursor: pointer;
-      font-size: var(--mc-font-size-sm);
-    }
-    .dropzone {
-      border: 1px dashed var(--mc-border-default);
-      border-radius: var(--mc-radius-md);
-      padding: var(--mc-space-3);
-      color: var(--mc-fg-muted);
-      text-align: center;
-      font-size: var(--mc-font-size-sm);
-    }
-    .dropzone.over {
-      border-color: var(--mc-accent-primary);
-      color: var(--mc-accent-primary);
-      background: var(--mc-bg-elevated);
-    }
-    .empty {
-      color: var(--mc-fg-muted);
-      font-size: var(--mc-font-size-sm);
-      margin: 0;
-    }
-    .grid {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      gap: var(--mc-space-3);
-    }
-    .cell {
-      display: flex;
-      flex-direction: column;
-      gap: var(--mc-space-1);
-    }
-    .cell[draggable='true'] {
-      cursor: grab;
-    }
-    .cell.dragging {
-      opacity: 0.4;
-    }
-    .cell.drop-target > .thumb {
-      outline: 2px solid var(--mc-accent-primary);
-      outline-offset: 2px;
-    }
-    .thumb {
-      background: var(--mc-bg-elevated);
-      border: 1px solid var(--mc-border-default);
-      border-radius: var(--mc-radius-md);
-      padding: 0;
-      cursor: pointer;
-      width: 100%;
-      aspect-ratio: 1;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .thumb img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .placeholder {
-      color: var(--mc-fg-muted);
-      font-size: var(--mc-font-size-lg);
-    }
-    .ops {
-      display: flex;
-      justify-content: center;
-      gap: 2px;
-    }
-    .ghost {
-      background: transparent;
-      border: 0;
-      color: var(--mc-fg-muted);
-      cursor: pointer;
-      padding: 2px 6px;
-      border-radius: var(--mc-radius-sm);
-    }
-    .ghost:hover:not(:disabled) {
-      color: var(--mc-fg-primary);
-      background: var(--mc-bg-base);
-    }
-    .ghost:disabled {
-      opacity: 0.3;
-      cursor: not-allowed;
-    }
-  `,
+  templateUrl: './image-grid.component.html',
+  styleUrl: './image-grid.component.css',
 })
 export class ImageGridComponent {
   readonly gallery = input.required<Gallery>();
@@ -224,6 +33,14 @@ export class ImageGridComponent {
   readonly moveDown = output<string>();
   readonly reorder = output<{ from: string; to: string }>();
 
+  protected readonly densityOptions: readonly DensityOption[] = [
+    { value: 'compact', glyph: '▪', labelKey: 'images.images.density.compact' },
+    { value: 'cozy', glyph: '▦', labelKey: 'images.images.density.cozy' },
+    { value: 'large', glyph: '▣', labelKey: 'images.images.density.large' },
+  ];
+
+  protected readonly density = signal<Density>('cozy');
+
   private readonly i18n = inject(I18nService);
   protected t(key: TranslationKey): string {
     return this.i18n.t(key);
@@ -232,6 +49,18 @@ export class ImageGridComponent {
   protected readonly dragOverState = { value: false };
   protected dragOver(): boolean {
     return this.dragOverState.value;
+  }
+
+  protected setDensity(value: Density): void {
+    this.density.set(value);
+  }
+
+  // why: cap ratio so panorámicas extremas no rompen el row y verticales finitas
+  //      no se vuelven una cinta. Ratio 0 (sin dims) cae a 1.
+  protected ratioFor(img: GalleryImage): number {
+    if (img.width <= 0 || img.height <= 0) return 1;
+    const r = img.width / img.height;
+    return Math.min(3, Math.max(0.5, r));
   }
 
   protected orderedImages(): readonly GalleryImage[] {
@@ -262,6 +91,7 @@ export class ImageGridComponent {
   }
 
   protected onDragOver(event: DragEvent): void {
+    if (hasInternalDnd(event)) return;
     event.preventDefault();
     this.dragOverState.value = true;
   }
@@ -269,6 +99,7 @@ export class ImageGridComponent {
     this.dragOverState.value = false;
   }
   protected onDrop(event: DragEvent): void {
+    if (hasInternalDnd(event)) return;
     event.preventDefault();
     this.dragOverState.value = false;
     const files = event.dataTransfer ? Array.from(event.dataTransfer.files) : [];

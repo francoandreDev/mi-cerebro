@@ -44,6 +44,7 @@ export interface GallerySummary {
   readonly folder: string;
   readonly imageCount: number;
   readonly position: string;
+  readonly coverImageIds: readonly string[];
 }
 
 export const MIME_TO_EXT: Record<string, string> = {

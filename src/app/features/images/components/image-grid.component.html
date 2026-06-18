@@ -1,0 +1,109 @@
+<header class="header">
+  <h3>{{ t('images.images.title') }} ({{ gallery().images.length }})</h3>
+  <div class="header-ops">
+    <div class="density" role="radiogroup" [attr.aria-label]="t('images.images.density.label')">
+      @for (opt of densityOptions; track opt.value) {
+        <button
+          type="button"
+          class="density-opt"
+          role="radio"
+          [attr.aria-checked]="density() === opt.value"
+          [class.active]="density() === opt.value"
+          [attr.aria-label]="t(opt.labelKey)"
+          [title]="t(opt.labelKey)"
+          (click)="setDensity(opt.value)"
+        >
+          {{ opt.glyph }}
+        </button>
+      }
+    </div>
+    @if (editable()) {
+      <button type="button" class="primary" (click)="onPick()">
+        + {{ t('images.images.add') }}
+      </button>
+    }
+  </div>
+</header>
+
+@if (editable()) {
+  <input #picker type="file" accept="image/*" multiple hidden (change)="onPickerChange($event)" />
+}
+
+@if (orderedImages().length === 0) {
+  @if (editable()) {
+    <div
+      class="dropzone empty"
+      [class.over]="dragOver()"
+      (dragover)="onDragOver($event)"
+      (dragleave)="onDragLeave()"
+      (drop)="onDrop($event)"
+    >
+      {{ t('images.images.dropHint') }}
+    </div>
+  } @else {
+    <p class="empty">{{ t('images.images.empty') }}</p>
+  }
+} @else {
+  <ul
+    class="grid"
+    [class.over]="dragOver()"
+    [attr.data-density]="density()"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave()"
+    (drop)="onDrop($event)"
+  >
+    @for (img of orderedImages(); track img.id; let i = $index) {
+      <!-- eslint-disable-next-line @angular-eslint/template/no-inline-styles -->
+      <li
+        class="cell"
+        [style.--ratio]="ratioFor(img)"
+        [class.drop-target]="dropTargetId() === img.id"
+        [class.dragging]="draggingId() === img.id"
+        [attr.draggable]="editable() ? true : null"
+        (dragstart)="onItemDragStart($event, img.id)"
+        (dragover)="onItemDragOver($event, img.id)"
+        (dragleave)="onItemDragLeave(img.id)"
+        (drop)="onItemDrop($event, img.id)"
+        (dragend)="onItemDragEnd()"
+      >
+        <button type="button" class="thumb" (click)="open.emit(img.id)">
+          @if (urls()[img.id]; as url) {
+            <img [src]="url" [alt]="img.originalName" />
+          } @else {
+            <span class="placeholder">…</span>
+          }
+        </button>
+        @if (editable()) {
+          <div class="ops">
+            <button
+              type="button"
+              class="ghost"
+              [disabled]="i === 0"
+              (click)="moveUp.emit(img.id)"
+              [attr.aria-label]="t('images.images.moveUp')"
+            >
+              ↑
+            </button>
+            <button
+              type="button"
+              class="ghost"
+              [disabled]="i === orderedImages().length - 1"
+              (click)="moveDown.emit(img.id)"
+              [attr.aria-label]="t('images.images.moveDown')"
+            >
+              ↓
+            </button>
+            <button
+              type="button"
+              class="ghost danger"
+              (click)="remove.emit(img.id)"
+              [attr.aria-label]="t('images.images.delete')"
+            >
+              <mc-icon name="x" />
+            </button>
+          </div>
+        }
+      </li>
+    }
+  </ul>
+}
