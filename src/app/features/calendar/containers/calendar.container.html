@@ -1,4 +1,12 @@
 <section class="page">
+  <mc-calendar-toolbar
+    [allEvents]="allEvents()"
+    [selectedDay]="cursor().day"
+    (pickResult)="onSearchPick($event)"
+    (pickDay)="onPickDayFromToolbar($event)"
+    (pickToday)="onToday()"
+  />
+
   <header class="head">
     <div class="nav">
       <button
@@ -9,7 +17,26 @@
       >
         ‹
       </button>
-      <h2>{{ periodLabel() }}</h2>
+      @if (view() === 'month') {
+        <label class="period-pick">
+          <span class="sr">{{ t('calendar.period.month') }}</span>
+          <select #ms (change)="onMonthSelect(+ms.value)">
+            @for (m of monthOptions; track m.value) {
+              <option [value]="m.value" [selected]="m.value === cursor().month">
+                {{ m.label }}
+              </option>
+            }
+          </select>
+        </label>
+      }
+      <label class="period-pick">
+        <span class="sr">{{ t('calendar.period.year') }}</span>
+        <select #ys (change)="onYearSelect(+ys.value)">
+          @for (y of yearOptions(); track y) {
+            <option [value]="y" [selected]="y === cursor().year">{{ y }}</option>
+          }
+        </select>
+      </label>
       <button
         type="button"
         class="ghost"
@@ -17,9 +44,6 @@
         [attr.aria-label]="t('calendar.nav.next')"
       >
         ›
-      </button>
-      <button type="button" class="ghost today-btn" (click)="onToday()">
-        {{ t('calendar.nav.today') }}
       </button>
     </div>
     <div class="views">
@@ -42,37 +66,54 @@
     </div>
   </header>
 
-  <mc-calendar-filters
-    [kinds]="kindFilter()"
-    [tagIds]="tagFilter()"
-    [tags]="tags()"
-    (toggleKind)="onToggleKind($event)"
-    (toggleTag)="onToggleTag($event)"
-    (clearTags)="onClearTags()"
-  />
+  <div class="wall">
+    <div class="grid-col">
+      @if (view() === 'month') {
+        <mc-calendar-month-grid
+          [year]="cursor().year"
+          [month]="cursor().month"
+          [selected]="cursor().day"
+          [events]="monthEvents()"
+          (pick)="onPickDay($event)"
+        />
+      } @else {
+        <mc-calendar-year-grid
+          [year]="cursor().year"
+          [events]="yearEvents()"
+          (pick)="onPickYearMonth($event)"
+          (openMonth)="onOpenMonth($event)"
+        />
+      }
+    </div>
 
-  @if (view() === 'month') {
-    <mc-calendar-month-grid
-      [year]="cursor().year"
-      [month]="cursor().month"
-      [selected]="cursor().day"
-      [events]="monthEvents()"
-      (pick)="onPickDay($event)"
-    />
-  } @else {
-    <mc-calendar-year-grid
-      [year]="cursor().year"
-      [events]="yearEvents()"
-      (pick)="onPickYearMonth($event)"
-      (openMonth)="onOpenMonth($event)"
-    />
-  }
+    <aside class="cards-col" aria-label="Wallboard">
+      @if (tags().length > 0) {
+        <mc-calendar-tag-filter
+          [tags]="tags()"
+          [selected]="tagFilter()"
+          (toggleTag)="onToggleTag($event)"
+          (clearTags)="onClearTags()"
+        />
+      }
+      @for (group of wallGroups(); track group.kind) {
+        <mc-calendar-kind-card
+          [kind]="group.kind"
+          [events]="group.events"
+          [active]="kindFilter().has(group.kind)"
+          (toggleActive)="onToggleKind(group.kind)"
+          (openEvent)="onOpenEvent($event)"
+          (create)="onCreateForKind(group.kind)"
+        />
+      }
+    </aside>
+  </div>
 
-  @if (cursor().day; as day) {
-    <mc-calendar-day-panel
+  @if (modalOpen() && cursor().day; as day) {
+    <mc-calendar-day-modal
       [date]="day"
       [events]="dayEvents()"
-      (open)="onOpenEvent($event)"
+      (dismiss)="onCloseDay()"
+      (openEvent)="onOpenEvent($event)"
       (createTask)="onCreateTask()"
       (createGoal)="onCreateGoal()"
       (createReminder)="onCreateReminder()"

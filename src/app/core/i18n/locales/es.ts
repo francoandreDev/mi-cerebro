@@ -895,6 +895,11 @@ export const es = {
   'reminders.toast.open': 'Ver',
 
   'calendar.kind.reminder': 'Recordatorios',
+  'calendar.search.placeholder': 'Buscar evento…',
+  'calendar.search.empty': 'Sin coincidencias',
+  'calendar.toolbar.goto': 'Ir al día',
+  'calendar.period.month': 'Mes',
+  'calendar.period.year': 'Año',
   'trash.kind.reminder': 'Recordatorio',
 
   'common.on': 'Activado',

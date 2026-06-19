@@ -68,3 +68,9 @@ export const MONTH_NAMES_ES = [
 ] as const;
 
 export const WEEKDAY_SHORT_ES = ['L', 'M', 'X', 'J', 'V', 'S', 'D'] as const;
+
+export const formatDayMonth = (iso: string): string => {
+  const d = parseIsoDay(iso);
+  if (!d) return iso;
+  return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}`;
+};

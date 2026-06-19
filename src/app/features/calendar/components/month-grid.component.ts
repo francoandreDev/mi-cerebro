@@ -87,10 +87,18 @@ interface CellSummary {
     .cell.today .num {
       background: var(--mc-accent-primary);
       color: var(--mc-accent-fg);
+      font-weight: 700;
+      box-shadow:
+        0 0 0 2px var(--mc-bg-surface),
+        0 0 0 3px var(--mc-accent-primary);
     }
     .cell.selected {
-      outline: 2px solid var(--mc-accent-primary);
-      outline-offset: -2px;
+      outline: 3px solid var(--mc-accent-primary);
+      outline-offset: -3px;
+      background: color-mix(in srgb, var(--mc-accent-primary) 12%, var(--mc-bg-surface));
+    }
+    .cell.selected .num {
+      font-weight: 700;
     }
     .day {
       display: flex;

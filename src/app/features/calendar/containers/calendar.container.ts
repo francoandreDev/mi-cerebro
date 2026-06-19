@@ -14,13 +14,20 @@ import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { TagsService } from '@core/tags/tags.service';
 
-import { CalendarDayPanelComponent } from '../components/day-panel.component';
-import { CalendarFiltersComponent } from '../components/calendar-filters.component';
+import { CalendarDayModalComponent } from '../components/day-modal.component';
+import { CalendarKindCardComponent } from '../components/kind-card.component';
 import { CalendarMonthGridComponent } from '../components/month-grid.component';
+import { CalendarTagFilterComponent } from '../components/tag-filter.component';
+import { CalendarToolbarComponent } from '../components/toolbar.component';
 import { CalendarYearGridComponent } from '../components/year-grid.component';
 import { MONTH_NAMES_ES, addMonths, parseIsoDay, todayIso } from '../utils/calendar-dates';
 
 type ViewMode = 'month' | 'year';
+
+interface WallGroup {
+  readonly kind: CalendarEventKind;
+  readonly events: readonly CalendarEvent[];
+}
 
 @Component({
   selector: 'mc-calendar',
@@ -28,8 +35,10 @@ type ViewMode = 'month' | 'year';
   imports: [
     CalendarMonthGridComponent,
     CalendarYearGridComponent,
-    CalendarDayPanelComponent,
-    CalendarFiltersComponent,
+    CalendarDayModalComponent,
+    CalendarKindCardComponent,
+    CalendarTagFilterComponent,
+    CalendarToolbarComponent,
   ],
   templateUrl: './calendar.container.html',
   styleUrl: './calendar.container.css',
@@ -42,6 +51,7 @@ export class CalendarContainer {
   private readonly i18n = inject(I18nService);
 
   protected readonly tags = this.tagsService.tags;
+  protected readonly allEvents = this.events.events;
 
   // why: read query params via toSignal to feed computeds reactively rather
   //      than imperatively syncing on every navigation event.
@@ -65,6 +75,11 @@ export class CalendarContainer {
     new Set(ALL_CALENDAR_KINDS),
   );
   protected readonly tagFilter = signal<ReadonlySet<string>>(new Set());
+  // why: keep modal openness separate from `day` query param so filter-driven
+  //      day changes (search, date picker, year→month drill) update the
+  //      selection outline without popping the modal, and closing the modal
+  //      doesn't wipe the selection.
+  protected readonly modalOpen = signal(false);
 
   private readonly filters = computed<CalendarFilters>(() => ({
     kinds: this.kindFilter(),
@@ -73,6 +88,16 @@ export class CalendarContainer {
 
   protected readonly visibleEvents = computed<readonly CalendarEvent[]>(() =>
     this.events.filter(this.events.events(), this.filters()),
+  );
+
+  // why: tag-only filter feeds the wallboard so collapsing a kind card hides
+  //      its events from the grid but its own card still shows the full count
+  //      for the period.
+  private readonly tagFilteredEvents = computed<readonly CalendarEvent[]>(() =>
+    this.events.filter(this.events.events(), {
+      kinds: new Set(ALL_CALENDAR_KINDS),
+      tagIds: this.tagFilter(),
+    }),
   );
 
   protected readonly monthEvents = computed<readonly CalendarEvent[]>(() => {
@@ -93,11 +118,39 @@ export class CalendarContainer {
     return this.visibleEvents().filter((e) => e.date === day);
   });
 
+  protected readonly wallGroups = computed<readonly WallGroup[]>(() => {
+    const prefix = this.periodPrefix();
+    const inPeriod = this.tagFilteredEvents().filter((e) => e.date.startsWith(prefix));
+    return ALL_CALENDAR_KINDS.map((kind) => ({
+      kind,
+      events: inPeriod.filter((e) => e.kind === kind),
+    }));
+  });
+
   protected readonly periodLabel = computed<string>(() => {
     const { year, month } = this.cursor();
     if (this.view() === 'year') return year.toString();
     return `${MONTH_NAMES_ES[month]} ${year}`;
   });
+
+  protected readonly monthOptions = MONTH_NAMES_ES.map((label, value) => ({ label, value }));
+
+  protected readonly yearOptions = computed<readonly number[]>(() => {
+    const years = new Set<number>();
+    for (const e of this.allEvents()) {
+      const y = Number(e.date.slice(0, 4));
+      if (!Number.isNaN(y)) years.add(y);
+    }
+    years.add(this.cursor().year);
+    years.add(new Date().getFullYear());
+    return [...years].sort((a, b) => a - b);
+  });
+
+  private periodPrefix(): string {
+    const { year, month } = this.cursor();
+    if (this.view() === 'year') return `${year}-`;
+    return `${year}-${(month + 1).toString().padStart(2, '0')}`;
+  }
 
   protected t(key: TranslationKey): string {
     return this.i18n.t(key);
@@ -133,6 +186,28 @@ export class CalendarContainer {
 
   protected onPickDay(iso: string): void {
     void this.navigate({ day: iso });
+    this.modalOpen.set(true);
+  }
+
+  protected onSearchPick(event: CalendarEvent): void {
+    void this.navigate({ view: 'month', cursor: event.date, day: event.date });
+  }
+
+  protected onMonthSelect(month: number): void {
+    void this.navigate({ view: 'month', cursor: isoFirst(this.cursor().year, month), day: null });
+  }
+
+  protected onYearSelect(year: number): void {
+    const { month } = this.cursor();
+    void this.navigate({ cursor: isoFirst(year, month), day: null });
+  }
+
+  protected onPickDayFromToolbar(iso: string): void {
+    void this.navigate({ view: 'month', cursor: iso, day: iso });
+  }
+
+  protected onCloseDay(): void {
+    this.modalOpen.set(false);
   }
 
   protected onPickYearMonth(iso: string): void {
@@ -163,6 +238,12 @@ export class CalendarContainer {
 
   protected onClearTags(): void {
     this.tagFilter.set(new Set());
+  }
+
+  protected onCreateForKind(kind: CalendarEventKind): void {
+    if (kind === 'task') void this.onCreateTask();
+    else if (kind === 'goal') void this.onCreateGoal();
+    else void this.onCreateReminder();
   }
 
   protected async onCreateTask(): Promise<void> {
