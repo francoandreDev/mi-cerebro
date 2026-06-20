@@ -338,6 +338,30 @@ Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `P
 - **Cómo resolver:** apuntar a otro bloque, descartar la marca, o usar `anchorType: 'doc'` si el cambio aplica a toda la entidad.
 - **Recuperable:** sí — la marca nunca se persistió.
 
+### MCB-VER-025 — No se pudo compactar el historial
+
+- **Severidad:** warning
+- **Cuándo:** la pasada background de compactación (§12 "Compactación del historial") falla al reescribir refs de alguna rama. Cubre fallos de `git.writeCommit` / `git.writeTree` / `git.writeRef` durante la fusión de buckets, o un commit barrera (tag, `before-restore`, `Merge-Group`) que no pudo aislarse correctamente.
+- **Causa típica:** permisos del adapter perdidos a mitad del proceso, una entidad cambió externamente entre el snapshot pre-compactación y la escritura del ref, o `.git/objects` quedó parcialmente roto.
+- **Cómo resolver:** la compactación es por rama y atómica por rama: la fallida queda intacta (apunta al oid original), las otras quedan compactadas. El throttle de 1×/día reintenta al día siguiente. Si persiste, restaurar la rama desde `.mi-cerebro/pre-compaction/<fecha>/` o desactivar la compactación en settings.
+- **Recuperable:** sí — el snapshot pre-compactación queda como red de seguridad por 30 días; los datos del usuario están en disco intactos.
+
+### MCB-VER-026 — No se pudo guardar el snapshot pre-compactación
+
+- **Severidad:** error
+- **Cuándo:** antes de tocar refs, la compactación intenta copiar los refs afectados y los oids a fusionar a `.mi-cerebro/pre-compaction/<fecha>/<branch>/` y la escritura falla.
+- **Causa típica:** disco lleno (`QuotaExceededError` mapeado desde `MCB-SYS-002`), permisos a la carpeta raíz revocados, o un crash de la pestaña a mitad de la copia.
+- **Cómo resolver:** la compactación se aborta antes de tocar refs — el historial queda como estaba. Liberar espacio (vaciar papelera, eliminar snapshots viejos de `.mi-cerebro/pre-compaction/` y `.mi-cerebro/pre-migration/`), reintentar al día siguiente o forzar manualmente desde el dev panel.
+- **Recuperable:** sí — sin efectos parciales; el repo no se tocó.
+
+### MCB-VER-027 — Compactación bloqueada por divergencia con el remoto
+
+- **Severidad:** warning
+- **Cuándo:** la compactación está habilitada con remoto configurado y el toggle "Compactar aunque haya remoto" prendido, pero el `push --force-with-lease` posterior detecta que el remoto avanzó desde el último fetch conocido. El push se aborta para no pisar trabajo ajeno.
+- **Causa típica:** otro dispositivo o pestaña empujó al mismo repo entre la última sincronización local y la pasada de compactación.
+- **Cómo resolver:** sincronizar primero (pull/fetch desde settings), reintentar la compactación al día siguiente. Si el conflicto es persistente, considerar desactivar el toggle hasta resolverlo manualmente con un cliente git externo.
+- **Recuperable:** sí — la historia local quedó compactada (es válida y consistente); sólo no se sincronizó. El próximo intento de push reintenta tras pull.
+
 ### MCB-NET-001 — Remoto no configurado o configuración inválida
 
 - **Severidad:** error

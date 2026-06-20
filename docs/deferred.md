@@ -153,6 +153,18 @@ Formato por entrada:
 - **Por qué se difirió**: los tres índices (main, comments, draft) convergen sobre la misma pieza de infraestructura (walk per-faceta + cache por familia en IndexedDB). Diseñarlos juntos evita reinventar el priming tres veces y permite decidir si los tres comparten un `idx-<family>-bundle` o quedan separados. Sin métricas reales de tamaño/latencia, mejor uno solo bien hecho.
 - **Target**: §19.16d (pulido de búsqueda) — junto con los índices de `main` y `comments`.
 
+### Umbral de compactación configurable en settings
+
+- **Qué**: §12 "Compactación del historial" fija el umbral de disparo en 500 commits por rama. Una versión avanzada lo expone en settings junto al toggle "Compactar aunque haya remoto" y al toggle de habilitar/deshabilitar la compactación.
+- **Por qué se difirió**: sin uso real no sabemos qué umbral tiene sentido por defecto, ni si el usuario quiere tocarlo. Exponerlo demasiado temprano contamina la UI de settings con knobs que nadie va a usar. 500 es un número conservador (≈3 meses de uso intenso) que se puede cambiar en código si la realidad lo pide.
+- **Target**: §19.16f (pulido del historial) o sin asignar.
+
+### Compactación manual sobre rango específico
+
+- **Qué**: además de la pasada background automática, una acción "Compactar este rango" desde `/history` que permita al usuario seleccionar un span de commits y forzar la fusión, respetando las barreras (tags, `before-restore`, `Merge-Group`).
+- **Por qué se difirió**: la compactación background con buckets por edad cubre el caso 95%. Compactación manual es una herramienta avanzada que se justifica si el usuario quiere "limpiar" un período específico sin esperar al auto. Sin uso real no hay forma de saber si vale la UI.
+- **Target**: sin asignar.
+
 ### `.git/` en OPFS para acelerar operaciones git
 
 - **Qué**: mover `.git/` (loose objects + refs + index) al Origin Private File System del browser, dejando sólo el workdir visible en la carpeta del usuario via FS Access. isomorphic-git acepta nativamente `dir` (workdir) y `gitdir` separados. La ganancia esperada es 10-100×: cada syscall sobre OPFS cuesta ~5-10 ms vs ~100-200 ms sobre FS Access. Eso bajaría el commit base de ~3 s a ~200 ms.

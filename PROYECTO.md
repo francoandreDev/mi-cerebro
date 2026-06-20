@@ -597,6 +597,37 @@ Split de 2 columnas. Izquierda: commits agrupados por bucket temporal (_Hoy / Ay
 - **Por entidad:** "restaurar esta versión" → escribe el blob del commit a la ruta actual con escritura atómica + autosave marca dirty.
 - **Por commit completo:** modal de confirmación fuerte + autocommit `before-restore: <hash>` previo. Siempre reversible.
 
+### Compactación del historial
+
+Los autocommits acumulan sin tope; tras meses de uso el log se vuelve ilegible y el `.git/` engorda de más. La compactación reescribe periódicamente segmentos del historial fusionando autocommits en uno solo, **sin tocar nunca puntos sagrados**.
+
+**Barreras (commits que jamás se fusionan):**
+
+- **Tags** (milestones del paso 13a-bis). Ref persistente nombrada por el usuario, semántica de "este punto importa".
+- **`before-restore: <hash>`**. La promesa "siempre reversible" de Restore exige que el punto previo a una restauración sobreviva sin fusionar.
+- **Grupos `Merge-Group: <uuid>`**. Los 3 commits de una sesión de merge se fusionan juntos o no se fusionan; nunca se fragmentan (rompería el invariante de §12 "merge entre variantes es una sola operación visible").
+
+**Política por edad (reusa los buckets de `/history`):**
+
+| Edad del commit | Política                                                                                        |
+| --------------- | ----------------------------------------------------------------------------------------------- |
+| ≤ 7 días        | Intactos.                                                                                       |
+| 8–30 días       | Un commit por día por faceta (`auto-batch [main]: 47 commits, 12 notes, 3 tasks (2026-05-14)`). |
+| 31–180 días     | Un commit por semana por faceta.                                                                |
+| > 180 días      | Un commit por mes por faceta.                                                                   |
+
+Las barreras rompen el bucket: si un tag cae en medio de un día/semana/mes, ese bucket se parte en dos commits compactados (antes y después del tag). Cada commit compactado lleva trailer `Compacted-From: <oid1>..<oidN>` para trazabilidad y para que el snapshot pre-compactación sirva de mapa al revertir.
+
+**Alcance por rama.** Cada rama (`variant/<family>/main`, `…/draft`, `…/comments`) se compacta independientemente con sus propios tags. Sin coordinación entre familias ni facetas: la operación es predecible y tolerante a fallos parciales — si una rama falla, las otras quedan compactadas y la fallida queda intacta para reintentar.
+
+**Disparo.** Background, throttle de 1×/día por workspace, sólo cuando una rama supera 500 commits (umbral fijo en el primer corte; configurable más adelante, ver `docs/deferred.md`). Corre detrás del mismo `FsLockService` que autocommits y switch de variante, con `flushAll()` de autosave previo. Nunca durante una pantalla de carga del usuario (switch, merge, restore, accept-draft).
+
+**Snapshot pre-compactación.** Antes de tocar refs, copia de los refs afectados + objetos a fusionar a `.mi-cerebro/pre-compaction/<fecha>/<branch>/` (mismo patrón que `pre-migration/` de §4.15). Retención 30 días. Permite revertir si la compactación corrompió algo o si el usuario quiere recuperar granularidad fina.
+
+**Interacción con push a GitHub.** Tras compactación, la siguiente sincronización con remoto requiere `push --force-with-lease` (la historia local divergió). La app **no force-pushea sola**: si hay remoto configurado, la compactación queda gated por un toggle en settings ("Compactar aunque haya remoto" — off por default). Con el toggle off, la compactación se desactiva silenciosamente y `/history` muestra un banner sugiriendo activarla cuando el log cruza el umbral. Con el toggle on, el push posterior usa `--force-with-lease` y se aborta si el remoto avanzó por otro lado (sin pisar trabajo ajeno).
+
+**Interacción con `lastCommitAt`.** Sin cambios: ya se reconstruye desde `git.log({ depth: 1 })` en boot. El footer mostrará el oid del commit fusionado más reciente.
+
 ### Índice de búsqueda por familia
 
 Cada familia tiene 3 índices independientes en IndexedDB: `idx-<family>-main`, `idx-<family>-comments`, `idx-<family>-draft`. Cuesta más memoria pero da switch de variante instantáneo (no rebuild) y permite búsqueda dentro de comentarios y drafts sin tocar disco. Las facetas borrador/comentarios suelen ser más livianas que main en contenido, así que el costo real es bastante menor que 3×.
