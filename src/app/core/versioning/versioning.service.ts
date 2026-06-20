@@ -127,6 +127,40 @@ export class VersioningService {
     return merged.slice(0, depth);
   }
 
+  // §12 compaction needs the full history of a single ref, not the
+  // capped default of log(). Kept separate so /history and other callers
+  // keep their safe depth=50 cap.
+  async logFull(ref: string): Promise<CommitSummary[]> {
+    const fs = this.requireAdapter();
+    const entries = await git.log({ fs, dir: REPO_DIR, ref });
+    return entries.map(toSummary);
+  }
+
+  // Peels every tag (annotated or lightweight) to the commit oid it
+  // points to. The compaction planner needs this set as a barrier
+  // membership test.
+  async listTagOids(): Promise<ReadonlySet<string>> {
+    const fs = this.requireAdapter();
+    const tags = await git.listTags({ fs, dir: REPO_DIR });
+    const oids = new Set<string>();
+    for (const tag of tags) {
+      try {
+        const oid = await git.resolveRef({ fs, dir: REPO_DIR, ref: `refs/tags/${tag}` });
+        try {
+          // Annotated tag: peel to the commit it points to.
+          const { tag: peeled } = await git.readTag({ fs, dir: REPO_DIR, oid });
+          oids.add(peeled.object);
+        } catch {
+          // Lightweight tag (resolveRef already returned the commit oid).
+          oids.add(oid);
+        }
+      } catch {
+        // skip unresolvable tags
+      }
+    }
+    return oids;
+  }
+
   async readBlob(oid: string, filepath: string): Promise<Uint8Array> {
     const fs = this.requireAdapter();
     const { blob } = await git.readBlob({ fs, dir: REPO_DIR, oid, filepath });

@@ -169,6 +169,14 @@ export const es = {
   'errors.ver.024.message':
     'El bloque al que querías anclar este cambio no se encuentra en la entidad actual. Probá apuntar a otro bloque o descartar la marca.',
 
+  'errors.ver.025.title': 'No se pudo compactar el historial',
+  'errors.ver.025.message':
+    'La pasada de compactación falló en esta rama. La rama queda intacta y tus datos en disco también; la próxima pasada lo reintenta o podés restaurar desde .mi-cerebro/pre-compaction/.',
+
+  'errors.ver.026.title': 'No se pudo guardar el snapshot pre-compactación',
+  'errors.ver.026.message':
+    'No pude copiar el estado previo antes de compactar. Aborté la operación sin tocar refs para no perder la red de seguridad. Liberá espacio o revisá permisos del workspace y reintentá.',
+
   'errors.ver.003.title': 'No se pudo restaurar',
   'errors.ver.003.message':
     'No pude reescribir esta entidad con la versión seleccionada. Tu disco quedó como estaba; podés reintentar.',

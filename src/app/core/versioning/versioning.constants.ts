@@ -16,6 +16,7 @@ images/*/original/
 # Safety nets — never enter history
 .mi-cerebro/recovery/
 .mi-cerebro/pre-migration/
+.mi-cerebro/pre-compaction/
 .mi-cerebro/trash/
 .mi-cerebro/history/
 `;
