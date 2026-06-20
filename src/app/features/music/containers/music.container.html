@@ -2,19 +2,22 @@
   <div class="zones">
     <aside class="rail" aria-label="Playlists">
       <header class="zone-head">
-        <h3>{{ t('music.playlists') }}</h3>
+        <h3><mc-icon name="music-notes" class="zone-head-icon" /> {{ t('music.playlists') }}</h3>
         <button
           type="button"
-          class="icon-btn"
+          class="icon-btn mc-hover-grow"
           (click)="onCreatePlaylist()"
           [title]="t('music.newPlaylist')"
           [attr.aria-label]="t('music.newPlaylist')"
         >
-          +
+          <mc-icon name="plus" />
         </button>
       </header>
       @if (playlistSummaries().length === 0) {
-        <p class="empty">{{ t('music.sidebar.emptyFavorites') }}</p>
+        <p class="empty">
+          <mc-icon name="star" class="empty-icon mc-anim-float" />
+          <span>{{ t('music.sidebar.emptyFavorites') }}</span>
+        </p>
       } @else {
         <ul class="pl-list">
           @for (p of playlistSummaries(); track p.id) {
@@ -55,9 +58,13 @@
         />
       } @else {
         <header class="zone-head">
-          <h3>{{ t('music.library') }} ({{ tracks().length }})</h3>
-          <label class="primary">
-            + {{ t('music.upload') }}
+          <h3>
+            <mc-icon name="music-note" class="zone-head-icon" />
+            {{ t('music.library') }} ({{ tracks().length }})
+          </h3>
+          <label class="primary mc-hover-grow">
+            <mc-icon name="upload-simple" />
+            <span>{{ t('music.upload') }}</span>
             <input
               type="file"
               accept="audio/mpeg,.mp3"
@@ -90,19 +97,23 @@
               />
             </label>
           } @else {
-            <input
-              #libSearch
-              type="search"
-              class="search-input lib-search"
-              [value]="libraryQuery()"
-              (input)="onLibraryQueryInput(asInput($event.target).value)"
-              [placeholder]="t('music.searchTracks')"
-            />
+            <div class="lib-search-wrap">
+              <mc-icon name="magnifying-glass" class="lib-search-icon" />
+              <input
+                #libSearch
+                type="search"
+                class="search-input lib-search"
+                [value]="libraryQuery()"
+                (input)="onLibraryQueryInput(asInput($event.target).value)"
+                [placeholder]="t('music.searchTracks')"
+              />
+            </div>
             @if (selectedCount() > 0) {
               <div class="bulk-bar" role="toolbar">
                 <span class="bulk-count">{{ bulkCountLabel() }}</span>
-                <button type="button" class="ghost" (click)="onBulkDelete()">
-                  {{ t('music.bulk.delete') }}
+                <button type="button" class="ghost mc-hover-wiggle" (click)="onBulkDelete()">
+                  <mc-icon name="trash" />
+                  <span>{{ t('music.bulk.delete') }}</span>
                 </button>
                 <select
                   class="bulk-select"
@@ -114,13 +125,17 @@
                     <option [value]="p.id">{{ p.title || t('music.untitledPlaylist') }}</option>
                   }
                 </select>
-                <button type="button" class="ghost" (click)="onClearSelection()">
-                  {{ t('music.bulk.clear') }}
+                <button type="button" class="ghost mc-hover-grow" (click)="onClearSelection()">
+                  <mc-icon name="x" />
+                  <span>{{ t('music.bulk.clear') }}</span>
                 </button>
               </div>
             }
             @if (libraryRows().length === 0) {
-              <p class="empty">{{ t('music.noTracksMatch') }}</p>
+              <p class="empty">
+                <mc-icon name="magnifying-glass" class="mc-anim-pulse" />
+                <span>{{ t('music.noTracksMatch') }}</span>
+              </p>
             } @else {
               <div class="lib-table" role="table">
                 <div class="lib-thead" role="row">
@@ -174,12 +189,12 @@
                       <span class="num" role="cell">{{ row.added }}</span>
                       <button
                         type="button"
-                        class="ghost"
+                        class="ghost mc-hover-wiggle"
                         role="cell"
                         (click)="onDeleteRow(row.id)"
                         [attr.aria-label]="t('common.delete')"
                       >
-                        <mc-icon name="x" />
+                        <mc-icon name="trash" />
                       </button>
                     </div>
                   }

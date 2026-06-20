@@ -139,9 +139,23 @@ dd {
   padding-top: var(--mc-space-3);
   border-top: 1px solid var(--mc-border-default);
 }
+.actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
 
 .empty {
   padding: var(--mc-space-5);
   color: var(--mc-fg-muted);
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--mc-space-3);
+}
+.empty-icon {
+  font-size: 3rem;
+  color: var(--mc-accent-primary);
+  opacity: 0.55;
 }

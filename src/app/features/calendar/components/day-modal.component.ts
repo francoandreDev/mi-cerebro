@@ -10,28 +10,29 @@ import {
 import type { CalendarEvent } from '@core/calendar/calendar-event.types';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { IconComponent } from '@shared/icon/icon.component';
 
 import { CalendarDayPanelComponent } from './day-panel.component';
 
 @Component({
   selector: 'mc-calendar-day-modal',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CalendarDayPanelComponent],
+  imports: [CalendarDayPanelComponent, IconComponent],
   template: `
     <div class="backdrop" (click)="dismiss.emit()" aria-hidden="true"></div>
     <div
-      class="dialog"
+      class="dialog mc-anim-pop"
       role="dialog"
       aria-modal="true"
       [attr.aria-label]="t('calendar.day.heading').replace('{date}', date())"
     >
       <button
         type="button"
-        class="x"
+        class="x mc-hover-grow"
         (click)="dismiss.emit()"
         [attr.aria-label]="t('common.close')"
       >
-        ×
+        <mc-icon name="x" />
       </button>
       <mc-calendar-day-panel
         [date]="date()"

@@ -1,6 +1,6 @@
 <section class="page">
   <header class="head">
-    <h2>{{ t('settings.title') }}</h2>
+    <h2><mc-icon name="gear" class="title-icon mc-hover-spin" /> {{ t('settings.title') }}</h2>
   </header>
 
   <div class="layout">
@@ -15,7 +15,8 @@
           [attr.aria-controls]="'sect-' + s.id"
           (click)="selectSection(s.id)"
         >
-          {{ t(s.labelKey) }}
+          <mc-icon class="nav-icon" [name]="s.icon" />
+          <span>{{ t(s.labelKey) }}</span>
         </button>
       }
     </nav>
@@ -115,19 +116,28 @@
           </label>
 
           <span class="row">
-            <button type="button" class="primary" (click)="saveRemote()">
-              {{ t('settings.remote.save') }}
+            <button type="button" class="primary mc-hover-grow" (click)="saveRemote()">
+              <mc-icon name="floppy-disk" />
+              <span>{{ t('settings.remote.save') }}</span>
             </button>
             <button
               type="button"
+              class="mc-hover-grow"
               (click)="pushRemote()"
               [disabled]="!remoteConfig() || isPushing()"
             >
-              {{ isPushing() ? t('settings.remote.pushing') : t('settings.remote.push') }}
+              @if (isPushing()) {
+                <mc-icon name="spinner-gap" class="mc-anim-spin" />
+                <span>{{ t('settings.remote.pushing') }}</span>
+              } @else {
+                <mc-icon name="arrow-square-out" />
+                <span>{{ t('settings.remote.push') }}</span>
+              }
             </button>
             @if (remoteConfig()) {
-              <button type="button" (click)="clearRemote()">
-                {{ t('settings.remote.clear') }}
+              <button type="button" class="mc-hover-wiggle" (click)="clearRemote()">
+                <mc-icon name="x" />
+                <span>{{ t('settings.remote.clear') }}</span>
               </button>
             }
           </span>
@@ -348,14 +358,16 @@
           <div class="field">
             <button
               type="button"
-              class="primary"
+              class="primary mc-hover-grow"
               [disabled]="exportRunning()"
               (click)="runExport()"
             >
               @if (exportRunning()) {
-                {{ t('settings.export.button.busy') }}
+                <mc-icon name="spinner-gap" class="mc-anim-spin" />
+                <span>{{ t('settings.export.button.busy') }}</span>
               } @else {
-                {{ t('settings.export.button') }}
+                <mc-icon name="archive" />
+                <span>{{ t('settings.export.button') }}</span>
               }
             </button>
             @if (exportProgress().phase === 'walking') {

@@ -10,30 +10,43 @@ import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import type { Variant } from '@core/versioning/variants.types';
 import { BgColorDirective } from '@shared/directives/bg-color.directive';
+import { IconComponent } from '@shared/icon/icon.component';
 
 import type { VariantTreeNode } from '../utils/variant-tree';
 
 @Component({
   selector: 'mc-variants-tree',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, BgColorDirective],
+  imports: [FormsModule, BgColorDirective, IconComponent],
   template: `
     <header class="tree-head">
-      <input
-        type="search"
-        class="search"
-        [ngModel]="query()"
-        (ngModelChange)="queryChange.emit($event)"
-        [placeholder]="t('variants.filters.search.placeholder')"
-        [attr.aria-label]="t('variants.filters.search')"
-      />
-      <button type="button" class="primary new" (click)="createNew.emit()" [disabled]="busy()">
-        + {{ t('variants.action.new') }}
+      <div class="search-wrap">
+        <mc-icon name="magnifying-glass" class="search-icon" />
+        <input
+          type="search"
+          class="search"
+          [ngModel]="query()"
+          (ngModelChange)="queryChange.emit($event)"
+          [placeholder]="t('variants.filters.search.placeholder')"
+          [attr.aria-label]="t('variants.filters.search')"
+        />
+      </div>
+      <button
+        type="button"
+        class="primary new mc-hover-grow"
+        (click)="createNew.emit()"
+        [disabled]="busy()"
+      >
+        <mc-icon name="plus" />
+        <span>{{ t('variants.action.new') }}</span>
       </button>
     </header>
 
     @if (matchedTree().length === 0) {
-      <p class="empty">{{ t('variants.filters.empty') }}</p>
+      <p class="empty">
+        <mc-icon name="magnifying-glass" class="mc-anim-pulse" />
+        <span>{{ t('variants.filters.empty') }}</span>
+      </p>
     } @else {
       <ul class="rows" role="tree" [attr.aria-label]="t('variants.page.title')">
         @for (node of matchedTree(); track node.variant.id) {

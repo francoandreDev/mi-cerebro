@@ -22,4 +22,13 @@
   margin: auto;
   color: var(--mc-fg-muted);
   font-size: var(--mc-font-size-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--mc-space-3);
+}
+.empty .empty-icon {
+  font-size: 3.5rem;
+  color: var(--mc-accent-primary);
+  opacity: 0.55;
 }

@@ -99,6 +99,12 @@ export class PlaylistEditorContainer {
     await this.player.playPlaylist(pl.trackIds, 0, pl.id);
   }
 
+  protected async onShufflePlaylist(): Promise<void> {
+    const pl = this.current();
+    if (!pl || pl.trackIds.length === 0) return;
+    await this.player.playPlaylist(pl.trackIds, 0, pl.id, true);
+  }
+
   protected async onDelete(): Promise<void> {
     const pl = this.current();
     if (!pl) return;

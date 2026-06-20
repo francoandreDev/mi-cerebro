@@ -14,6 +14,12 @@
   margin: 0;
   font-size: 18px;
   font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+}
+.title-icon {
+  color: var(--mc-accent-primary);
 }
 
 .split {
@@ -274,6 +280,9 @@
   font-weight: 500;
   color: var(--mc-fg-primary);
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .commit-restore:hover:not(:disabled) {
@@ -306,6 +315,9 @@
   font-weight: 500;
   color: var(--mc-accent-primary);
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .milestone-mark:hover:not(:disabled) {
@@ -373,9 +385,16 @@
   display: flex;
   align-items: center;
 }
+.timeline-search-icon {
+  position: absolute;
+  left: 8px;
+  color: var(--mc-fg-muted);
+  pointer-events: none;
+  font-size: 12px;
+}
 .timeline-search-input {
   width: 100%;
-  padding: 6px 28px 6px 10px;
+  padding: 6px 28px 6px 26px;
   font: inherit;
   font-size: 12px;
   border: 1px solid var(--mc-border-default);

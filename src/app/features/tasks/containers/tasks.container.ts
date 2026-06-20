@@ -10,6 +10,7 @@ import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { EntityLockController } from '@core/locks/entity-lock.controller';
 import { TagsService } from '@core/tags/tags.service';
+import { IconComponent } from '@shared/icon/icon.component';
 import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
 
 import { TaskEditorPaneComponent, type SaveStatus } from '../components/task-editor-pane.component';
@@ -19,7 +20,7 @@ import { TasksService } from '../services/tasks.service';
 @Component({
   selector: 'mc-tasks',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TaskEditorPaneComponent, LockBannerComponent],
+  imports: [TaskEditorPaneComponent, LockBannerComponent, IconComponent],
   templateUrl: './tasks.container.html',
   styleUrl: './tasks.container.css',
 })

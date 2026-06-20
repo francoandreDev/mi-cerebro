@@ -3,6 +3,8 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, output } f
 import type { CalendarEvent, CalendarEventKind } from '@core/calendar/calendar-event.types';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { IconComponent } from '@shared/icon/icon.component';
+import type { IconName } from '@shared/icon/icons.data';
 
 interface KindGroup {
   readonly kind: CalendarEventKind;
@@ -12,31 +14,45 @@ interface KindGroup {
 @Component({
   selector: 'mc-calendar-day-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [IconComponent],
   template: `
     <header>
-      <h3>{{ heading() }}</h3>
+      <h3>
+        <mc-icon name="calendar-blank" class="head-icon" />
+        {{ heading() }}
+      </h3>
       <div class="actions">
         <button type="button" class="primary" (click)="createTask.emit()">
-          + {{ t('calendar.day.newTask') }}
+          <mc-icon name="check-square" />
+          {{ t('calendar.day.newTask') }}
         </button>
         <button type="button" class="primary" (click)="createGoal.emit()">
-          + {{ t('calendar.day.newGoal') }}
+          <mc-icon name="target" />
+          {{ t('calendar.day.newGoal') }}
         </button>
         <button type="button" class="primary" (click)="createReminder.emit()">
-          + {{ t('calendar.day.newReminder') }}
+          <mc-icon name="bell" />
+          {{ t('calendar.day.newReminder') }}
         </button>
       </div>
     </header>
     @if (groups().length === 0) {
-      <p class="empty">{{ t('calendar.day.empty') }}</p>
+      <div class="empty">
+        <mc-icon name="calendar-blank" class="empty-icon mc-anim-float" />
+        <p>{{ t('calendar.day.empty') }}</p>
+      </div>
     } @else {
       @for (g of groups(); track g.kind) {
-        <section class="group">
-          <h4>{{ kindLabel(g.kind) }} ({{ g.events.length }})</h4>
+        <section class="group" [attr.data-kind]="g.kind">
+          <h4>
+            <mc-icon [name]="kindIcon(g.kind)" />
+            {{ kindLabel(g.kind) }} <span class="count">({{ g.events.length }})</span>
+          </h4>
           <ul>
             @for (e of g.events; track e.id) {
-              <li [class.done]="e.done">
+              <li class="mc-anim-slide-up" [class.done]="e.done">
                 <button type="button" (click)="open.emit(e)">
+                  <mc-icon [name]="e.done ? 'check' : 'dot-outline'" class="bullet" />
                   {{ e.title || t('calendar.day.untitled') }}
                 </button>
               </li>
@@ -79,15 +95,58 @@ interface KindGroup {
       border-radius: var(--mc-radius-md);
       cursor: pointer;
       font-size: var(--mc-font-size-sm);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .head-icon {
+      color: var(--mc-accent-primary);
+      margin-right: 4px;
     }
     .empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--mc-space-2);
       color: var(--mc-fg-muted);
+      padding: var(--mc-space-3) 0;
+    }
+    .empty p {
       margin: 0;
+    }
+    .empty-icon {
+      font-size: 2.5rem;
+      color: var(--mc-accent-primary);
+      opacity: 0.55;
     }
     .group h4 {
       margin: 0 0 var(--mc-space-1);
       font-size: var(--mc-font-size-sm);
       color: var(--mc-fg-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .group[data-kind='task'] h4 mc-icon {
+      color: var(--mc-accent-primary);
+    }
+    .group[data-kind='goal'] h4 mc-icon {
+      color: var(--mc-warn, #d4a847);
+    }
+    .group[data-kind='reminder'] h4 mc-icon {
+      color: var(--mc-danger, #d04a4a);
+    }
+    .count {
+      color: var(--mc-fg-muted);
+      font-size: var(--mc-font-size-xs);
+    }
+    .bullet {
+      color: var(--mc-fg-muted);
+      font-size: 0.85em;
+      margin-right: 4px;
+    }
+    li.done .bullet {
+      color: var(--mc-success, #4caf7a);
     }
     .group ul {
       list-style: none;
@@ -132,6 +191,12 @@ export class CalendarDayPanelComponent {
 
   protected heading(): string {
     return this.t('calendar.day.heading').replace('{date}', this.date());
+  }
+
+  protected kindIcon(kind: CalendarEventKind): IconName {
+    if (kind === 'task') return 'check-square';
+    if (kind === 'goal') return 'target';
+    return 'bell';
   }
 
   protected kindLabel(kind: CalendarEventKind): string {

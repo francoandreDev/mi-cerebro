@@ -90,6 +90,15 @@ export class RemindersService {
     return updated;
   }
 
+  async restore(reminder: Reminder): Promise<Reminder> {
+    const dir = await this.remindersDir();
+    const filename = `${reminder.id}${REMINDER_FILE_SUFFIX}`;
+    await this.fs.writeFileAtomic(dir, filename, JSON.stringify(reminder, null, 2));
+    this.idToFile.set(reminder.id, filename);
+    this.summariesSignal.update((curr) => sortSummaries([this.toSummary(reminder), ...curr]));
+    return reminder;
+  }
+
   async deleteToTrash(id: string): Promise<void> {
     const root = this.requireRoot();
     const dir = await this.remindersDir();

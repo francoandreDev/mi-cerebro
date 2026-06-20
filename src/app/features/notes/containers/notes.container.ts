@@ -10,6 +10,7 @@ import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { EntityLockController } from '@core/locks/entity-lock.controller';
 import { TagsService } from '@core/tags/tags.service';
+import { IconComponent } from '@shared/icon/icon.component';
 import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
 
 import { NoteEditorPaneComponent, type SaveStatus } from '../components/note-editor-pane.component';
@@ -19,7 +20,7 @@ import { NotesService } from '../services/notes.service';
 @Component({
   selector: 'mc-notes',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NoteEditorPaneComponent, LockBannerComponent],
+  imports: [NoteEditorPaneComponent, LockBannerComponent, IconComponent],
   templateUrl: './notes.container.html',
   styleUrl: './notes.container.css',
 })

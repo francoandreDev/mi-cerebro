@@ -97,9 +97,31 @@
 .np-controls {
   display: flex;
   align-items: center;
-  gap: var(--mc-space-2);
+  gap: var(--mc-space-1);
   flex-wrap: wrap;
   justify-content: center;
+}
+.np-seek {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+  width: 100%;
+}
+.np-seek-input {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--mc-accent-primary);
+}
+.np-time {
+  font-size: var(--mc-font-size-xs);
+  color: var(--mc-fg-muted);
+  font-variant-numeric: tabular-nums;
+  min-width: 36px;
+  text-align: center;
+}
+.np-skip {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
 }
 .np-toggle {
   width: 44px;

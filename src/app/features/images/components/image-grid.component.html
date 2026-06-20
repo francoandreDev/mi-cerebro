@@ -18,8 +18,9 @@
       }
     </div>
     @if (editable()) {
-      <button type="button" class="primary" (click)="onPick()">
-        + {{ t('images.images.add') }}
+      <button type="button" class="primary mc-hover-grow" (click)="onPick()">
+        <mc-icon name="plus" />
+        <span>{{ t('images.images.add') }}</span>
       </button>
     }
   </div>
@@ -38,10 +39,14 @@
       (dragleave)="onDragLeave()"
       (drop)="onDrop($event)"
     >
-      {{ t('images.images.dropHint') }}
+      <mc-icon name="upload-simple" class="dropzone-icon mc-anim-float" />
+      <span>{{ t('images.images.dropHint') }}</span>
     </div>
   } @else {
-    <p class="empty">{{ t('images.images.empty') }}</p>
+    <p class="empty">
+      <mc-icon name="image" class="empty-icon mc-anim-float" />
+      <span>{{ t('images.images.empty') }}</span>
+    </p>
   }
 } @else {
   <ul
@@ -82,7 +87,7 @@
               (click)="moveUp.emit(img.id)"
               [attr.aria-label]="t('images.images.moveUp')"
             >
-              ↑
+              <mc-icon name="arrow-up" />
             </button>
             <button
               type="button"
@@ -91,15 +96,15 @@
               (click)="moveDown.emit(img.id)"
               [attr.aria-label]="t('images.images.moveDown')"
             >
-              ↓
+              <mc-icon name="arrow-down" />
             </button>
             <button
               type="button"
-              class="ghost danger"
+              class="ghost danger mc-hover-wiggle"
               (click)="remove.emit(img.id)"
               [attr.aria-label]="t('images.images.delete')"
             >
-              <mc-icon name="x" />
+              <mc-icon name="trash" />
             </button>
           </div>
         }

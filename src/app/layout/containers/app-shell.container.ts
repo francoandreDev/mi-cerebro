@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, isDevMode } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
 import { ContinuityService } from '@core/continuity/continuity.service';
@@ -18,8 +18,6 @@ import { CommandPaletteContainer } from '@features/search/containers/command-pal
 
 import { RemoteDivergenceBannerComponent } from '@layout/components/remote-divergence-banner.component';
 
-import { DevVariantsPanelContainer } from './dev-variants-panel.container';
-import { DevVersioningPanelContainer } from './dev-versioning-panel.container';
 import { VariantSwitchOverlayContainer } from './variant-switch-overlay.container';
 import { ErrorDisplayContainer } from './error-display.container';
 import { MiniPlayerContainer } from './mini-player.container';
@@ -38,8 +36,6 @@ import { WorkspaceSidebarContainer } from './workspace-sidebar.container';
     ReminderToastContainer,
     MiniPlayerContainer,
     VariantSwitchOverlayContainer,
-    DevVersioningPanelContainer,
-    DevVariantsPanelContainer,
     RemoteDivergenceBannerComponent,
     KeyboardHelpDialogComponent,
   ],
@@ -58,10 +54,6 @@ import { WorkspaceSidebarContainer } from './workspace-sidebar.container';
       <mc-reminder-toast />
       <mc-mini-player />
       <mc-variant-switch-overlay />
-      @if (isDev) {
-        <mc-dev-versioning-panel />
-        <mc-dev-variants-panel />
-      }
     } @else {
       <mc-onboarding />
     }
@@ -76,7 +68,7 @@ import { WorkspaceSidebarContainer } from './workspace-sidebar.container';
     }
     .shell {
       display: flex;
-      height: 100vh;
+      height: calc(100vh - var(--mc-mini-player-h, 0px));
     }
     .content {
       flex: 1;
@@ -89,7 +81,6 @@ export class AppShellContainer {
   // why: instantiate so theme is applied before first paint.
   protected readonly theme = inject(ThemeService);
   protected readonly workspace = inject(WorkspaceService);
-  protected readonly isDev = isDevMode();
   private readonly errors = inject(ErrorService);
   private readonly autocommit = inject(AutocommitService);
   // why: instantiate AutoPushService eagerly so its effect on

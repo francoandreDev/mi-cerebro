@@ -1,14 +1,17 @@
 <header class="header">
-  <h1>{{ t('images.title') }}</h1>
+  <h1><mc-icon name="image-square" class="title-icon" /> {{ t('images.title') }}</h1>
   <div class="ops">
-    <input
-      type="search"
-      class="filter"
-      [placeholder]="t('images.index.search')"
-      [attr.aria-label]="t('images.index.search')"
-      [value]="query()"
-      (input)="onQuery($event)"
-    />
+    <div class="search-wrap">
+      <mc-icon name="magnifying-glass" class="search-icon" />
+      <input
+        type="search"
+        class="filter"
+        [placeholder]="t('images.index.search')"
+        [attr.aria-label]="t('images.index.search')"
+        [value]="query()"
+        (input)="onQuery($event)"
+      />
+    </div>
     <select
       class="select"
       [attr.aria-label]="t('images.index.sort.label')"
@@ -31,17 +34,27 @@
         }
       </select>
     }
-    <button type="button" class="primary" (click)="createGallery()">+ {{ t('images.new') }}</button>
+    <button type="button" class="primary mc-hover-grow" (click)="createGallery()">
+      <mc-icon name="plus" />
+      <span>{{ t('images.new') }}</span>
+    </button>
   </div>
 </header>
 
 @if (summaries().length === 0) {
   <div class="empty">
+    <mc-icon name="image-square" class="empty-icon mc-anim-float" />
     <p>{{ t('images.empty') }}</p>
-    <button type="button" class="primary" (click)="createGallery()">+ {{ t('images.new') }}</button>
+    <button type="button" class="primary mc-hover-grow" (click)="createGallery()">
+      <mc-icon name="plus" />
+      <span>{{ t('images.new') }}</span>
+    </button>
   </div>
 } @else if (views().length === 0) {
-  <p class="empty-soft">{{ t('images.index.noMatch') }}</p>
+  <p class="empty-soft">
+    <mc-icon name="magnifying-glass" class="empty-icon-soft mc-anim-pulse" />
+    {{ t('images.index.noMatch') }}
+  </p>
 } @else {
   <ul class="wall">
     @for (v of views(); track v.summary.id) {
@@ -73,8 +86,8 @@
       </li>
     }
     <li class="card new">
-      <button type="button" class="new-btn" (click)="createGallery()">
-        <span class="plus" aria-hidden="true">+</span>
+      <button type="button" class="new-btn mc-hover-grow" (click)="createGallery()">
+        <mc-icon name="plus-circle" class="plus mc-anim-pulse" />
         <span class="new-label">{{ t('images.index.newCard') }}</span>
       </button>
     </li>

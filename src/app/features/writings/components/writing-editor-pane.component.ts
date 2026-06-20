@@ -5,6 +5,8 @@ import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import type { Tag } from '@core/tags/tag.types';
 import { EditorComponent } from '@shared/editor/editor.component';
+import { IconComponent } from '@shared/icon/icon.component';
+import type { IconName } from '@shared/icon/icons.data';
 import { TagPickerComponent } from '@shared/tags/tag-picker.component';
 
 import type { Writing } from '../models/writing.types';
@@ -14,9 +16,10 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
 @Component({
   selector: 'mc-writing-editor-pane',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [EditorComponent, TagPickerComponent],
+  imports: [EditorComponent, TagPickerComponent, IconComponent],
   template: `
     <header class="bar">
+      <mc-icon name="pen-nib" class="title-icon" />
       <input
         type="text"
         class="title-input"
@@ -26,10 +29,18 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
         [readOnly]="!editable()"
         (input)="onTitleInput($event)"
       />
-      <span class="status" [attr.data-status]="status()">{{ statusLabel() }}</span>
+      <span class="status" [attr.data-status]="status()">
+        <mc-icon
+          [name]="statusIcon()"
+          [class.mc-anim-spin]="status() === 'saving'"
+          [class.mc-anim-pulse]="status() === 'unsaved'"
+        />
+        <span>{{ statusLabel() }}</span>
+      </span>
       @if (editable()) {
-        <button type="button" class="danger" (click)="removeWriting.emit()">
-          {{ t('writings.delete') }}
+        <button type="button" class="danger mc-hover-wiggle" (click)="removeWriting.emit()">
+          <mc-icon name="trash" />
+          <span>{{ t('writings.delete') }}</span>
         </button>
       }
     </header>
@@ -63,6 +74,19 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
       display: flex;
       align-items: center;
       gap: var(--mc-space-3);
+    }
+    .title-icon {
+      color: var(--mc-accent-primary);
+    }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .danger {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
     .title-input {
       flex: 1;
@@ -119,6 +143,12 @@ export class WritingEditorPaneComponent {
   }
   protected statusLabel(): string {
     return this.t(`writings.status.${this.status()}` as TranslationKey);
+  }
+  protected statusIcon(): IconName {
+    const s = this.status();
+    if (s === 'saving') return 'spinner-gap';
+    if (s === 'unsaved') return 'warning';
+    return 'check';
   }
   protected onTitleInput(event: Event): void {
     const target = event.target as HTMLInputElement | null;

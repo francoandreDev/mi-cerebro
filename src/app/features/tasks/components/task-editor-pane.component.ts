@@ -5,6 +5,8 @@ import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import type { Tag } from '@core/tags/tag.types';
 import { EditorComponent } from '@shared/editor/editor.component';
+import { IconComponent } from '@shared/icon/icon.component';
+import type { IconName } from '@shared/icon/icons.data';
 import { TagPickerComponent } from '@shared/tags/tag-picker.component';
 
 import type { Task } from '../models/task.types';
@@ -15,7 +17,7 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
 @Component({
   selector: 'mc-task-editor-pane',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [EditorComponent, TagPickerComponent, DueDatesPickerComponent],
+  imports: [EditorComponent, TagPickerComponent, DueDatesPickerComponent, IconComponent],
   templateUrl: './task-editor-pane.component.html',
   styleUrl: './task-editor-pane.component.css',
 })
@@ -39,6 +41,12 @@ export class TaskEditorPaneComponent {
   }
   protected statusLabel(): string {
     return this.t(`tasks.status.${this.status()}` as TranslationKey);
+  }
+  protected statusIcon(): IconName {
+    const s = this.status();
+    if (s === 'saving') return 'spinner-gap';
+    if (s === 'unsaved') return 'warning';
+    return 'check';
   }
   protected onTitleInput(event: Event): void {
     const target = event.target as HTMLInputElement | null;

@@ -3,6 +3,8 @@ import { ChangeDetectionStrategy, Component, inject, input, output } from '@angu
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import type { Tag } from '@core/tags/tag.types';
+import { IconComponent } from '@shared/icon/icon.component';
+import type { IconName } from '@shared/icon/icons.data';
 import { MenuButtonComponent, type MenuOption } from '@shared/menu-button/menu-button.component';
 import { TagPickerComponent } from '@shared/tags/tag-picker.component';
 
@@ -13,8 +15,9 @@ export type FileCollectionSaveStatus = 'saved' | 'saving' | 'unsaved';
 @Component({
   selector: 'mc-file-collection-meta-bar',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TagPickerComponent, MenuButtonComponent],
+  imports: [IconComponent, TagPickerComponent, MenuButtonComponent],
   template: `
+    <mc-icon name="folder" class="title-icon" />
     <input
       type="text"
       class="title-input"
@@ -37,8 +40,13 @@ export type FileCollectionSaveStatus = 'saved' | 'saving' | 'unsaved';
       [attr.data-status]="status()"
       [attr.aria-label]="statusLabel()"
       [title]="statusLabel()"
-      >{{ statusGlyph() }}</span
     >
+      <mc-icon
+        [name]="statusIcon()"
+        [class.mc-anim-spin]="status() === 'saving'"
+        [class.mc-anim-pulse]="status() === 'unsaved'"
+      />
+    </span>
     @if (editable()) {
       <mc-menu-button
         variant="ghost"
@@ -55,6 +63,11 @@ export type FileCollectionSaveStatus = 'saved' | 'saving' | 'unsaved';
       gap: var(--mc-space-3);
       padding: var(--mc-space-3) var(--mc-space-4);
       border-bottom: 1px solid var(--mc-border-default);
+    }
+    .title-icon {
+      color: var(--mc-accent-primary);
+      font-size: 1.3em;
+      flex-shrink: 0;
     }
     .title-input {
       flex: 1;
@@ -73,16 +86,21 @@ export type FileCollectionSaveStatus = 'saved' | 'saving' | 'unsaved';
       flex-shrink: 0;
     }
     .status {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       font-size: var(--mc-font-size-md);
       color: var(--mc-fg-muted);
       width: 1.2rem;
-      text-align: center;
     }
     .status[data-status='saving'] {
       color: var(--mc-accent-primary);
     }
     .status[data-status='unsaved'] {
       color: var(--mc-fg-warning, #d97706);
+    }
+    .status[data-status='saved'] mc-icon {
+      color: var(--mc-success, #4caf7a);
     }
   `,
 })
@@ -103,11 +121,11 @@ export class FileCollectionMetaBarComponent {
   protected statusLabel(): string {
     return this.t(`files.status.${this.status()}` as TranslationKey);
   }
-  protected statusGlyph(): string {
+  protected statusIcon(): IconName {
     const s = this.status();
-    if (s === 'saving') return '↻';
-    if (s === 'unsaved') return '●';
-    return '✓';
+    if (s === 'saving') return 'spinner-gap';
+    if (s === 'unsaved') return 'warning';
+    return 'check';
   }
   protected menuOptions(): readonly MenuOption[] {
     return [{ key: 'delete', label: this.t('files.delete') }];

@@ -7,22 +7,31 @@
       (click)="$event.stopPropagation()"
       (keydown)="$event.stopPropagation()"
     >
-      <input
-        #input
-        type="text"
-        class="input"
-        [placeholder]="t('palette.placeholder')"
-        [attr.aria-label]="t('palette.placeholder')"
-        [value]="query()"
-        (input)="onInput($event)"
-        (keydown)="onKey($event)"
-      />
+      <div class="input-wrap">
+        <mc-icon name="magnifying-glass" class="input-icon" />
+        <input
+          #input
+          type="text"
+          class="input"
+          [placeholder]="t('palette.placeholder')"
+          [attr.aria-label]="t('palette.placeholder')"
+          [value]="query()"
+          (input)="onInput($event)"
+          (keydown)="onKey($event)"
+        />
+      </div>
       @if (parsed().unknownTags.length > 0) {
-        <p class="warn">{{ t('palette.unknownTag') }} "{{ parsed().unknownTags.join(', ') }}"</p>
+        <p class="warn">
+          <mc-icon name="warning" class="mc-anim-pulse" />
+          {{ t('palette.unknownTag') }} "{{ parsed().unknownTags.join(', ') }}"
+        </p>
       }
       @if (mode() === 'recents') {
         @if (items().length === 0) {
-          <p class="empty">{{ t('palette.recents.empty') }}</p>
+          <p class="empty">
+            <mc-icon name="clock-counter-clockwise" class="empty-icon mc-anim-float" />
+            <span>{{ t('palette.recents.empty') }}</span>
+          </p>
         } @else {
           <ul class="results" role="listbox">
             @if (recentsItems().length > 0) {
@@ -36,6 +45,7 @@
                   (mouseenter)="cursor.set(i)"
                   (mousedown)="pick($event, h)"
                 >
+                  <mc-icon class="kind-icon" [name]="iconForKind(h.kind)" />
                   <div class="kind">{{ t(kindKey(h.kind)) }}</div>
                   <div class="title">{{ h.title || t('notes.untitledTitle') }}</div>
                 </li>
@@ -55,11 +65,11 @@
                   <div class="title">{{ q.text }}</div>
                   <button
                     type="button"
-                    class="forget"
+                    class="forget mc-hover-wiggle"
                     [attr.aria-label]="t('palette.queries.forget')"
                     (mousedown)="forgetQuery($event, q.text)"
                   >
-                    ✕
+                    <mc-icon name="x" />
                   </button>
                 </li>
               }
@@ -67,7 +77,10 @@
           </ul>
         }
       } @else if (items().length === 0) {
-        <p class="empty">{{ t('palette.empty') }}</p>
+        <p class="empty">
+          <mc-icon name="magnifying-glass" class="empty-icon mc-anim-pulse" />
+          <span>{{ t('palette.empty') }}</span>
+        </p>
       } @else {
         <ul class="results" role="listbox">
           @for (h of entityItems(); track h.id; let i = $index) {

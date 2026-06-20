@@ -48,6 +48,9 @@
       />
     }
   } @else {
-    <div class="empty">{{ t('images.selectOne') }}</div>
+    <div class="empty">
+      <mc-icon name="image-square" class="empty-icon mc-anim-float" />
+      <span>{{ t('images.selectOne') }}</span>
+    </div>
   }
 </div>

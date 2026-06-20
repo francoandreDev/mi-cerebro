@@ -30,6 +30,16 @@
   color: var(--mc-fg-default);
   cursor: pointer;
   font: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+}
+.nav-icon {
+  color: var(--mc-fg-muted);
+  font-size: 1.1em;
+}
+.nav-item.active .nav-icon {
+  color: var(--mc-accent-primary);
 }
 .nav-item:hover {
   background: var(--mc-bg-elevated);
@@ -59,6 +69,12 @@
 .head h2 {
   margin: 0;
   font-size: var(--mc-font-size-xl);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+}
+.title-icon {
+  color: var(--mc-accent-primary);
 }
 .group {
   display: flex;
@@ -132,6 +148,14 @@
   padding: var(--mc-space-1) var(--mc-space-3);
   border-radius: var(--mc-radius-md);
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.row button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 .error {
   font-size: var(--mc-font-size-xs, 0.75rem);

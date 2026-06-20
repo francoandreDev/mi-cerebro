@@ -2,24 +2,31 @@ import { ChangeDetectionStrategy, Component, inject, input, output } from '@angu
 
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { IconComponent } from '@shared/icon/icon.component';
 
 @Component({
   selector: 'mc-foreign-folder-modal',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [IconComponent],
   template: `
     <div class="backdrop" aria-hidden="true"></div>
     <div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="ffm-title">
-      <h2 id="ffm-title" class="title">{{ t('onboarding.foreign.title') }}</h2>
+      <h2 id="ffm-title" class="title">
+        <mc-icon name="folder-open" class="title-icon" />
+        <span>{{ t('onboarding.foreign.title') }}</span>
+      </h2>
       <p class="message">
         {{ t('onboarding.foreign.message') }}
         <span class="folder mc-mono">{{ folderName() }}</span>
       </p>
       <div class="actions">
-        <button type="button" class="secondary" (click)="chooseOther.emit()">
-          {{ t('common.chooseAnother') }}
+        <button type="button" class="secondary mc-hover-grow" (click)="chooseOther.emit()">
+          <mc-icon name="folder" />
+          <span>{{ t('common.chooseAnother') }}</span>
         </button>
-        <button type="button" class="primary" (click)="confirm.emit()">
-          {{ t('onboarding.foreign.initHere') }}
+        <button type="button" class="primary mc-hover-grow" (click)="confirm.emit()">
+          <mc-icon name="check" />
+          <span>{{ t('onboarding.foreign.initHere') }}</span>
         </button>
       </div>
     </div>
@@ -48,6 +55,12 @@ import type { TranslationKey } from '@core/i18n/i18n.types';
     .title {
       font-size: var(--mc-font-size-xl);
       margin-bottom: var(--mc-space-2);
+      display: inline-flex;
+      align-items: center;
+      gap: var(--mc-space-2);
+    }
+    .title-icon {
+      color: var(--mc-accent-primary);
     }
     .message {
       color: var(--mc-fg-muted);
@@ -70,6 +83,9 @@ import type { TranslationKey } from '@core/i18n/i18n.types';
       padding: var(--mc-space-2) var(--mc-space-4);
       border-radius: var(--mc-radius-md);
       font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
     .primary {
       background: var(--mc-accent-primary);

@@ -52,12 +52,13 @@ export class MusicLibraryService {
       const id = crypto.randomUUID();
       const filename = `${id}${TRACK_EXT}`;
       await this.fs.writeFileAtomicBinary(tracksDir, filename, file);
+      const durationMs = await probeDurationMs(file);
       added.push({
         id,
         originalName: file.name,
         addedAt: now,
         bytes: file.size,
-        durationMs: null,
+        durationMs,
       });
     }
     if (added.length === 0) return [];
@@ -78,6 +79,21 @@ export class MusicLibraryService {
     const next: MusicLibrary = { tracks: this.tracksSignal().filter((t) => t.id !== id) };
     await this.writeLibrary(root, next);
     this.tracksSignal.set(next.tracks);
+  }
+
+  async backfillDurationMs(id: string, durationMs: number): Promise<void> {
+    if (!Number.isFinite(durationMs) || durationMs <= 0) return;
+    const current = this.tracksSignal();
+    const idx = current.findIndex((t) => t.id === id);
+    if (idx < 0) return;
+    const track = current[idx]!;
+    if (track.durationMs !== null && track.durationMs > 0) return;
+    const updated: Track = { ...track, durationMs: Math.round(durationMs) };
+    const next = [...current];
+    next[idx] = updated;
+    this.tracksSignal.set(next);
+    const root = await this.musicDir();
+    await this.writeLibrary(root, { tracks: next });
   }
 
   async readBlob(id: string): Promise<Blob> {
@@ -120,3 +136,20 @@ export class MusicLibraryService {
 
 const isMp3 = (file: File): boolean =>
   file.type === TRACK_MIME || file.name.toLowerCase().endsWith(TRACK_EXT);
+
+const probeDurationMs = (file: Blob): Promise<number | null> =>
+  new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const audio = new Audio();
+    audio.preload = 'metadata';
+    const done = (value: number | null): void => {
+      URL.revokeObjectURL(url);
+      resolve(value);
+    };
+    audio.addEventListener('loadedmetadata', () => {
+      const sec = audio.duration;
+      done(Number.isFinite(sec) && sec > 0 ? Math.round(sec * 1000) : null);
+    });
+    audio.addEventListener('error', () => done(null));
+    audio.src = url;
+  });

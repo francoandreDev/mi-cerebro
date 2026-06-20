@@ -18,14 +18,23 @@
     [readOnly]="!editable()"
     (input)="onTitleInput($event)"
   />
-  <span class="status" [attr.data-status]="status()">{{ statusLabel() }}</span>
+  <span class="status" [attr.data-status]="status()">
+    <mc-icon
+      [name]="statusIcon()"
+      [class.mc-anim-spin]="status() === 'saving'"
+      [class.mc-anim-pulse]="status() === 'unsaved'"
+    />
+    {{ statusLabel() }}
+  </span>
   @if (editable()) {
-    <button type="button" class="danger" (click)="removeTask.emit()">
-      {{ t('tasks.delete') }}
+    <button type="button" class="danger mc-hover-wiggle" (click)="removeTask.emit()">
+      <mc-icon name="trash" />
+      <span>{{ t('tasks.delete') }}</span>
     </button>
   }
 </header>
 <section class="meta">
+  <mc-icon name="calendar-dots" class="meta-icon" />
   <span class="label">{{ t('tasks.due.label') }}:</span>
   <mc-due-dates-picker
     [dates]="task().dueDates"

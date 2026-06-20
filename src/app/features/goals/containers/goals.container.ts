@@ -10,6 +10,7 @@ import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { EntityLockController } from '@core/locks/entity-lock.controller';
 import { TagsService } from '@core/tags/tags.service';
+import { IconComponent } from '@shared/icon/icon.component';
 import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
 
 import { GoalEditorPaneComponent, type SaveStatus } from '../components/goal-editor-pane.component';
@@ -19,7 +20,7 @@ import { GoalsService } from '../services/goals.service';
 @Component({
   selector: 'mc-goals',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [GoalEditorPaneComponent, LockBannerComponent],
+  imports: [GoalEditorPaneComponent, LockBannerComponent, IconComponent],
   templateUrl: './goals.container.html',
   styleUrl: './goals.container.css',
 })

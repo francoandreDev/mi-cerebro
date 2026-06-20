@@ -7,6 +7,8 @@ import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 
+import { IconComponent } from '@shared/icon/icon.component';
+
 import { BookVolumeComponent } from '../components/book-volume.component';
 import type { BookSummary } from '../models/book.types';
 import { BooksService } from '../services/books.service';
@@ -24,7 +26,7 @@ const BOOKS_PER_SHELF = 5;
 @Component({
   selector: 'mc-bookshelf',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [BookVolumeComponent],
+  imports: [BookVolumeComponent, IconComponent],
   templateUrl: './bookshelf.container.html',
   styleUrl: './bookshelf.container.css',
 })

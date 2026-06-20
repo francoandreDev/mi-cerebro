@@ -1,17 +1,18 @@
 <section class="page">
   <header class="page-head">
     <div>
-      <h2>{{ t('variants.page.title') }}</h2>
+      <h2><mc-icon name="copy" class="title-icon" /> {{ t('variants.page.title') }}</h2>
       <p class="subtitle">{{ t('variants.page.subtitle') }}</p>
     </div>
     <div class="head-actions">
       <button
         type="button"
-        class="ghost"
+        class="ghost mc-hover-grow"
         (click)="refreshActivity()"
         [disabled]="refreshing() || busy()"
       >
-        {{ refreshing() ? t('variants.refreshing') : t('variants.refresh') }}
+        <mc-icon name="arrows-clockwise" [class.mc-anim-spin]="refreshing()" />
+        <span>{{ refreshing() ? t('variants.refreshing') : t('variants.refresh') }}</span>
       </button>
     </div>
   </header>
@@ -71,17 +72,32 @@
       (click)="cancelDelete()"
     ></button>
     <div class="modal" role="alertdialog" aria-modal="true">
-      <h3>{{ t('variants.action.delete') }}</h3>
+      <h3><mc-icon name="trash" class="title-icon" /> {{ t('variants.action.delete') }}</h3>
       <p>{{ t('variants.delete.confirm', { name: req.variant.name }) }}</p>
       @if (req.unmerged > 0) {
-        <p class="warning">{{ t('variants.delete.unmerged.warning', { n: req.unmerged }) }}</p>
+        <p class="warning">
+          <mc-icon name="warning" class="mc-anim-pulse" />
+          <span>{{ t('variants.delete.unmerged.warning', { n: req.unmerged }) }}</span>
+        </p>
       }
       <div class="modal-actions">
-        <button type="button" class="ghost" (click)="cancelDelete()" [disabled]="busy()">
-          {{ t('variants.form.cancel') }}
+        <button
+          type="button"
+          class="ghost mc-hover-grow"
+          (click)="cancelDelete()"
+          [disabled]="busy()"
+        >
+          <mc-icon name="x" />
+          <span>{{ t('variants.form.cancel') }}</span>
         </button>
-        <button type="button" class="danger" (click)="confirmDelete()" [disabled]="busy()">
-          {{ t('variants.delete.confirm.button') }}
+        <button
+          type="button"
+          class="danger mc-hover-wiggle"
+          (click)="confirmDelete()"
+          [disabled]="busy()"
+        >
+          <mc-icon name="trash" />
+          <span>{{ t('variants.delete.confirm.button') }}</span>
         </button>
       </div>
     </div>

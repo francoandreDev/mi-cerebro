@@ -2,16 +2,18 @@ import { ChangeDetectionStrategy, Component, inject, input, output, signal } fro
 
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { IconComponent } from '@shared/icon/icon.component';
 import { McDatePipe } from '@shared/pipes/mc-date.pipe';
 
 @Component({
   selector: 'mc-due-dates-picker',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [McDatePipe],
+  imports: [McDatePipe, IconComponent],
   template: `
     <div class="wrap">
       @for (d of dates(); track d) {
-        <span class="chip" [class.overdue]="isOverdue(d)">
+        <span class="chip mc-anim-pop" [class.overdue]="isOverdue(d)">
+          <mc-icon [name]="isOverdue(d) ? 'alarm' : 'calendar-blank'" class="chip-icon" />
           <span>{{ friendlyLabel(d) || (d | mcDate) }}</span>
           @if (editable()) {
             <button
@@ -20,7 +22,7 @@ import { McDatePipe } from '@shared/pipes/mc-date.pipe';
               [attr.aria-label]="t('tasks.due.remove')"
               (click)="remove.emit(d)"
             >
-              ×
+              <mc-icon name="x" />
             </button>
           }
         </span>

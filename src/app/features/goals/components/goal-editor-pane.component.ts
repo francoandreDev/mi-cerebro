@@ -5,6 +5,8 @@ import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import type { Tag } from '@core/tags/tag.types';
 import { EditorComponent } from '@shared/editor/editor.component';
+import { IconComponent } from '@shared/icon/icon.component';
+import type { IconName } from '@shared/icon/icons.data';
 import { TagPickerComponent } from '@shared/tags/tag-picker.component';
 
 import type { Goal } from '../models/goal.types';
@@ -15,7 +17,7 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
 @Component({
   selector: 'mc-goal-editor-pane',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [EditorComponent, TagPickerComponent, DeadlinePickerComponent],
+  imports: [EditorComponent, TagPickerComponent, DeadlinePickerComponent, IconComponent],
   templateUrl: './goal-editor-pane.component.html',
   styleUrl: './goal-editor-pane.component.css',
 })
@@ -38,6 +40,12 @@ export class GoalEditorPaneComponent {
   }
   protected statusLabel(): string {
     return this.t(`goals.status.${this.status()}` as TranslationKey);
+  }
+  protected statusIcon(): IconName {
+    const s = this.status();
+    if (s === 'saving') return 'spinner-gap';
+    if (s === 'unsaved') return 'warning';
+    return 'check';
   }
   protected onTitleInput(event: Event): void {
     const target = event.target as HTMLInputElement | null;

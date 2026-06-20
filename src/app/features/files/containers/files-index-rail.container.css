@@ -50,6 +50,10 @@
   cursor: pointer;
   font-size: var(--mc-font-size-sm);
   font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 .actions .primary:hover {
   filter: brightness(1.1);
@@ -62,6 +66,10 @@
   padding: var(--mc-space-1) var(--mc-space-2);
   cursor: pointer;
   font-size: var(--mc-font-size-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 .ghost:hover {
   color: var(--mc-fg-primary);

@@ -18,6 +18,13 @@
   border-color: var(--mc-fg-warning, #d97706);
   color: var(--mc-fg-warning, #d97706);
 }
+.chip.overdue .chip-icon {
+  color: var(--mc-danger, #d04a4a);
+  animation: mc-anim-pulse-kf 2s ease-in-out infinite;
+}
+.chip-icon {
+  color: var(--mc-fg-muted);
+}
 .chip .x {
   background: transparent;
   border: none;

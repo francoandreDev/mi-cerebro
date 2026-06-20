@@ -740,6 +740,7 @@ const PANE_HIDDEN_PREFIXES: readonly string[] = [
   '/music',
   '/files',
   '/calendar',
+  '/reminders',
 ];
 
 const ROUTE_TO_KIND = {

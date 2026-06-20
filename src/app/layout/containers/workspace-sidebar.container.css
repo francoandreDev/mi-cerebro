@@ -4,7 +4,7 @@
   width: 340px;
   border-right: 1px solid var(--mc-border-default);
   background: var(--mc-bg-surface);
-  height: 100vh;
+  height: 100%;
 }
 :host(.no-pane) {
   width: auto;

@@ -1,7 +1,8 @@
 <header class="bar">
-  <h1>{{ t('trash.title') }}</h1>
+  <h1><mc-icon name="trash" class="title-icon" /> {{ t('trash.title') }}</h1>
   <div class="bar-tools">
     <div class="search">
+      <mc-icon name="magnifying-glass" class="search-icon" />
       <input
         type="search"
         class="search-input"
@@ -13,17 +14,18 @@
       @if (query()) {
         <button
           type="button"
-          class="search-clear"
+          class="search-clear mc-hover-wiggle"
           [attr.aria-label]="t('trash.search.clear')"
           (click)="clearQuery()"
         >
-          ×
+          <mc-icon name="x" />
         </button>
       }
     </div>
     @if (!isEmpty()) {
-      <button type="button" class="danger" (click)="onEmpty()">
-        {{ t('trash.empty') }}
+      <button type="button" class="danger mc-hover-wiggle" (click)="onEmpty()">
+        <mc-icon name="broom" />
+        <span>{{ t('trash.empty') }}</span>
       </button>
     }
   </div>
@@ -31,7 +33,7 @@
 
 @if (isEmpty()) {
   <div class="empty">
-    <div class="empty-icon" aria-hidden="true">🗑</div>
+    <mc-icon name="trash" class="empty-icon mc-anim-float" aria-hidden="true" />
     <h2 class="empty-title">{{ t('trash.empty.title') }}</h2>
     <p class="empty-body">{{ t('trash.empty.body') }}</p>
   </div>
@@ -45,7 +47,10 @@
   />
 
   @if (noMatch()) {
-    <div class="empty soft">{{ t('trash.noMatch') }}</div>
+    <div class="empty soft">
+      <mc-icon name="magnifying-glass" class="mc-anim-pulse" />
+      <span>{{ t('trash.noMatch') }}</span>
+    </div>
   } @else {
     <div class="grid">
       @for (entry of visible(); track entryKey(entry)) {
@@ -83,11 +88,11 @@
       <h2 class="modal-title">{{ entryTitle(v) }}</h2>
       <button
         type="button"
-        class="modal-close"
+        class="modal-close mc-hover-wiggle"
         [attr.aria-label]="t('trash.viewClose')"
         (click)="closeView()"
       >
-        ×
+        <mc-icon name="x" />
       </button>
     </header>
     <div class="modal-meta">
@@ -134,11 +139,13 @@
       }
     </div>
     <footer class="modal-foot">
-      <button type="button" class="op restore" (click)="onRestore(v)">
-        {{ t('trash.restore') }}
+      <button type="button" class="op restore mc-hover-grow" (click)="onRestore(v)">
+        <mc-icon name="arrow-counter-clockwise" />
+        <span>{{ t('trash.restore') }}</span>
       </button>
-      <button type="button" class="op purge" (click)="onPurge(v)">
-        {{ t('trash.purgeForever') }}
+      <button type="button" class="op purge mc-hover-wiggle" (click)="onPurge(v)">
+        <mc-icon name="trash" />
+        <span>{{ t('trash.purgeForever') }}</span>
       </button>
     </footer>
   </div>

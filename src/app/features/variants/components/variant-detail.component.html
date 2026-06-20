@@ -117,37 +117,56 @@
 
     <footer class="actions">
       @if (renaming()) {
-        <button type="button" class="primary" (click)="renameSubmit.emit()" [disabled]="busy()">
-          {{ t('variants.rename.save') }}
+        <button
+          type="button"
+          class="primary mc-hover-grow"
+          (click)="renameSubmit.emit()"
+          [disabled]="busy()"
+        >
+          <mc-icon name="check" />
+          <span>{{ t('variants.rename.save') }}</span>
         </button>
-        <button type="button" class="ghost" (click)="renameCancel.emit()">
-          {{ t('variants.form.cancel') }}
+        <button type="button" class="ghost mc-hover-grow" (click)="renameCancel.emit()">
+          <mc-icon name="x" />
+          <span>{{ t('variants.form.cancel') }}</span>
         </button>
       } @else {
         @if (!isActive()) {
           <button
             type="button"
-            class="primary"
+            class="primary mc-hover-grow"
             (click)="switchTo.emit()"
             [disabled]="busy() || switching()"
           >
-            {{ t('variants.action.switch') }}
+            <mc-icon
+              [name]="switching() ? 'spinner-gap' : 'arrows-clockwise'"
+              [class.mc-anim-spin]="switching()"
+            />
+            <span>{{ t('variants.action.switch') }}</span>
           </button>
         }
         @if (!v.protected) {
-          <button type="button" (click)="renameStart.emit()" [disabled]="busy()">
-            {{ t('variants.action.rename') }}
+          <button
+            type="button"
+            class="mc-hover-grow"
+            (click)="renameStart.emit()"
+            [disabled]="busy()"
+          >
+            <mc-icon name="pencil-simple" />
+            <span>{{ t('variants.action.rename') }}</span>
           </button>
-          <button type="button" (click)="merge.emit()" [disabled]="busy()">
-            {{ t('variants.action.merge') }}
+          <button type="button" class="mc-hover-grow" (click)="merge.emit()" [disabled]="busy()">
+            <mc-icon name="git-branch" />
+            <span>{{ t('variants.action.merge') }}</span>
           </button>
           <button
             type="button"
-            class="danger"
+            class="danger mc-hover-wiggle"
             (click)="delete_.emit()"
             [disabled]="busy() || isActive()"
           >
-            {{ t('variants.action.delete') }}
+            <mc-icon name="trash" />
+            <span>{{ t('variants.action.delete') }}</span>
           </button>
         }
       }
@@ -155,6 +174,7 @@
   </article>
 } @else {
   <div class="empty">
+    <mc-icon name="copy" class="empty-icon mc-anim-float" />
     <p>{{ t('variants.detail.empty') }}</p>
   </div>
 }

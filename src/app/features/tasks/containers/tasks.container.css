@@ -10,8 +10,19 @@
 }
 .empty {
   flex: 1;
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mc-space-2);
   color: var(--mc-fg-muted);
   padding: var(--mc-space-5);
+}
+.empty p {
+  margin: 0;
+}
+.empty-icon {
+  font-size: 3.5rem;
+  color: var(--mc-accent-primary);
+  opacity: 0.55;
 }

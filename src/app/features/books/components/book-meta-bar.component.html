@@ -1,6 +1,7 @@
 <div class="top">
-  <a routerLink="/books" class="back" [title]="t('books.breadcrumb.root')">
-    ‹ {{ t('books.breadcrumb.root') }}
+  <a routerLink="/books" class="back mc-hover-grow" [title]="t('books.breadcrumb.root')">
+    <mc-icon name="caret-left" />
+    <span>{{ t('books.breadcrumb.root') }}</span>
   </a>
   <span class="spacer"></span>
   <span class="status" [attr.data-status]="status()" [attr.aria-label]="statusLabel()">

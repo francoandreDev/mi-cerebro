@@ -13,6 +13,8 @@ import {
 import type { CalendarEvent } from '@core/calendar/calendar-event.types';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { IconComponent } from '@shared/icon/icon.component';
+import type { IconName } from '@shared/icon/icons.data';
 
 import { formatDayMonth, todayIso } from '../utils/calendar-dates';
 
@@ -21,8 +23,10 @@ const MAX_RESULTS = 8;
 @Component({
   selector: 'mc-calendar-toolbar',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [IconComponent],
   template: `
     <div class="search">
+      <mc-icon name="magnifying-glass" class="search-icon" />
       <input
         #q
         type="search"
@@ -41,6 +45,7 @@ const MAX_RESULTS = 8;
               @for (e of results(); track e.id) {
                 <li>
                   <button type="button" (click)="onPick(e)">
+                    <mc-icon [name]="kindIcon(e)" class="kind-icon" />
                     <span class="when">{{ formatWhen(e.date) }}</span>
                     <span class="title">{{ e.title || t('calendar.day.untitled') }}</span>
                     <span class="kind">{{ kindLabel(e) }}</span>
@@ -54,6 +59,7 @@ const MAX_RESULTS = 8;
     </div>
 
     <div class="day-picker">
+      <mc-icon name="calendar-dots" class="picker-icon" />
       <input
         #d
         type="date"
@@ -63,6 +69,7 @@ const MAX_RESULTS = 8;
         [attr.aria-label]="t('calendar.toolbar.goto')"
       />
       <button type="button" class="today-btn" (click)="pickToday.emit()">
+        <mc-icon name="calendar-check" />
         {{ t('calendar.nav.today') }}
       </button>
     </div>
@@ -86,8 +93,27 @@ const MAX_RESULTS = 8;
       color: var(--mc-fg-primary);
       border: 1px solid var(--mc-border-default);
       border-radius: var(--mc-radius-md);
-      padding: var(--mc-space-1) var(--mc-space-2);
+      padding: var(--mc-space-1) var(--mc-space-2) var(--mc-space-1) calc(var(--mc-space-2) + 1.4em);
       font-size: var(--mc-font-size-sm);
+    }
+    .search-icon {
+      position: absolute;
+      left: var(--mc-space-2);
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--mc-fg-muted);
+      pointer-events: none;
+    }
+    .kind-icon {
+      color: var(--mc-fg-muted);
+    }
+    .picker-icon {
+      color: var(--mc-fg-muted);
+    }
+    .today-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
     }
     .results {
       position: absolute;
@@ -233,6 +259,12 @@ export class CalendarToolbarComponent {
     if (e.kind === 'task') return this.t('calendar.kind.task');
     if (e.kind === 'goal') return this.t('calendar.kind.goal');
     return this.t('calendar.kind.reminder');
+  }
+
+  protected kindIcon(e: CalendarEvent): IconName {
+    if (e.kind === 'task') return 'check-square';
+    if (e.kind === 'goal') return 'target';
+    return 'bell';
   }
 
   @HostListener('document:click', ['$event'])

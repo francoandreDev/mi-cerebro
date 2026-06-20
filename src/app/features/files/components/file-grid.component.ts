@@ -22,8 +22,9 @@ import {
       <h3>{{ t('files.items.title') }} ({{ collection().items.length }})</h3>
       @if (editable()) {
         <div class="actions">
-          <button type="button" class="primary" (click)="onPick()">
-            + {{ t('files.items.add') }}
+          <button type="button" class="primary mc-hover-grow" (click)="onPick()">
+            <mc-icon name="plus" />
+            <span>{{ t('files.items.add') }}</span>
           </button>
         </div>
       }
@@ -36,12 +37,16 @@ import {
         (dragleave)="onDragLeave()"
         (drop)="onDrop($event)"
       >
-        {{ t('files.items.dropHint') }}
+        <mc-icon name="upload-simple" class="dropzone-icon mc-anim-float" />
+        <span>{{ t('files.items.dropHint') }}</span>
       </div>
       <input #picker type="file" multiple hidden (change)="onPickerChange($event)" />
     }
     @if (orderedItems().length === 0) {
-      <p class="empty">{{ t('files.items.empty') }}</p>
+      <p class="empty">
+        <mc-icon name="folder-open" class="empty-icon mc-anim-float" />
+        <span>{{ t('files.items.empty') }}</span>
+      </p>
     } @else {
       <ul class="grid">
         @for (item of orderedItems(); track item.id; let i = $index) {
@@ -78,7 +83,7 @@ import {
                   (click)="moveUp.emit(item.id)"
                   [attr.aria-label]="t('files.items.moveUp')"
                 >
-                  ↑
+                  <mc-icon name="arrow-up" />
                 </button>
                 <button
                   type="button"
@@ -87,15 +92,15 @@ import {
                   (click)="moveDown.emit(item.id)"
                   [attr.aria-label]="t('files.items.moveDown')"
                 >
-                  ↓
+                  <mc-icon name="arrow-down" />
                 </button>
                 <button
                   type="button"
-                  class="ghost"
+                  class="ghost mc-hover-wiggle"
                   (click)="remove.emit(item.id)"
                   [attr.aria-label]="t('files.items.delete')"
                 >
-                  <mc-icon name="x" />
+                  <mc-icon name="trash" />
                 </button>
               </div>
             }
@@ -131,6 +136,9 @@ import {
       border-radius: var(--mc-radius-md);
       cursor: pointer;
       font-size: var(--mc-font-size-sm);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
     .dropzone {
       border: 1px dashed var(--mc-border-default);
@@ -139,6 +147,15 @@ import {
       color: var(--mc-fg-muted);
       text-align: center;
       font-size: var(--mc-font-size-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--mc-space-2);
+    }
+    .dropzone-icon {
+      font-size: 1.2em;
+      color: var(--mc-accent-primary);
+      opacity: 0.7;
     }
     .dropzone.over {
       border-color: var(--mc-accent-primary);
@@ -149,6 +166,16 @@ import {
       color: var(--mc-fg-muted);
       font-size: var(--mc-font-size-sm);
       margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--mc-space-2);
+      padding: var(--mc-space-4) 0;
+    }
+    .empty-icon {
+      font-size: 2.5rem;
+      color: var(--mc-accent-primary);
+      opacity: 0.55;
     }
     .grid {
       list-style: none;

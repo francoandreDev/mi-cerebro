@@ -11,10 +11,14 @@
   </button>
 </header>
 <div class="actions">
-  <button type="button" class="primary" (click)="onCreateCollection()">
-    + {{ t('files.new') }}
+  <button type="button" class="primary mc-hover-grow" (click)="onCreateCollection()">
+    <mc-icon name="plus" />
+    <span>{{ t('files.new') }}</span>
   </button>
-  <button type="button" class="ghost" (click)="onCreateFolder()">+ {{ t('common.folder') }}</button>
+  <button type="button" class="ghost mc-hover-grow" (click)="onCreateFolder()">
+    <mc-icon name="folder-plus" />
+    <span>{{ t('common.folder') }}</span>
+  </button>
 </div>
 <mc-tree-filter
   [query]="query()"

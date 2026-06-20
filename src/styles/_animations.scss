@@ -1,0 +1,195 @@
+// Shared animation library. Keyframes prefixed mc-anim-* to avoid collisions.
+// Utility classes mc-anim-<name> apply the animation with sensible defaults.
+
+@keyframes mc-anim-spark-kf {
+  0%,
+  100% {
+    transform: scale(0.6);
+    opacity: 0.2;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+}
+@keyframes mc-anim-pulse-kf {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 0.75;
+  }
+}
+@keyframes mc-anim-pop-kf {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes mc-anim-slide-up-kf {
+  0% {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+@keyframes mc-anim-fade-in-kf {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes mc-anim-shake-kf {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-3px);
+  }
+  40%,
+  80% {
+    transform: translateX(3px);
+  }
+}
+@keyframes mc-anim-bounce-soft-kf {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+@keyframes mc-anim-spin-kf {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes mc-anim-float-kf {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+@keyframes mc-anim-glow-kf {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 transparent);
+  }
+  50% {
+    filter: drop-shadow(0 0 6px var(--mc-accent-primary));
+  }
+}
+@keyframes mc-anim-check-kf {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes mc-anim-wiggle-kf {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-6deg);
+  }
+  75% {
+    transform: rotate(6deg);
+  }
+}
+
+.mc-anim-spark {
+  animation: mc-anim-spark-kf 2.4s ease-in-out infinite;
+}
+.mc-anim-pulse {
+  animation: mc-anim-pulse-kf 2s ease-in-out infinite;
+}
+.mc-anim-pop {
+  animation: mc-anim-pop-kf 0.18s ease-out both;
+}
+.mc-anim-slide-up {
+  animation: mc-anim-slide-up-kf 0.18s ease-out both;
+}
+.mc-anim-fade-in {
+  animation: mc-anim-fade-in-kf 0.18s ease-out both;
+}
+.mc-anim-shake {
+  animation: mc-anim-shake-kf 0.32s ease-in-out;
+}
+.mc-anim-bounce-soft {
+  animation: mc-anim-bounce-soft-kf 1.6s ease-in-out infinite;
+}
+.mc-anim-spin {
+  animation: mc-anim-spin-kf 1s linear infinite;
+}
+.mc-anim-float {
+  animation: mc-anim-float-kf 3s ease-in-out infinite;
+}
+.mc-anim-glow {
+  animation: mc-anim-glow-kf 2.4s ease-in-out infinite;
+}
+.mc-anim-check {
+  animation: mc-anim-check-kf 0.28s ease-out both;
+}
+.mc-anim-wiggle {
+  animation: mc-anim-wiggle-kf 0.6s ease-in-out;
+}
+
+.mc-hover-grow {
+  transition: transform 0.12s ease;
+}
+.mc-hover-grow:hover {
+  transform: scale(1.1);
+}
+.mc-hover-spin:hover mc-icon {
+  animation: mc-anim-spin-kf 0.8s linear;
+}
+.mc-hover-wiggle:hover mc-icon {
+  animation: mc-anim-wiggle-kf 0.5s ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mc-anim-spark,
+  .mc-anim-pulse,
+  .mc-anim-bounce-soft,
+  .mc-anim-spin,
+  .mc-anim-float,
+  .mc-anim-glow {
+    animation: none;
+  }
+  .mc-anim-pop,
+  .mc-anim-slide-up,
+  .mc-anim-fade-in,
+  .mc-anim-check {
+    animation-duration: 0.001s;
+  }
+}

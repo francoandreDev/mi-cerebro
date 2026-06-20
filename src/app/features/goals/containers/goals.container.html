@@ -33,6 +33,9 @@
       (removeTag)="onRemoveTag($event)"
     />
   } @else {
-    <div class="empty">{{ t('goals.selectOne') }}</div>
+    <div class="empty">
+      <mc-icon name="target" class="empty-icon mc-anim-float" />
+      <p>{{ t('goals.selectOne') }}</p>
+    </div>
   }
 </div>

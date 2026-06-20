@@ -7,6 +7,7 @@
     [attr.aria-checked]="active() === null"
     (click)="onSelect(null)"
   >
+    <mc-icon name="funnel" class="chip-icon" />
     <span class="label">{{ t('trash.filter.all') }}</span>
     <span class="count">{{ total() }}</span>
   </button>
@@ -20,6 +21,7 @@
       [attr.aria-checked]="active() === chip.kind"
       (click)="onSelect(chip.kind)"
     >
+      <mc-icon class="chip-icon" [name]="iconFor(chip.kind)" />
       <span class="label">{{ chip.label }}</span>
       <span class="count">{{ chip.count }}</span>
     </button>

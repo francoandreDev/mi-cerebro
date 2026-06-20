@@ -249,3 +249,31 @@ Formato por entrada:
 - **Qué**: dibujar la forma de onda en Now Playing y permitir click para seek.
 - **Por qué se difirió**: implica decodificar todo el MP3 en `AudioContext` al subir (costo: ~3-10s por archivo) y persistir el peak array. Bonito pero pesado para una PWA personal.
 - **Target**: sin asignar — junto con cover art si se hace fase de "música rica".
+
+---
+
+## Recordatorios — Mejoras UI (origen: rediseño 2026-06-19)
+
+### Snooze 1d / Duplicar / menú de acciones extendido
+
+- **Qué**: además de "Posponer 1 h" agregar 1 día, próximo lunes, fin de semana; acción "Duplicar"; menú overflow `⋯` que agrupe todo en lugar de chips sueltos al hover.
+- **Por qué se difirió**: el rediseño priorizó layout 2-cols + buckets + quick-add + undo. Snooze 1h y borrar cubren ~80% del flujo diario. Sumar más acciones implica decidir si menú overflow o chips persistentes — punto de UX que conviene observar primero en uso.
+- **Target**: sin asignar.
+
+### Atajos de navegación de fila (J/K, Space, E, Del)
+
+- **Qué**: navegación por teclado dentro de la lista (J/K), Space para toggle done, E para editar, Del para borrar — todos con scope `editable-safe`.
+- **Por qué se difirió**: hoy la lista no tiene concepto de "fila enfocada" (no hay roving tabindex ni signal de cursor). Implementarlo bien implica patrón reutilizable (`listbox` ARIA + cursor signal) que conviene resolver una sola vez para reminders/tasks/goals juntos. Por ahora solo `N` (nuevo) y `/` (buscar) están registrados.
+- **Target**: cuando se aborde patrón compartido de listas navegables.
+
+### Badge de vencidas en el rail global
+
+- **Qué**: pintar un badge numérico junto al ícono de Reminders en el sidebar con la cantidad de vencidas.
+- **Por qué se difirió**: requiere exponer un signal global de "overdue count" desde `RemindersService` y agregar slot de badge en el rail (que hoy no tiene). Cambio cruza capa de layout — fuera de scope del rediseño de la página en sí.
+- **Target**: sin asignar.
+
+### Parser de fecha natural — alcance ampliado
+
+- **Qué**: el `@hint` actual soporta hoy/mañana/pasado, días de la semana, "en Nh/Nm/Nd" y horas (24h y am/pm). Faltan: "viernes que viene", "fin de semana", "próximo mes", fechas absolutas "15/07", parsing dentro del título sin `@`.
+- **Por qué se difirió**: cobertura actual cubre los casos cotidianos; lo demás suma complejidad de parser y ambigüedad UX (cuándo `Llamar 15` significa hora 15 vs día 15). Mejor evaluar uso real antes de extender.
+- **Target**: sin asignar.

@@ -11,6 +11,23 @@
 .head h2 {
   margin: 0;
   font-size: var(--mc-font-size-xl);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+}
+.title-icon {
+  color: var(--mc-accent-primary);
+}
+.actions button,
+.not-configured .primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.not-configured {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-2);
 }
 .subtitle {
   margin: var(--mc-space-1) 0 0;

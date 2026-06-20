@@ -8,6 +8,7 @@ import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import type { Variant } from '@core/versioning/variants.types';
 import { BgColorDirective } from '@shared/directives/bg-color.directive';
+import { IconComponent } from '@shared/icon/icon.component';
 import { McDatePipe } from '@shared/pipes/mc-date.pipe';
 
 import type { VariantOverview } from '../services/variants-stats.service';
@@ -15,7 +16,7 @@ import type { VariantOverview } from '../services/variants-stats.service';
 @Component({
   selector: 'mc-variant-detail',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, BgColorDirective, McDatePipe],
+  imports: [FormsModule, BgColorDirective, McDatePipe, IconComponent],
   templateUrl: './variant-detail.component.html',
   styleUrl: './variant-detail.component.css',
 })

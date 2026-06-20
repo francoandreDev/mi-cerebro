@@ -10,6 +10,7 @@ import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { EntityLockController } from '@core/locks/entity-lock.controller';
 import { TagsService } from '@core/tags/tags.service';
+import { IconComponent } from '@shared/icon/icon.component';
 import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
 
 import { ListEditorPaneComponent, type SaveStatus } from '../components/list-editor-pane.component';
@@ -19,7 +20,7 @@ import { ListsService } from '../services/lists.service';
 @Component({
   selector: 'mc-lists',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ListEditorPaneComponent, LockBannerComponent],
+  imports: [ListEditorPaneComponent, LockBannerComponent, IconComponent],
   templateUrl: './lists.container.html',
   styleUrl: './lists.container.css',
 })

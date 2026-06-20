@@ -3,6 +3,8 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, output } f
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import type { TrashKind } from '@core/trash/trash.types';
+import { IconComponent } from '@shared/icon/icon.component';
+import type { IconName } from '@shared/icon/icons.data';
 
 const ORDER: readonly TrashKind[] = [
   'note',
@@ -22,9 +24,22 @@ interface KindChip {
   readonly count: number;
 }
 
+const KIND_ICON: Readonly<Record<TrashKind, IconName>> = {
+  note: 'note',
+  task: 'check-square',
+  goal: 'target',
+  list: 'list-bullets',
+  writing: 'pen-nib',
+  book: 'books',
+  image: 'image-square',
+  file: 'folder',
+  reminder: 'bell',
+};
+
 @Component({
   selector: 'mc-trash-filter-bar',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [IconComponent],
   templateUrl: './trash-filter-bar.component.html',
   styleUrl: './trash-filter-bar.component.css',
 })
@@ -51,5 +66,9 @@ export class TrashFilterBarComponent {
 
   protected onSelect(kind: TrashKind | null): void {
     this.kindChange.emit(kind);
+  }
+
+  protected iconFor(kind: TrashKind): IconName {
+    return KIND_ICON[kind];
   }
 }

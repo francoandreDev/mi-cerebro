@@ -88,6 +88,9 @@
   border-radius: var(--mc-radius-pill);
   cursor: pointer;
   font-size: var(--mc-font-size-xs);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 .chip.active {
   background: var(--mc-accent-primary);

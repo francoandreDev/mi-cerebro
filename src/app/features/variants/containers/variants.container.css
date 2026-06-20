@@ -21,6 +21,28 @@
 .page-head h2 {
   margin: 0;
   font-size: var(--mc-font-size-xl);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+}
+.title-icon {
+  color: var(--mc-accent-primary);
+}
+.head-actions .ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.modal-actions .ghost,
+.modal-actions .danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.warning {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 .subtitle {
   color: var(--mc-fg-muted);

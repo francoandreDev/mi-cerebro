@@ -27,6 +27,8 @@ import { isDormant } from '@core/versioning/variants-activity';
 import { VariantsService } from '@core/versioning/variants.service';
 import { PRINCIPAL_VARIANT_ID, type Variant } from '@core/versioning/variants.types';
 
+import { IconComponent } from '@shared/icon/icon.component';
+
 import { VariantDetailComponent } from '../components/variant-detail.component';
 import {
   VariantsCreateModalComponent,
@@ -45,7 +47,12 @@ interface DeleteRequest {
   selector: 'mc-variants-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [VariantsStatsService],
-  imports: [VariantsTreeComponent, VariantDetailComponent, VariantsCreateModalComponent],
+  imports: [
+    VariantsTreeComponent,
+    VariantDetailComponent,
+    VariantsCreateModalComponent,
+    IconComponent,
+  ],
   templateUrl: './variants.container.html',
   styleUrl: './variants.container.css',
 })

@@ -39,7 +39,14 @@
   outline: none;
   border-bottom: 1px solid var(--mc-accent-primary);
 }
+.title-icon {
+  color: var(--mc-accent-primary);
+  font-size: 1.4em;
+}
 .status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: var(--mc-font-size-sm);
   color: var(--mc-fg-muted);
 }
@@ -49,16 +56,26 @@
 .status[data-status='unsaved'] {
   color: var(--mc-fg-warning, #d97706);
 }
+.status[data-status='saved'] mc-icon {
+  color: var(--mc-success, #4caf7a);
+}
 .danger {
   background: transparent;
   color: var(--mc-fg-muted);
   border: 1px solid var(--mc-border-default);
   padding: var(--mc-space-1) var(--mc-space-3);
   border-radius: var(--mc-radius-md);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
 }
 .danger:hover {
-  color: var(--mc-fg-primary);
-  border-color: var(--mc-accent-primary);
+  color: var(--mc-danger, #d04a4a);
+  border-color: var(--mc-danger, #d04a4a);
+}
+.meta-icon {
+  color: var(--mc-fg-muted);
 }
 .meta {
   display: flex;

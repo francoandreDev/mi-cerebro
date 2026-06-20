@@ -1,6 +1,7 @@
 <div class="top">
-  <a routerLink="/images" class="back" [title]="t('images.breadcrumb.root')">
-    ‹ {{ t('images.breadcrumb.root') }}
+  <a routerLink="/images" class="back mc-hover-grow" [title]="t('images.breadcrumb.root')">
+    <mc-icon name="caret-left" />
+    <span>{{ t('images.breadcrumb.root') }}</span>
   </a>
   <span class="spacer"></span>
   <span
@@ -8,8 +9,13 @@
     [attr.data-status]="status()"
     [attr.aria-label]="statusLabel()"
     [title]="statusLabel()"
-    >{{ statusGlyph() }}</span
   >
+    <mc-icon
+      [name]="statusIcon()"
+      [class.mc-anim-spin]="status() === 'saving'"
+      [class.mc-anim-pulse]="status() === 'unsaved'"
+    />
+  </span>
   @if (editable()) {
     <mc-menu-button
       variant="ghost"
@@ -19,15 +25,18 @@
     />
   }
 </div>
-<input
-  type="text"
-  class="title-input"
-  [value]="gallery().title"
-  [placeholder]="t('images.placeholderTitle')"
-  [attr.aria-label]="t('images.placeholderTitle')"
-  [readOnly]="!editable()"
-  (input)="onTitleInput($event)"
-/>
+<div class="title-row">
+  <mc-icon name="image-square" class="title-icon" />
+  <input
+    type="text"
+    class="title-input"
+    [value]="gallery().title"
+    [placeholder]="t('images.placeholderTitle')"
+    [attr.aria-label]="t('images.placeholderTitle')"
+    [readOnly]="!editable()"
+    (input)="onTitleInput($event)"
+  />
+</div>
 <div class="bottom">
   <mc-tag-picker
     class="tags"

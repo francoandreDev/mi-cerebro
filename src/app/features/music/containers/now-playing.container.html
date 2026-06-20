@@ -10,6 +10,20 @@
     @if (sourceTitle(); as src) {
       <p class="np-source">{{ src }}</p>
     }
+    <div class="np-seek">
+      <span class="np-time">{{ formatTime(currentTime()) }}</span>
+      <input
+        type="range"
+        class="np-seek-input"
+        min="0"
+        [max]="duration() || 0"
+        step="0.5"
+        [value]="currentTime()"
+        (input)="onSeek(asInput($event.target).valueAsNumber)"
+        [attr.aria-label]="t('music.seek')"
+      />
+      <span class="np-time">{{ formatTime(duration()) }}</span>
+    </div>
     <div class="np-controls">
       <button
         type="button"
@@ -33,6 +47,15 @@
       </button>
       <button
         type="button"
+        class="icon-btn np-skip"
+        (click)="onSkip(-10)"
+        [title]="t('music.skipBack10')"
+        [attr.aria-label]="t('music.skipBack10')"
+      >
+        −10s
+      </button>
+      <button
+        type="button"
         class="icon-btn np-toggle"
         (click)="onTogglePlay()"
         [title]="t('music.playPause')"
@@ -46,12 +69,32 @@
       </button>
       <button
         type="button"
+        class="icon-btn np-skip"
+        (click)="onSkip(10)"
+        [title]="t('music.skipForward10')"
+        [attr.aria-label]="t('music.skipForward10')"
+      >
+        +10s
+      </button>
+      <button
+        type="button"
         class="icon-btn"
         (click)="onNext()"
         [title]="t('music.next')"
         [attr.aria-label]="t('music.next')"
       >
         <mc-icon name="skip-forward" />
+      </button>
+      <button
+        type="button"
+        class="icon-btn"
+        [class.fav-active]="repeat() === 'all'"
+        (click)="onToggleRepeat()"
+        [title]="t('music.repeat')"
+        [attr.aria-label]="t('music.repeat')"
+        [attr.aria-pressed]="repeat() === 'all'"
+      >
+        <mc-icon name="arrows-clockwise" />
       </button>
       <button
         type="button"

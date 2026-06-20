@@ -34,6 +34,16 @@
     </button>
     <button
       type="button"
+      class="icon-btn"
+      (click)="onShufflePlaylist()"
+      [disabled]="activeTracks().length === 0"
+      [title]="t('music.playShuffled')"
+      [attr.aria-label]="t('music.playShuffled')"
+    >
+      <mc-icon name="shuffle" />
+    </button>
+    <button
+      type="button"
       class="icon-btn danger"
       (click)="onDelete()"
       [title]="t('common.delete')"

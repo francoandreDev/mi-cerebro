@@ -1,31 +1,54 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, computed, effect, inject, signal } from '@angular/core';
 
 import { MusicLibraryService } from '@features/music/services/music-library.service';
+
+type RepeatMode = 'off' | 'all';
 
 interface QueueState {
   readonly trackIds: readonly string[];
   readonly index: number;
+  readonly originalOrder: readonly string[];
 }
 
-// why: single Audio element + signals. Shuffle is enabled by default per
-//      §16 ("reproducción aleatoria en bucle como modo principal"); when
-//      shuffle is on, prev/next walk a pre-shuffled clone of the queue.
+interface PersistedState {
+  readonly trackIds: readonly string[];
+  readonly originalOrder: readonly string[];
+  readonly index: number;
+  readonly currentTime: number;
+  readonly shuffle: boolean;
+  readonly repeat: RepeatMode;
+  readonly sourceId: string | null;
+}
+
+const STORAGE_KEY = 'mc.player.state';
+const SEEK_SAVE_THROTTLE_MS = 1500;
+
 @Injectable({ providedIn: 'root' })
 export class PlayerService {
   private readonly library = inject(MusicLibraryService);
 
   private readonly audio: HTMLAudioElement;
   private currentBlobUrl: string | null = null;
+  private lastSeekSaveAt = 0;
+  private restored = false;
 
-  private readonly queueSignal = signal<QueueState>({ trackIds: [], index: 0 });
+  private readonly queueSignal = signal<QueueState>({
+    trackIds: [],
+    index: 0,
+    originalOrder: [],
+  });
   readonly queue = this.queueSignal.asReadonly();
   private readonly playingSignal = signal(false);
   readonly isPlaying = this.playingSignal.asReadonly();
   private readonly shuffleSignal = signal(true);
   readonly shuffle = this.shuffleSignal.asReadonly();
+  private readonly repeatSignal = signal<RepeatMode>('off');
+  readonly repeat = this.repeatSignal.asReadonly();
+  private readonly currentTimeSignal = signal(0);
+  readonly currentTime = this.currentTimeSignal.asReadonly();
+  private readonly durationSignal = signal(0);
+  readonly duration = this.durationSignal.asReadonly();
   private readonly currentSourceSignal = signal<string | null>(null);
-  // why: identifies which playlist (if any) owns the active queue so the UI
-  //      can mark the source as "playing now". null = ad-hoc / single track.
   readonly currentSourceId = this.currentSourceSignal.asReadonly();
 
   readonly currentTrackId = computed<string | null>(() => {
@@ -41,25 +64,52 @@ export class PlayerService {
   constructor() {
     this.audio = new Audio();
     this.audio.preload = 'auto';
-    this.audio.addEventListener('ended', () => this.next());
+    this.audio.addEventListener('ended', () => void this.handleEnded());
     this.audio.addEventListener('play', () => this.playingSignal.set(true));
     this.audio.addEventListener('pause', () => this.playingSignal.set(false));
+    this.audio.addEventListener('timeupdate', () => {
+      this.currentTimeSignal.set(this.audio.currentTime);
+      const now = Date.now();
+      if (now - this.lastSeekSaveAt > SEEK_SAVE_THROTTLE_MS) {
+        this.lastSeekSaveAt = now;
+        this.persist();
+      }
+    });
+    this.audio.addEventListener('loadedmetadata', () => {
+      const dur = this.audio.duration || 0;
+      this.durationSignal.set(dur);
+      const id = this.currentTrackId();
+      if (id && dur > 0) void this.library.backfillDurationMs(id, dur * 1000);
+    });
+
+    // why: restore once the library has loaded so we can resolve track ids.
+    effect(() => {
+      const tracks = this.library.tracks();
+      if (this.restored || tracks.length === 0) return;
+      this.restored = true;
+      void this.restoreFromStorage();
+    });
   }
 
   async playTrack(trackId: string): Promise<void> {
     this.currentSourceSignal.set(null);
-    await this.loadQueue([trackId], 0);
+    await this.loadQueue([trackId], [trackId], 0);
   }
 
   async playPlaylist(
     trackIds: readonly string[],
     startIndex = 0,
     sourceId: string | null = null,
+    forceShuffle?: boolean,
   ): Promise<void> {
     if (trackIds.length === 0) return;
     this.currentSourceSignal.set(sourceId);
-    const order = this.shuffleSignal() ? shuffleFrom(trackIds, startIndex) : [...trackIds];
-    await this.loadQueue(order, this.shuffleSignal() ? 0 : startIndex);
+    if (forceShuffle === true) this.shuffleSignal.set(true);
+    const useShuffle = this.shuffleSignal();
+    const original = [...trackIds];
+    const order = useShuffle ? shuffleFrom(trackIds, startIndex) : original;
+    const index = useShuffle ? 0 : startIndex;
+    await this.loadQueue(order, original, index);
   }
 
   async toggle(): Promise<void> {
@@ -71,6 +121,11 @@ export class PlayerService {
   async next(): Promise<void> {
     const q = this.queueSignal();
     if (q.trackIds.length === 0) return;
+    const last = q.index >= q.trackIds.length - 1;
+    if (last && this.repeatSignal() === 'off' && q.trackIds.length > 1) {
+      this.audio.pause();
+      return;
+    }
     const nextIdx = (q.index + 1) % q.trackIds.length;
     this.queueSignal.set({ ...q, index: nextIdx });
     await this.loadCurrent(true);
@@ -79,13 +134,44 @@ export class PlayerService {
   async prev(): Promise<void> {
     const q = this.queueSignal();
     if (q.trackIds.length === 0) return;
+    // why: "prev" within first 3s of a track restarts it (familiar UX).
+    if (this.audio.currentTime > 3) {
+      this.audio.currentTime = 0;
+      return;
+    }
     const prevIdx = (q.index - 1 + q.trackIds.length) % q.trackIds.length;
     this.queueSignal.set({ ...q, index: prevIdx });
     await this.loadCurrent(true);
   }
 
   toggleShuffle(): void {
-    this.shuffleSignal.update((v) => !v);
+    const turningOn = !this.shuffleSignal();
+    this.shuffleSignal.set(turningOn);
+    const q = this.queueSignal();
+    if (q.trackIds.length === 0) {
+      this.persist();
+      return;
+    }
+    const currentId = q.trackIds[q.index];
+    if (currentId === undefined) {
+      this.persist();
+      return;
+    }
+    if (turningOn) {
+      const startIdx = q.originalOrder.indexOf(currentId);
+      const shuffled = shuffleFrom(q.originalOrder, startIdx >= 0 ? startIdx : 0);
+      this.queueSignal.set({ trackIds: shuffled, index: 0, originalOrder: q.originalOrder });
+    } else {
+      const order = q.originalOrder.length > 0 ? q.originalOrder : [...q.trackIds];
+      const newIdx = Math.max(0, order.indexOf(currentId));
+      this.queueSignal.set({ trackIds: order, index: newIdx, originalOrder: order });
+    }
+    this.persist();
+  }
+
+  toggleRepeat(): void {
+    this.repeatSignal.update((m) => (m === 'off' ? 'all' : 'off'));
+    this.persist();
   }
 
   async jumpTo(index: number): Promise<void> {
@@ -95,31 +181,58 @@ export class PlayerService {
     await this.loadCurrent(true);
   }
 
+  seekTo(seconds: number): void {
+    if (!Number.isFinite(seconds)) return;
+    const dur = this.durationSignal();
+    const clamped = Math.max(0, dur > 0 ? Math.min(seconds, dur) : seconds);
+    this.audio.currentTime = clamped;
+    this.currentTimeSignal.set(clamped);
+    this.persist();
+  }
+
+  skip(deltaSeconds: number): void {
+    this.seekTo(this.audio.currentTime + deltaSeconds);
+  }
+
   removeAt(index: number): void {
     const q = this.queueSignal();
     if (index < 0 || index >= q.trackIds.length) return;
-    // why: removing the currently-playing entry would force a reload; skip it,
-    //      callers gate the button on `current` and use stop()/next() instead.
     if (index === q.index) return;
+    const removedId = q.trackIds[index];
     const trackIds = q.trackIds.filter((_, i) => i !== index);
+    const originalOrder =
+      removedId !== undefined ? q.originalOrder.filter((id) => id !== removedId) : q.originalOrder;
     const newIndex = index < q.index ? q.index - 1 : q.index;
-    this.queueSignal.set({ trackIds, index: newIndex });
+    this.queueSignal.set({ trackIds, index: newIndex, originalOrder });
+    this.persist();
   }
 
   stop(): void {
     this.audio.pause();
     this.audio.removeAttribute('src');
     this.revokeUrl();
-    this.queueSignal.set({ trackIds: [], index: 0 });
+    this.queueSignal.set({ trackIds: [], index: 0, originalOrder: [] });
     this.currentSourceSignal.set(null);
+    this.currentTimeSignal.set(0);
+    this.durationSignal.set(0);
+    this.persist();
   }
 
-  private async loadQueue(trackIds: readonly string[], index: number): Promise<void> {
-    this.queueSignal.set({ trackIds, index });
+  private async handleEnded(): Promise<void> {
+    await this.next();
+  }
+
+  private async loadQueue(
+    trackIds: readonly string[],
+    originalOrder: readonly string[],
+    index: number,
+  ): Promise<void> {
+    this.queueSignal.set({ trackIds, index, originalOrder });
+    this.currentTimeSignal.set(0);
     await this.loadCurrent(true);
   }
 
-  private async loadCurrent(autoPlay: boolean): Promise<void> {
+  private async loadCurrent(autoPlay: boolean, seekTo?: number): Promise<void> {
     const id = this.currentTrackId();
     if (!id) return;
     try {
@@ -127,8 +240,16 @@ export class PlayerService {
       this.revokeUrl();
       this.currentBlobUrl = URL.createObjectURL(blob);
       this.audio.src = this.currentBlobUrl;
+      if (seekTo !== undefined && seekTo > 0) {
+        const apply = (): void => {
+          this.audio.currentTime = seekTo;
+          this.audio.removeEventListener('loadedmetadata', apply);
+        };
+        this.audio.addEventListener('loadedmetadata', apply);
+      }
       if (autoPlay) await this.audio.play();
       void this.library.incrementPlayCount(id);
+      this.persist();
     } catch (cause) {
       console.warn('[player] failed to load track', id, cause);
     }
@@ -139,6 +260,53 @@ export class PlayerService {
       URL.revokeObjectURL(this.currentBlobUrl);
       this.currentBlobUrl = null;
     }
+  }
+
+  private persist(): void {
+    try {
+      const q = this.queueSignal();
+      const state: PersistedState = {
+        trackIds: q.trackIds,
+        originalOrder: q.originalOrder,
+        index: q.index,
+        currentTime: this.audio.currentTime || 0,
+        shuffle: this.shuffleSignal(),
+        repeat: this.repeatSignal(),
+        sourceId: this.currentSourceSignal(),
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch {
+      // why: localStorage may be full/unavailable; silent — UX continues.
+    }
+  }
+
+  private async restoreFromStorage(): Promise<void> {
+    let raw: string | null;
+    try {
+      raw = localStorage.getItem(STORAGE_KEY);
+    } catch {
+      return;
+    }
+    if (raw === null) return;
+    let parsed: PersistedState;
+    try {
+      parsed = JSON.parse(raw) as PersistedState;
+    } catch {
+      return;
+    }
+    if (!Array.isArray(parsed.trackIds) || parsed.trackIds.length === 0) return;
+    const validIds = new Set(this.library.tracks().map((t) => t.id));
+    const trackIds = parsed.trackIds.filter((id) => validIds.has(id));
+    const originalOrder = (parsed.originalOrder ?? parsed.trackIds).filter((id) =>
+      validIds.has(id),
+    );
+    if (trackIds.length === 0) return;
+    const index = Math.min(Math.max(0, parsed.index ?? 0), trackIds.length - 1);
+    this.shuffleSignal.set(parsed.shuffle === true);
+    this.repeatSignal.set(parsed.repeat === 'all' ? 'all' : 'off');
+    this.currentSourceSignal.set(parsed.sourceId ?? null);
+    this.queueSignal.set({ trackIds, index, originalOrder });
+    await this.loadCurrent(false, parsed.currentTime || 0);
   }
 }
 

@@ -1,34 +1,51 @@
 <section class="page">
   <header class="head">
-    <h2>{{ t('sync.title') }}</h2>
+    <h2><mc-icon name="arrows-clockwise" class="title-icon" /> {{ t('sync.title') }}</h2>
     <p class="subtitle">{{ t('sync.subtitle') }}</p>
   </header>
 
   @if (!isConfigured()) {
     <section class="not-configured" role="alert">
+      <mc-icon name="warning" class="mc-anim-pulse" />
       <p>{{ t('sync.notConfigured') }}</p>
-      <a class="primary" routerLink="/settings">{{ t('sync.openSettings') }}</a>
+      <a class="primary mc-hover-grow" routerLink="/settings">
+        <mc-icon name="gear" />
+        <span>{{ t('sync.openSettings') }}</span>
+      </a>
     </section>
   } @else {
     <section class="actions">
       <button
         type="button"
-        class="primary"
+        class="primary mc-hover-grow"
         [disabled]="isPushing() || isFetching() || hasDivergence()"
         [title]="hasDivergence() ? t('sync.divergent.disabled') : ''"
         (click)="pushAll()"
       >
+        <mc-icon
+          [name]="isPushing() ? 'spinner-gap' : 'upload-simple'"
+          [class.mc-anim-spin]="isPushing()"
+        />
         @if (isPushing()) {
-          {{ t('sync.actions.pushing') }}
+          <span>{{ t('sync.actions.pushing') }}</span>
         } @else {
-          {{ t('sync.actions.pushAll') }}
+          <span>{{ t('sync.actions.pushAll') }}</span>
         }
       </button>
-      <button type="button" [disabled]="isPushing() || isFetching()" (click)="fetchAll()">
+      <button
+        type="button"
+        class="mc-hover-grow"
+        [disabled]="isPushing() || isFetching()"
+        (click)="fetchAll()"
+      >
+        <mc-icon
+          [name]="isFetching() ? 'spinner-gap' : 'download-simple'"
+          [class.mc-anim-spin]="isFetching()"
+        />
         @if (isFetching()) {
-          {{ t('sync.actions.fetching') }}
+          <span>{{ t('sync.actions.fetching') }}</span>
         } @else {
-          {{ t('sync.actions.fetchAll') }}
+          <span>{{ t('sync.actions.fetchAll') }}</span>
         }
       </button>
       @if (lastBulkAt(); as when) {

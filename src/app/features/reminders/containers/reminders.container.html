@@ -1,87 +1,224 @@
 <section class="page">
-  <header class="head">
+  <header class="toolbar">
     <h2>{{ t('reminders.title') }}</h2>
-    <button type="button" class="primary" (click)="onCreate()">+ {{ t('reminders.new') }}</button>
+    <label class="search">
+      <mc-icon name="magnifying-glass" />
+      <input
+        #searchInput
+        type="search"
+        [value]="query()"
+        (input)="onSearch(asInput($event).value)"
+        [placeholder]="t('reminders.searchPlaceholder')"
+        [attr.aria-label]="t('reminders.searchPlaceholder')"
+      />
+    </label>
+    <button type="button" class="primary" (click)="onQuickAddSubmit($event)">
+      + {{ t('reminders.new') }} <kbd>N</kbd>
+    </button>
   </header>
 
-  <section class="group">
-    <h3>{{ t('reminders.pending') }} ({{ pending().length }})</h3>
-    @if (pending().length === 0) {
-      <p class="empty">{{ t('reminders.emptyPending') }}</p>
-    } @else {
-      <ul class="list">
-        @for (r of pending(); track r.id) {
-          <li class="row">
-            <input
-              type="checkbox"
-              [checked]="r.done"
-              (change)="onToggleDone(r)"
-              [attr.aria-label]="t('reminders.markDone')"
-            />
-            @if (editingId() === r.id) {
-              <input
-                type="text"
-                class="title-input"
-                [value]="draft()?.title ?? r.title"
-                (input)="onTitleInput(r.id, asInput($event.target).value)"
-                [placeholder]="t('reminders.titlePlaceholder')"
-              />
-              <input
-                type="datetime-local"
-                [value]="draft()?.dueAt ?? r.dueAt"
-                (input)="onDueInput(r.id, asInput($event.target).value)"
-              />
-              <button type="button" class="ghost" (click)="onSaveEdit()">
-                {{ t('common.confirm') }}
-              </button>
-              <button type="button" class="ghost" (click)="cancelEdit()">
-                {{ t('common.cancel') }}
-              </button>
-            } @else {
-              <button type="button" class="title-btn" (click)="onEdit(r)">
-                {{ r.title || t('reminders.untitled') }}
-              </button>
-              <span class="due">{{ r.dueAt | mcDate: true }}</span>
-              <button
-                type="button"
-                class="ghost"
-                (click)="onDelete(r)"
-                [attr.aria-label]="t('common.delete')"
-              >
-                <mc-icon name="x" />
-              </button>
-            }
-          </li>
-        }
-      </ul>
-    }
-  </section>
+  <div class="layout">
+    <aside class="rail" aria-label="Filtros">
+      <h4 class="rail-section">{{ t('reminders.filter.section') }}</h4>
+      @for (k of filterChips; track k) {
+        <button
+          type="button"
+          class="chip"
+          [class.active]="filter() === k"
+          [class.danger]="k === 'overdue'"
+          (click)="onFilter(k)"
+        >
+          <mc-icon [name]="iconFor(k)" />
+          <span class="chip-label">{{ filterLabel(k) }}</span>
+          <span class="chip-count">{{ counts().get(k) ?? 0 }}</span>
+        </button>
+      }
+      <div class="rail-sep"></div>
+      <button
+        type="button"
+        class="chip"
+        [class.active]="showDone()"
+        (click)="onToggleDoneSection()"
+      >
+        <mc-icon [name]="showDone() ? 'caret-down' : 'caret-right'" />
+        <span class="chip-label">{{ t('reminders.bucket.done') }}</span>
+        <span class="chip-count">{{ counts().get('done') ?? 0 }}</span>
+      </button>
+    </aside>
 
-  @if (done().length > 0) {
-    <section class="group">
-      <h3>{{ t('reminders.done') }} ({{ done().length }})</h3>
-      <ul class="list">
-        @for (r of done(); track r.id) {
-          <li class="row done">
-            <input
-              type="checkbox"
-              [checked]="r.done"
-              (change)="onToggleDone(r)"
-              [attr.aria-label]="t('reminders.markPending')"
-            />
-            <span class="title-btn done-title">{{ r.title || t('reminders.untitled') }}</span>
-            <span class="due">{{ r.dueAt | mcDate: true }}</span>
-            <button
-              type="button"
-              class="ghost"
-              (click)="onDelete(r)"
-              [attr.aria-label]="t('common.delete')"
-            >
-              <mc-icon name="x" />
-            </button>
-          </li>
-        }
-      </ul>
-    </section>
+    <main class="main">
+      <form class="quick-add" (submit)="onQuickAddSubmit($event)">
+        <mc-icon name="plus-circle" class="quick-plus" />
+        <input
+          #quickAddInput
+          type="text"
+          [value]="quickAdd()"
+          (input)="onQuickAddInput(asInput($event).value)"
+          [placeholder]="t('reminders.quickAddPlaceholder')"
+          [attr.aria-label]="t('reminders.quickAddPlaceholder')"
+        />
+        <span class="quick-hint">{{ t('reminders.quickAddHint') }}</span>
+      </form>
+
+      @if (buckets().length === 0 && doneItems().length === 0) {
+        <div class="empty">
+          <div class="empty-art">
+            <mc-icon name="bell" class="empty-icon" />
+            <mc-icon name="sparkle" class="empty-spark spark-a" />
+            <mc-icon name="sparkle" class="empty-spark spark-b" />
+            <mc-icon name="sparkle" class="empty-spark spark-c" />
+          </div>
+          <p>{{ t('reminders.emptyPending') }}</p>
+          <button type="button" class="primary subtle" (click)="focusQuickAdd()">
+            <mc-icon name="plus-circle" />
+            {{ t('reminders.createFirst') }}
+          </button>
+        </div>
+      }
+
+      @for (group of buckets(); track group.key) {
+        <section class="group" [attr.data-bucket]="group.key">
+          <h3>
+            <mc-icon [name]="iconFor(group.key)" />
+            <span>{{ bucketLabel(group.key) }}</span>
+            <span class="group-count">{{ group.items.length }}</span>
+          </h3>
+          <ul class="list">
+            @for (r of group.items; track r.id) {
+              <li
+                class="row"
+                [class.editing]="editingId() === r.id"
+                [class.overdue]="isOverdue(r)"
+                [attr.data-bucket]="group.key"
+              >
+                <input
+                  type="checkbox"
+                  [checked]="r.done"
+                  (change)="onToggleDone(r)"
+                  [attr.aria-label]="t('reminders.markDone')"
+                />
+                @if (editingId() === r.id) {
+                  <input
+                    type="text"
+                    class="title-input"
+                    [value]="editTitle()"
+                    (input)="onEditTitle(asInput($event).value)"
+                    (keydown.enter)="onSaveEdit()"
+                    (keydown.escape)="cancelEdit()"
+                    [placeholder]="t('reminders.titlePlaceholder')"
+                  />
+                  <input
+                    type="datetime-local"
+                    class="due-input"
+                    [value]="editDue()"
+                    (input)="onEditDue(asInput($event).value)"
+                    (keydown.enter)="onSaveEdit()"
+                    (keydown.escape)="cancelEdit()"
+                  />
+                  <button
+                    type="button"
+                    class="ghost icon"
+                    (click)="onSaveEdit()"
+                    [attr.aria-label]="t('common.confirm')"
+                  >
+                    <mc-icon name="check" />
+                  </button>
+                  <button
+                    type="button"
+                    class="ghost icon"
+                    (click)="cancelEdit()"
+                    [attr.aria-label]="t('common.cancel')"
+                  >
+                    <mc-icon name="x" />
+                  </button>
+                } @else {
+                  <button type="button" class="title-btn" (click)="onStartEdit(r)">
+                    {{ r.title || t('reminders.untitled') }}
+                  </button>
+                  <span class="due" [title]="r.dueAt">{{ r.dueAt | mcDate: true }}</span>
+                  <div class="actions">
+                    <button
+                      type="button"
+                      class="ghost icon"
+                      (click)="onSnooze(r, 1)"
+                      [attr.aria-label]="t('reminders.snooze1h')"
+                      [title]="t('reminders.snooze1h')"
+                    >
+                      <mc-icon name="clock-counter-clockwise" />
+                    </button>
+                    <button
+                      type="button"
+                      class="ghost icon"
+                      (click)="onDelete(r)"
+                      [attr.aria-label]="t('common.delete')"
+                      [title]="t('common.delete')"
+                    >
+                      <mc-icon name="trash" />
+                    </button>
+                  </div>
+                }
+              </li>
+            }
+          </ul>
+        </section>
+      }
+
+      @if (showDone() && doneItems().length > 0) {
+        <section class="group" data-bucket="done">
+          <h3>
+            <mc-icon name="check" />
+            <span>{{ t('reminders.bucket.done') }}</span>
+            <span class="group-count">{{ doneItems().length }}</span>
+          </h3>
+          <ul class="list">
+            @for (r of doneItems(); track r.id) {
+              <li class="row done">
+                <input
+                  type="checkbox"
+                  [checked]="r.done"
+                  (change)="onToggleDone(r)"
+                  [attr.aria-label]="t('reminders.markPending')"
+                />
+                <span class="title-btn done-title">{{ r.title || t('reminders.untitled') }}</span>
+                <span class="due">{{ r.dueAt | mcDate: true }}</span>
+                <div class="actions">
+                  <button
+                    type="button"
+                    class="ghost icon"
+                    (click)="onDelete(r)"
+                    [attr.aria-label]="t('common.delete')"
+                  >
+                    <mc-icon name="trash" />
+                  </button>
+                </div>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+
+      <p class="hints">{{ t('reminders.shortcuts.hint') }}</p>
+    </main>
+  </div>
+
+  @if (undo(); as u) {
+    <div class="toast" role="status" aria-live="polite">
+      <mc-icon name="trash" class="toast-icon" />
+      <span class="toast-msg">{{
+        t('reminders.deletedToast').replace('{title}', u.title || '—')
+      }}</span>
+      <button type="button" class="toast-btn" (click)="onUndo()">
+        <mc-icon name="arrow-counter-clockwise" />
+        {{ t('reminders.undo') }}
+      </button>
+      <button
+        type="button"
+        class="toast-close"
+        (click)="onDismissUndo()"
+        [attr.aria-label]="t('common.close')"
+      >
+        <mc-icon name="x" />
+      </button>
+    </div>
   }
 </section>

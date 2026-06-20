@@ -1,5 +1,8 @@
 <header class="head">
-  <h2>{{ i18n.t('versioning.history.title') }}</h2>
+  <h2>
+    <mc-icon name="clock-counter-clockwise" class="title-icon" />
+    {{ i18n.t('versioning.history.title') }}
+  </h2>
 </header>
 
 <div
@@ -28,9 +31,10 @@
         "
         (click)="toggleTimeline()"
       >
-        {{ timelineCollapsed() ? '›' : '‹' }}
+        <mc-icon [name]="timelineCollapsed() ? 'caret-right' : 'caret-left'" />
       </button>
       <div class="timeline-search">
+        <mc-icon name="magnifying-glass" class="timeline-search-icon" />
         <input
           type="search"
           class="timeline-search-input"
@@ -42,12 +46,12 @@
         @if (query()) {
           <button
             type="button"
-            class="timeline-search-clear"
+            class="timeline-search-clear mc-hover-wiggle"
             [attr.aria-label]="i18n.t('versioning.history.search.clear')"
             [title]="i18n.t('versioning.history.search.clear')"
             (click)="clearQuery()"
           >
-            ×
+            <mc-icon name="x" />
           </button>
         }
       </div>
@@ -147,7 +151,9 @@
                       "
                       (click)="toggleAutoGroup(item.id)"
                     >
-                      {{ isAutoGroupExpanded(item.id) ? '▾' : '▸' }}
+                      <mc-icon
+                        [name]="isAutoGroupExpanded(item.id) ? 'caret-down' : 'caret-right'"
+                      />
                     </button>
                     <button
                       type="button"
@@ -224,7 +230,9 @@
                       "
                       (click)="toggleMergeGroup(item.id)"
                     >
-                      {{ isMergeGroupExpanded(item.id) ? '▾' : '▸' }}
+                      <mc-icon
+                        [name]="isMergeGroupExpanded(item.id) ? 'caret-down' : 'caret-right'"
+                      />
                     </button>
                     <button
                       type="button"
@@ -328,7 +336,7 @@
         "
         (click)="toggleDetail()"
       >
-        {{ detailCollapsed() ? '‹' : '›' }}
+        <mc-icon [name]="detailCollapsed() ? 'caret-left' : 'caret-right'" />
       </button>
       <span class="pane-collapsed-label">{{ i18n.t('versioning.history.detailRail') }}</span>
     </div>
@@ -340,11 +348,12 @@
             @if (milestonesFor(entry.oid).length === 0) {
               <button
                 type="button"
-                class="milestone-mark"
+                class="milestone-mark mc-hover-grow"
                 [disabled]="milestones.busy()"
                 (click)="markMilestone()"
               >
-                {{ i18n.t('versioning.history.milestone.mark') }}
+                <mc-icon name="flag" />
+                <span>{{ i18n.t('versioning.history.milestone.mark') }}</span>
               </button>
             } @else {
               @for (m of milestonesFor(entry.oid); track m.name) {
@@ -376,14 +385,16 @@
             @if (headOid() !== entry.oid) {
               <button
                 type="button"
-                class="commit-restore"
+                class="commit-restore mc-hover-grow"
                 [disabled]="restoringCommit() || restoringPath() !== null"
                 (click)="restoreWholeCommit()"
               >
                 @if (restoringCommit()) {
-                  {{ i18n.t('versioning.history.restoringCommit') }}
+                  <mc-icon name="spinner-gap" class="mc-anim-spin" />
+                  <span>{{ i18n.t('versioning.history.restoringCommit') }}</span>
                 } @else {
-                  {{ i18n.t('versioning.history.restoreCommit') }}
+                  <mc-icon name="arrow-counter-clockwise" />
+                  <span>{{ i18n.t('versioning.history.restoreCommit') }}</span>
                 }
               </button>
             }
@@ -550,7 +561,9 @@
                         [attr.aria-expanded]="isSystemExpanded(d.filepath)"
                         (click)="toggleSystemExpanded(d.filepath)"
                       >
-                        {{ isSystemExpanded(d.filepath) ? '▾' : '▸' }}
+                        <mc-icon
+                          [name]="isSystemExpanded(d.filepath) ? 'caret-down' : 'caret-right'"
+                        />
                         {{ i18n.t('versioning.history.field.systemFields') }}
                         ({{ d.view.fields.system.length }})
                       </button>

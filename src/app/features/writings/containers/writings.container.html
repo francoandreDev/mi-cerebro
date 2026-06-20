@@ -31,6 +31,9 @@
       (removeTag)="onRemoveTag($event)"
     />
   } @else {
-    <div class="empty">{{ t('writings.selectOne') }}</div>
+    <div class="empty">
+      <mc-icon name="pen-nib" class="empty-icon mc-anim-float" />
+      <span>{{ t('writings.selectOne') }}</span>
+    </div>
   }
 </div>

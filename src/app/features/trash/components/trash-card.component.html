@@ -34,16 +34,16 @@
   </footer>
 
   <div class="ops" aria-hidden="false">
-    <button type="button" class="op view" (click)="onView($event)">
-      <span aria-hidden="true">👁</span>
+    <button type="button" class="op view mc-hover-grow" (click)="onView($event)">
+      <mc-icon name="eye" />
       <span>{{ t('trash.view') }}</span>
     </button>
-    <button type="button" class="op restore" (click)="onRestore($event)">
-      <span aria-hidden="true">↩</span>
+    <button type="button" class="op restore mc-hover-grow" (click)="onRestore($event)">
+      <mc-icon name="arrow-counter-clockwise" />
       <span>{{ t('trash.restore') }}</span>
     </button>
-    <button type="button" class="op purge" (click)="onPurge($event)">
-      <mc-icon name="x" />
+    <button type="button" class="op purge mc-hover-wiggle" (click)="onPurge($event)">
+      <mc-icon name="trash" />
       <span>{{ t('trash.purgeForever') }}</span>
     </button>
   </div>

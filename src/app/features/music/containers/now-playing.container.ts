@@ -24,6 +24,9 @@ export class NowPlayingContainer {
   protected readonly currentTrack = this.player.currentTrack;
   protected readonly isPlaying = this.player.isPlaying;
   protected readonly shuffle = this.player.shuffle;
+  protected readonly repeat = this.player.repeat;
+  protected readonly currentTime = this.player.currentTime;
+  protected readonly duration = this.player.duration;
   protected readonly queue = this.player.queue;
 
   protected readonly sourceTitle = computed(() => {
@@ -66,6 +69,30 @@ export class NowPlayingContainer {
 
   protected onToggleShuffle(): void {
     this.player.toggleShuffle();
+  }
+
+  protected onToggleRepeat(): void {
+    this.player.toggleRepeat();
+  }
+
+  protected onSeek(value: number): void {
+    this.player.seekTo(value);
+  }
+
+  protected onSkip(delta: number): void {
+    this.player.skip(delta);
+  }
+
+  protected asInput(target: EventTarget | null): HTMLInputElement {
+    return target as HTMLInputElement;
+  }
+
+  protected formatTime(sec: number): string {
+    if (!Number.isFinite(sec) || sec <= 0) return '0:00';
+    const total = Math.floor(sec);
+    const m = Math.floor(total / 60);
+    const s = total % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
   }
 
   protected onStop(): void {

@@ -16,6 +16,27 @@
 .header h1 {
   margin: 0;
   font-size: var(--mc-font-size-lg);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+}
+.title-icon {
+  color: var(--mc-accent-primary);
+  font-size: 1.1em;
+}
+.search-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.search-icon {
+  position: absolute;
+  left: var(--mc-space-2);
+  color: var(--mc-fg-muted);
+  pointer-events: none;
+}
+.search-wrap .filter {
+  padding-left: calc(var(--mc-space-2) * 2 + 1em);
 }
 .ops {
   display: flex;
@@ -43,6 +64,24 @@
   border-radius: var(--mc-radius-md);
   cursor: pointer;
   font-size: var(--mc-font-size-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.empty-icon {
+  font-size: 3rem;
+  color: var(--mc-accent-primary);
+  opacity: 0.55;
+}
+.empty-soft {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.empty-icon-soft {
+  font-size: 1.2em;
+  color: var(--mc-accent-primary);
+  opacity: 0.7;
 }
 .empty,
 .empty-soft {

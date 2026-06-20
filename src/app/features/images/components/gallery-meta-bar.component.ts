@@ -4,6 +4,8 @@ import { RouterLink } from '@angular/router';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import type { Tag } from '@core/tags/tag.types';
+import { IconComponent } from '@shared/icon/icon.component';
+import type { IconName } from '@shared/icon/icons.data';
 import { MenuButtonComponent, type MenuOption } from '@shared/menu-button/menu-button.component';
 import { TagPickerComponent } from '@shared/tags/tag-picker.component';
 
@@ -14,7 +16,7 @@ export type GallerySaveStatus = 'saved' | 'saving' | 'unsaved';
 @Component({
   selector: 'mc-gallery-meta-bar',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TagPickerComponent, MenuButtonComponent],
+  imports: [RouterLink, IconComponent, TagPickerComponent, MenuButtonComponent],
   templateUrl: './gallery-meta-bar.component.html',
   styleUrl: './gallery-meta-bar.component.css',
 })
@@ -35,11 +37,11 @@ export class GalleryMetaBarComponent {
   protected statusLabel(): string {
     return this.t(`images.status.${this.status()}` as TranslationKey);
   }
-  protected statusGlyph(): string {
+  protected statusIcon(): IconName {
     const s = this.status();
-    if (s === 'saving') return '↻';
-    if (s === 'unsaved') return '●';
-    return '✓';
+    if (s === 'saving') return 'spinner-gap';
+    if (s === 'unsaved') return 'warning';
+    return 'check';
   }
   protected menuOptions(): readonly MenuOption[] {
     return [{ key: 'delete', label: this.t('images.delete') }];

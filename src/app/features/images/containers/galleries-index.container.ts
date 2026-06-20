@@ -15,6 +15,7 @@ import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { TagsService } from '@core/tags/tags.service';
+import { IconComponent } from '@shared/icon/icon.component';
 
 import { GalleryCoverComponent } from '../components/gallery-cover.component';
 import type { GallerySummary } from '../models/gallery.types';
@@ -32,7 +33,7 @@ interface GalleryView {
 @Component({
   selector: 'mc-galleries-index',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [GalleryCoverComponent],
+  imports: [GalleryCoverComponent, IconComponent],
   templateUrl: './galleries-index.container.html',
   styleUrl: './galleries-index.container.css',
 })

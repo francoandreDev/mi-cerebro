@@ -21,6 +21,8 @@ import { PaletteRecentsService } from '@core/search/palette-recents.service';
 import { SearchIndexService } from '@core/search/search-index.service';
 import { ShortcutsService } from '@core/shortcuts/shortcuts.service';
 import { TagsService } from '@core/tags/tags.service';
+import { IconComponent } from '@shared/icon/icon.component';
+import type { IconName } from '@shared/icon/icons.data';
 
 import {
   KIND_TITLE_KEY,
@@ -32,6 +34,7 @@ import {
 @Component({
   selector: 'mc-command-palette',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [IconComponent],
   templateUrl: './command-palette.container.html',
   styleUrl: './command-palette.container.css',
 })
@@ -122,6 +125,20 @@ export class CommandPaletteContainer {
 
   protected kindKey(kind: string): TranslationKey {
     return KIND_TITLE_KEY[kind] ?? 'palette.kindUnknown';
+  }
+  protected iconForKind(kind: string): IconName {
+    const map: Record<string, IconName> = {
+      note: 'note',
+      task: 'check-square',
+      list: 'list-bullets',
+      goal: 'target',
+      reminder: 'bell',
+      file: 'folder',
+      image: 'image-square',
+      writing: 'pen-nib',
+      book: 'books',
+    };
+    return map[kind] ?? 'file';
   }
   protected close(): void {
     this.paletteState.hide();

@@ -13,21 +13,26 @@ import {
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import type { Tag } from '@core/tags/tag.types';
+import { IconComponent } from '@shared/icon/icon.component';
 
 @Component({
   selector: 'mc-calendar-tag-filter',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [IconComponent],
   template: `
     <div class="active">
+      <mc-icon name="funnel" class="filter-icon" />
       <span class="label">{{ t('calendar.filters.tag') }}</span>
       @for (tag of activeTags(); track tag.id) {
         <button
           type="button"
-          class="chip active"
+          class="chip active mc-anim-pop"
           (click)="toggleTag.emit(tag.id)"
           [attr.aria-label]="'Quitar ' + tag.label"
         >
-          {{ tag.label }} <span class="x" aria-hidden="true">×</span>
+          <mc-icon name="tag" />
+          {{ tag.label }}
+          <mc-icon name="x" class="x" />
         </button>
       }
       <button
@@ -37,15 +42,17 @@ import type { Tag } from '@core/tags/tag.types';
         (click)="onToggleOpen()"
         [attr.aria-expanded]="open()"
       >
+        <mc-icon name="plus" />
         @if (selected().size === 0) {
-          + {{ t('calendar.filters.tag') }}
+          {{ t('calendar.filters.tag') }}
         } @else {
-          + más
+          más
         }
-        <span class="caret" aria-hidden="true">▾</span>
+        <mc-icon name="caret-down" class="caret" />
       </button>
       @if (selected().size > 0) {
         <button type="button" class="ghost tiny" (click)="clearTags.emit()">
+          <mc-icon name="broom" />
           {{ t('calendar.filters.clear') }}
         </button>
       }
@@ -72,9 +79,10 @@ import type { Tag } from '@core/tags/tag.types';
                   [class.on]="selected().has(tag.id)"
                   (click)="toggleTag.emit(tag.id)"
                 >
-                  <span class="check" aria-hidden="true">
-                    {{ selected().has(tag.id) ? '✓' : '' }}
-                  </span>
+                  <mc-icon
+                    [name]="selected().has(tag.id) ? 'check-square' : 'circle-dashed'"
+                    class="check"
+                  />
                   <span class="name">{{ tag.label }}</span>
                 </button>
               </li>
@@ -95,10 +103,18 @@ import type { Tag } from '@core/tags/tag.types';
       align-items: center;
       gap: var(--mc-space-1);
     }
+    .filter-icon {
+      color: var(--mc-fg-muted);
+    }
     .label {
       color: var(--mc-fg-muted);
       font-size: var(--mc-font-size-xs);
       margin-right: var(--mc-space-1);
+    }
+    .ghost.tiny {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
     }
     .chip {
       background: var(--mc-bg-elevated);

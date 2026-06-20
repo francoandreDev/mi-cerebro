@@ -2,16 +2,18 @@ import { ChangeDetectionStrategy, Component, inject, input, output } from '@angu
 
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { IconComponent } from '@shared/icon/icon.component';
 import { McDatePipe } from '@shared/pipes/mc-date.pipe';
 
 @Component({
   selector: 'mc-deadline-picker',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [McDatePipe],
+  imports: [McDatePipe, IconComponent],
   template: `
     <div class="wrap">
       @if (deadline()) {
-        <span class="chip" [class.overdue]="isOverdue(deadline()!)">
+        <span class="chip mc-anim-pop" [class.overdue]="isOverdue(deadline()!)">
+          <mc-icon [name]="isOverdue(deadline()!) ? 'alarm' : 'calendar-check'" class="chip-icon" />
           <span>{{ friendlyLabel(deadline()!) || (deadline()! | mcDate) }}</span>
           @if (editable()) {
             <button
@@ -20,7 +22,7 @@ import { McDatePipe } from '@shared/pipes/mc-date.pipe';
               [attr.aria-label]="t('goals.deadline.remove')"
               (click)="deadlineChange.emit(null)"
             >
-              ×
+              <mc-icon name="x" />
             </button>
           }
         </span>

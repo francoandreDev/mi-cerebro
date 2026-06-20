@@ -3,26 +3,35 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, output } f
 import type { CalendarEvent, CalendarEventKind } from '@core/calendar/calendar-event.types';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { IconComponent } from '@shared/icon/icon.component';
+import type { IconName } from '@shared/icon/icons.data';
 
 import { formatDayMonth } from '../utils/calendar-dates';
 
 @Component({
   selector: 'mc-calendar-kind-card',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [IconComponent],
   template: `
-    <header>
+    <header [attr.data-kind]="kind()">
       <button
         type="button"
         class="toggle"
         [attr.aria-expanded]="active()"
         (click)="toggleActive.emit()"
       >
-        <span class="chev" [class.open]="active()" aria-hidden="true">▸</span>
+        <mc-icon [name]="active() ? 'caret-down' : 'caret-right'" class="chev" />
+        <mc-icon [name]="kindIcon()" class="kind-icon" />
         <span class="label">{{ kindLabel() }}</span>
         <span class="count">({{ events().length }})</span>
       </button>
-      <button type="button" class="add" (click)="create.emit()" [attr.aria-label]="addLabel()">
-        +
+      <button
+        type="button"
+        class="add mc-hover-grow"
+        (click)="create.emit()"
+        [attr.aria-label]="addLabel()"
+      >
+        <mc-icon name="plus" />
       </button>
     </header>
     @if (active()) {
@@ -31,8 +40,9 @@ import { formatDayMonth } from '../utils/calendar-dates';
       } @else {
         <ul>
           @for (e of sorted(); track e.id) {
-            <li [class.done]="e.done">
+            <li class="mc-anim-slide-up" [class.done]="e.done">
               <button type="button" (click)="openEvent.emit(e)">
+                <mc-icon [name]="e.done ? 'check' : 'dot-outline'" class="bullet" />
                 <span class="when">{{ formatWhen(e.date) }}</span>
                 <span class="title">{{ e.title || t('calendar.day.untitled') }}</span>
               </button>
@@ -71,13 +81,26 @@ import { formatDayMonth } from '../utils/calendar-dates';
       text-align: left;
     }
     .chev {
-      display: inline-block;
-      transition: transform 120ms ease;
       color: var(--mc-fg-muted);
-      width: 1ch;
     }
-    .chev.open {
-      transform: rotate(90deg);
+    .kind-icon {
+      color: var(--mc-fg-muted);
+    }
+    header[data-kind='task'] .kind-icon {
+      color: var(--mc-accent-primary);
+    }
+    header[data-kind='goal'] .kind-icon {
+      color: var(--mc-warn, #d4a847);
+    }
+    header[data-kind='reminder'] .kind-icon {
+      color: var(--mc-danger, #d04a4a);
+    }
+    .bullet {
+      color: var(--mc-fg-muted);
+      font-size: 0.85em;
+    }
+    li.done .bullet {
+      color: var(--mc-success, #4caf7a);
     }
     .label {
       font-weight: 600;
@@ -91,11 +114,12 @@ import { formatDayMonth } from '../utils/calendar-dates';
       border: 1px solid var(--mc-border-default);
       color: var(--mc-fg-primary);
       cursor: pointer;
-      width: 22px;
-      height: 22px;
+      width: 24px;
+      height: 24px;
       border-radius: var(--mc-radius-sm);
-      line-height: 1;
-      font-size: var(--mc-font-size-sm);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
     .add:hover {
       background: var(--mc-bg-hover);
@@ -172,6 +196,13 @@ export class CalendarKindCardComponent {
     if (k === 'task') return this.t('calendar.kind.task');
     if (k === 'goal') return this.t('calendar.kind.goal');
     return this.t('calendar.kind.reminder');
+  }
+
+  protected kindIcon(): IconName {
+    const k = this.kind();
+    if (k === 'task') return 'check-square';
+    if (k === 'goal') return 'target';
+    return 'bell';
   }
 
   protected addLabel(): string {

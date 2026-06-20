@@ -2,12 +2,15 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { IconComponent } from '@shared/icon/icon.component';
 
 @Component({
   selector: 'mc-unsupported-browser',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [IconComponent],
   template: `
     <section class="card" role="alert">
+      <mc-icon name="warning" class="alert-icon mc-anim-pulse" />
       <h1 class="title">{{ t('onboarding.unsupported.title') }}</h1>
       <p class="message">{{ t('onboarding.unsupported.message') }}</p>
       <p class="code mc-mono">{{ t('common.code') }}: MCB-SYS-001</p>
@@ -22,6 +25,12 @@ import type { TranslationKey } from '@core/i18n/i18n.types';
       border: 1px solid var(--mc-state-danger);
       border-radius: var(--mc-radius-lg);
       box-shadow: var(--mc-shadow-md);
+    }
+    .alert-icon {
+      font-size: 2.5rem;
+      color: var(--mc-state-danger);
+      display: block;
+      margin-bottom: var(--mc-space-3);
     }
     .title {
       font-size: var(--mc-font-size-xl);

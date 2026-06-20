@@ -13,6 +13,7 @@ import {
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { TagsService } from '@core/tags/tags.service';
+import { IconComponent } from '@shared/icon/icon.component';
 
 import { CalendarDayModalComponent } from '../components/day-modal.component';
 import { CalendarKindCardComponent } from '../components/kind-card.component';
@@ -39,6 +40,7 @@ interface WallGroup {
     CalendarKindCardComponent,
     CalendarTagFilterComponent,
     CalendarToolbarComponent,
+    IconComponent,
   ],
   templateUrl: './calendar.container.html',
   styleUrl: './calendar.container.css',

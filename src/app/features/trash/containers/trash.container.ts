@@ -13,6 +13,7 @@ import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { TrashService } from '@core/trash/trash.service';
 import type { TrashEntry, TrashKind, TrashPreview } from '@core/trash/trash.types';
+import { IconComponent } from '@shared/icon/icon.component';
 import { McDatePipe } from '@shared/pipes/mc-date.pipe';
 
 import { TrashCardContentComponent } from '../components/trash-card-content.component';
@@ -41,7 +42,13 @@ const norm = (s: string): string => s.toLowerCase().normalize('NFD').replace(/[Ì
 @Component({
   selector: 'mc-trash',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TrashFilterBarComponent, TrashCardComponent, TrashCardContentComponent, McDatePipe],
+  imports: [
+    IconComponent,
+    TrashFilterBarComponent,
+    TrashCardComponent,
+    TrashCardContentComponent,
+    McDatePipe,
+  ],
   templateUrl: './trash.container.html',
   styleUrl: './trash.container.css',
 })

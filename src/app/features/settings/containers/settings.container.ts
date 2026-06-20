@@ -9,6 +9,8 @@ import {
 import { RouterLink } from '@angular/router';
 
 import { BgColorDirective } from '@shared/directives/bg-color.directive';
+import { IconComponent } from '@shared/icon/icon.component';
+import type { IconName } from '@shared/icon/icons.data';
 
 import { ErrorService } from '@core/errors/error.service';
 import { ExportZipService } from '@core/export/export-zip.service';
@@ -32,7 +34,7 @@ import { RemoteService } from '@core/versioning/remote.service';
 @Component({
   selector: 'mc-settings',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, BgColorDirective],
+  imports: [RouterLink, BgColorDirective, IconComponent],
   templateUrl: './settings.container.html',
   styleUrl: './settings.container.css',
 })
@@ -71,14 +73,18 @@ export class SettingsContainer {
     reportContrast(this.previewAccent(), ACCENT_FG[this.resolvedTheme()]),
   );
 
-  protected readonly sections: readonly { id: SectionId; labelKey: TranslationKey }[] = [
-    { id: 'general', labelKey: 'settings.section.general' },
-    { id: 'theme', labelKey: 'settings.section.theme' },
-    { id: 'remote', labelKey: 'settings.remote.section.title' },
-    { id: 'versioning', labelKey: 'settings.section.versioning' },
-    { id: 'variants', labelKey: 'settings.section.variants' },
-    { id: 'export', labelKey: 'settings.export.section.title' },
-    { id: 'goals', labelKey: 'settings.section.goals' },
+  protected readonly sections: readonly {
+    id: SectionId;
+    labelKey: TranslationKey;
+    icon: IconName;
+  }[] = [
+    { id: 'general', labelKey: 'settings.section.general', icon: 'gear' },
+    { id: 'theme', labelKey: 'settings.section.theme', icon: 'palette' },
+    { id: 'remote', labelKey: 'settings.remote.section.title', icon: 'git-branch' },
+    { id: 'versioning', labelKey: 'settings.section.versioning', icon: 'clock-counter-clockwise' },
+    { id: 'variants', labelKey: 'settings.section.variants', icon: 'copy' },
+    { id: 'export', labelKey: 'settings.export.section.title', icon: 'archive' },
+    { id: 'goals', labelKey: 'settings.section.goals', icon: 'target' },
   ];
   protected readonly activeSection = signal<SectionId>(readStoredSection());
 

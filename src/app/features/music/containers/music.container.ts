@@ -166,13 +166,14 @@ export class MusicContainer {
   }
 
   protected async onPlayRow(id: string): Promise<void> {
-    const t = this.tracks().find((x) => x.id === id);
-    if (!t) return;
-    if (this.currentTrackId() === t.id) {
+    if (this.currentTrackId() === id) {
       await this.player.toggle();
       return;
     }
-    await this.player.playTrack(t.id);
+    const ids = this.filteredTracks().map((t) => t.id);
+    const startIndex = ids.indexOf(id);
+    if (startIndex < 0) return;
+    await this.player.playPlaylist(ids, startIndex, null);
   }
 
   protected async onDeleteRow(id: string): Promise<void> {
