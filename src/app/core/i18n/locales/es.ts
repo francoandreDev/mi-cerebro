@@ -177,6 +177,10 @@ export const es = {
   'errors.ver.026.message':
     'No pude copiar el estado previo antes de compactar. Aborté la operación sin tocar refs para no perder la red de seguridad. Liberá espacio o revisá permisos del workspace y reintentá.',
 
+  'errors.ver.027.title': 'Compactación bloqueada por divergencia con el remoto',
+  'errors.ver.027.message':
+    'El remoto avanzó por otro lado desde la última sincronización. Sincronizá primero (pull/fetch) y reintentá; mientras tanto la compactación queda en pausa para no pisar trabajo ajeno.',
+
   'errors.ver.003.title': 'No se pudo restaurar',
   'errors.ver.003.message':
     'No pude reescribir esta entidad con la versión seleccionada. Tu disco quedó como estaba; podés reintentar.',

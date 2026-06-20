@@ -9,6 +9,7 @@ import { KeyboardHelpDialogComponent } from '@core/shortcuts/keyboard-help-dialo
 import { ThemeService } from '@core/theme/theme.service';
 import { AutocommitService } from '@core/versioning/autocommit.service';
 import { AutoPushService } from '@core/versioning/auto-push.service';
+import { CompactionSchedulerService } from '@core/versioning/compaction-scheduler.service';
 import { SwitchVariantService } from '@core/versioning/switch-variant.service';
 import { VariantsService } from '@core/versioning/variants.service';
 import { GoalReminderContainer } from '@features/goals/containers/goal-reminder.container';
@@ -86,6 +87,9 @@ export class AppShellContainer {
   // why: instantiate AutoPushService eagerly so its effect on
   //      autocommit.lastCommitAt is registered before the first commit.
   private readonly autoPush = inject(AutoPushService);
+  // why: instantiate eagerly so the workspace-ready effect inside the
+  //      scheduler fires once permissions are granted.
+  private readonly compactionScheduler = inject(CompactionSchedulerService);
   private readonly variantsService = inject(VariantsService);
   private readonly switchVariant = inject(SwitchVariantService);
   private readonly settings = inject(SettingsService);
@@ -94,6 +98,7 @@ export class AppShellContainer {
   constructor() {
     this.continuity.start();
     this.autoPush.start();
+    this.compactionScheduler.start();
     this.workspace
       .bootstrap()
       .then(async () => {

@@ -98,6 +98,13 @@ export class SettingsService {
     this.update((s) => ({ ...s, theme: { ...s.theme, customAccentId: id } }));
   }
 
+  setCompactWithRemote(enabled: boolean): void {
+    this.update((s) => ({
+      ...s,
+      versioning: { ...s.versioning, compactWithRemote: enabled },
+    }));
+  }
+
   setPushThrottleMinutes(minutes: number): void {
     const clamped = Math.max(0, Math.min(180, Math.round(minutes)));
     this.update((s) => ({

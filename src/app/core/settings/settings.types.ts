@@ -10,6 +10,7 @@ export interface Settings {
     readonly autocommitMinutes: number;
     readonly pushAfterAutocommit: boolean;
     readonly pushThrottleMinutes: number;
+    readonly compactWithRemote: boolean;
   };
   readonly variants: {
     readonly dormantThresholdDays: number;
@@ -34,6 +35,7 @@ export const DEFAULT_SETTINGS: Settings = {
     autocommitMinutes: 5,
     pushAfterAutocommit: false,
     pushThrottleMinutes: 5,
+    compactWithRemote: false,
   },
   variants: { dormantThresholdDays: 30 },
   goals: { dormantThresholdDays: 30 },
