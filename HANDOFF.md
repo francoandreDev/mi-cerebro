@@ -1,82 +1,98 @@
-# Handoff — Compactación del historial (sesión 2 de 3-4)
+# Handoff — Compactación del historial (sesión 3 de 4)
 
 ## Contexto
 
-Implementación de PROYECTO.md §12 "Compactación del historial" — fusionar autocommits viejos respetando barreras (tags, `before-restore:`, `Merge-Group:`).
+Implementación de PROYECTO.md §12 "Compactación del historial". Sesión 1 dejó el planner puro; sesión 2 el plumbing git + snapshot pre-compactación; **sesión 3 (esta) cablea el scheduler background + threshold + toggle remoto + VER_027**. Sesión 4 cierra con UI (banner `/history`, dev panel) e integración real `--force-with-lease` en `RemoteService`.
 
 **Antes de tocar nada, leé `PROYECTO.md` §12** (regla CLAUDE.md) y `docs/errors.md` MCB-VER-025/026/027.
 
-## Lo que ya está (sesión 1)
+## Lo que ya está (sesiones 1 + 2 + 3)
 
-`src/app/core/versioning/compaction-plan.ts` — planner puro, sin FS ni git. API:
+### Sesión 1 — planner puro
 
-```ts
-buildCompactionPlan({ commits, tagOids, now }): CompactionPlan
-isBarrier(commit, tagOids): boolean
+`src/app/core/versioning/compaction-plan.ts` — `buildCompactionPlan({ commits, tagOids, now }) → { fuseGroups, preservedOids }`. 17 tests verdes en `compaction-plan.spec.ts`. Respeta barreras (tag / `before-restore:` / `Merge-Group:`) y buckets (daily 8–30d / weekly 31–180d / monthly >180d).
 
-interface CompactionPlan {
-  fuseGroups: FuseGroup[];  // grupos a fusionar (≥2 commits)
-  preservedOids: string[];  // commits que quedan intactos
-}
+### Sesión 2 — plumbing git + snapshot
 
-interface FuseGroup {
-  bucket: 'daily' | 'weekly' | 'monthly';
-  bucketKey: string;        // YYYY-MM-DD | YYYY-Www | YYYY-MM (UTC)
-  oids: string[];           // oldest → newest
-  newestTimestamp: number;
-}
-```
+`src/app/core/versioning/compaction.service.ts` con:
 
-`compaction-plan.spec.ts` — 17 tests, todos verdes. Cubren: empty, recent-only, daily fuse, singleton-bucket preservación, barreras (tag/before-restore/Merge-Group) partiendo buckets, weekly/monthly, mixed scenario, key boundaries, newestTimestamp.
+- `planForBranch(ref): Promise<CompactionPlan>` — `versioning.logFull(ref)` + `versioning.listTagOids()` → planner.
+- `applyPlan(ref, plan): Promise<{newTipOid, rewrote}>` — snapshot a `.mi-cerebro/pre-compaction/<YYYY-MM-DD-HHmm>/<branch-slug>/plan.json` → walk root→tip (`git.readCommit` + `git.writeCommit`, skip todos los no-últimos de cada grupo, fuse-commit con subject `auto-batch [<faceta>]: N commits (<bucketKey>)` y trailer `Compacted-From: <oid1>..<oidN>`) → `git.writeRef force:true`. Detrás de `FsLockService` + `autosave.flushAll()`. No-op idempotente si `fuseGroups.length === 0`.
+- `versioning.service.ts` ganó `logFull(ref)` (sin cap de depth) y `listTagOids()` (peelea anotados).
+- `VER_025` / `VER_026` cableados en `error.codes.ts` + `i18n/locales/es.ts`.
+- `.mi-cerebro/pre-compaction/` agregado al gitignore default (`versioning.constants.ts`).
+- `compaction.service.spec.ts` — 3 integration tests (fuse trivial 3→1 con trailer, snapshot JSON escrito, idempotencia).
 
-## Lo que falta (sesión 2)
+### Sesión 3 — scheduler background
 
-**Plumbing git + snapshot.** Tomar un `CompactionPlan` y aplicarlo sobre una rama vía isomorphic-git plumbing, sin tocar el working tree.
+1. **`compaction-scheduler.ts`** — helper puro `decideCompaction(input): CompactionSchedulerDecision`. Orden de skips: `in-flight` → `remote-gated` → `divergent` → `below-threshold` → `throttle` → `run`. 12 tests verdes en `compaction-scheduler.spec.ts`.
 
-### Tareas concretas
+   ```ts
+   type CompactionSchedulerDecision =
+     | 'run'
+     | 'skip-below-threshold'
+     | 'skip-throttle'
+     | 'skip-in-flight'
+     | 'skip-remote-gated'
+     | 'skip-divergent';
 
-1. **`compaction.service.ts`** (nuevo) en `core/versioning/`. Métodos:
-   - `planForBranch(ref: string): Promise<CompactionPlan>` — wraps log completo del ref + `git.listTags` + filtros para obtener `tagOids`, llama al planner puro. El `log` actual está capado en `depth = 50` (ver caveat abajo).
-   - `applyPlan(ref: string, plan: CompactionPlan): Promise<{ newTipOid: string }>` — rewrite real, ver abajo.
-2. **Snapshot pre-compactación.** Antes de tocar refs: copiar el ref actual y los oids del rango fusionado a `.mi-cerebro/pre-compaction/<YYYY-MM-DD-HHmm>/<branch-slug>/`. Forma mínima: un JSON con `{ ref, originalTipOid, fuseGroups }`; los blobs ya están en `.git/objects/` (no se borran solos, ver caveat de GC). Si falla → `MCB-VER-026`, abortar antes de tocar refs.
-3. **Reescritura.** Algoritmo lineal:
-   - Walkear desde root del ref hacia HEAD construyendo nueva cadena de commits.
-   - Para cada commit del log original:
-     - Si está en `preservedOids`: cherry-pick conceptual (mismo tree, mismo mensaje, nuevo parent = último commit reescrito).
-     - Si pertenece a un `FuseGroup`: skip todos menos el último del grupo; el "último" se reescribe con tree = tree del último commit original del grupo, mensaje = `auto-batch [<faceta>]: N commits (<bucketKey>)\n\nCompacted-From: <oid1>..<oidN>\n`, parent = último commit reescrito.
-   - `git.writeCommit` para cada uno (no `git.commit`, ese stagea).
-   - Al final, `git.writeRef({ force: true, value: newTipOid })`.
-4. **Coordinación.** Toda la operación detrás de `FsLockService` (ver `branch-blob-ops.ts`, `merge.service.ts` para el patrón). `flushAll()` de `AutosaveService` antes.
-5. **Errores.**
-   - `MCB-VER-025` (compaction-failed): el fail genérico durante el rewrite.
-   - `MCB-VER-026` (snapshot-failed): falla del snapshot antes de tocar refs.
-   - `MCB-VER-027` (remote-divergence): no aplica en sesión 2 — entra en sesión 4.
-6. **Tests.**
-   - `compaction.service.spec.ts` con repo in-memory (mirar `git-fs.integration.spec.ts` para el patrón existente). Mínimo: aplicar un plan trivial (3 commits → 1 fuse → ref movido), verificar `Compacted-From` trailer, verificar snapshot escrito, verificar idempotencia (correr 2 veces sobre la rama ya compactada es no-op).
+   interface CompactionSchedulerInput {
+     commitCount: number; // per-ref
+     thresholdCommits: number; // 500
+     now: number;
+     lastRunAt: number | null; // workspace-global
+     throttleMs: number; // 24h
+     remoteConfigured: boolean;
+     compactWithRemote: boolean;
+     hasDivergence: boolean;
+     inFlight: boolean; // managed at evaluate() level, no por-ref
+   }
+   ```
 
-### Patrones del repo a respetar
+2. **`compaction-state.io.ts`** — read/write `.mi-cerebro/compaction-state.json` (schema v1, `{ schemaVersion, lastRunAt }`). Per-workspace, no per-branch: el throttle 1×/día es global a la pasada; el threshold sí es per-branch.
 
-- **Servicios:** `@Injectable({ providedIn: 'root' })`, inyectar `WorkspaceService`, `VersioningService`, `FsLockService`, `AutosaveService`. Patrón de adapter caché: ver `versioning.service.ts:28-46` (lazy `requireAdapter`, `resetForNewWorkspace`).
-- **Errores:** `throw new AppError(ERROR_CODES.VER_025, { severity, context, recoverable })`. Códigos en `core/errors/error.codes.ts`; agregar las constantes nuevas ahí.
-- **Plumbing sin checkout:** ver `branch-blob-ops.ts` y `tree-ops.ts`. `git.readCommit`, `git.writeCommit`, `git.writeRef` son los primitives.
-- **Mensaje de commit fusionado:** subject `auto-batch [main]: N commits (YYYY-MM-DD)`. Trailer `Compacted-From: <oid1>..<oidN>` — definir formato exacto en sesión 2 (lista corta vs `oid-min..oid-max`).
+3. **`compaction-scheduler.service.ts`** — `@Injectable({ providedIn: 'root' })`. En `workspace.isReady()` carga estado y arranca `setInterval(evaluate, 1h)` + corre una pasada inmediata. `evaluate()` enumera variantes × `{main, draft, comments}`, para cada ref calcula `commitCount` con `versioning.logFull(ref)`, pasa por `decideCompaction`, y si `'run'` llama a `compaction.planForBranch` + `applyPlan`. Persiste `lastRunAt` sólo si alguna rama se reescribió.
 
-### Caveats
+4. **Settings.** `versioning.compactWithRemote: boolean` (default `false`) en `settings.types.ts` con `DEFAULT_SETTINGS` + setter `setCompactWithRemote(enabled)` en `settings.service.ts`. Schema v1 mantenido (merge aditivo con defaults absorbe el campo nuevo sin romper).
 
-- `versioning.service.ts log()` está limitado a `depth = 50` por default. Para compactación necesitamos el log completo del ref. Agregar un `logFull(ref)` nuevo o pasar `depth = Number.MAX_SAFE_INTEGER` — no romper el default seguro del existente.
-- `git.writeCommit` requiere el shape exacto del objeto commit (`tree`, `parent`, `author`, `committer`, `message`). Ver cómo lo arma `merge-facetas.ts` (`buildMergeCommit`).
-- isomorphic-git no expone `gc` sobre FS Access. Los blobs de los commits fusionados quedan huérfanos en `.git/objects/` hasta un prune manual (que probablemente nunca corre). Aceptable para v1; tracking como diferido si el bloat se vuelve real.
-- Las barreras (`before-restore:`, `Merge-Group:`) ya las detecta el planner. El rewrite no necesita re-checkearlas, sólo respetar `preservedOids` tal cual viene.
+5. **VER_027** — `error.codes.ts` + `ERROR_CODE_META` + `i18n/locales/es.ts` (`errors.ver.027.title` / `errors.ver.027.message`). El scheduler emite `VER_027` (severity warning, recoverable) cuando `remote.isConfigured() && cfg.compactWithRemote && remote.hasDivergence()`, **una sola vez por ventana de 24h** para no spamear el toast en cada tick. `skip-remote-gated` (toggle off) es silencioso por diseño — el banner en `/history` queda para sesión 4.
 
-## Lo que viene después (no es de esta sesión)
+6. **App shell.** `CompactionSchedulerService` se inyecta eagerly en `AppShellContainer` (junto con `AutoPushService`) y `.start()` se llama en el constructor; el effect interno espera a `workspace.isReady()`.
 
-- **Sesión 3:** scheduler background con throttle 1×/día, detección de umbral 500 commits, settings toggle "compactar aunque haya remoto", persistencia. `MCB-VER-027` wirado contra `RemoteService` pero sin push.
-- **Sesión 4:** UI (banner en `/history` cuando umbral cruzado y compactación off), integración real con `--force-with-lease` en `RemoteService`, dev panel para trigger manual.
+### Estado al cierre de sesión 3
+
+- ✅ `compaction-scheduler.spec.ts` 12/12 verdes en la última corrida local.
+- ⚠️ La corrida completa de `bun x vitest run src/app/core/versioning/compaction` se interrumpió antes de cerrar: el run mostró 29/29 tests de `compaction-plan.spec.ts` + `compaction-scheduler.spec.ts` verdes, pero `compaction.service.spec.ts` falló por `Cannot find package '@core/errors/app-error'` al importar `autosave.service.ts` — alias resolution de vitest, **no relacionado con código de sesión 3** (el spec ya andaba en sesión 2 cerrando 127/127). Verificar en sesión 4 si fue un glitch puntual del runner o cambió algo en `vitest.config`/`tsconfig`. Si persiste, revisar `vite-tsconfig-paths` o alias explícitos en la config de vitest.
+- ⚠️ `bun run build` y `bun x vitest run` (suite completa) no se ejecutaron en esta sesión por interrupción. Correr al abrir sesión 4 antes de tocar nada nuevo.
+
+## Lo que falta (sesión 4)
+
+1. **UI banner en `/history`.** Cuando `remote.isConfigured() && !cfg.compactWithRemote && hay alguna rama con commitCount > 500`, mostrar banner sugiriendo activar el toggle. Necesita un computed que cruce settings + remote + un counter de commits por familia (el scheduler ya hace este cálculo, exponerlo como signal observable para no duplicarlo).
+
+2. **Force-push real en `RemoteService`.** Hoy `pushAll()` usa el flujo normal; falta una variante `pushAllWithLease()` (o un flag) para que el primer push tras compactación use `--force-with-lease`. La compactación reescribió historia local: sin force, GitHub rechaza el push. Aborto si el remoto avanzó (`force-with-lease` ya lo hace nativo en isomorphic-git, ver `remote-bulk.ts`).
+
+3. **Dev panel para trigger manual.** El `CompactionSchedulerService` ya expone `runOnce()` — exponerlo desde `/dev` (junto a los otros toggles de dev-perf) para forzar una pasada sin esperar el tick horario ni el threshold (probablemente con un flag `ignoreThreshold` para QA).
+
+4. **Settings UI.** Toggle "Compactar aunque haya remoto" en `/settings` → "Versionado remoto". Llamar a `settings.setCompactWithRemote(boolean)`.
+
+5. **Verificar resolución de aliases** del item ⚠️ arriba.
+
+## Patrones del repo a respetar
+
+- **Servicios:** `@Injectable({ providedIn: 'root' })`, signals + effects, OnPush.
+- **Plumbing sin checkout:** `branch-blob-ops.ts`, `tree-ops.ts`. `git.readCommit/writeCommit/writeRef`.
+- **Errores:** `throw new AppError(ERROR_CODES.X, { severity, context, recoverable })`. Códigos en `error.codes.ts` + `ERROR_CODE_META` + i18n.
+- **Persistencia per-workspace:** `.mi-cerebro/<file>.json`, lock vía `FsLockService` cuando toca `.git/`, JSON pretty-printed con `JSON.stringify(_, null, 2)`.
+
+## Caveats heredados
+
+- `git.gc` no existe sobre FS Access (isomorphic-git limitation). Los blobs de commits fusionados quedan huérfanos en `.git/objects/` hasta un prune manual (que probablemente nunca corre). Aceptable para v1; tracking como diferido si el bloat se vuelve real.
+- El throttle 1×/día es per-workspace, no per-rama: una rama que falla no se reintenta hasta el próximo día. Aceptable porque el `applyPlan` ya es por-rama atómico.
 
 ## Verificación al cerrar la sesión
 
 ```bash
-bun x vitest run src/app/core/versioning/compaction
+bun x vitest run
 bun run build
 ```
 
@@ -85,7 +101,7 @@ Ambos verdes. Hooks de commit corren eslint + prettier sobre staged; si fallan, 
 ## Reglas duras del repo
 
 - TS strict, sin `any`, signals, OnPush, standalone.
-- Files: soft 200 / hard 300 líneas. Si `compaction.service.ts` se acerca a 200, split.
-- Sin cross-feature imports. Todo este trabajo vive en `core/versioning/`.
+- Files: soft 200 / hard 300 líneas. `compaction-scheduler.service.ts` queda en ~170; si crece, extraer la enumeración de refs o el reporting de skips.
+- Sin cross-feature imports. Todo este trabajo vive en `core/versioning/` (excepto el toque a `core/settings/` y `layout/containers/app-shell.container.ts`).
 - UI español, código/commits inglés.
-- Cualquier cambio arquitectónico actualiza `PROYECTO.md` en el mismo commit (regla §4.11.25). Sesión 1 no introduce cambios al doc — el algoritmo respeta la sección "Compactación del historial" ya escrita.
+- Cualquier cambio arquitectónico actualiza `PROYECTO.md` en el mismo commit (regla §4.11.25). Sesión 3 no introduce cambios al doc — el algoritmo respeta la sección "Compactación del historial" ya escrita.
