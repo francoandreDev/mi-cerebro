@@ -21,7 +21,7 @@ Una idea distinta por página. No replicar el mismo patrón: cada entidad tiene 
 | `/history`   | (heredado, sin section pane)                                                | ✅     |
 | `/variants`  | (heredado, sin section pane)                                                | ✅     |
 | `/notes`     | Muro de stickies (CSS columns) + card "nueva" inline + chips de filtro      | ✅     |
-| `/tasks`     | pendiente                                                                   | ⏳     |
+| `/tasks`     | Tres columnas por horizonte (Hoy / Esta semana / Backlog) + búsqueda local  | ✅     |
 | `/goals`     | pendiente                                                                   | ⏳     |
 | `/lists`     | pendiente                                                                   | ⏳     |
 | `/writings`  | pendiente                                                                   | ⏳     |

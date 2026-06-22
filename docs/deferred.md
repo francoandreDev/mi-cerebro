@@ -278,6 +278,14 @@ Formato por entrada:
 - **Por qué se difirió**: requiere exponer un signal global de "overdue count" desde `RemindersService` y agregar slot de badge en el rail (que hoy no tiene). Cambio cruza capa de layout — fuera de scope del rediseño de la página en sí.
 - **Target**: sin asignar.
 
+## Tareas (origen: rediseño /tasks)
+
+### Drag & drop entre columnas (Hoy / Semana / Backlog)
+
+- **Qué**: arrastrar una card de tarea entre columnas para cambiar su horizonte (mismo efecto que el patch de `dueDates` que hoy hacen los botones de mover). HTML5 DnD nativo + alternativa por teclado (focused card + Shift+→/← mueve a la columna siguiente/anterior).
+- **Por qué se difirió**: la sesión cerró con botones explícitos "Hoy / Semana / Backlog" en cada card que ya cubren la operación de forma accesible por teclado (tab al botón + enter). DnD nativo agrega un helper compartido en `shared/utils/dnd.ts` + manejo de dragover/drop a nivel column + teclas Shift+flecha que conviene resolver junto con la misma pieza en `/lists` (drag de ítems dentro del detalle) para no duplicar el patrón.
+- **Target**: sin asignar — abrir junto al rediseño de `/lists` o cuando aparezca dolor real.
+
 ### Parser de fecha natural — alcance ampliado
 
 - **Qué**: el `@hint` actual soporta hoy/mañana/pasado, días de la semana, "en Nh/Nm/Nd" y horas (24h y am/pm). Faltan: "viernes que viene", "fin de semana", "próximo mes", fechas absolutas "15/07", parsing dentro del título sin `@`.

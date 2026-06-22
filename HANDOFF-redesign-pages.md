@@ -70,9 +70,13 @@ Riesgos / caveats a vigilar:
 - Masonry CSS nativo aún es spec experimental; el fallback `column-count` rompe el orden visual (lee top-to-bottom por columna). Si el orden importa, considerar JS-driven masonry (no agregar librería pesada — escribir uno chico en `shared/` o aceptar el orden por columna).
 - Notas muy largas: clampear el preview a N líneas con `-webkit-line-clamp`.
 
-## Sesión 2 — `/tasks` (tres columnas por horizonte)
+## Sesión 2 — `/tasks` (tres columnas por horizonte) ✅
 
-**Idea.** Tres columnas: **Hoy** / **Esta semana** / **Backlog**. Tareas vencidas pintan badge rojo dentro de "Hoy". Card arrastrable entre columnas (cambia la fecha). Captura inline al final de cada columna (Enter crea). "Sin fecha" cae a Backlog. Toggle "ocultar hechas" en header.
+**Cerrado.** Board en `TasksBoardContainer` (ruta `''`), editor sigue en `TasksContainer` (ruta `:id`). Bucketing puro en `services/task-buckets.ts` con spec — define "esta semana" como próximos 7 días desde hoy (no "hasta domingo"); tareas con `dueDates[0] < today` viven en "Hoy" con flag `overdue` para badge rojo. Card (`task-card`) muestra título, checkbox done, due chip (Hoy/Vencida/N mes), tags y botones de mover; column (`task-column`) tiene header, lista y captura inline (`createInline`). Container compone 3 columnas + search local + toggle "ocultar hechas". Prefix `/tasks` agregado a `PANE_HIDDEN_PREFIXES`. i18n bajo `tasks.board.*`. Build verde, tests pasan salvo los 6 pre-existentes de `variant-tree.spec`.
+
+**Caveat / diferido.** DnD entre columnas (HTML5 nativo + atajo de teclado) no entró: en su lugar, cada card expone botones para mover a las otras columnas (accesibles por teclado vía tab). Registrado en `docs/deferred.md` apuntando a fase posterior.
+
+**Idea original.** Tres columnas: **Hoy** / **Esta semana** / **Backlog**. Tareas vencidas pintan badge rojo dentro de "Hoy". Card arrastrable entre columnas (cambia la fecha). Captura inline al final de cada columna (Enter crea). "Sin fecha" cae a Backlog. Toggle "ocultar hechas" en header.
 
 Subpasos:
 

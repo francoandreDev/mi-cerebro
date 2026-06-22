@@ -1,0 +1,90 @@
+<section class="board">
+  <header class="board-head">
+    <h1 class="board-title">
+      <mc-icon name="check-square" class="title-icon" aria-hidden="true" />
+      {{ t('tasks.title') }}
+    </h1>
+    <div class="board-controls">
+      <div class="search">
+        <mc-icon name="magnifying-glass" class="search-icon" aria-hidden="true" />
+        <input
+          type="search"
+          class="search-input"
+          [value]="query()"
+          [attr.aria-label]="t('tasks.board.searchAria')"
+          [placeholder]="t('tasks.board.searchPlaceholder')"
+          (input)="onQueryInput($event)"
+        />
+        @if (query()) {
+          <button
+            type="button"
+            class="search-clear mc-hover-wiggle"
+            [attr.aria-label]="t('tasks.board.searchClear')"
+            (click)="onClearQuery()"
+          >
+            <mc-icon name="x" />
+          </button>
+        }
+      </div>
+      <button
+        type="button"
+        class="toggle"
+        [class.active]="hideDone()"
+        [attr.aria-pressed]="hideDone()"
+        (click)="onToggleHideDone()"
+      >
+        <mc-icon [name]="hideDone() ? 'eye-slash' : 'eye'" />
+        <span>{{ t('tasks.board.hideDone') }}</span>
+      </button>
+    </div>
+  </header>
+
+  @if (empty()) {
+    <p class="board-empty">{{ t('tasks.empty') }}</p>
+  } @else {
+    <div class="columns">
+      <mc-task-column
+        bucket="today"
+        [entries]="buckets().today"
+        [availableTags]="tags()"
+        [untitledLabel]="untitledLabel()"
+        [hideDone]="hideDone()"
+        [busy]="creating()"
+        (open)="onOpen($event)"
+        (toggleDone)="onToggleDone($event)"
+        (remove)="onDelete($event)"
+        (moveTask)="onMoveTask($event)"
+        (createInline)="onCreate($event)"
+      />
+      <mc-task-column
+        bucket="week"
+        [entries]="buckets().week"
+        [availableTags]="tags()"
+        [untitledLabel]="untitledLabel()"
+        [hideDone]="hideDone()"
+        [busy]="creating()"
+        (open)="onOpen($event)"
+        (toggleDone)="onToggleDone($event)"
+        (remove)="onDelete($event)"
+        (moveTask)="onMoveTask($event)"
+        (createInline)="onCreate($event)"
+      />
+      <mc-task-column
+        bucket="backlog"
+        [entries]="buckets().backlog"
+        [availableTags]="tags()"
+        [untitledLabel]="untitledLabel()"
+        [hideDone]="hideDone()"
+        [busy]="creating()"
+        (open)="onOpen($event)"
+        (toggleDone)="onToggleDone($event)"
+        (remove)="onDelete($event)"
+        (moveTask)="onMoveTask($event)"
+        (createInline)="onCreate($event)"
+      />
+    </div>
+    @if (noMatch()) {
+      <p class="board-empty">{{ t('tasks.board.noMatch') }}</p>
+    }
+  }
+</section>

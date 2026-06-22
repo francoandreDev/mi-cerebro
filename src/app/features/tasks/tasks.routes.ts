@@ -3,7 +3,8 @@ import type { Routes } from '@angular/router';
 export const tasksRoutes: Routes = [
   {
     path: '',
-    loadComponent: () => import('./containers/tasks.container').then((m) => m.TasksContainer),
+    loadComponent: () =>
+      import('./containers/tasks-board.container').then((m) => m.TasksBoardContainer),
   },
   {
     path: ':id',
