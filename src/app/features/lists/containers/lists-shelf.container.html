@@ -1,0 +1,78 @@
+<section class="shelf">
+  <header class="shelf-head">
+    <h1 class="shelf-title">
+      <mc-icon name="list-bullets" class="title-icon" aria-hidden="true" />
+      {{ t('lists.title') }}
+    </h1>
+    <div class="shelf-controls">
+      <div class="search">
+        <mc-icon name="magnifying-glass" class="search-icon" aria-hidden="true" />
+        <input
+          type="search"
+          class="search-input"
+          [value]="query()"
+          [attr.aria-label]="t('lists.shelf.searchAria')"
+          [placeholder]="t('lists.shelf.searchPlaceholder')"
+          (input)="onQueryInput($event)"
+        />
+        @if (query()) {
+          <button
+            type="button"
+            class="search-clear mc-hover-wiggle"
+            [attr.aria-label]="t('lists.shelf.searchClear')"
+            (click)="onClearQuery()"
+          >
+            <mc-icon name="x" />
+          </button>
+        }
+      </div>
+      @if (hasFilter()) {
+        <button
+          type="button"
+          class="clear mc-hover-wiggle"
+          [attr.aria-label]="t('lists.shelf.filtersClear')"
+          (click)="onClearFilters()"
+        >
+          <mc-icon name="x" />
+          <span>{{ t('lists.shelf.filtersClear') }}</span>
+        </button>
+      }
+    </div>
+  </header>
+
+  @if (availableTags().length) {
+    <div class="tags" role="group" [attr.aria-label]="t('lists.shelf.tagsLabel')">
+      @for (tag of availableTags(); track tag.id) {
+        <button
+          type="button"
+          class="tag-button"
+          [class.active]="isTagActive(tag.id)"
+          [attr.aria-pressed]="isTagActive(tag.id)"
+          (click)="onToggleTag(tag.id)"
+        >
+          <mc-tag-chip [tag]="tag" size="small" />
+        </button>
+      }
+    </div>
+  }
+
+  @if (empty()) {
+    <mc-new-list-card [busy]="creating()" [hero]="true" (create)="onCreate($event)" />
+  } @else {
+    <div class="grid">
+      <mc-new-list-card [busy]="creating()" (create)="onCreate($event)" />
+      @for (list of visible(); track list.id) {
+        <mc-list-card
+          [list]="list"
+          [availableTags]="tags()"
+          [untitledLabel]="untitledLabel()"
+          (open)="onOpen($event)"
+          (remove)="onDelete($event)"
+        />
+      }
+    </div>
+    @if (noMatch()) {
+      <p class="shelf-empty">{{ t('lists.shelf.noMatch') }}</p>
+    }
+  }
+</section>

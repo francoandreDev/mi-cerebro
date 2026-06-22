@@ -23,7 +23,7 @@ Una idea distinta por página. No replicar el mismo patrón: cada entidad tiene 
 | `/notes`     | Muro de stickies (CSS columns) + card "nueva" inline + chips de filtro          | ✅     |
 | `/tasks`     | Tres columnas por horizonte (Hoy / Esta semana / Backlog) + búsqueda local      | ✅     |
 | `/goals`     | Wallboard tipográfico: posters grandes en grid auto-fit + filtros + hero create | ✅     |
-| `/lists`     | pendiente                                                                       | ⏳     |
+| `/lists`     | Estantería de cards con preview de ítems + búsqueda + chips de tags             | ✅     |
 | `/writings`  | pendiente                                                                       | ⏳     |
 | `/files`     | Rail interno fijo (260px) con árbol jerárquico + DnD + workbench full-width     | ✅     |
 | `/music`     | 3 zonas: playlists rail / biblioteca densa / now playing + cola                 | ✅     |

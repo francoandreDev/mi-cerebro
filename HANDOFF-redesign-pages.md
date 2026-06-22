@@ -118,9 +118,13 @@ Riesgos:
 - 1-2 objetivos = grid casi vacío. Solución: cuando `goals.length <= 2`, agrandar columnas (CSS `:has` o un signal `posterScale`).
 - Wallboard puede pisar visualmente al `goal-reminder` global; verificar que ambos contextos se diferencian (tipografía / fondo).
 
-## Sesión 4 — `/lists` (estantería con preview)
+## Sesión 4 — `/lists` (estantería con preview) ✅
 
-**Idea.** Grid de cards medianas estilo tarjeta. Cada card: título, 3-4 primeros ítems en preview (truncados), contador "+N más", tags. Click → expande a modal o vista detalle full-screen con la lista editable.
+**Cerrado.** Estantería en `ListsShelfContainer` (ruta `''`); el editor sigue en `ListsContainer` (ruta `:id`). `ListSummary` ahora incluye `previewItems` (hasta 4 ítems clampeados a 120 chars, ítems vacíos se omiten) e `itemCount` (total no-vacío). Helper puro en `services/list-preview.ts` con spec (`list-preview.spec.ts`). Card (`list-card`) muestra ícono + título + preview con bullets, "+N más" si hay overflow, footer con tags y delete on hover; cuando la lista está vacía muestra "Lista vacía. Abrila para agregar ítems.". `new-list-card` inline al frente del grid (`repeat(auto-fill, minmax(280px, 1fr))`); cuando no hay listas se renderiza como hero con headline "Tus listas vivirán acá". Header con búsqueda local (matchea título + previewItems) + chips de tags usados. Prefix `/lists` agregado a `PANE_HIDDEN_PREFIXES`. i18n nuevo bajo `lists.shelf.*`. Build verde, lint sin errores (warnings pre-existentes intactos), tests pasan salvo los 6 pre-existentes (`variant-tree.spec`, `tree-state.service.spec`).
+
+**Riesgo cubierto.** El detalle como ruta hija (`/lists/:id`) ya está cubierto por el `startsWith` de `PANE_HIDDEN_PREFIXES`, no hace falta listarlo aparte. Preview clampeado a 1 línea por ítem via `text-overflow: ellipsis`.
+
+**Idea original.** Grid de cards medianas estilo tarjeta. Cada card: título, 3-4 primeros ítems en preview (truncados), contador "+N más", tags. Click → expande a modal o vista detalle full-screen con la lista editable.
 
 Subpasos:
 

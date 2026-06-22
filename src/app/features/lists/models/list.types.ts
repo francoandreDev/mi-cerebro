@@ -24,6 +24,8 @@ export interface ListSummary {
   readonly tags: readonly string[];
   readonly folder: string;
   readonly position: string;
+  readonly previewItems: readonly string[];
+  readonly itemCount: number;
 }
 
 export const emptyDoc = (): JSONContent => ({

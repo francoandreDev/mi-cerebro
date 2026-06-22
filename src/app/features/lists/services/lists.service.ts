@@ -32,6 +32,7 @@ import {
   type List,
   type ListSummary,
 } from '../models/list.types';
+import { buildListPreview } from './list-preview';
 
 const TRASH_DIR = '.mi-cerebro';
 const TRASH_SUBDIR = 'trash';
@@ -269,6 +270,7 @@ export class ListsService {
   }
 
   private toSummary(list: List, folder: string): ListSummary {
+    const preview = buildListPreview(list.body);
     return {
       id: list.id,
       title: list.title,
@@ -276,6 +278,8 @@ export class ListsService {
       tags: list.tags,
       folder,
       position: list.position ?? '',
+      previewItems: preview.items,
+      itemCount: preview.itemCount,
     };
   }
 
