@@ -3,7 +3,29 @@
     <h1 class="wall-title">
       <mc-icon name="target" class="title-icon" aria-hidden="true" />
       {{ t('goals.title') }}
+      <span class="count" aria-hidden="true">· {{ stars().length }}</span>
     </h1>
+    <form class="new" (submit)="onCreateSubmit($event)">
+      <mc-icon name="plus" class="new-icon" aria-hidden="true" />
+      <input
+        type="text"
+        class="new-input"
+        [value]="newTitle()"
+        [attr.aria-label]="t('goals.wall.newAria')"
+        [placeholder]="t('goals.wall.newPlaceholder')"
+        [disabled]="creating()"
+        autocomplete="off"
+        (input)="onNewTitleInput($event)"
+      />
+      <button
+        type="submit"
+        class="new-submit"
+        [attr.aria-label]="t('goals.wall.newSubmit')"
+        [disabled]="creating() || !newTitle().trim()"
+      >
+        <mc-icon name="arrow-right" />
+      </button>
+    </form>
     <div class="wall-controls">
       <div class="search">
         <mc-icon name="magnifying-glass" class="search-icon" aria-hidden="true" />
@@ -67,24 +89,67 @@
   }
 
   @if (empty()) {
-    <mc-new-goal-card [busy]="creating()" [hero]="true" (create)="onCreate($event)" />
+    <p class="wall-empty">{{ t('goals.wall.emptyHint') }}</p>
   } @else {
-    <div class="grid">
-      <mc-new-goal-card [busy]="creating()" (create)="onCreate($event)" />
-      @for (goal of visible(); track goal.id) {
-        <mc-goal-poster
-          [goal]="goal"
-          [availableTags]="tags()"
-          [untitledLabel]="untitledLabel()"
-          [today]="today()"
-          (open)="onOpen($event)"
-          (remove)="onDelete($event)"
-          (toggleCompleted)="onToggleCompleted($event)"
-        />
+    <div class="sky" role="region" [attr.aria-label]="t('goals.title')">
+      <svg
+        class="sky-lines"
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+        focusable="false"
+      >
+        @for (link of links(); track link.a + '|' + link.b) {
+          <line
+            class="link"
+            [class.dim]="link.dim"
+            [attr.x1]="link.x1"
+            [attr.y1]="link.y1"
+            [attr.x2]="link.x2"
+            [attr.y2]="link.y2"
+          />
+        }
+      </svg>
+      <ul class="stars" [attr.aria-label]="t('goals.title')">
+        @for (star of stars(); track star.goal.id) {
+          <li
+            class="star-slot"
+            [style.left.%]="star.x"
+            [style.top.%]="star.y"
+            [class.dim]="star.dim"
+          >
+            <button
+              type="button"
+              class="star"
+              [class.completed]="star.state === 'completed'"
+              [class.overdue]="star.state === 'overdue'"
+              [class.soon]="star.state === 'soon'"
+              [class.pulsing]="star.pulsing"
+              [style.--star-size.px]="star.size"
+              [style.--star-glow.px]="star.glow"
+              [style.--star-opacity]="star.opacity"
+              [attr.aria-label]="ariaLabelFor(star)"
+              (click)="onOpen(star.goal.id)"
+            >
+              <span class="star-dot" aria-hidden="true"></span>
+              <span class="star-label">
+                {{ star.goal.title || untitledLabel() }}
+              </span>
+              <span class="star-meta" aria-hidden="true">
+                {{ star.progressDisplay }}%
+                @if (star.state === 'overdue') {
+                  · {{ t('goals.wall.overdueBadge') }}
+                } @else if (star.state === 'completed') {
+                  · {{ t('goals.wall.completedBadge') }}
+                }
+              </span>
+            </button>
+          </li>
+        }
+      </ul>
+      @if (hasFilter() && allDim()) {
+        <p class="sky-empty">{{ t('goals.wall.noMatch') }}</p>
       }
     </div>
-    @if (noMatch()) {
-      <p class="wall-empty">{{ t('goals.wall.noMatch') }}</p>
-    }
   }
 </section>
