@@ -32,6 +32,7 @@ import {
   type Writing,
   type WritingSummary,
 } from '../models/writing.types';
+import { buildWritingPreview } from './writing-preview';
 
 const TRASH_DIR = '.mi-cerebro';
 const TRASH_SUBDIR = 'trash';
@@ -271,6 +272,7 @@ export class WritingsService {
   }
 
   private toSummary(writing: Writing, folder: string): WritingSummary {
+    const { preview, wordCount } = buildWritingPreview(writing.body);
     return {
       id: writing.id,
       title: writing.title,
@@ -278,6 +280,8 @@ export class WritingsService {
       tags: writing.tags,
       folder,
       position: writing.position ?? '',
+      preview,
+      wordCount,
     };
   }
 

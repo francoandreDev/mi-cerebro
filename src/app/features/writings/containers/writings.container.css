@@ -8,6 +8,47 @@
   height: 100%;
   min-width: 0;
 }
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+  padding: var(--mc-space-2) var(--mc-space-4);
+  background: var(--mc-bg-elevated);
+  border-bottom: 1px solid var(--mc-border-default);
+  backdrop-filter: blur(6px);
+}
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  color: var(--mc-fg-secondary);
+  border: 1px solid var(--mc-border-default);
+  border-radius: var(--mc-radius-sm);
+  padding: 4px 10px;
+  font-size: var(--mc-font-size-sm);
+  cursor: pointer;
+}
+.back:hover,
+.back:focus-visible {
+  color: var(--mc-fg-primary);
+  border-color: var(--mc-accent-primary);
+}
+.back:focus-visible {
+  outline: 2px solid var(--mc-focus-ring, var(--mc-accent-primary));
+  outline-offset: 2px;
+}
+.canvas {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: 80ch;
+  margin: 0 auto;
+}
 .empty {
   flex: 1;
   display: flex;

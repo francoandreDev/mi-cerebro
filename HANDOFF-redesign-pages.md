@@ -142,9 +142,13 @@ Riesgos:
 - Si el detalle se hace ruta hija, asegurar que `PANE_HIDDEN_PREFIXES` cubra `/lists` y no haga falta listar `/lists/:id` aparte (el `startsWith` ya lo cubre — verificar).
 - Preview vs item largo: clamp a 1 línea por ítem.
 
-## Sesión 5 — `/writings` (biblioteca + editor full-bleed)
+## Sesión 5 — `/writings` (biblioteca + editor full-bleed) ✅
 
-**Idea.** Index sobrio tipo estantería de borrador: cada escrito como card tipográfica (título, primeras líneas, wordcount, updatedAt). Click → editor TipTap ocupando toda la pantalla (sin chrome extra) con barra mínima superior (volver, título editable, menú). Modo typewriter opcional vía toggle.
+**Cerrado.** Biblioteca en `WritingsShelfContainer` (ruta `''`); el editor sigue en `WritingsContainer` (ruta `:id`) ahora con layout full-bleed: topbar sticky con botón "Volver" + `canvas` centrado a `max-width: 80ch` para que título, tags y TipTap respiren a un ancho legible. `WritingSummary` ganó `preview` (excerpt de hasta 240 chars) y `wordCount`, computados por el helper puro `services/writing-preview.ts` (con spec). Card (`writing-card`) muestra título en serif (clamp), preview clampeado a 4 líneas, footer con cantidad de palabras + "hace X" (vía `containers/format-ago.ts` espejando books). `new-writing-card` inline al frente del grid (`repeat(auto-fill, minmax(320px, 1fr))`); cuando no hay escritos se renderiza como hero ("Tu biblioteca de borrador"). Header del shelf con búsqueda local (matchea título + preview) + chips de tags usados + select de orden (editado recientemente / título / cantidad de palabras). Prefix `/writings` agregado a `PANE_HIDDEN_PREFIXES`. Esc dentro del editor vuelve al shelf cuando el foco no está en ProseMirror/inputs. i18n nuevo bajo `writings.shelf.*`, `writings.editor.*` y `writings.editedAgo.*`. Build verde, lint sin nuevos errores (79 warnings pre-existentes intactos), tests pasan salvo los 6 pre-existentes (`variant-tree.spec`).
+
+**Caveat / diferido.** Typewriter mode (toggle que centra la línea activa) no entró — registrado en `docs/deferred.md` bajo "Escritos" apuntando a §19.16f.
+
+**Idea original.** Index sobrio tipo estantería de borrador: cada escrito como card tipográfica (título, primeras líneas, wordcount, updatedAt). Click → editor TipTap ocupando toda la pantalla (sin chrome extra) con barra mínima superior (volver, título editable, menú). Modo typewriter opcional vía toggle.
 
 Subpasos:
 

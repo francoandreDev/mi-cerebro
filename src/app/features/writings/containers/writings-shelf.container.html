@@ -1,0 +1,87 @@
+<section class="shelf">
+  <header class="shelf-head">
+    <h1 class="shelf-title">
+      <mc-icon name="pen-nib" class="title-icon" aria-hidden="true" />
+      {{ t('writings.title') }}
+    </h1>
+    <div class="shelf-controls">
+      <div class="search">
+        <mc-icon name="magnifying-glass" class="search-icon" aria-hidden="true" />
+        <input
+          type="search"
+          class="search-input"
+          [value]="query()"
+          [attr.aria-label]="t('writings.shelf.searchAria')"
+          [placeholder]="t('writings.shelf.searchPlaceholder')"
+          (input)="onQueryInput($event)"
+        />
+        @if (query()) {
+          <button
+            type="button"
+            class="search-clear mc-hover-wiggle"
+            [attr.aria-label]="t('writings.shelf.searchClear')"
+            (click)="onClearQuery()"
+          >
+            <mc-icon name="x" />
+          </button>
+        }
+      </div>
+      <label class="sort">
+        <span class="sort-label">{{ t('writings.shelf.sortLabel') }}</span>
+        <select class="sort-select" [value]="sortKey()" (change)="onSortChange($event)">
+          <option value="updated">{{ t('writings.shelf.sort.updated') }}</option>
+          <option value="title">{{ t('writings.shelf.sort.title') }}</option>
+          <option value="wordCount">{{ t('writings.shelf.sort.wordCount') }}</option>
+        </select>
+      </label>
+      @if (hasFilter()) {
+        <button
+          type="button"
+          class="clear mc-hover-wiggle"
+          [attr.aria-label]="t('writings.shelf.filtersClear')"
+          (click)="onClearFilters()"
+        >
+          <mc-icon name="x" />
+          <span>{{ t('writings.shelf.filtersClear') }}</span>
+        </button>
+      }
+    </div>
+  </header>
+
+  @if (availableTags().length) {
+    <div class="tags" role="group" [attr.aria-label]="t('writings.shelf.tagsLabel')">
+      @for (tag of availableTags(); track tag.id) {
+        <button
+          type="button"
+          class="tag-button"
+          [class.active]="isTagActive(tag.id)"
+          [attr.aria-pressed]="isTagActive(tag.id)"
+          (click)="onToggleTag(tag.id)"
+        >
+          <mc-tag-chip [tag]="tag" size="small" />
+        </button>
+      }
+    </div>
+  }
+
+  @if (empty()) {
+    <mc-new-writing-card [busy]="creating()" [hero]="true" (create)="onCreate($event)" />
+  } @else {
+    <div class="grid">
+      <mc-new-writing-card [busy]="creating()" (create)="onCreate($event)" />
+      @for (view of visible(); track view.summary.id) {
+        <mc-writing-card
+          [writing]="view.summary"
+          [availableTags]="tags()"
+          [untitledLabel]="untitledLabel()"
+          [ago]="view.ago"
+          (open)="onOpen($event)"
+          (remove)="onDelete($event)"
+        />
+      }
+    </div>
+    @if (noMatch()) {
+      <p class="shelf-empty">{{ t('writings.shelf.noMatch') }}</p>
+    }
+  }
+</section>

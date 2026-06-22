@@ -1,4 +1,15 @@
 <div class="pane">
+  <header class="topbar">
+    <button
+      type="button"
+      class="back mc-hover-wiggle"
+      [attr.aria-label]="t('writings.editor.backAria')"
+      (click)="onBack()"
+    >
+      <mc-icon name="arrow-left" />
+      <span>{{ t('writings.editor.back') }}</span>
+    </button>
+  </header>
   @if (active(); as writing) {
     @if (lock.showForeign()) {
       <mc-lock-banner
@@ -19,17 +30,19 @@
         (dismiss)="lock.dismissEvicted()"
       />
     }
-    <mc-writing-editor-pane
-      [writing]="writing"
-      [status]="status()"
-      [availableTags]="tags()"
-      [editable]="lock.editable()"
-      (titleChange)="onTitleChange($event)"
-      (bodyChange)="onBodyChange($event)"
-      (removeWriting)="onDelete()"
-      (addTag)="onAddTag($event)"
-      (removeTag)="onRemoveTag($event)"
-    />
+    <div class="canvas">
+      <mc-writing-editor-pane
+        [writing]="writing"
+        [status]="status()"
+        [availableTags]="tags()"
+        [editable]="lock.editable()"
+        (titleChange)="onTitleChange($event)"
+        (bodyChange)="onBodyChange($event)"
+        (removeWriting)="onDelete()"
+        (addTag)="onAddTag($event)"
+        (removeTag)="onRemoveTag($event)"
+      />
+    </div>
   } @else {
     <div class="empty">
       <mc-icon name="pen-nib" class="empty-icon mc-anim-float" />

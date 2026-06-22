@@ -286,6 +286,14 @@ Formato por entrada:
 - **Por qué se difirió**: la sesión cerró con botones explícitos "Hoy / Semana / Backlog" en cada card que ya cubren la operación de forma accesible por teclado (tab al botón + enter). DnD nativo agrega un helper compartido en `shared/utils/dnd.ts` + manejo de dragover/drop a nivel column + teclas Shift+flecha que conviene resolver junto con la misma pieza en `/lists` (drag de ítems dentro del detalle) para no duplicar el patrón.
 - **Target**: sin asignar — abrir junto al rediseño de `/lists` o cuando aparezca dolor real.
 
+## Escritos (origen: rediseño /writings)
+
+### Typewriter mode dentro del editor full-bleed
+
+- **Qué**: toggle en el editor full-bleed de `/writings` que active "typewriter mode" — la línea activa queda visualmente al centro del viewport (scroll-padding-bottom: 40vh o equivalente) y opcionalmente atenúa los párrafos no activos.
+- **Por qué se difirió**: el rediseño cerró con shelf + editor centrado a `max-width: 80ch` y back/Esc para volver. Typewriter requiere extensión de ProseMirror que reaccione a `selectionUpdate`, decisión de UX sobre dimming y persistencia del toggle. Bonito pero no bloquea la migración del section pane.
+- **Target**: §19.16f (pulido del editor) o sin asignar.
+
 ### Parser de fecha natural — alcance ampliado
 
 - **Qué**: el `@hint` actual soporta hoy/mañana/pasado, días de la semana, "en Nh/Nm/Nd" y horas (24h y am/pm). Faltan: "viernes que viene", "fin de semana", "próximo mes", fechas absolutas "15/07", parsing dentro del título sin `@`.

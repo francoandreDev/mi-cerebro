@@ -24,6 +24,8 @@ export interface WritingSummary {
   readonly tags: readonly string[];
   readonly folder: string;
   readonly position: string;
+  readonly preview: string;
+  readonly wordCount: number;
 }
 
 export const emptyDoc = (): JSONContent => ({

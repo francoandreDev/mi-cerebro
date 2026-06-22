@@ -26,6 +26,7 @@ import { WritingsService } from '../services/writings.service';
   imports: [WritingEditorPaneComponent, LockBannerComponent, IconComponent],
   templateUrl: './writings.container.html',
   styleUrl: './writings.container.css',
+  host: { '(document:keydown.escape)': 'onEscape($event)' },
 })
 export class WritingsContainer {
   readonly id = input<string | undefined>(undefined);
@@ -58,6 +59,17 @@ export class WritingsContainer {
 
   protected t(key: TranslationKey): string {
     return this.i18n.t(key);
+  }
+
+  protected async onBack(): Promise<void> {
+    await this.router.navigate(['/writings']);
+  }
+
+  protected onEscape(event: Event): void {
+    const target = event.target as HTMLElement | null;
+    if (target && target.closest('.ProseMirror, input, textarea, select')) return;
+    event.preventDefault();
+    void this.router.navigate(['/writings']);
   }
 
   protected onTitleChange(title: string): void {
