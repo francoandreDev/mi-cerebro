@@ -14,7 +14,7 @@ import { IconComponent } from '@shared/icon/icon.component';
 import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
 
 import { GoalEditorPaneComponent, type SaveStatus } from '../components/goal-editor-pane.component';
-import { GOAL_KIND, type Goal } from '../models/goal.types';
+import { GOAL_KIND, clampProgress, type Goal, type GoalPriority } from '../models/goal.types';
 import { GoalsService } from '../services/goals.service';
 
 @Component({
@@ -71,6 +71,15 @@ export class GoalsContainer {
 
   protected onDeadlineChange(deadline: string | null): void {
     this.patch((current) => ({ ...current, deadline }));
+  }
+
+  protected onPriorityChange(priority: GoalPriority): void {
+    this.patch((current) => ({ ...current, priority }));
+  }
+
+  protected onProgressChange(progress: number): void {
+    const next = clampProgress(progress);
+    this.patch((current) => ({ ...current, progress: next }));
   }
 
   protected async onAddTag(label: string): Promise<void> {

@@ -653,6 +653,9 @@ Los objetivos no compiten por atención con el resto: aparecen en momentos espec
 - **Pantalla de carga / cambio de ruta:** al navegar a una ruta nueva, durante unos segundos aparece un **botón/banner flotante** con un objetivo (o a veces una tarea) elegido al azar, en formato "Recuerda... tenés X tiempo para…".
 - Sección dedicada con vista completa de todos los objetivos.
 - No banner permanente. No sidebar fijo. **Si todo es importante, nada lo es.**
+- **Modelo `Goal` (schema v4)** además de `deadline`/`completed` lleva dos campos manuales que alimentan la vista constelación de `/goals`:
+  - `priority: 'low' | 'med' | 'high'` (default `'med'`) — controla tamaño/peso visual.
+  - `progress: 0–100` (default `0`) — avance manual. **Invariante:** `completed === true ⇒ progress = 100`. `GoalsService.save` la fuerza; la UI bloquea el slider cuando `completed`. Migración v3→v4 backfilea: `priority` ausente → `'med'`, `progress` ausente → `completed ? 100 : 0`.
 
 ---
 

@@ -28,7 +28,9 @@ describe('GoalsService', () => {
     const goal = await svc.create('Aprender ruso');
     expect(goal.completed).toBe(false);
     expect(goal.deadline).toBeNull();
-    expect(goal.schemaVersion).toBe(3);
+    expect(goal.schemaVersion).toBe(4);
+    expect(goal.priority).toBe('med');
+    expect(goal.progress).toBe(0);
     expect(goal.position).toBeTypeOf('string');
     const goals = fs.root.dirs.get('goals')!;
     expect(goals.files.has('aprender-ruso.json')).toBe(true);
@@ -74,5 +76,19 @@ describe('GoalsService', () => {
   it('registers goal kind in MigrationsService at construct', async () => {
     await svc.create('x');
     expect(GOAL_KIND).toBe('goal');
+  });
+
+  it('save forces progress to 100 when completed=true', async () => {
+    const goal = await svc.create('X');
+    const saved = await svc.save({ ...goal, completed: true, progress: 30 });
+    expect(saved.progress).toBe(100);
+  });
+
+  it('save clamps progress to [0, 100] when not completed', async () => {
+    const goal = await svc.create('X');
+    const low = await svc.save({ ...goal, progress: -10 });
+    expect(low.progress).toBe(0);
+    const high = await svc.save({ ...goal, progress: 150 });
+    expect(high.progress).toBe(100);
   });
 });

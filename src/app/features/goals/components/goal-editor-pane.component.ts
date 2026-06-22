@@ -9,7 +9,7 @@ import { IconComponent } from '@shared/icon/icon.component';
 import type { IconName } from '@shared/icon/icons.data';
 import { TagPickerComponent } from '@shared/tags/tag-picker.component';
 
-import type { Goal } from '../models/goal.types';
+import { GOAL_PRIORITIES, type Goal, type GoalPriority } from '../models/goal.types';
 import { DeadlinePickerComponent } from './deadline-picker.component';
 
 export type SaveStatus = 'saved' | 'saving' | 'unsaved';
@@ -33,6 +33,10 @@ export class GoalEditorPaneComponent {
   readonly removeGoal = output<void>();
   readonly addTag = output<string>();
   readonly removeTag = output<string>();
+  readonly priorityChange = output<GoalPriority>();
+  readonly progressChange = output<number>();
+
+  protected readonly priorities = GOAL_PRIORITIES;
 
   private readonly i18n = inject(I18nService);
   protected t(key: TranslationKey): string {
@@ -53,5 +57,17 @@ export class GoalEditorPaneComponent {
   }
   protected onCompletedToggle(event: Event): void {
     this.completedChange.emit((event.target as HTMLInputElement).checked);
+  }
+  protected onPrioritySelect(p: GoalPriority): void {
+    if (this.goal().priority !== p) this.priorityChange.emit(p);
+  }
+  protected onProgressInput(event: Event): void {
+    const target = event.target as HTMLInputElement | null;
+    if (!target) return;
+    const n = Number(target.value);
+    if (Number.isFinite(n)) this.progressChange.emit(n);
+  }
+  protected priorityKey(p: GoalPriority): TranslationKey {
+    return `goals.priority.${p}` as TranslationKey;
   }
 }

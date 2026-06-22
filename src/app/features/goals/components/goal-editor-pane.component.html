@@ -47,6 +47,43 @@
     (deadlineChange)="deadlineChange.emit($event)"
   />
 </section>
+<section class="meta">
+  <mc-icon name="star" class="meta-icon" />
+  <span class="label">{{ t('goals.priority.label') }}:</span>
+  <div class="priority-chips" role="radiogroup" [attr.aria-label]="t('goals.priority.label')">
+    @for (p of priorities; track p) {
+      <button
+        type="button"
+        class="chip"
+        role="radio"
+        [class.active]="goal().priority === p"
+        [attr.aria-checked]="goal().priority === p"
+        [disabled]="!editable()"
+        (click)="onPrioritySelect(p)"
+      >
+        {{ t(priorityKey(p)) }}
+      </button>
+    }
+  </div>
+</section>
+<section class="meta">
+  <mc-icon name="hourglass-medium" class="meta-icon" />
+  <span class="label">{{ t('goals.progress.label') }}:</span>
+  <input
+    type="range"
+    class="progress-range"
+    min="0"
+    max="100"
+    step="5"
+    [value]="goal().completed ? 100 : goal().progress"
+    [disabled]="!editable() || goal().completed"
+    [attr.aria-label]="t('goals.progress.label')"
+    (input)="onProgressInput($event)"
+  />
+  <span class="progress-value" aria-live="polite">
+    {{ goal().completed ? 100 : goal().progress }}%
+  </span>
+</section>
 <mc-tag-picker
   [availableTags]="availableTags()"
   [selectedIds]="goal().tags"

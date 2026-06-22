@@ -24,14 +24,17 @@ import { TagsService } from '@core/tags/tags.service';
 import { toSlug, withSuffix } from '@shared/utils/slug';
 
 import {
+  DEFAULT_GOAL_PRIORITY,
   GOAL_FILE_SUFFIX,
   GOAL_KIND,
   GOAL_SCHEMA_VERSION,
   GOALS_DIR,
+  clampProgress,
   emptyDoc,
   type Goal,
   type GoalSummary,
 } from '../models/goal.types';
+import { goalPriorityProgressMigrationStep } from './priority-progress.migration';
 
 const TRASH_DIR = '.mi-cerebro';
 const TRASH_SUBDIR = 'trash';
@@ -55,7 +58,11 @@ export class GoalsService {
     this.migrations.register({
       kind: GOAL_KIND,
       latest: GOAL_SCHEMA_VERSION,
-      steps: [blockIdMigrationStep(1), positionSeedMigrationStep(2)],
+      steps: [
+        blockIdMigrationStep(1),
+        positionSeedMigrationStep(2),
+        goalPriorityProgressMigrationStep(3),
+      ],
     });
   }
 
@@ -110,6 +117,8 @@ export class GoalsService {
       tags: [],
       deadline: null,
       completed: false,
+      priority: DEFAULT_GOAL_PRIORITY,
+      progress: 0,
       createdAt: now,
       updatedAt: now,
       schemaVersion: GOAL_SCHEMA_VERSION,
@@ -138,7 +147,13 @@ export class GoalsService {
   async save(goal: Goal): Promise<Goal> {
     const dir = await this.goalsDir();
     const cleanTags = this.dropStaleTags(goal.tags);
-    const updated: Goal = { ...goal, tags: cleanTags, updatedAt: new Date().toISOString() };
+    const progress = goal.completed ? 100 : clampProgress(goal.progress);
+    const updated: Goal = {
+      ...goal,
+      tags: cleanTags,
+      progress,
+      updatedAt: new Date().toISOString(),
+    };
     const { folder, filename } = splitRelativePath(await this.findPath(dir, goal.id));
     const subdir = await getDirByPath(this.fs, dir, folder);
     if (!subdir) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
@@ -277,6 +292,8 @@ export class GoalsService {
       title: goal.title,
       deadline: goal.deadline,
       completed: goal.completed,
+      priority: goal.priority,
+      progress: goal.progress,
       updatedAt: goal.updatedAt,
       tags: goal.tags,
       folder,

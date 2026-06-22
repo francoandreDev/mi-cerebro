@@ -87,6 +87,45 @@
   font-size: var(--mc-font-size-sm);
   color: var(--mc-fg-muted);
 }
+.priority-chips {
+  display: inline-flex;
+  gap: var(--mc-space-1);
+}
+.chip {
+  background: transparent;
+  color: var(--mc-fg-muted);
+  border: 1px solid var(--mc-border-default);
+  padding: var(--mc-space-1) var(--mc-space-2);
+  border-radius: var(--mc-radius-md);
+  cursor: pointer;
+  font-size: var(--mc-font-size-sm);
+}
+.chip:hover:not(:disabled) {
+  color: var(--mc-fg-primary);
+  border-color: var(--mc-accent-primary);
+}
+.chip.active {
+  background: var(--mc-accent-primary);
+  color: var(--mc-fg-on-accent, #fff);
+  border-color: var(--mc-accent-primary);
+}
+.chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.progress-range {
+  flex: 1;
+  min-width: 120px;
+  max-width: 320px;
+  accent-color: var(--mc-accent-primary);
+}
+.progress-value {
+  font-size: var(--mc-font-size-sm);
+  color: var(--mc-fg-muted);
+  font-variant-numeric: tabular-nums;
+  min-width: 3ch;
+  text-align: right;
+}
 .editor {
   flex: 1;
 }

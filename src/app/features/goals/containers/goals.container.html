@@ -31,6 +31,8 @@
       (removeGoal)="onDelete()"
       (addTag)="onAddTag($event)"
       (removeTag)="onRemoveTag($event)"
+      (priorityChange)="onPriorityChange($event)"
+      (progressChange)="onProgressChange($event)"
     />
   } @else {
     <div class="empty">
