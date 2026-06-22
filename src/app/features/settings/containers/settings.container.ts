@@ -216,6 +216,10 @@ export class SettingsContainer {
     this.settings.setThemeOverride(next);
   }
 
+  protected onToggleCompactWithRemote(event: Event): void {
+    this.settings.setCompactWithRemote((event.target as HTMLInputElement).checked);
+  }
+
   protected async pushRemote(): Promise<void> {
     try {
       await this.remote.pushActiveMain();

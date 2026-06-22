@@ -131,6 +131,48 @@ export function gitPushOne(adapter: GitFsAdapter, cfg: RemoteConfig): SyncOneFn 
   };
 }
 
+// §12 — force-push with a lease. After compaction rewrites history, the
+// next push must be force, but only if the server still points at the
+// oid we last saw. isomorphic-git doesn't ship `--force-with-lease`, so
+// we synthesize it via `onPrePush`: the callback receives the actual
+// server-side oid for the ref; if it doesn't match the lease the caller
+// captured before the rewrite, abort by returning false (push throws).
+// `null` lease = "no expectation" (skip the check; useful when the ref
+// never existed on remote).
+export function gitPushWithLeaseOne(
+  adapter: GitFsAdapter,
+  cfg: RemoteConfig,
+  expectedRemoteOid: string | null,
+): SyncOneFn {
+  return async (ref) => {
+    try {
+      const result = await git.push({
+        fs: adapter,
+        http,
+        dir: REPO_DIR,
+        url: cfg.url,
+        ref,
+        remoteRef: ref,
+        force: true,
+        corsProxy: CORS_PROXY,
+        onAuth: () => ({ username: cfg.token, password: 'x-oauth-basic' }),
+        onPrePush: ({ remoteRef }) => {
+          if (expectedRemoteOid === null) return true;
+          return remoteRef.oid === expectedRemoteOid;
+        },
+      });
+      return classifyPushResult(result, ref);
+    } catch (cause) {
+      const message = String((cause as Error)?.message ?? cause ?? 'unknown');
+      const isLease = /pre-?push|onPrePush|prepush|aborted/i.test(message);
+      return {
+        status: 'error',
+        error: isLease ? `lease-violation:${ref}` : message,
+      };
+    }
+  };
+}
+
 export function gitFetchOne(adapter: GitFsAdapter, cfg: RemoteConfig): SyncOneFn {
   return async (ref) => {
     try {

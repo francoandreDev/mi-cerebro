@@ -159,6 +159,12 @@ Formato por entrada:
 - **Por qué se difirió**: sin uso real no sabemos qué umbral tiene sentido por defecto, ni si el usuario quiere tocarlo. Exponerlo demasiado temprano contamina la UI de settings con knobs que nadie va a usar. 500 es un número conservador (≈3 meses de uso intenso) que se puede cambiar en código si la realidad lo pide.
 - **Target**: §19.16f (pulido del historial) o sin asignar.
 
+### Dev panel para la compactación
+
+- **Qué**: una pantalla `/dev` (o similar) que exponga `CompactionSchedulerService.runOnce({ ignoreThreshold })` como botón para QA, junto a los otros toggles de dev-perf (`DevPerfService`, `dev-variants-switch-tests`). Hoy esos servicios existen sólo como herramientas internas sin UI consumidora.
+- **Por qué se difirió**: la API `runOnce()` ya está cableada (sesión 4 de §12) y desde la consola del navegador alcanza para QA. Construir el `/dev` feature entero —con todas las herramientas dev-perf, no sólo compactación— es un trabajo aparte que no aporta a una persona usuaria final.
+- **Target**: sin asignar.
+
 ### Compactación manual sobre rango específico
 
 - **Qué**: además de la pasada background automática, una acción "Compactar este rango" desde `/history` que permita al usuario seleccionar un span de commits y forzar la fusión, respetando las barreras (tags, `before-restore`, `Merge-Group`).

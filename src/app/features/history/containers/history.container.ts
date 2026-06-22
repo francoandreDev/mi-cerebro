@@ -9,10 +9,11 @@ import {
   signal,
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { ErrorService } from '@core/errors/error.service';
 import { I18nService } from '@core/i18n/i18n.service';
+import { CompactionSchedulerService } from '@core/versioning/compaction-scheduler.service';
 import { RestoreService } from '@core/versioning/restore.service';
 import { IconComponent } from '@shared/icon/icon.component';
 import { McDatePipe } from '@shared/pipes/mc-date.pipe';
@@ -115,7 +116,7 @@ function groupKeyForPath(path: string): GroupKey {
   selector: 'mc-history',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [HistoryService, HistoryDiffService, MilestoneController],
-  imports: [McDatePipe, IconComponent, NgTemplateOutlet],
+  imports: [McDatePipe, IconComponent, NgTemplateOutlet, RouterLink],
   templateUrl: './history.container.html',
   styleUrl: './history.container.css',
 })
@@ -123,6 +124,9 @@ export class HistoryContainer implements OnInit {
   private readonly history = inject(HistoryService);
   private readonly diff = inject(HistoryDiffService);
   private readonly restore = inject(RestoreService);
+  private readonly compactionScheduler = inject(CompactionSchedulerService);
+  protected readonly suggestEnableCompaction =
+    this.compactionScheduler.shouldSuggestEnableCompaction;
   protected readonly milestones = inject(MilestoneController);
   private readonly errors = inject(ErrorService);
   protected readonly i18n = inject(I18nService);

@@ -5,6 +5,19 @@
   </h2>
 </header>
 
+@if (suggestEnableCompaction()) {
+  <aside class="compaction-banner" role="status">
+    <mc-icon name="warning" class="compaction-banner-icon" />
+    <div class="compaction-banner-body">
+      <strong>{{ i18n.t('versioning.history.compactionBanner.title') }}</strong>
+      <p>{{ i18n.t('versioning.history.compactionBanner.body') }}</p>
+    </div>
+    <a class="compaction-banner-cta" routerLink="/settings">
+      {{ i18n.t('versioning.history.compactionBanner.cta') }} →
+    </a>
+  </aside>
+}
+
 <div
   class="split"
   [class.timeline-collapsed]="timelineCollapsed()"

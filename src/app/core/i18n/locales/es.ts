@@ -189,6 +189,10 @@ export const es = {
   'versioning.status.committing': 'Guardando versión…',
   'versioning.status.lastCommit': 'Último commit · hace {n} min',
   'versioning.history.title': 'Historial',
+  'versioning.history.compactionBanner.title': 'Tu historial está creciendo',
+  'versioning.history.compactionBanner.body':
+    'Alguna de tus ramas pasó los 500 commits. La compactación automática está desactivada porque hay un remoto configurado: activá "Compactar aunque haya remoto" en configuración para que se reescriba sola.',
+  'versioning.history.compactionBanner.cta': 'Ir a configuración',
   'versioning.history.placeholder': 'Próximamente: timeline de commits, diff por entidad, restore.',
   'versioning.history.openButton': 'Abrir historial',
   'versioning.history.railLabel': 'Historial',
@@ -1176,6 +1180,9 @@ export const es = {
   'settings.remote.confirmClear':
     '¿Borrar la configuración del remoto? El PAT se va a borrar del disco.',
   'settings.remote.openSync': 'Abrir sincronización completa',
+  'settings.remote.compactWithRemote.label': 'Compactar aunque haya remoto',
+  'settings.remote.compactWithRemote.hint':
+    'La compactación reescribe historia local; el primer push posterior usa --force-with-lease. Si el remoto avanzó por otro lado, el push se aborta sin pisar trabajo ajeno.',
 
   'sync.title': 'Sincronización con GitHub',
   'sync.subtitle': 'Push y fetch de todas las variantes × {main, comments, draft}.',

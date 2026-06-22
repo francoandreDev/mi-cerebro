@@ -1,107 +1,77 @@
-# Handoff — Compactación del historial (sesión 3 de 4)
+# Handoff — Compactación del historial (cierre §12)
 
 ## Contexto
 
-Implementación de PROYECTO.md §12 "Compactación del historial". Sesión 1 dejó el planner puro; sesión 2 el plumbing git + snapshot pre-compactación; **sesión 3 (esta) cablea el scheduler background + threshold + toggle remoto + VER_027**. Sesión 4 cierra con UI (banner `/history`, dev panel) e integración real `--force-with-lease` en `RemoteService`.
+Implementación de PROYECTO.md §12 "Compactación del historial" cerrada en 4 sesiones:
 
-**Antes de tocar nada, leé `PROYECTO.md` §12** (regla CLAUDE.md) y `docs/errors.md` MCB-VER-025/026/027.
+1. **Sesión 1** — planner puro (`compaction-plan.ts`, 17 tests).
+2. **Sesión 2** — plumbing git + snapshot (`compaction.service.ts`, 3 tests).
+3. **Sesión 3** — scheduler background (`compaction-scheduler.service.ts` + helper puro, 12 tests, VER_027, setting `compactWithRemote`).
+4. **Sesión 4** (esta) — banner /history, `pushAllWithLease`, toggle en settings, exposición de `runOnce({ ignoreThreshold })`.
 
-## Lo que ya está (sesiones 1 + 2 + 3)
+PROYECTO.md §12 ya está alineado, no requirió cambios.
 
-### Sesión 1 — planner puro
+## Lo nuevo en sesión 4
 
-`src/app/core/versioning/compaction-plan.ts` — `buildCompactionPlan({ commits, tagOids, now }) → { fuseGroups, preservedOids }`. 17 tests verdes en `compaction-plan.spec.ts`. Respeta barreras (tag / `before-restore:` / `Merge-Group:`) y buckets (daily 8–30d / weekly 31–180d / monthly >180d).
+### Banner en `/history`
 
-### Sesión 2 — plumbing git + snapshot
+- `CompactionSchedulerService` expone:
+  - `maxBranchCommitCount: Signal<number>` — actualizado al final de cada `evaluate()`.
+  - `shouldSuggestEnableCompaction: Signal<boolean>` — `remote.isConfigured() && !cfg.compactWithRemote && maxBranchCommitCount() > 500`.
+- `HistoryContainer` inyecta el scheduler y lee el computed. Si on, renderiza `<aside class="compaction-banner">` con CTA a `/settings`. CSS nuevo en `history.container.css` (~50 líneas, sin tocar lo existente).
+- Sin polling: el conteo se refresca con cada tick del scheduler (1×/h). Bastante para el caso "el log creció pasivamente".
 
-`src/app/core/versioning/compaction.service.ts` con:
+### `pushAllWithLease` en `RemoteService`
 
-- `planForBranch(ref): Promise<CompactionPlan>` — `versioning.logFull(ref)` + `versioning.listTagOids()` → planner.
-- `applyPlan(ref, plan): Promise<{newTipOid, rewrote}>` — snapshot a `.mi-cerebro/pre-compaction/<YYYY-MM-DD-HHmm>/<branch-slug>/plan.json` → walk root→tip (`git.readCommit` + `git.writeCommit`, skip todos los no-últimos de cada grupo, fuse-commit con subject `auto-batch [<faceta>]: N commits (<bucketKey>)` y trailer `Compacted-From: <oid1>..<oidN>`) → `git.writeRef force:true`. Detrás de `FsLockService` + `autosave.flushAll()`. No-op idempotente si `fuseGroups.length === 0`.
-- `versioning.service.ts` ganó `logFull(ref)` (sin cap de depth) y `listTagOids()` (peelea anotados).
-- `VER_025` / `VER_026` cableados en `error.codes.ts` + `i18n/locales/es.ts`.
-- `.mi-cerebro/pre-compaction/` agregado al gitignore default (`versioning.constants.ts`).
-- `compaction.service.spec.ts` — 3 integration tests (fuse trivial 3→1 con trailer, snapshot JSON escrito, idempotencia).
+- `gitPushWithLeaseOne(adapter, cfg, expectedRemoteOid)` en `remote-bulk.ts`: usa `git.push({ force: true, onPrePush })`. `onPrePush` recibe `remoteRef.oid` (lo que el server reporta) y devuelve `false` si no matchea la lease → isomorphic-git aborta el push.
+- `RemoteService.snapshotRemoteOid(ref): Promise<string | null>` — captura el oid del remote-tracking ref _antes_ del rewrite.
+- `RemoteService.pushAllWithLease(leases: Map<ref, expectedOid | null>)` — itera variantes × facetas, pushea cada ref con su lease (o sin si la entrada del map es `null`). Refs no presentes en el map caen al `gitPushOne` normal (no-force).
+- El scheduler captura la lease justo antes de `applyPlan` y batchea el push al final del `evaluate()` cuando alguna rama se reescribió y `compactWithRemote && remote.isConfigured()`.
 
-### Sesión 3 — scheduler background
+### `runOnce({ ignoreThreshold })`
 
-1. **`compaction-scheduler.ts`** — helper puro `decideCompaction(input): CompactionSchedulerDecision`. Orden de skips: `in-flight` → `remote-gated` → `divergent` → `below-threshold` → `throttle` → `run`. 12 tests verdes en `compaction-scheduler.spec.ts`.
+- API añadida al scheduler. Cuando `ignoreThreshold: true`, el `decideCompaction` recibe `commitCount: Number.MAX_SAFE_INTEGER` y `lastRunAt: null` — bypassea threshold + throttle, pero sigue respetando in-flight, remote-divergence y remote-gated.
+- **No hay panel `/dev`.** El handoff de sesión 3 lo mencionaba, pero el feature no existe (`DevPerfService` y `dev-variants-switch-tests.ts` también están sin UI consumidora). Diferido en `docs/deferred.md` ("Dev panel para la compactación"). `runOnce({ ignoreThreshold: true })` se invoca desde la consola del navegador para QA.
 
-   ```ts
-   type CompactionSchedulerDecision =
-     | 'run'
-     | 'skip-below-threshold'
-     | 'skip-throttle'
-     | 'skip-in-flight'
-     | 'skip-remote-gated'
-     | 'skip-divergent';
+### Settings UI
 
-   interface CompactionSchedulerInput {
-     commitCount: number; // per-ref
-     thresholdCommits: number; // 500
-     now: number;
-     lastRunAt: number | null; // workspace-global
-     throttleMs: number; // 24h
-     remoteConfigured: boolean;
-     compactWithRemote: boolean;
-     hasDivergence: boolean;
-     inFlight: boolean; // managed at evaluate() level, no por-ref
-   }
-   ```
+- Toggle "Compactar aunque haya remoto" agregado en `/settings → Versionado remoto`, debajo del enlace a `/sync`. Llama a `settings.setCompactWithRemote()`.
+- I18n keys nuevas en `es.ts`: `settings.remote.compactWithRemote.label/hint`, `versioning.history.compactionBanner.title/body/cta`.
 
-2. **`compaction-state.io.ts`** — read/write `.mi-cerebro/compaction-state.json` (schema v1, `{ schemaVersion, lastRunAt }`). Per-workspace, no per-branch: el throttle 1×/día es global a la pasada; el threshold sí es per-branch.
+### Verificación de aliases (item ⚠️ del handoff anterior)
 
-3. **`compaction-scheduler.service.ts`** — `@Injectable({ providedIn: 'root' })`. En `workspace.isReady()` carga estado y arranca `setInterval(evaluate, 1h)` + corre una pasada inmediata. `evaluate()` enumera variantes × `{main, draft, comments}`, para cada ref calcula `commitCount` con `versioning.logFull(ref)`, pasa por `decideCompaction`, y si `'run'` llama a `compaction.planForBranch` + `applyPlan`. Persiste `lastRunAt` sólo si alguna rama se reescribió.
+- `bun x vitest run` directo **no resuelve** `@core/...` porque no hay `vitest.config.ts` ni paths cargados — el builder `@angular/build:unit-test` los inyecta.
+- **Correr siempre con `bun x ng test --watch=false`** (que invoca el builder). Resuelve los aliases bien y termina sin watch.
+- Resultado limpio en `bun x ng test --watch=false`: 332 passed / 6 failed. Los 6 fallos son **pre-existentes** y ajenos a §12:
+  - `src/app/shared/tree/tree-state.service.spec.ts` (4 fallos) — `localStorage.clear()` undefined en el entorno de test.
+  - `src/app/features/variants/utils/variant-tree.spec.ts` (2 fallos) — connector indent format `"   ├ "` vs `"├ "`.
+  - Ambos vienen de commits `459744f` y `6c63ef6`; no introducidos por sesión 4.
 
-4. **Settings.** `versioning.compactWithRemote: boolean` (default `false`) en `settings.types.ts` con `DEFAULT_SETTINGS` + setter `setCompactWithRemote(enabled)` en `settings.service.ts`. Schema v1 mantenido (merge aditivo con defaults absorbe el campo nuevo sin romper).
+### `bun run build` — verde.
 
-5. **VER_027** — `error.codes.ts` + `ERROR_CODE_META` + `i18n/locales/es.ts` (`errors.ver.027.title` / `errors.ver.027.message`). El scheduler emite `VER_027` (severity warning, recoverable) cuando `remote.isConfigured() && cfg.compactWithRemote && remote.hasDivergence()`, **una sola vez por ventana de 24h** para no spamear el toast en cada tick. `skip-remote-gated` (toggle off) es silencioso por diseño — el banner en `/history` queda para sesión 4.
+## Caveats heredados (siguen vigentes)
 
-6. **App shell.** `CompactionSchedulerService` se inyecta eagerly en `AppShellContainer` (junto con `AutoPushService`) y `.start()` se llama en el constructor; el effect interno espera a `workspace.isReady()`.
+- `git.gc` no existe sobre FS Access: blobs huérfanos quedan en `.git/objects/` hasta un prune manual.
+- Throttle 1×/día es per-workspace, no per-rama: si una rama falla, no se reintenta hasta el día siguiente.
+- `gitPushWithLeaseOne` retorna `error: 'lease-violation:<ref>'` cuando `onPrePush` devuelve `false`. La clasificación es heurística sobre el mensaje de error de isomorphic-git (`pre-?push|onPrePush|prepush|aborted`); si la library cambia el wording, revisar.
 
-### Estado al cierre de sesión 3
+## Diferidos abiertos vinculados a §12
 
-- ✅ `compaction-scheduler.spec.ts` 12/12 verdes en la última corrida local.
-- ⚠️ La corrida completa de `bun x vitest run src/app/core/versioning/compaction` se interrumpió antes de cerrar: el run mostró 29/29 tests de `compaction-plan.spec.ts` + `compaction-scheduler.spec.ts` verdes, pero `compaction.service.spec.ts` falló por `Cannot find package '@core/errors/app-error'` al importar `autosave.service.ts` — alias resolution de vitest, **no relacionado con código de sesión 3** (el spec ya andaba en sesión 2 cerrando 127/127). Verificar en sesión 4 si fue un glitch puntual del runner o cambió algo en `vitest.config`/`tsconfig`. Si persiste, revisar `vite-tsconfig-paths` o alias explícitos en la config de vitest.
-- ⚠️ `bun run build` y `bun x vitest run` (suite completa) no se ejecutaron en esta sesión por interrupción. Correr al abrir sesión 4 antes de tocar nada nuevo.
+(Ya tenían entrada antes; ninguno bloquea el cierre.)
 
-## Lo que falta (sesión 4)
+- Umbral de compactación configurable en settings.
+- Compactación manual sobre rango específico.
+- `.git/` en OPFS para acelerar operaciones git.
+- **Nuevo:** Dev panel para la compactación (`docs/deferred.md`).
 
-1. **UI banner en `/history`.** Cuando `remote.isConfigured() && !cfg.compactWithRemote && hay alguna rama con commitCount > 500`, mostrar banner sugiriendo activar el toggle. Necesita un computed que cruce settings + remote + un counter de commits por familia (el scheduler ya hace este cálculo, exponerlo como signal observable para no duplicarlo).
-
-2. **Force-push real en `RemoteService`.** Hoy `pushAll()` usa el flujo normal; falta una variante `pushAllWithLease()` (o un flag) para que el primer push tras compactación use `--force-with-lease`. La compactación reescribió historia local: sin force, GitHub rechaza el push. Aborto si el remoto avanzó (`force-with-lease` ya lo hace nativo en isomorphic-git, ver `remote-bulk.ts`).
-
-3. **Dev panel para trigger manual.** El `CompactionSchedulerService` ya expone `runOnce()` — exponerlo desde `/dev` (junto a los otros toggles de dev-perf) para forzar una pasada sin esperar el tick horario ni el threshold (probablemente con un flag `ignoreThreshold` para QA).
-
-4. **Settings UI.** Toggle "Compactar aunque haya remoto" en `/settings` → "Versionado remoto". Llamar a `settings.setCompactWithRemote(boolean)`.
-
-5. **Verificar resolución de aliases** del item ⚠️ arriba.
-
-## Patrones del repo a respetar
-
-- **Servicios:** `@Injectable({ providedIn: 'root' })`, signals + effects, OnPush.
-- **Plumbing sin checkout:** `branch-blob-ops.ts`, `tree-ops.ts`. `git.readCommit/writeCommit/writeRef`.
-- **Errores:** `throw new AppError(ERROR_CODES.X, { severity, context, recoverable })`. Códigos en `error.codes.ts` + `ERROR_CODE_META` + i18n.
-- **Persistencia per-workspace:** `.mi-cerebro/<file>.json`, lock vía `FsLockService` cuando toca `.git/`, JSON pretty-printed con `JSON.stringify(_, null, 2)`.
-
-## Caveats heredados
-
-- `git.gc` no existe sobre FS Access (isomorphic-git limitation). Los blobs de commits fusionados quedan huérfanos en `.git/objects/` hasta un prune manual (que probablemente nunca corre). Aceptable para v1; tracking como diferido si el bloat se vuelve real.
-- El throttle 1×/día es per-workspace, no per-rama: una rama que falla no se reintenta hasta el próximo día. Aceptable porque el `applyPlan` ya es por-rama atómico.
-
-## Verificación al cerrar la sesión
-
-```bash
-bun x vitest run
-bun run build
-```
-
-Ambos verdes. Hooks de commit corren eslint + prettier sobre staged; si fallan, fix el error real (no `--no-verify`).
-
-## Reglas duras del repo
+## Reglas duras del repo (recordatorio para el próximo)
 
 - TS strict, sin `any`, signals, OnPush, standalone.
-- Files: soft 200 / hard 300 líneas. `compaction-scheduler.service.ts` queda en ~170; si crece, extraer la enumeración de refs o el reporting de skips.
-- Sin cross-feature imports. Todo este trabajo vive en `core/versioning/` (excepto el toque a `core/settings/` y `layout/containers/app-shell.container.ts`).
+- Files: soft 200 / hard 300 líneas. `compaction-scheduler.service.ts` quedó en ~254; `remote.service.ts` en ~298. Ambos pasan lint (warning, no error).
+- Sin cross-feature imports.
 - UI español, código/commits inglés.
-- Cualquier cambio arquitectónico actualiza `PROYECTO.md` en el mismo commit (regla §4.11.25). Sesión 3 no introduce cambios al doc — el algoritmo respeta la sección "Compactación del historial" ya escrita.
+- Cualquier cambio arquitectónico actualiza `PROYECTO.md` en el mismo commit (§4.11.25). Sesión 4 no introdujo cambios al doc.
+
+## Próximo trabajo
+
+§12 está cerrado. Mirar `PROYECTO.md` §19 (roadmap) para el siguiente paso, o `docs/deferred.md` para ítems sueltos.

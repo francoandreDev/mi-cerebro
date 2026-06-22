@@ -5,6 +5,7 @@
 // 13e-ii — pushAll/fetchAll: iterate variants × {main, comments, draft}.
 
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
+import * as git from 'isomorphic-git';
 
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
@@ -19,7 +20,15 @@ import {
   readRemoteSecrets,
   writeRemoteSecrets,
 } from './remote.config.io';
-import { gitFetchOne, gitPushOne, listRefTargets, runBulk, summarize } from './remote-bulk';
+import {
+  gitFetchOne,
+  gitPushOne,
+  gitPushWithLeaseOne,
+  listRefTargets,
+  remoteTrackingRef,
+  runBulk,
+  summarize,
+} from './remote-bulk';
 import { detectDivergences, type DivergentRef } from './remote-divergence';
 import {
   REMOTE_SECRETS_SCHEMA_VERSION,
@@ -134,6 +143,61 @@ export class RemoteService {
       try {
         const adapter = this.requireGitFs();
         const outcomes = await runBulk(targets, gitPushOne(adapter, cfg));
+        this.lastPushOutcomesSignal.set(outcomes);
+        this.lastBulkAtSignal.set(new Date().toISOString());
+        await this.persistLastPushAt();
+        return this.finalizeBulk(outcomes, ERROR_CODES.NET_004);
+      } finally {
+        this.pushingSignal.set(false);
+      }
+    });
+  }
+
+  // §12 — captures the current remote-tracking oid for `ref` so callers
+  // (compaction scheduler) can later use it as a lease for force-push.
+  // Null when no tracking ref exists yet (ref never been fetched / pushed).
+  async snapshotRemoteOid(ref: string): Promise<string | null> {
+    if (!this.workspace.isReady()) return null;
+    try {
+      const adapter = this.requireGitFs();
+      return await git.resolveRef({
+        fs: adapter,
+        dir: '/',
+        ref: remoteTrackingRef(ref),
+      });
+    } catch {
+      return null;
+    }
+  }
+
+  // §12 — variant of pushAll() that force-pushes each ref with the lease
+  // captured in `leases`. Used by the compaction scheduler after a rewrite:
+  // without `force`, GitHub rejects the diverged history; with the lease,
+  // a remote that advanced behind our back aborts the push instead of
+  // overwriting work. Refs not in `leases` get a regular (non-force) push.
+  async pushAllWithLease(leases: ReadonlyMap<string, string | null>): Promise<BulkSyncResult> {
+    const cfg = this.requireConfigured();
+    const variants = await this.variants.list();
+    const targets = listRefTargets(variants);
+    return this.fsLock.withLock(async () => {
+      this.pushingSignal.set(true);
+      try {
+        const adapter = this.requireGitFs();
+        const outcomes: RefSyncOutcome[] = [];
+        for (const t of targets) {
+          const fn = leases.has(t.ref)
+            ? gitPushWithLeaseOne(adapter, cfg, leases.get(t.ref) ?? null)
+            : gitPushOne(adapter, cfg);
+          const r = await fn(t.ref);
+          outcomes.push({
+            variantId: t.variantId,
+            facet: t.facet,
+            ref: t.ref,
+            remoteRef: t.ref,
+            status: r.status,
+            ...(r.error ? { error: r.error } : {}),
+          });
+        }
         this.lastPushOutcomesSignal.set(outcomes);
         this.lastBulkAtSignal.set(new Date().toISOString());
         await this.persistLastPushAt();

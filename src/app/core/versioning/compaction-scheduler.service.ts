@@ -3,14 +3,20 @@
 // (3 facetas × N familias), and for each one:
 //   1. asks `decideCompaction` whether to run, given the persisted
 //      pass-level throttle and the remote/divergence flags;
-//   2. on 'run', builds a plan via CompactionService and applies it.
+//   2. on 'run', captures the current remote-tracking oid (lease for the
+//      post-rewrite force-push), builds a plan via CompactionService and
+//      applies it.
+//
+// After any rewrite, if a remote is configured and `compactWithRemote` is
+// on, force-pushes with the captured leases. A remote that advanced behind
+// our back aborts the push instead of overwriting work.
 //
 // The pass-level throttle (1×/day per workspace) lives in
 // `.mi-cerebro/compaction-state.json` so a reload doesn't reset it.
 // The threshold (500 commits) is per-branch so a quiet variant doesn't
 // drag the busy one into a rewrite it doesn't need.
 
-import { Injectable, effect, inject } from '@angular/core';
+import { Injectable, computed, effect, inject, signal } from '@angular/core';
 
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
@@ -31,9 +37,13 @@ import { VariantsService } from './variants.service';
 import { stripHeadsPrefix } from './variants.io';
 import { VersioningService } from './versioning.service';
 
-const COMPACTION_THRESHOLD_COMMITS = 500;
+export const COMPACTION_THRESHOLD_COMMITS = 500;
 const COMPACTION_THROTTLE_MS = 24 * 60 * 60 * 1000;
 const COMPACTION_TICK_MS = 60 * 60 * 1000;
+
+export interface RunOnceOptions {
+  readonly ignoreThreshold?: boolean;
+}
 
 @Injectable({ providedIn: 'root' })
 export class CompactionSchedulerService {
@@ -51,6 +61,22 @@ export class CompactionSchedulerService {
   private stateLoaded = false;
   private inFlight = false;
   private divergenceReportedAt: number | null = null;
+
+  // Updated after each pass — drives the /history banner. Tracks the
+  // largest per-ref commit count we've observed so far, so the banner
+  // doesn't blink when one ref crosses the threshold and others don't.
+  private readonly maxBranchCommitCountSignal = signal(0);
+  readonly maxBranchCommitCount = this.maxBranchCommitCountSignal.asReadonly();
+  readonly threshold = COMPACTION_THRESHOLD_COMMITS;
+
+  // Banner-driver. True when remote-gated would skip compaction *and*
+  // some ref already deserves it. Off the rest of the time — quiet UI.
+  readonly shouldSuggestEnableCompaction = computed(
+    () =>
+      this.remote.isConfigured() &&
+      !this.settings.state().versioning.compactWithRemote &&
+      this.maxBranchCommitCountSignal() > COMPACTION_THRESHOLD_COMMITS,
+  );
 
   constructor() {
     // why: scheduler is registered eagerly from the app shell; the actual
@@ -76,11 +102,12 @@ export class CompactionSchedulerService {
     this.divergenceReportedAt = null;
   }
 
-  // Exposed for the dev panel and tests. Runs once unconditionally
-  // through the same gate (so it still honors in-flight + remote gates).
-  async runOnce(): Promise<void> {
+  // Exposed for the dev panel and tests. `ignoreThreshold` lets QA force
+  // a pass on a workspace that hasn't crossed 500 commits yet — same gates
+  // (in-flight, remote-divergence, remote-gated) still apply.
+  async runOnce(options: RunOnceOptions = {}): Promise<void> {
     if (!this.stateLoaded) await this.loadState();
-    await this.evaluate();
+    await this.evaluate({ ignoreThreshold: options.ignoreThreshold ?? false });
   }
 
   private async bootstrap(): Promise<void> {
@@ -101,7 +128,9 @@ export class CompactionSchedulerService {
     this.stateLoaded = true;
   }
 
-  private async evaluate(): Promise<void> {
+  private async evaluate(
+    opts: { ignoreThreshold: boolean } = { ignoreThreshold: false },
+  ): Promise<void> {
     if (this.inFlight) return;
     if (!this.workspace.isReady()) return;
     this.inFlight = true;
@@ -114,30 +143,41 @@ export class CompactionSchedulerService {
         refs.push(stripHeadsPrefix(v.refs.comments));
       }
       let anyRun = false;
+      let maxCount = 0;
+      const leases = new Map<string, string | null>();
       for (const ref of refs) {
-        const ran = await this.evaluateRef(ref);
+        const { ran, commitCount } = await this.evaluateRef(ref, opts, leases);
         anyRun = anyRun || ran;
+        if (commitCount > maxCount) maxCount = commitCount;
       }
-      if (anyRun) await this.persistLastRunAt(Date.now());
+      this.maxBranchCommitCountSignal.set(maxCount);
+      if (anyRun) {
+        await this.persistLastRunAt(Date.now());
+        await this.pushRewrittenRefs(leases);
+      }
     } finally {
       this.inFlight = false;
     }
   }
 
-  private async evaluateRef(ref: string): Promise<boolean> {
+  private async evaluateRef(
+    ref: string,
+    opts: { ignoreThreshold: boolean },
+    leases: Map<string, string | null>,
+  ): Promise<{ ran: boolean; commitCount: number }> {
     let commitCount: number;
     try {
       const log = await this.versioning.logFull(ref);
       commitCount = log.length;
     } catch {
       // ref doesn't exist yet (fresh variant facet) — nothing to compact.
-      return false;
+      return { ran: false, commitCount: 0 };
     }
     const decision = decideCompaction({
-      commitCount,
+      commitCount: opts.ignoreThreshold ? Number.MAX_SAFE_INTEGER : commitCount,
       thresholdCommits: COMPACTION_THRESHOLD_COMMITS,
       now: Date.now(),
-      lastRunAt: this.lastRunAt,
+      lastRunAt: opts.ignoreThreshold ? null : this.lastRunAt,
       throttleMs: COMPACTION_THROTTLE_MS,
       remoteConfigured: this.remote.isConfigured(),
       compactWithRemote: this.settings.state().versioning.compactWithRemote,
@@ -146,21 +186,41 @@ export class CompactionSchedulerService {
     });
     if (decision !== 'run') {
       this.reportSkip(decision);
-      return false;
+      return { ran: false, commitCount };
     }
     try {
+      // why: capture the lease *before* the rewrite so the post-push
+      //      onPrePush check has a stable expectation. After the rewrite
+      //      we can't recover the remote-tracking ref's pre-state.
+      if (this.remote.isConfigured()) {
+        leases.set(ref, await this.remote.snapshotRemoteOid(ref));
+      }
       const plan = await this.compaction.planForBranch(ref);
       const result = await this.compaction.applyPlan(ref, plan);
-      return result.rewrote;
+      return { ran: result.rewrote, commitCount };
     } catch (cause) {
       this.errors.report(cause);
-      return false;
+      return { ran: false, commitCount };
+    }
+  }
+
+  private async pushRewrittenRefs(leases: ReadonlyMap<string, string | null>): Promise<void> {
+    if (leases.size === 0) return;
+    if (!this.remote.isConfigured()) return;
+    if (!this.settings.state().versioning.compactWithRemote) return;
+    try {
+      await this.remote.pushAllWithLease(leases);
+    } catch (cause) {
+      // RemoteService already wrapped lease violations + partial failures
+      // in AppError with NET_004; surface them through ErrorService so the
+      // user sees the toast.
+      this.errors.report(cause);
     }
   }
 
   // VER_027 is the only skip we surface, and only once per remote-divergence
   // window — otherwise the hourly tick would spam the toast. Remote-gated
-  // (toggle off) is silent on purpose: the banner in /history is session 4.
+  // (toggle off) is silent on purpose: the /history banner covers that case.
   private reportSkip(decision: CompactionSchedulerDecision): void {
     if (decision !== 'skip-divergent') return;
     const now = Date.now();
