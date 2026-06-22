@@ -1,0 +1,123 @@
+<div class="artifact" [attr.data-variant]="variant()" [style]="jitterStyle()">
+  <span class="pin" aria-hidden="true" [style.--mc-pin-hue]="pinHue() + 'deg'">
+    <svg viewBox="0 0 24 24">
+      <circle cx="12" cy="9" r="6" class="pin-head" />
+      <ellipse cx="14" cy="7" rx="1.7" ry="1" class="pin-shine" />
+      <path d="M12 14 L12 22" class="pin-needle" />
+    </svg>
+  </span>
+
+  <button type="button" class="body" (click)="onDownload()" [title]="item().originalName">
+    @switch (variant()) {
+      @case ('polaroid') {
+        <span class="washi" aria-hidden="true"></span>
+        <span class="frame polaroid-frame">
+          @if (preview(); as p) {
+            <img class="shot" [src]="p.url" [alt]="item().originalName" />
+          } @else {
+            <span class="shot-fallback"><mc-icon name="image" /></span>
+          }
+        </span>
+        <span class="caption polaroid-caption">{{ item().originalName }}</span>
+      }
+
+      @case ('pdf-sheet') {
+        <span class="sheet pdf-sheet" aria-hidden="true">
+          @if (preview(); as p) {
+            <embed class="pdf-preview" [src]="p.url" type="application/pdf" />
+          } @else {
+            <span class="sheet-lines">
+              <span></span><span></span><span></span><span></span><span></span>
+            </span>
+          }
+          <span class="dog-ear"></span>
+          <span class="stamp">PDF</span>
+        </span>
+        <span class="caption">{{ item().originalName }}</span>
+      }
+
+      @case ('thermal-receipt') {
+        <span class="sheet receipt" aria-hidden="true">
+          <span class="receipt-head">{{ extLabel() }}</span>
+          <span class="receipt-lines">
+            <span></span><span></span><span></span><span></span><span></span><span></span>
+          </span>
+          <span class="receipt-zigzag"></span>
+        </span>
+        <span class="caption">{{ item().originalName }}</span>
+      }
+
+      @case ('envelope') {
+        <span class="envelope" aria-hidden="true">
+          <span class="envelope-flap"></span>
+          <span class="envelope-label">
+            <mc-icon name="package" />
+            <span>{{ extLabel() }}</span>
+          </span>
+        </span>
+        <span class="caption">{{ item().originalName }}</span>
+      }
+
+      @case ('cassette') {
+        <span class="cassette" aria-hidden="true">
+          <span class="reel reel-l"></span>
+          <span class="reel reel-r"></span>
+          <span class="cassette-window"></span>
+          <span class="cassette-label">{{ extLabel() }}</span>
+        </span>
+        <span class="caption">{{ item().originalName }}</span>
+      }
+
+      @case ('vhs') {
+        <span class="vhs" aria-hidden="true">
+          <span class="vhs-window"></span>
+          <span class="vhs-label">
+            <span class="vhs-tape">{{ extLabel() }}</span>
+          </span>
+        </span>
+        <span class="caption">{{ item().originalName }}</span>
+      }
+
+      @default {
+        <span class="postit" aria-hidden="true">
+          <mc-icon name="paperclip" class="postit-icon" />
+          <span class="postit-ext">{{ extLabel() }}</span>
+        </span>
+        <span class="caption">{{ item().originalName }}</span>
+      }
+    }
+
+    <span class="bytes">{{ sizeLabel() }}</span>
+  </button>
+
+  @if (editable()) {
+    <div class="ops">
+      <button
+        type="button"
+        class="ghost"
+        [disabled]="!canMoveUp()"
+        (click)="onMoveUp($event)"
+        [attr.aria-label]="t('files.items.moveUp')"
+      >
+        <mc-icon name="arrow-up" />
+      </button>
+      <button
+        type="button"
+        class="ghost"
+        [disabled]="!canMoveDown()"
+        (click)="onMoveDown($event)"
+        [attr.aria-label]="t('files.items.moveDown')"
+      >
+        <mc-icon name="arrow-down" />
+      </button>
+      <button
+        type="button"
+        class="ghost mc-hover-wiggle"
+        (click)="onRemove($event)"
+        [attr.aria-label]="t('files.items.delete')"
+      >
+        <mc-icon name="trash" />
+      </button>
+    </div>
+  }
+</div>

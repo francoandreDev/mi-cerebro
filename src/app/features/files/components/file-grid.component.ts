@@ -1,270 +1,27 @@
-import { ChangeDetectionStrategy, Component, inject, input, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { IconComponent } from '@shared/icon/icon.component';
-import type { IconName } from '@shared/icon/icons.data';
 import { MC_INTERNAL_DND_TYPE, hasInternalDnd } from '@shared/utils/dnd';
 
-import {
-  formatBytes,
-  iconForMime,
-  type FileCollection,
-  type FileItem,
-} from '../models/file-collection.types';
+import type { FileCollection, FileItem } from '../models/file-collection.types';
+import { FileArtifactComponent, type FilePreview } from './file-artifact.component';
 
 @Component({
   selector: 'mc-file-grid',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent],
-  template: `
-    <header class="header">
-      <h3>{{ t('files.items.title') }} ({{ collection().items.length }})</h3>
-      @if (editable()) {
-        <div class="actions">
-          <button type="button" class="primary mc-hover-grow" (click)="onPick()">
-            <mc-icon name="plus" />
-            <span>{{ t('files.items.add') }}</span>
-          </button>
-        </div>
-      }
-    </header>
-    @if (editable()) {
-      <div
-        class="dropzone"
-        [class.over]="dragOver()"
-        (dragover)="onDragOver($event)"
-        (dragleave)="onDragLeave()"
-        (drop)="onDrop($event)"
-      >
-        <mc-icon name="upload-simple" class="dropzone-icon mc-anim-float" />
-        <span>{{ t('files.items.dropHint') }}</span>
-      </div>
-      <input #picker type="file" multiple hidden (change)="onPickerChange($event)" />
-    }
-    @if (orderedItems().length === 0) {
-      <p class="empty">
-        <mc-icon name="folder-open" class="empty-icon mc-anim-float" />
-        <span>{{ t('files.items.empty') }}</span>
-      </p>
-    } @else {
-      <ul class="grid">
-        @for (item of orderedItems(); track item.id; let i = $index) {
-          <li
-            class="cell"
-            [class.drop-target]="dropTargetId() === item.id"
-            [class.dragging]="draggingId() === item.id"
-            [attr.draggable]="editable() ? true : null"
-            (dragstart)="onItemDragStart($event, item.id)"
-            (dragover)="onItemDragOver($event, item.id)"
-            (dragleave)="onItemDragLeave(item.id)"
-            (drop)="onItemDrop($event, item.id)"
-            (dragend)="onItemDragEnd()"
-          >
-            <button type="button" class="card" (click)="download.emit(item.id)">
-              @if (previewFor(item); as preview) {
-                @if (preview.kind === 'image') {
-                  <img class="preview" [src]="preview.url" [alt]="item.originalName" />
-                } @else if (preview.kind === 'pdf') {
-                  <embed class="preview pdf" [src]="preview.url" type="application/pdf" />
-                }
-              } @else {
-                <mc-icon class="icon" [name]="iconFor(item)" />
-              }
-              <span class="name" [title]="item.originalName">{{ item.originalName }}</span>
-              <span class="bytes">{{ formatSize(item.bytes) }}</span>
-            </button>
-            @if (editable()) {
-              <div class="ops">
-                <button
-                  type="button"
-                  class="ghost"
-                  [disabled]="i === 0"
-                  (click)="moveUp.emit(item.id)"
-                  [attr.aria-label]="t('files.items.moveUp')"
-                >
-                  <mc-icon name="arrow-up" />
-                </button>
-                <button
-                  type="button"
-                  class="ghost"
-                  [disabled]="i === orderedItems().length - 1"
-                  (click)="moveDown.emit(item.id)"
-                  [attr.aria-label]="t('files.items.moveDown')"
-                >
-                  <mc-icon name="arrow-down" />
-                </button>
-                <button
-                  type="button"
-                  class="ghost mc-hover-wiggle"
-                  (click)="remove.emit(item.id)"
-                  [attr.aria-label]="t('files.items.delete')"
-                >
-                  <mc-icon name="trash" />
-                </button>
-              </div>
-            }
-          </li>
-        }
-      </ul>
-    }
-  `,
-  styles: `
-    :host {
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      padding: var(--mc-space-3);
-      gap: var(--mc-space-3);
-      overflow-y: auto;
-    }
-    .header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .header h3 {
-      margin: 0;
-      font-size: var(--mc-font-size-md);
-      color: var(--mc-fg-muted);
-    }
-    .primary {
-      background: var(--mc-accent-primary);
-      color: var(--mc-accent-fg);
-      border: none;
-      padding: var(--mc-space-1) var(--mc-space-3);
-      border-radius: var(--mc-radius-md);
-      cursor: pointer;
-      font-size: var(--mc-font-size-sm);
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .dropzone {
-      border: 1px dashed var(--mc-border-default);
-      border-radius: var(--mc-radius-md);
-      padding: var(--mc-space-3);
-      color: var(--mc-fg-muted);
-      text-align: center;
-      font-size: var(--mc-font-size-sm);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: var(--mc-space-2);
-    }
-    .dropzone-icon {
-      font-size: 1.2em;
-      color: var(--mc-accent-primary);
-      opacity: 0.7;
-    }
-    .dropzone.over {
-      border-color: var(--mc-accent-primary);
-      color: var(--mc-accent-primary);
-      background: var(--mc-bg-elevated);
-    }
-    .empty {
-      color: var(--mc-fg-muted);
-      font-size: var(--mc-font-size-sm);
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: var(--mc-space-2);
-      padding: var(--mc-space-4) 0;
-    }
-    .empty-icon {
-      font-size: 2.5rem;
-      color: var(--mc-accent-primary);
-      opacity: 0.55;
-    }
-    .grid {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: var(--mc-space-3);
-    }
-    .cell {
-      display: flex;
-      flex-direction: column;
-      gap: var(--mc-space-1);
-    }
-    .cell[draggable='true'] {
-      cursor: grab;
-    }
-    .cell.dragging {
-      opacity: 0.4;
-    }
-    .cell.drop-target > .card {
-      outline: 2px solid var(--mc-accent-primary);
-      outline-offset: 2px;
-    }
-    .card {
-      background: var(--mc-bg-elevated);
-      border: 1px solid var(--mc-border-default);
-      border-radius: var(--mc-radius-md);
-      padding: var(--mc-space-3);
-      cursor: pointer;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: var(--mc-space-1);
-      align-items: center;
-      text-align: center;
-      color: var(--mc-fg-primary);
-    }
-    .card:hover {
-      border-color: var(--mc-accent-primary);
-    }
-    .icon {
-      font-size: 2rem;
-      line-height: 1;
-    }
-    .preview {
-      width: 100%;
-      aspect-ratio: 1;
-      object-fit: cover;
-      border-radius: var(--mc-radius-sm);
-      background: var(--mc-bg-base);
-      pointer-events: none;
-    }
-    .preview.pdf {
-      object-fit: contain;
-    }
-    .name {
-      width: 100%;
-      font-size: var(--mc-font-size-sm);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .bytes {
-      color: var(--mc-fg-muted);
-      font-size: var(--mc-font-size-xs);
-    }
-    .ops {
-      display: flex;
-      justify-content: center;
-      gap: 2px;
-    }
-    .ghost {
-      background: transparent;
-      border: 0;
-      color: var(--mc-fg-muted);
-      cursor: pointer;
-      padding: 2px 6px;
-      border-radius: var(--mc-radius-sm);
-    }
-    .ghost:hover:not(:disabled) {
-      color: var(--mc-fg-primary);
-      background: var(--mc-bg-base);
-    }
-    .ghost:disabled {
-      opacity: 0.3;
-      cursor: not-allowed;
-    }
-  `,
+  imports: [IconComponent, FileArtifactComponent],
+  templateUrl: './file-grid.component.html',
+  styleUrl: './file-grid.component.css',
 })
 export class FileGridComponent {
   readonly collection = input.required<FileCollection>();
@@ -282,12 +39,7 @@ export class FileGridComponent {
     return this.i18n.t(key);
   }
 
-  protected readonly dragOverState = { value: false };
-  protected dragOver(): boolean {
-    return this.dragOverState.value;
-  }
-
-  protected orderedItems(): readonly FileItem[] {
+  protected readonly orderedItems = computed<readonly FileItem[]>(() => {
     const c = this.collection();
     const byId = new Map(c.items.map((i) => [i.id, i] as const));
     const ordered: FileItem[] = [];
@@ -300,13 +52,13 @@ export class FileGridComponent {
     }
     for (const item of byId.values()) ordered.push(item);
     return ordered;
-  }
+  });
 
-  protected iconFor(item: FileItem): IconName {
-    return iconForMime(item.mime, item.originalName);
-  }
+  // why: with very few items the cork board looks empty; tilt only when there
+  //      are enough items to read as a real collage.
+  protected readonly applyJitter = computed(() => this.orderedItems().length >= 3);
 
-  protected previewFor(item: FileItem): { kind: 'image' | 'pdf'; url: string } | null {
+  protected previewFor(item: FileItem): FilePreview | null {
     const url = this.previews()[item.id];
     if (!url) return null;
     if (item.mime.startsWith('image/')) return { kind: 'image', url };
@@ -314,38 +66,33 @@ export class FileGridComponent {
     return null;
   }
 
-  protected formatSize(bytes: number): string {
-    return formatBytes(bytes);
-  }
+  protected readonly dragOver = signal(false);
+  protected readonly draggingId = signal<string | null>(null);
+  protected readonly dropTargetId = signal<string | null>(null);
 
   protected onPick(): void {
     const input = document.querySelector<HTMLInputElement>('mc-file-grid input[type="file"]');
     input?.click();
   }
-
   protected onPickerChange(event: Event): void {
     const input = event.target as HTMLInputElement;
     const files = input.files ? Array.from(input.files) : [];
     if (files.length > 0) this.addFiles.emit(files);
     input.value = '';
   }
-
   protected onDragOver(event: DragEvent): void {
     event.preventDefault();
-    this.dragOverState.value = true;
+    this.dragOver.set(true);
   }
   protected onDragLeave(): void {
-    this.dragOverState.value = false;
+    this.dragOver.set(false);
   }
   protected onDrop(event: DragEvent): void {
     event.preventDefault();
-    this.dragOverState.value = false;
+    this.dragOver.set(false);
     const files = event.dataTransfer ? Array.from(event.dataTransfer.files) : [];
     if (files.length > 0) this.addFiles.emit(files);
   }
-
-  protected readonly draggingId = signal<string | null>(null);
-  protected readonly dropTargetId = signal<string | null>(null);
 
   protected onItemDragStart(event: DragEvent, id: string): void {
     if (!this.editable() || !event.dataTransfer) return;

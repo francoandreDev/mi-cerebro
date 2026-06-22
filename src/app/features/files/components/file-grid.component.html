@@ -1,0 +1,83 @@
+<header class="head">
+  <h3 class="head-title">
+    <mc-icon name="folder-open" />
+    <span>{{ t('files.items.title') }} ({{ collection().items.length }})</span>
+  </h3>
+  @if (editable()) {
+    <button type="button" class="primary mc-hover-grow" (click)="onPick()">
+      <mc-icon name="plus" />
+      <span>{{ t('files.items.add') }}</span>
+    </button>
+  }
+</header>
+
+<div
+  class="board"
+  [class.dragover]="dragOver()"
+  (dragover)="onDragOver($event)"
+  (dragleave)="onDragLeave()"
+  (drop)="onDrop($event)"
+>
+  @if (orderedItems().length === 0) {
+    <div class="board-empty">
+      <span class="empty-pin" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <circle cx="12" cy="9" r="6" fill="#c44545" />
+          <ellipse cx="14" cy="7" rx="1.7" ry="1" fill="rgba(255,255,255,0.55)" />
+          <path
+            d="M12 14 L12 22"
+            stroke="#2b2b2b"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            fill="none"
+            opacity="0.6"
+          />
+        </svg>
+      </span>
+      <p>{{ t('files.items.empty') }}</p>
+      @if (editable()) {
+        <span class="empty-hint">{{ t('files.items.dropHint') }}</span>
+      }
+    </div>
+  } @else {
+    <ul class="board-grid">
+      @for (item of orderedItems(); track item.id; let i = $index) {
+        <li
+          class="slot"
+          [class.drop-target]="dropTargetId() === item.id"
+          [class.dragging]="draggingId() === item.id"
+          [attr.draggable]="editable() ? true : null"
+          (dragstart)="onItemDragStart($event, item.id)"
+          (dragover)="onItemDragOver($event, item.id)"
+          (dragleave)="onItemDragLeave(item.id)"
+          (drop)="onItemDrop($event, item.id)"
+          (dragend)="onItemDragEnd()"
+        >
+          <mc-file-artifact
+            [item]="item"
+            [preview]="previewFor(item)"
+            [editable]="editable()"
+            [canMoveUp]="i > 0"
+            [canMoveDown]="i < orderedItems().length - 1"
+            [jitter]="applyJitter()"
+            (download)="download.emit(item.id)"
+            (remove)="remove.emit(item.id)"
+            (moveUp)="moveUp.emit(item.id)"
+            (moveDown)="moveDown.emit(item.id)"
+          />
+        </li>
+      }
+    </ul>
+  }
+
+  @if (editable()) {
+    <div class="dropzone" [class.over]="dragOver()">
+      <mc-icon name="upload-simple" class="dropzone-icon mc-anim-float" />
+      <span>{{ t('files.items.dropHint') }}</span>
+    </div>
+  }
+</div>
+
+@if (editable()) {
+  <input type="file" multiple hidden (change)="onPickerChange($event)" />
+}

@@ -286,6 +286,26 @@ Formato por entrada:
 - **Por qué se difirió**: la sesión cerró con botones explícitos "Hoy / Semana / Backlog" en cada card que ya cubren la operación de forma accesible por teclado (tab al botón + enter). DnD nativo agrega un helper compartido en `shared/utils/dnd.ts` + manejo de dragover/drop a nivel column + teclas Shift+flecha que conviene resolver junto con la misma pieza en `/lists` (drag de ítems dentro del detalle) para no duplicar el patrón.
 - **Target**: sin asignar — abrir junto al rediseño de `/lists` o cuando aparezca dolor real.
 
+## Archivos (origen: rediseño /files — tablero de evidencia)
+
+### Hilos entre items relacionados
+
+- **Qué**: el rediseño "cork board" sugiere visualmente la idea de items vinculados con hilos. Hoy no hay modelo de relaciones entre `FileItem`s, así que la pieza queda como puro decorado pendiente.
+- **Por qué se difirió**: introducir relaciones requiere extender `FileCollection`/`FileItem` con un grafo (id origen, id destino, opcional label), persistirlo en `_collection.json`, manejar deletes (limpiar hilos huérfanos), y diseñar UX para crear/borrar el hilo. Es un feature autónoma de tamaño propio, no parte del cambio visual.
+- **Target**: sin asignar — abrir si aparece demanda real de "agrupar archivos relacionados dentro de una colección".
+
+### Navegación por carpetas / DnD entre carpetas en /files
+
+- **Qué**: el `files-index-rail` viejo exponía un árbol jerárquico de carpetas con DnD para mover colecciones entre carpetas, crear/renombrar carpetas y filtro de búsqueda. Con el rediseño "cork shelf", `/files` muestra una grilla plana de colecciones (ordenada por `position`) y no expone esa jerarquía visualmente.
+- **Por qué se difirió**: la pieza de árbol jerárquico chocaba con la metáfora de tablero (un corcho no tiene "subcarpetas"). El backend (`FoldersService`, `FilesService.moveCollectionToFolder`, `setPosition`) sigue intacto; lo único que falta es UI. La sidebar global todavía expone el árbol completo con DnD para quien lo necesite mientras tanto.
+- **Target**: sin asignar — abrir si aparece dolor real de "tengo demasiadas colecciones planas y necesito agruparlas desde la propia página".
+
+### Posición libre real (drag x/y) en el tablero
+
+- **Qué**: en lugar de grilla con jitter determinista, dejar que el usuario arrastre cada artefacto a una coordenada arbitraria del corcho y persistirla.
+- **Por qué se difirió**: implica nuevo `x,y` por item en el schema (migración + bump de `FILE_COLLECTION_SCHEMA_VERSION`), resolver overflow/colisiones al resize de ventana, hit-test de drop sobre el board, y modo "auto-acomodar" para colecciones nuevas. El jitter determinista ya transmite el feeling sin tocar disco ni schema.
+- **Target**: sin asignar.
+
 ## Escritos (origen: rediseño /writings)
 
 ### Typewriter mode dentro del editor full-bleed

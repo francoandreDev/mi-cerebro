@@ -1,52 +1,98 @@
-<div class="layout">
-  <mc-files-index-rail />
-  <div class="workbench">
-    @if (active(); as collection) {
-      @if (lock.showForeign()) {
-        <mc-lock-banner
-          kind="foreign"
-          [title]="t('files.lock.foreign.title')"
-          [message]="t('files.lock.foreign.message')"
-          [readonlyLabel]="t('files.lock.foreign.readonly')"
-          [takeoverLabel]="t('files.lock.foreign.takeover')"
-          (readonly)="lock.acceptReadonly()"
-          (takeover)="lock.takeover()"
-        />
-      } @else if (lock.showEvicted()) {
-        <mc-lock-banner
-          kind="evicted"
-          [title]="t('files.lock.evicted.title')"
-          [message]="t('files.lock.evicted.message')"
-          [dismissLabel]="t('files.lock.evicted.dismiss')"
-          (dismiss)="lock.dismissEvicted()"
-        />
-      }
-      <mc-file-collection-meta-bar
-        [collection]="collection"
-        [status]="status()"
-        [availableTags]="tags()"
-        [editable]="lock.editable()"
-        (titleChange)="onTitleChange($event)"
-        (removeCollection)="onDeleteCollection()"
-        (addTag)="onAddTag($event)"
-        (removeTag)="onRemoveTag($event)"
+@if (active(); as collection) {
+  <div class="workbench full">
+    <button
+      type="button"
+      class="back"
+      [attr.aria-label]="t('files.backToIndex')"
+      [title]="t('files.backToIndex')"
+      (click)="onBackToIndex()"
+    >
+      <mc-icon name="arrow-left" />
+      <span>{{ t('files.backToIndex') }}</span>
+    </button>
+    @if (lock.showForeign()) {
+      <mc-lock-banner
+        kind="foreign"
+        [title]="t('files.lock.foreign.title')"
+        [message]="t('files.lock.foreign.message')"
+        [readonlyLabel]="t('files.lock.foreign.readonly')"
+        [takeoverLabel]="t('files.lock.foreign.takeover')"
+        (readonly)="lock.acceptReadonly()"
+        (takeover)="lock.takeover()"
       />
-      <mc-file-grid
-        [collection]="collection"
-        [previews]="previewUrls()"
-        [editable]="lock.editable()"
-        (addFiles)="onAddFiles($event)"
-        (download)="onDownload($event)"
-        (remove)="onRemoveItem($event)"
-        (moveUp)="onMoveUp($event)"
-        (moveDown)="onMoveDown($event)"
-        (reorder)="onReorder($event)"
+    } @else if (lock.showEvicted()) {
+      <mc-lock-banner
+        kind="evicted"
+        [title]="t('files.lock.evicted.title')"
+        [message]="t('files.lock.evicted.message')"
+        [dismissLabel]="t('files.lock.evicted.dismiss')"
+        (dismiss)="lock.dismissEvicted()"
       />
-    } @else {
-      <div class="empty">
-        <mc-icon name="folder-open" class="empty-icon mc-anim-float" />
-        <span>{{ t('files.selectOne') }}</span>
-      </div>
     }
+    <mc-file-collection-meta-bar
+      [collection]="collection"
+      [status]="status()"
+      [availableTags]="tags()"
+      [editable]="lock.editable()"
+      (titleChange)="onTitleChange($event)"
+      (removeCollection)="onDeleteCollection()"
+      (addTag)="onAddTag($event)"
+      (removeTag)="onRemoveTag($event)"
+    />
+    <mc-file-grid
+      [collection]="collection"
+      [previews]="previewUrls()"
+      [editable]="lock.editable()"
+      (addFiles)="onAddFiles($event)"
+      (download)="onDownload($event)"
+      (remove)="onRemoveItem($event)"
+      (moveUp)="onMoveUp($event)"
+      (moveDown)="onMoveDown($event)"
+      (reorder)="onReorder($event)"
+    />
   </div>
-</div>
+} @else {
+  <div class="shelf-wrap">
+    <header class="shelf-head">
+      <h2>{{ t('files.title') }}</h2>
+      <button type="button" class="primary mc-hover-grow" (click)="onCreateCollection()">
+        <mc-icon name="plus" />
+        <span>{{ t('files.shelf.newCollection') }}</span>
+      </button>
+    </header>
+    <div class="shelf-board">
+      @if (filesService.summaries().length === 0) {
+        <div class="shelf-empty">
+          <span class="empty-pin" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="9" r="6" fill="#c44545" />
+              <ellipse cx="14" cy="7" rx="1.7" ry="1" fill="rgba(255,255,255,0.55)" />
+              <path
+                d="M12 14 L12 22"
+                stroke="#2b2b2b"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                fill="none"
+                opacity="0.6"
+              />
+            </svg>
+          </span>
+          <p>{{ t('files.shelf.empty') }}</p>
+        </div>
+      } @else {
+        <ul class="shelf-grid">
+          @for (summary of filesService.summaries(); track summary.id) {
+            <li class="shelf-slot">
+              <mc-file-shelf-card
+                [summary]="summary"
+                [availableTags]="tags()"
+                [untitledLabel]="t('files.untitledTitle')"
+                (open)="onOpenCollection($event)"
+              />
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  </div>
+}

@@ -26,9 +26,9 @@ import {
   type FileCollectionSaveStatus,
 } from '../components/file-collection-meta-bar.component';
 import { FileGridComponent } from '../components/file-grid.component';
+import { FileShelfCardComponent } from '../components/file-shelf-card.component';
 import { FILE_KIND, type FileCollection } from '../models/file-collection.types';
 import { FilesService } from '../services/files.service';
-import { FilesIndexRailContainer } from './files-index-rail.container';
 
 @Component({
   selector: 'mc-files',
@@ -36,9 +36,9 @@ import { FilesIndexRailContainer } from './files-index-rail.container';
   imports: [
     FileCollectionMetaBarComponent,
     FileGridComponent,
+    FileShelfCardComponent,
     IconComponent,
     LockBannerComponent,
-    FilesIndexRailContainer,
   ],
   templateUrl: './files.container.html',
   styleUrl: './files.container.css',
@@ -46,7 +46,7 @@ import { FilesIndexRailContainer } from './files-index-rail.container';
 export class FilesContainer {
   readonly id = input<string | undefined>(undefined);
 
-  private readonly filesService = inject(FilesService);
+  protected readonly filesService = inject(FilesService);
   private readonly autosave = inject(AutosaveService);
   private readonly workspace = inject(WorkspaceService);
   private readonly tagsService = inject(TagsService);
@@ -138,6 +138,24 @@ export class FilesContainer {
     const next = { ...current, tags: current.tags.filter((t) => t !== id) };
     this.active.set(next);
     this.scheduleSave(next);
+  }
+
+  protected async onBackToIndex(): Promise<void> {
+    await this.router.navigate(['/files']);
+  }
+
+  protected async onOpenCollection(id: string): Promise<void> {
+    await this.router.navigate(['/files', id]);
+  }
+
+  protected async onCreateCollection(): Promise<void> {
+    try {
+      await this.workspace.ensureWritable();
+      const created = await this.filesService.createCollection('');
+      await this.router.navigate(['/files', created.id]);
+    } catch (e) {
+      this.errors.report(this.withReauthIfNeeded(e));
+    }
   }
 
   protected async onDeleteCollection(): Promise<void> {
