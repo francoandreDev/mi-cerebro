@@ -12,24 +12,24 @@ Una idea distinta por página. No replicar el mismo patrón: cada entidad tiene 
 
 ## Estado por página
 
-| Ruta         | Idea del redesign                                                           | Estado |
-| ------------ | --------------------------------------------------------------------------- | ------ |
-| `/books`     | Estantería + page-turn 3D flip con paper bend en lectura                    | ✅     |
-| `/images`    | Gallery wall index + justified inner grid                                   | ✅     |
-| `/trash`     | Grid visual de cards con filtro por kind, búsqueda y modal detalle          | ✅     |
-| `/settings`  | Tabs verticales sticky + panel (sección activa única)                       | ✅     |
-| `/history`   | (heredado, sin section pane)                                                | ✅     |
-| `/variants`  | (heredado, sin section pane)                                                | ✅     |
-| `/notes`     | Muro de stickies (CSS columns) + card "nueva" inline + chips de filtro      | ✅     |
-| `/tasks`     | Tres columnas por horizonte (Hoy / Esta semana / Backlog) + búsqueda local  | ✅     |
-| `/goals`     | pendiente                                                                   | ⏳     |
-| `/lists`     | pendiente                                                                   | ⏳     |
-| `/writings`  | pendiente                                                                   | ⏳     |
-| `/files`     | Rail interno fijo (260px) con árbol jerárquico + DnD + workbench full-width | ✅     |
-| `/music`     | 3 zonas: playlists rail / biblioteca densa / now playing + cola             | ✅     |
-| `/calendar`  | Wallboard: grid mes/año + columna cards colapsables por kind + modal de día | ✅     |
-| `/reminders` | pendiente                                                                   | ⏳     |
-| `/sync`      | pendiente                                                                   | ⏳     |
+| Ruta         | Idea del redesign                                                               | Estado |
+| ------------ | ------------------------------------------------------------------------------- | ------ |
+| `/books`     | Estantería + page-turn 3D flip con paper bend en lectura                        | ✅     |
+| `/images`    | Gallery wall index + justified inner grid                                       | ✅     |
+| `/trash`     | Grid visual de cards con filtro por kind, búsqueda y modal detalle              | ✅     |
+| `/settings`  | Tabs verticales sticky + panel (sección activa única)                           | ✅     |
+| `/history`   | (heredado, sin section pane)                                                    | ✅     |
+| `/variants`  | (heredado, sin section pane)                                                    | ✅     |
+| `/notes`     | Muro de stickies (CSS columns) + card "nueva" inline + chips de filtro          | ✅     |
+| `/tasks`     | Tres columnas por horizonte (Hoy / Esta semana / Backlog) + búsqueda local      | ✅     |
+| `/goals`     | Wallboard tipográfico: posters grandes en grid auto-fit + filtros + hero create | ✅     |
+| `/lists`     | pendiente                                                                       | ⏳     |
+| `/writings`  | pendiente                                                                       | ⏳     |
+| `/files`     | Rail interno fijo (260px) con árbol jerárquico + DnD + workbench full-width     | ✅     |
+| `/music`     | 3 zonas: playlists rail / biblioteca densa / now playing + cola                 | ✅     |
+| `/calendar`  | Wallboard: grid mes/año + columna cards colapsables por kind + modal de día     | ✅     |
+| `/reminders` | pendiente                                                                       | ⏳     |
+| `/sync`      | pendiente                                                                       | ⏳     |
 
 ## Checklist al migrar una página
 

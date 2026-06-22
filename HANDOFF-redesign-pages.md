@@ -96,9 +96,11 @@ Riesgos:
 - "Esta semana" ambigua: definir explícitamente como "próximos 7 días desde hoy" (no "hasta domingo"). Documentar en código.
 - Tareas recurrentes — fuera de alcance acá; si el modelo ya las tiene, dejarlas caer en su bucket por la próxima ocurrencia.
 
-## Sesión 3 — `/goals` (wallboard tipográfico)
+## Sesión 3 — `/goals` (wallboard tipográfico) ✅
 
-**Idea.** Cada objetivo es una card grande tipográfica (título enorme, una línea de "por qué"/subtítulo, opcional barra de progreso o métricas). Grid de 2-3 columnas. Sensación "póster". Click → modal o ruta de detalle.
+**Cerrado.** Wallboard en `GoalsWallContainer` (ruta `''`); el editor sigue en `GoalsContainer` (ruta `:id`). Cada meta es un `goal-poster` (título tipográfico grande con `clamp()`, checkbox toggle-completed, badge "Lograda" / "Plazo vencido" / "Vence hoy/mañana/N d", tags chips, delete on hover) en grid `repeat(auto-fit, minmax(360px, 1fr))`. Header con búsqueda local + toggle "ocultar completadas" + chips de tags usados (toggle por click). `new-goal-card` inline al frente del grid; cuando no hay metas se muestra como hero (`hero=true`) con headline "¿Qué querés lograr?". Prefix `/goals` agregado a `PANE_HIDDEN_PREFIXES`. i18n nuevo bajo `goals.wall.*`. Build + lint verdes; tests pasan salvo los 6 pre-existentes de `variant-tree.spec`.
+
+**Idea original.** Cada objetivo es una card grande tipográfica (título enorme, una línea de "por qué"/subtítulo, opcional barra de progreso o métricas). Grid de 2-3 columnas. Sensación "póster". Click → modal o ruta de detalle.
 
 Subpasos:
 

@@ -1,0 +1,90 @@
+<section class="wall">
+  <header class="wall-head">
+    <h1 class="wall-title">
+      <mc-icon name="target" class="title-icon" aria-hidden="true" />
+      {{ t('goals.title') }}
+    </h1>
+    <div class="wall-controls">
+      <div class="search">
+        <mc-icon name="magnifying-glass" class="search-icon" aria-hidden="true" />
+        <input
+          type="search"
+          class="search-input"
+          [value]="query()"
+          [attr.aria-label]="t('goals.wall.searchAria')"
+          [placeholder]="t('goals.wall.searchPlaceholder')"
+          (input)="onQueryInput($event)"
+        />
+        @if (query()) {
+          <button
+            type="button"
+            class="search-clear mc-hover-wiggle"
+            [attr.aria-label]="t('goals.wall.searchClear')"
+            (click)="onClearQuery()"
+          >
+            <mc-icon name="x" />
+          </button>
+        }
+      </div>
+      <button
+        type="button"
+        class="toggle"
+        [class.active]="hideCompleted()"
+        [attr.aria-pressed]="hideCompleted()"
+        (click)="onToggleHideCompleted()"
+      >
+        <mc-icon [name]="hideCompleted() ? 'eye-slash' : 'eye'" />
+        <span>{{ t('goals.wall.hideCompleted') }}</span>
+      </button>
+      @if (hasFilter()) {
+        <button
+          type="button"
+          class="clear mc-hover-wiggle"
+          [attr.aria-label]="t('goals.wall.filtersClear')"
+          (click)="onClearFilters()"
+        >
+          <mc-icon name="x" />
+          <span>{{ t('goals.wall.filtersClear') }}</span>
+        </button>
+      }
+    </div>
+  </header>
+
+  @if (availableTags().length) {
+    <div class="tags" role="group" [attr.aria-label]="t('goals.wall.tagsLabel')">
+      @for (tag of availableTags(); track tag.id) {
+        <button
+          type="button"
+          class="tag-button"
+          [class.active]="isTagActive(tag.id)"
+          [attr.aria-pressed]="isTagActive(tag.id)"
+          (click)="onToggleTag(tag.id)"
+        >
+          <mc-tag-chip [tag]="tag" size="small" />
+        </button>
+      }
+    </div>
+  }
+
+  @if (empty()) {
+    <mc-new-goal-card [busy]="creating()" [hero]="true" (create)="onCreate($event)" />
+  } @else {
+    <div class="grid">
+      <mc-new-goal-card [busy]="creating()" (create)="onCreate($event)" />
+      @for (goal of visible(); track goal.id) {
+        <mc-goal-poster
+          [goal]="goal"
+          [availableTags]="tags()"
+          [untitledLabel]="untitledLabel()"
+          [today]="today()"
+          (open)="onOpen($event)"
+          (remove)="onDelete($event)"
+          (toggleCompleted)="onToggleCompleted($event)"
+        />
+      }
+    </div>
+    @if (noMatch()) {
+      <p class="wall-empty">{{ t('goals.wall.noMatch') }}</p>
+    }
+  }
+</section>
