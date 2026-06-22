@@ -24,6 +24,7 @@ export interface NoteSummary {
   readonly tags: readonly string[];
   readonly folder: string;
   readonly position: string;
+  readonly preview: string;
 }
 
 export const emptyDoc = (): JSONContent => ({

@@ -282,6 +282,7 @@ export class NotesService {
       tags: note.tags,
       folder,
       position: note.position ?? '',
+      preview: buildPreview(note.body),
     };
   }
 
@@ -306,6 +307,12 @@ export class NotesService {
     return tagIds.filter((id) => this.tags.byId(id) !== undefined);
   }
 }
+
+const PREVIEW_MAX = 280;
+const buildPreview = (body: Note['body']): string => {
+  const text = extractPlainText(body);
+  return text.length > PREVIEW_MAX ? `${text.slice(0, PREVIEW_MAX - 1).trimEnd()}…` : text;
+};
 
 const compareLegacy = (a: NoteSummary, b: NoteSummary): number =>
   b.updatedAt.localeCompare(a.updatedAt) || a.id.localeCompare(b.id);

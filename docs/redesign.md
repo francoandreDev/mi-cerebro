@@ -20,7 +20,7 @@ Una idea distinta por página. No replicar el mismo patrón: cada entidad tiene 
 | `/settings`  | Tabs verticales sticky + panel (sección activa única)                       | ✅     |
 | `/history`   | (heredado, sin section pane)                                                | ✅     |
 | `/variants`  | (heredado, sin section pane)                                                | ✅     |
-| `/notes`     | pendiente                                                                   | ⏳     |
+| `/notes`     | Muro de stickies (CSS columns) + card "nueva" inline + chips de filtro      | ✅     |
 | `/tasks`     | pendiente                                                                   | ⏳     |
 | `/goals`     | pendiente                                                                   | ⏳     |
 | `/lists`     | pendiente                                                                   | ⏳     |

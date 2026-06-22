@@ -1,0 +1,36 @@
+<section class="wall">
+  <header class="wall-head">
+    <h1 class="wall-title">
+      <mc-icon name="note" class="title-icon" aria-hidden="true" />
+      {{ t('notes.title') }}
+    </h1>
+    <mc-notes-filter-bar
+      class="wall-filters"
+      [tags]="availableTags()"
+      [activeTagIds]="activeTagIds()"
+      [query]="query()"
+      (toggleTag)="onToggleTag($event)"
+      (queryChange)="onQueryChange($event)"
+      (clear)="onClearFilters()"
+    />
+  </header>
+
+  <div class="masonry">
+    <mc-new-note-card [busy]="creating()" (create)="onCreate($event)" />
+    @for (note of visible(); track note.id) {
+      <mc-note-sticky
+        [note]="note"
+        [availableTags]="tags()"
+        [untitledLabel]="untitledLabel()"
+        (open)="onOpen($event)"
+        (remove)="onDelete($event)"
+      />
+    }
+  </div>
+
+  @if (empty()) {
+    <p class="wall-empty">{{ t('notes.empty') }}</p>
+  } @else if (noMatch()) {
+    <p class="wall-empty">{{ t('notes.wall.noMatch') }}</p>
+  }
+</section>
