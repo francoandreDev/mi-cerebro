@@ -17,7 +17,12 @@ import { IconComponent } from '@shared/icon/icon.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [IconComponent],
   template: `
-    <form class="card" [class.hero]="hero()" (submit)="onSubmit($event)">
+    <form
+      class="card"
+      [class.hero]="hero()"
+      [class.bar]="bar() && !hero()"
+      (submit)="onSubmit($event)"
+    >
       @if (hero()) {
         <h2 class="headline">{{ t('writings.shelf.emptyHeadline') }}</h2>
         <p class="hint">{{ t('writings.shelf.emptyHint') }}</p>
@@ -64,6 +69,17 @@ import { IconComponent } from '@shared/icon/icon.component';
       align-items: center;
       text-align: center;
       padding: var(--mc-space-5);
+    }
+    .card.bar {
+      min-height: 0;
+      padding: var(--mc-space-2) var(--mc-space-3);
+      border-style: solid;
+      border-color: var(--mc-border-default);
+      background: var(--mc-bg-elevated);
+    }
+    .card.bar:focus-within {
+      border-color: var(--mc-accent-primary);
+      box-shadow: 0 0 0 3px var(--mc-focus-ring, transparent);
     }
     .headline {
       margin: 0;
@@ -124,6 +140,7 @@ import { IconComponent } from '@shared/icon/icon.component';
 export class NewWritingCardComponent {
   readonly busy = input<boolean>(false);
   readonly hero = input<boolean>(false);
+  readonly bar = input<boolean>(false);
   readonly create = output<string>();
 
   private readonly i18n = inject(I18nService);

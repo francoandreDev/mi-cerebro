@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
@@ -12,13 +13,29 @@ import { TagsService } from '@core/tags/tags.service';
 import { IconComponent } from '@shared/icon/icon.component';
 import { TagChipComponent } from '@shared/tags/tag-chip.component';
 
+import { ContinueReadingCardComponent } from '../components/continue-reading-card.component';
 import { NewWritingCardComponent } from '../components/new-writing-card.component';
 import { WritingCardComponent } from '../components/writing-card.component';
+import { WritingRowComponent } from '../components/writing-row.component';
+import { WritingSpineComponent } from '../components/writing-spine.component';
 import type { WritingSummary } from '../models/writing.types';
 import { WritingsService } from '../services/writings.service';
 import { formatAgo } from './format-ago';
 
 type SortKey = 'updated' | 'title' | 'wordCount';
+type ViewMode = 'shelf' | 'table' | 'list';
+
+const VIEW_MODE_STORAGE_KEY = 'mc:writings:viewMode';
+const GROUPING_STORAGE_KEY = 'mc:writings:grouping';
+const UNTITLED_GROUP_KEY = '__untitled__';
+const isViewMode = (v: string | null): v is ViewMode =>
+  v === 'shelf' || v === 'table' || v === 'list';
+
+interface DisplayGroup {
+  readonly key: string;
+  readonly label: string;
+  readonly items: readonly WritingCardView[];
+}
 
 interface WritingCardView {
   readonly summary: WritingSummary;
@@ -30,7 +47,16 @@ const norm = (s: string): string => s.toLowerCase().normalize('NFD').replace(/[Ì
 @Component({
   selector: 'mc-writings-shelf',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent, TagChipComponent, WritingCardComponent, NewWritingCardComponent],
+  imports: [
+    NgTemplateOutlet,
+    IconComponent,
+    TagChipComponent,
+    WritingCardComponent,
+    NewWritingCardComponent,
+    ContinueReadingCardComponent,
+    WritingRowComponent,
+    WritingSpineComponent,
+  ],
   templateUrl: './writings-shelf.container.html',
   styleUrl: './writings-shelf.container.css',
 })
@@ -49,6 +75,9 @@ export class WritingsShelfContainer {
   protected readonly activeTagIds = signal<ReadonlySet<string>>(new Set());
   protected readonly sortKey = signal<SortKey>('updated');
   protected readonly creating = signal<boolean>(false);
+  protected readonly viewMode = signal<ViewMode>(readStoredViewMode());
+  protected readonly groupingEnabled = signal<boolean>(readStoredGrouping());
+  protected readonly libraryOpen = signal<boolean>(false);
 
   protected readonly untitledLabel = computed(() => this.t('writings.untitledTitle'));
 
@@ -58,10 +87,26 @@ export class WritingsShelfContainer {
     return this.tags().filter((t) => used.has(t.id));
   });
 
-  protected readonly visible = computed<readonly WritingCardView[]>(() => {
+  protected readonly hasFilter = computed(
+    () => this.query().trim() !== '' || this.activeTagIds().size > 0,
+  );
+  protected readonly continueReading = computed<WritingCardView | null>(() => {
+    const sorted = sortSummaries(this.summaries(), 'updated', this.untitledLabel());
+    const top = sorted[0];
+    if (!top) return null;
+    const tt = (key: TranslationKey, params?: Record<string, string | number>): string =>
+      this.i18n.t(key, params);
+    return { summary: top, ago: formatAgo(top.updatedAt, tt) };
+  });
+  protected readonly restAll = computed<readonly WritingSummary[]>(() => {
+    const cr = this.continueReading();
+    if (!cr) return [];
+    return this.summaries().filter((s) => s.id !== cr.summary.id);
+  });
+  protected readonly restView = computed<readonly WritingCardView[]>(() => {
     const q = norm(this.query().trim());
     const tagSet = this.activeTagIds();
-    const filtered = this.summaries().filter((w) => {
+    const filtered = this.restAll().filter((w) => {
       if (tagSet.size > 0 && !w.tags.some((id) => tagSet.has(id))) return false;
       if (!q) return true;
       return norm(`${w.title} ${w.preview}`).includes(q);
@@ -71,13 +116,37 @@ export class WritingsShelfContainer {
       this.i18n.t(key, params);
     return sorted.map((summary) => ({ summary, ago: formatAgo(summary.updatedAt, tt) }));
   });
-
-  protected readonly hasFilter = computed(
-    () => this.query().trim() !== '' || this.activeTagIds().size > 0,
-  );
-  protected readonly empty = computed(() => this.summaries().length === 0 && !this.hasFilter());
+  protected readonly displayGroups = computed<readonly DisplayGroup[]>(() => {
+    const items = this.restView();
+    if (!this.groupingEnabled() || this.hasFilter()) {
+      return [{ key: '__all__', label: '', items }];
+    }
+    const buckets = new Map<string, WritingCardView[]>();
+    for (const view of items) {
+      const folder = view.summary.folder;
+      const key = folder || UNTITLED_GROUP_KEY;
+      const list = buckets.get(key);
+      if (list) list.push(view);
+      else buckets.set(key, [view]);
+    }
+    const groups: DisplayGroup[] = [];
+    for (const [key, arr] of buckets) {
+      groups.push({
+        key,
+        label: key === UNTITLED_GROUP_KEY ? this.t('writings.shelf.group.untitled') : key,
+        items: arr,
+      });
+    }
+    groups.sort((a, b) => {
+      if (a.key === UNTITLED_GROUP_KEY) return 1;
+      if (b.key === UNTITLED_GROUP_KEY) return -1;
+      return a.label.localeCompare(b.label);
+    });
+    return groups;
+  });
+  protected readonly empty = computed(() => this.summaries().length === 0);
   protected readonly noMatch = computed(
-    () => this.hasFilter() && this.visible().length === 0 && this.summaries().length > 0,
+    () => this.hasFilter() && this.restView().length === 0 && this.restAll().length > 0,
   );
 
   protected t(key: TranslationKey): string {
@@ -115,6 +184,45 @@ export class WritingsShelfContainer {
     return this.activeTagIds().has(id);
   }
 
+  protected onOpenLibrary(): void {
+    this.libraryOpen.set(true);
+  }
+
+  protected onCloseLibrary(): void {
+    this.libraryOpen.set(false);
+  }
+
+  protected onLibraryKey(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.onCloseLibrary();
+    }
+  }
+
+  protected libraryButtonLabel(): string {
+    return this.i18n.t('writings.shelf.library.open', { n: this.restAll().length });
+  }
+
+  protected onToggleGrouping(): void {
+    const next = !this.groupingEnabled();
+    this.groupingEnabled.set(next);
+    try {
+      localStorage.setItem(GROUPING_STORAGE_KEY, next ? '1' : '0');
+    } catch {
+      // why: localStorage may be unavailable; UI still toggles in-memory
+    }
+  }
+
+  protected onViewModeChange(mode: ViewMode): void {
+    if (this.viewMode() === mode) return;
+    this.viewMode.set(mode);
+    try {
+      localStorage.setItem(VIEW_MODE_STORAGE_KEY, mode);
+    } catch {
+      // why: localStorage may be unavailable in private mode; UI keeps working ephemerally
+    }
+  }
+
   protected onSortChange(event: Event): void {
     const target = event.target as HTMLSelectElement | null;
     if (!target) return;
@@ -150,6 +258,27 @@ export class WritingsShelfContainer {
     }
   }
 }
+
+const readStoredGrouping = (): boolean => {
+  try {
+    const stored = localStorage.getItem(GROUPING_STORAGE_KEY);
+    if (stored === '1') return true;
+    if (stored === '0') return false;
+  } catch {
+    // why: localStorage may be unavailable; fall through to default
+  }
+  return false;
+};
+
+const readStoredViewMode = (): ViewMode => {
+  try {
+    const stored = localStorage.getItem(VIEW_MODE_STORAGE_KEY);
+    if (isViewMode(stored)) return stored;
+  } catch {
+    // why: localStorage may be unavailable; fall through to default
+  }
+  return 'table';
+};
 
 const sortSummaries = (
   list: readonly WritingSummary[],

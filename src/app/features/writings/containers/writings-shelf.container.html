@@ -4,84 +4,234 @@
       <mc-icon name="pen-nib" class="title-icon" aria-hidden="true" />
       {{ t('writings.title') }}
     </h1>
-    <div class="shelf-controls">
-      <div class="search">
-        <mc-icon name="magnifying-glass" class="search-icon" aria-hidden="true" />
-        <input
-          type="search"
-          class="search-input"
-          [value]="query()"
-          [attr.aria-label]="t('writings.shelf.searchAria')"
-          [placeholder]="t('writings.shelf.searchPlaceholder')"
-          (input)="onQueryInput($event)"
-        />
-        @if (query()) {
-          <button
-            type="button"
-            class="search-clear mc-hover-wiggle"
-            [attr.aria-label]="t('writings.shelf.searchClear')"
-            (click)="onClearQuery()"
-          >
-            <mc-icon name="x" />
-          </button>
-        }
-      </div>
-      <label class="sort">
-        <span class="sort-label">{{ t('writings.shelf.sortLabel') }}</span>
-        <select class="sort-select" [value]="sortKey()" (change)="onSortChange($event)">
-          <option value="updated">{{ t('writings.shelf.sort.updated') }}</option>
-          <option value="title">{{ t('writings.shelf.sort.title') }}</option>
-          <option value="wordCount">{{ t('writings.shelf.sort.wordCount') }}</option>
-        </select>
-      </label>
-      @if (hasFilter()) {
-        <button
-          type="button"
-          class="clear mc-hover-wiggle"
-          [attr.aria-label]="t('writings.shelf.filtersClear')"
-          (click)="onClearFilters()"
-        >
-          <mc-icon name="x" />
-          <span>{{ t('writings.shelf.filtersClear') }}</span>
-        </button>
-      }
-    </div>
   </header>
 
-  @if (availableTags().length) {
-    <div class="tags" role="group" [attr.aria-label]="t('writings.shelf.tagsLabel')">
-      @for (tag of availableTags(); track tag.id) {
-        <button
-          type="button"
-          class="tag-button"
-          [class.active]="isTagActive(tag.id)"
-          [attr.aria-pressed]="isTagActive(tag.id)"
-          (click)="onToggleTag(tag.id)"
-        >
-          <mc-tag-chip [tag]="tag" size="small" />
-        </button>
+  <ng-template #itemsTpl let-items>
+    @switch (viewMode()) {
+      @case ('shelf') {
+        <div class="shelf-row" role="list">
+          @for (view of items; track view.summary.id) {
+            <mc-writing-spine
+              [writing]="view.summary"
+              [untitledLabel]="untitledLabel()"
+              (open)="onOpen($event)"
+            />
+          }
+        </div>
       }
-    </div>
-  }
+      @case ('list') {
+        <div class="list">
+          @for (view of items; track view.summary.id) {
+            <mc-writing-row
+              [writing]="view.summary"
+              [availableTags]="tags()"
+              [untitledLabel]="untitledLabel()"
+              [ago]="view.ago"
+              (open)="onOpen($event)"
+              (remove)="onDelete($event)"
+            />
+          }
+        </div>
+      }
+      @default {
+        <div class="grid">
+          @for (view of items; track view.summary.id) {
+            <mc-writing-card
+              [writing]="view.summary"
+              [availableTags]="tags()"
+              [untitledLabel]="untitledLabel()"
+              [ago]="view.ago"
+              (open)="onOpen($event)"
+              (remove)="onDelete($event)"
+            />
+          }
+        </div>
+      }
+    }
+  </ng-template>
+  <ng-template #groupsTpl>
+    @for (group of displayGroups(); track group.key) {
+      @if (group.label) {
+        <header class="group-head">
+          <mc-icon name="folder" aria-hidden="true" />
+          <span class="group-name">{{ group.label }}</span>
+          <span class="group-count">{{ group.items.length }}</span>
+        </header>
+      }
+      <ng-container
+        [ngTemplateOutlet]="itemsTpl"
+        [ngTemplateOutletContext]="{ $implicit: group.items }"
+      />
+    }
+  </ng-template>
 
   @if (empty()) {
     <mc-new-writing-card [busy]="creating()" [hero]="true" (create)="onCreate($event)" />
   } @else {
-    <div class="grid">
-      <mc-new-writing-card [busy]="creating()" (create)="onCreate($event)" />
-      @for (view of visible(); track view.summary.id) {
-        <mc-writing-card
-          [writing]="view.summary"
-          [availableTags]="tags()"
-          [untitledLabel]="untitledLabel()"
-          [ago]="view.ago"
-          (open)="onOpen($event)"
-          (remove)="onDelete($event)"
-        />
-      }
+    <div class="new-sticky">
+      <mc-new-writing-card [busy]="creating()" [bar]="true" (create)="onCreate($event)" />
     </div>
-    @if (noMatch()) {
-      <p class="shelf-empty">{{ t('writings.shelf.noMatch') }}</p>
+    @if (continueReading(); as cr) {
+      <mc-continue-reading-card
+        [writing]="cr.summary"
+        [availableTags]="tags()"
+        [untitledLabel]="untitledLabel()"
+        [ago]="cr.ago"
+        (open)="onOpen($event)"
+      />
+      @if (restAll().length > 0) {
+        <button
+          type="button"
+          class="library-open"
+          [attr.aria-label]="libraryButtonLabel()"
+          (click)="onOpenLibrary()"
+        >
+          <mc-icon name="books" aria-hidden="true" />
+          <span>{{ libraryButtonLabel() }}</span>
+        </button>
+      }
     }
+  }
+  @if (libraryOpen()) {
+    <div
+      class="lib-backdrop"
+      (click)="onCloseLibrary()"
+      (keydown)="onLibraryKey($event)"
+      tabindex="-1"
+    >
+      <div
+        class="lib-dialog"
+        role="dialog"
+        [attr.aria-label]="t('writings.shelf.library.title')"
+        (click)="$event.stopPropagation()"
+        (keydown)="onLibraryKey($event)"
+        tabindex="0"
+      >
+        <header class="lib-head">
+          <h2 class="lib-title">
+            <mc-icon name="books" aria-hidden="true" />
+            {{ t('writings.shelf.library.title') }}
+            <span class="lib-count">{{ restAll().length }}</span>
+          </h2>
+          <button
+            type="button"
+            class="lib-close"
+            [attr.aria-label]="t('writings.shelf.library.close')"
+            (click)="onCloseLibrary()"
+          >
+            <mc-icon name="x" />
+          </button>
+        </header>
+        <div class="lib-toolbar">
+          <div class="search">
+            <mc-icon name="magnifying-glass" class="search-icon" aria-hidden="true" />
+            <input
+              type="search"
+              class="search-input"
+              [value]="query()"
+              [attr.aria-label]="t('writings.shelf.searchAria')"
+              [placeholder]="t('writings.shelf.searchPlaceholder')"
+              (input)="onQueryInput($event)"
+            />
+            @if (query()) {
+              <button
+                type="button"
+                class="search-clear mc-hover-wiggle"
+                [attr.aria-label]="t('writings.shelf.searchClear')"
+                (click)="onClearQuery()"
+              >
+                <mc-icon name="x" />
+              </button>
+            }
+          </div>
+          <label class="sort">
+            <span class="sort-label">{{ t('writings.shelf.sortLabel') }}</span>
+            <select class="sort-select" [value]="sortKey()" (change)="onSortChange($event)">
+              <option value="updated">{{ t('writings.shelf.sort.updated') }}</option>
+              <option value="title">{{ t('writings.shelf.sort.title') }}</option>
+              <option value="wordCount">{{ t('writings.shelf.sort.wordCount') }}</option>
+            </select>
+          </label>
+          <button
+            type="button"
+            class="view-button group-toggle"
+            [class.active]="groupingEnabled()"
+            [attr.aria-pressed]="groupingEnabled()"
+            [attr.aria-label]="t('writings.shelf.group.toggle')"
+            [title]="t('writings.shelf.group.toggle')"
+            (click)="onToggleGrouping()"
+          >
+            <mc-icon name="folder" />
+          </button>
+          <div class="view-toggle" role="group" [attr.aria-label]="t('writings.shelf.view.label')">
+            <button
+              type="button"
+              class="view-button"
+              [class.active]="viewMode() === 'shelf'"
+              [attr.aria-pressed]="viewMode() === 'shelf'"
+              [attr.aria-label]="t('writings.shelf.view.shelf')"
+              [title]="t('writings.shelf.view.shelf')"
+              (click)="onViewModeChange('shelf')"
+            >
+              <mc-icon name="books" />
+            </button>
+            <button
+              type="button"
+              class="view-button"
+              [class.active]="viewMode() === 'table'"
+              [attr.aria-pressed]="viewMode() === 'table'"
+              [attr.aria-label]="t('writings.shelf.view.table')"
+              [title]="t('writings.shelf.view.table')"
+              (click)="onViewModeChange('table')"
+            >
+              <mc-icon name="squares-four" />
+            </button>
+            <button
+              type="button"
+              class="view-button"
+              [class.active]="viewMode() === 'list'"
+              [attr.aria-pressed]="viewMode() === 'list'"
+              [attr.aria-label]="t('writings.shelf.view.list')"
+              [title]="t('writings.shelf.view.list')"
+              (click)="onViewModeChange('list')"
+            >
+              <mc-icon name="rows" />
+            </button>
+          </div>
+          @if (hasFilter()) {
+            <button
+              type="button"
+              class="clear mc-hover-wiggle"
+              [attr.aria-label]="t('writings.shelf.filtersClear')"
+              (click)="onClearFilters()"
+            >
+              <mc-icon name="x" />
+              <span>{{ t('writings.shelf.filtersClear') }}</span>
+            </button>
+          }
+        </div>
+        @if (availableTags().length) {
+          <div class="lib-tags" role="group" [attr.aria-label]="t('writings.shelf.tagsLabel')">
+            @for (tag of availableTags(); track tag.id) {
+              <button
+                type="button"
+                class="tag-button"
+                [class.active]="isTagActive(tag.id)"
+                [attr.aria-pressed]="isTagActive(tag.id)"
+                (click)="onToggleTag(tag.id)"
+              >
+                <mc-tag-chip [tag]="tag" size="small" />
+              </button>
+            }
+          </div>
+        }
+        <div class="lib-body">
+          <ng-container [ngTemplateOutlet]="groupsTpl" />
+          @if (noMatch()) {
+            <p class="shelf-empty">{{ t('writings.shelf.noMatch') }}</p>
+          }
+        </div>
+      </div>
+    </div>
   }
 </section>
