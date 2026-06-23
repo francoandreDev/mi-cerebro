@@ -1,78 +1,77 @@
-<section class="shelf">
-  <header class="shelf-head">
-    <h1 class="shelf-title">
+<section class="board">
+  <header class="board-head">
+    <h1 class="board-title">
       <mc-icon name="list-bullets" class="title-icon" aria-hidden="true" />
       {{ t('lists.title') }}
     </h1>
-    <div class="shelf-controls">
-      <div class="search">
-        <mc-icon name="magnifying-glass" class="search-icon" aria-hidden="true" />
-        <input
-          type="search"
-          class="search-input"
-          [value]="query()"
-          [attr.aria-label]="t('lists.shelf.searchAria')"
-          [placeholder]="t('lists.shelf.searchPlaceholder')"
-          (input)="onQueryInput($event)"
-        />
-        @if (query()) {
-          <button
-            type="button"
-            class="search-clear mc-hover-wiggle"
-            [attr.aria-label]="t('lists.shelf.searchClear')"
-            (click)="onClearQuery()"
-          >
-            <mc-icon name="x" />
-          </button>
-        }
-      </div>
-      @if (hasFilter()) {
+    <div class="search">
+      <mc-icon name="magnifying-glass" class="search-icon" aria-hidden="true" />
+      <input
+        type="search"
+        class="search-input"
+        [value]="query()"
+        [attr.aria-label]="t('lists.board.searchAria')"
+        [placeholder]="t('lists.board.searchPlaceholder')"
+        (input)="onQueryInput($event)"
+      />
+      @if (query()) {
         <button
           type="button"
-          class="clear mc-hover-wiggle"
-          [attr.aria-label]="t('lists.shelf.filtersClear')"
-          (click)="onClearFilters()"
+          class="search-clear"
+          [attr.aria-label]="t('lists.board.searchClear')"
+          (click)="onClearQuery()"
         >
           <mc-icon name="x" />
-          <span>{{ t('lists.shelf.filtersClear') }}</span>
         </button>
       }
     </div>
   </header>
 
-  @if (availableTags().length) {
-    <div class="tags" role="group" [attr.aria-label]="t('lists.shelf.tagsLabel')">
-      @for (tag of availableTags(); track tag.id) {
-        <button
-          type="button"
-          class="tag-button"
-          [class.active]="isTagActive(tag.id)"
-          [attr.aria-pressed]="isTagActive(tag.id)"
-          (click)="onToggleTag(tag.id)"
-        >
-          <mc-tag-chip [tag]="tag" size="small" />
-        </button>
-      }
-    </div>
-  }
-
   @if (empty()) {
-    <mc-new-list-card [busy]="creating()" [hero]="true" (create)="onCreate($event)" />
-  } @else {
-    <div class="grid">
-      <mc-new-list-card [busy]="creating()" (create)="onCreate($event)" />
-      @for (list of visible(); track list.id) {
-        <mc-list-card
-          [list]="list"
-          [availableTags]="tags()"
-          [untitledLabel]="untitledLabel()"
-          (open)="onOpen($event)"
-          (remove)="onDelete($event)"
-        />
-      }
+    <div class="board-body solo">
+      <mc-chalk-new-entry [busy]="creating()" [hero]="true" (create)="onCreate($event)" />
     </div>
-    @if (noMatch()) {
-      <p class="shelf-empty">{{ t('lists.shelf.noMatch') }}</p>
-    }
+  } @else {
+    <div class="board-body">
+      <mc-chalk-rail
+        [axis]="axis()"
+        [groups]="railGroups()"
+        [activeKey]="activeKey()"
+        (axisChange)="onAxisChange($event)"
+        (jump)="onJump($event)"
+      />
+      <div #flow class="flow" (scroll)="onScroll($event)">
+        @for (section of sections(); track section.key) {
+          <section class="section">
+            <h2 class="section-head" [attr.data-section-key]="section.key">
+              @if (section.color) {
+                <span
+                  class="section-dot"
+                  [style.background]="section.color"
+                  aria-hidden="true"
+                ></span>
+              }
+              <span>{{ section.label }}</span>
+            </h2>
+            <div class="section-flow">
+              @for (list of section.lists; track list.id) {
+                <mc-chalk-entry
+                  [list]="list"
+                  [availableTags]="tags()"
+                  [untitledLabel]="untitledLabel()"
+                  [query]="query()"
+                  (open)="onOpen($event)"
+                  (remove)="onDelete($event)"
+                />
+              }
+            </div>
+          </section>
+        }
+        <mc-chalk-new-entry [busy]="creating()" (create)="onCreate($event)" />
+        @if (hasQuery() && !anyMatch()) {
+          <p class="no-match">{{ t('lists.board.noMatch') }}</p>
+        }
+      </div>
+    </div>
   }
 </section>

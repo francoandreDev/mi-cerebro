@@ -13,30 +13,30 @@ import type { TranslationKey } from '@core/i18n/i18n.types';
 import { IconComponent } from '@shared/icon/icon.component';
 
 @Component({
-  selector: 'mc-new-list-card',
+  selector: 'mc-chalk-new-entry',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [IconComponent],
   template: `
-    <form class="card" [class.hero]="hero()" (submit)="onSubmit($event)">
+    <form class="entry" [class.hero]="hero()" (submit)="onSubmit($event)">
       @if (hero()) {
-        <h2 class="headline">{{ t('lists.shelf.emptyHeadline') }}</h2>
-        <p class="hint">{{ t('lists.shelf.emptyHint') }}</p>
+        <h2 class="headline">{{ t('lists.board.emptyHeadline') }}</h2>
+        <p class="hint">{{ t('lists.board.emptyHint') }}</p>
       }
       <label class="row">
-        <mc-icon name="plus" class="icon mc-anim-pulse" aria-hidden="true" />
+        <mc-icon name="plus" class="plus" aria-hidden="true" />
         <input
           #input
           type="text"
           class="input"
-          [attr.aria-label]="t('lists.shelf.newAria')"
-          [placeholder]="t('lists.shelf.newPlaceholder')"
+          [attr.aria-label]="t('lists.board.newAria')"
+          [placeholder]="t('lists.board.newPlaceholder')"
           [disabled]="busy()"
           autocomplete="off"
         />
         <button
           type="submit"
           class="submit"
-          [attr.aria-label]="t('lists.shelf.newSubmit')"
+          [attr.aria-label]="t('lists.board.newSubmit')"
           [disabled]="busy()"
         >
           <mc-icon name="arrow-right" />
@@ -47,57 +47,55 @@ import { IconComponent } from '@shared/icon/icon.component';
   styles: `
     :host {
       display: block;
+      break-inside: avoid;
+      margin-bottom: var(--mc-space-5);
     }
-    .card {
-      display: flex;
-      flex-direction: column;
-      gap: var(--mc-space-2);
-      padding: var(--mc-space-4);
-      min-height: 180px;
-      background: var(--mc-bg-elevated);
-      border: 1px dashed var(--mc-accent-primary);
-      border-radius: var(--mc-radius-lg, 12px);
-      justify-content: center;
+    .entry {
+      padding: var(--mc-space-2);
+      border-top: 1px dashed var(--mc-chalk-muted, #8a8e7a);
+      border-bottom: 1px dashed var(--mc-chalk-muted, #8a8e7a);
     }
-    .card.hero {
-      min-height: 260px;
-      align-items: center;
-      text-align: center;
+    .entry.hero {
+      border: 1px dashed var(--mc-chalk-muted, #8a8e7a);
+      border-radius: var(--mc-radius-sm);
       padding: var(--mc-space-5);
+      text-align: center;
+      max-width: 560px;
+      margin-inline: auto;
     }
     .headline {
-      margin: 0;
-      font-size: clamp(1.6rem, 2.6vw, 2.2rem);
-      font-weight: 700;
-      color: var(--mc-fg-primary);
+      margin: 0 0 var(--mc-space-2);
+      font-family: 'Caveat', 'Kalam', 'Comic Sans MS', cursive;
+      font-weight: 600;
+      font-size: clamp(2rem, 3vw, 2.6rem);
+      color: var(--mc-chalk-title, #f1f5d8);
     }
     .hint {
-      margin: 0;
-      color: var(--mc-fg-muted);
+      margin: 0 0 var(--mc-space-3);
+      color: var(--mc-chalk-muted, #8a8e7a);
       font-size: var(--mc-font-size-sm);
     }
     .row {
       display: flex;
       align-items: center;
       gap: var(--mc-space-2);
-      min-width: 0;
-      width: 100%;
     }
-    .card.hero .row {
-      max-width: 520px;
-      margin-top: var(--mc-space-2);
-    }
-    .icon {
-      color: var(--mc-accent-primary);
+    .plus {
+      color: var(--mc-chalk-muted, #8a8e7a);
     }
     .input {
       flex: 1;
       min-width: 0;
       background: transparent;
-      border: none;
-      color: var(--mc-fg-primary);
-      font-size: var(--mc-font-size-base);
-      padding: var(--mc-space-1) 0;
+      border: 0;
+      color: var(--mc-chalk-title, #f1f5d8);
+      font-family: 'Caveat', 'Kalam', 'Comic Sans MS', cursive;
+      font-size: 1.3rem;
+      padding: 2px 0;
+    }
+    .input::placeholder {
+      color: var(--mc-chalk-muted, #8a8e7a);
+      font-style: italic;
     }
     .input:focus {
       outline: none;
@@ -106,13 +104,16 @@ import { IconComponent } from '@shared/icon/icon.component';
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      background: var(--mc-accent-primary);
-      color: var(--mc-fg-on-accent, #fff);
-      border: 0;
+      background: transparent;
+      color: var(--mc-chalk-title, #f1f5d8);
+      border: 1px solid var(--mc-chalk-muted, #8a8e7a);
       border-radius: var(--mc-radius-sm);
-      width: 32px;
-      height: 32px;
+      width: 28px;
+      height: 28px;
       cursor: pointer;
+    }
+    .submit:hover {
+      border-color: var(--mc-chalk-title, #f1f5d8);
     }
     .submit:disabled {
       opacity: 0.5;
@@ -120,7 +121,7 @@ import { IconComponent } from '@shared/icon/icon.component';
     }
   `,
 })
-export class NewListCardComponent {
+export class ChalkNewEntryComponent {
   readonly busy = input<boolean>(false);
   readonly hero = input<boolean>(false);
   readonly create = output<string>();
