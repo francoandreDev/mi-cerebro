@@ -10,8 +10,8 @@ import type { TranslationKey } from '@core/i18n/i18n.types';
 import { TagsService } from '@core/tags/tags.service';
 import { IconComponent } from '@shared/icon/icon.component';
 
-import { NewNoteCardComponent } from '../components/new-note-card.component';
-import { NoteStickyComponent } from '../components/note-sticky.component';
+import { NoteComposeComponent } from '../components/note-compose.component';
+import { NoteSlipComponent } from '../components/note-slip.component';
 import { NotesFilterBarComponent } from '../components/notes-filter-bar.component';
 import type { NoteSummary } from '../models/note.types';
 import { NotesService } from '../services/notes.service';
@@ -21,7 +21,7 @@ const norm = (s: string): string => s.toLowerCase().normalize('NFD').replace(/[Ì
 @Component({
   selector: 'mc-notes-wall',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent, NoteStickyComponent, NewNoteCardComponent, NotesFilterBarComponent],
+  imports: [IconComponent, NoteSlipComponent, NoteComposeComponent, NotesFilterBarComponent],
   templateUrl: './notes-wall.container.html',
   styleUrl: './notes-wall.container.css',
 })
@@ -46,14 +46,16 @@ export class NotesWallContainer {
     for (const s of this.summaries()) for (const id of s.tags) used.add(id);
     return this.tags().filter((t) => used.has(t.id));
   });
+  // why: ticker shows newest first, but service orders ascending by position.
   protected readonly visible = computed<readonly NoteSummary[]>(() => {
     const q = norm(this.query().trim());
     const tagSet = this.activeTagIds();
-    return this.summaries().filter((n) => {
+    const filtered = this.summaries().filter((n) => {
       if (tagSet.size > 0 && !n.tags.some((id) => tagSet.has(id))) return false;
       if (!q) return true;
       return norm(`${n.title} ${n.preview}`).includes(q);
     });
+    return [...filtered].reverse();
   });
   protected readonly hasFilter = computed(
     () => this.query().trim() !== '' || this.activeTagIds().size > 0,
@@ -76,8 +78,7 @@ export class NotesWallContainer {
     this.creating.set(true);
     try {
       await this.workspace.ensureWritable();
-      const note = await this.notesService.create(title);
-      await this.router.navigate(['/notes', note.id]);
+      await this.notesService.create(title);
     } catch (e) {
       this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize()));
     } finally {

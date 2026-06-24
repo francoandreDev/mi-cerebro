@@ -15,16 +15,23 @@
     />
   </header>
 
-  <div class="masonry">
-    <mc-new-note-card [busy]="creating()" (create)="onCreate($event)" />
+  <mc-note-compose [busy]="creating()" (create)="onCreate($event)" />
+
+  <div class="roll" [attr.aria-label]="t('notes.wall.tickerLabel')" role="list">
     @for (note of visible(); track note.id) {
-      <mc-note-sticky
+      <mc-note-slip
+        role="listitem"
         [note]="note"
         [availableTags]="tags()"
         [untitledLabel]="untitledLabel()"
         (open)="onOpen($event)"
         (remove)="onDelete($event)"
       />
+    }
+    @if (visible().length > 0) {
+      <div class="tail" aria-hidden="true">
+        <span class="tail-line">{{ t('notes.wall.tickerEnd') }}</span>
+      </div>
     }
   </div>
 
