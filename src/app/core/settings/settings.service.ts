@@ -61,6 +61,18 @@ export class SettingsService {
     this.update((s) => ({ ...s, variants: { ...s.variants, dormantThresholdDays: clamped } }));
   }
 
+  setReminderLeadMinutes(minutes: number): void {
+    if (!Number.isFinite(minutes)) return;
+    // why: 2 minutes is the tightest ping in the fixed cadence; anything
+    //      below would never trigger. 1 week ahead is the longest pre-set
+    //      we expose, but clamp to 30 days as a sane absolute ceiling.
+    const clamped = Math.max(2, Math.min(43_200, Math.round(minutes)));
+    this.update((s) => ({
+      ...s,
+      reminders: { ...s.reminders, leadMinutes: clamped },
+    }));
+  }
+
   setPushAfterAutocommit(enabled: boolean): void {
     this.update((s) => ({
       ...s,
@@ -199,6 +211,29 @@ export const isValidTimezone = (tz: string): boolean => {
   }
 };
 
+const mergeGoals = (partial: Partial<Settings['goals']> | undefined): Settings['goals'] => {
+  const base = DEFAULT_SETTINGS.goals;
+  return {
+    dormantThresholdDays: partial?.dormantThresholdDays ?? base.dormantThresholdDays,
+  };
+};
+
+// why: back-compat — earlier settings stored the lead under
+//      `goals.reminderLeadMinutes`. Read from the new path first and
+//      fall back to the legacy slot so existing files don't reset.
+const mergeReminders = (
+  partial: Partial<Settings['reminders']> | undefined,
+  legacyGoals: Partial<{ reminderLeadMinutes: number }> | undefined,
+): Settings['reminders'] => {
+  const base = DEFAULT_SETTINGS.reminders;
+  const raw = partial?.leadMinutes ?? legacyGoals?.reminderLeadMinutes;
+  const lead =
+    typeof raw === 'number' && Number.isFinite(raw)
+      ? Math.max(2, Math.min(43_200, Math.round(raw)))
+      : base.leadMinutes;
+  return { leadMinutes: lead };
+};
+
 const mergeWithDefaults = (partial: Partial<Settings>): Settings => ({
   schemaVersion: SETTINGS_SCHEMA_VERSION,
   timezone:
@@ -207,6 +242,10 @@ const mergeWithDefaults = (partial: Partial<Settings>): Settings => ({
       : DEFAULT_SETTINGS.timezone,
   versioning: { ...DEFAULT_SETTINGS.versioning, ...(partial.versioning ?? {}) },
   variants: { ...DEFAULT_SETTINGS.variants, ...(partial.variants ?? {}) },
-  goals: { ...DEFAULT_SETTINGS.goals, ...(partial.goals ?? {}) },
+  goals: mergeGoals(partial.goals),
+  reminders: mergeReminders(
+    partial.reminders,
+    partial.goals as Partial<{ reminderLeadMinutes: number }> | undefined,
+  ),
   theme: { ...DEFAULT_SETTINGS.theme, ...(partial.theme ?? {}) },
 });

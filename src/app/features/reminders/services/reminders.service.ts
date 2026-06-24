@@ -13,8 +13,11 @@ import {
   REMINDER_SCHEMA_VERSION,
   REMINDERS_DIR,
   type Reminder,
+  type ReminderSourceKind,
   type ReminderSummary,
 } from '../models/reminder.types';
+import { reminderCadenceMigrationStep } from './reminder-cadence.migration';
+import { reminderSourceMigrationStep } from './reminder-source.migration';
 
 const TRASH_DIR = '.mi-cerebro';
 const TRASH_SUBDIR = 'trash';
@@ -29,11 +32,33 @@ export class RemindersService {
   private readonly summariesSignal = signal<readonly ReminderSummary[]>([]);
   readonly summaries = this.summariesSignal.asReadonly();
 
+  // why: the FileSystemFileHandle API locks while a writable is open, so
+  //      concurrent saves to the same file from cadence-sync, goal-sync,
+  //      and user edits collide ("cannot be moved while it is locked").
+  //      It also lets a refresh race with an in-flight create and yield
+  //      duplicate-key summaries. A single FS-mutation gate serializes
+  //      everything that touches reminder files.
+  private fsQueue: Promise<unknown> = Promise.resolve();
+
+  private gate<T>(run: () => Promise<T>): Promise<T> {
+    const next = this.fsQueue.then(run, run);
+    this.fsQueue = next.catch(() => undefined);
+    return next;
+  }
+
   constructor() {
-    this.migrations.register({ kind: REMINDER_KIND, latest: REMINDER_SCHEMA_VERSION, steps: [] });
+    this.migrations.register({
+      kind: REMINDER_KIND,
+      latest: REMINDER_SCHEMA_VERSION,
+      steps: [reminderSourceMigrationStep(1), reminderCadenceMigrationStep(2)],
+    });
   }
 
   async refresh(): Promise<readonly ReminderSummary[]> {
+    return this.gate(() => this.refreshLocked());
+  }
+
+  private async refreshLocked(): Promise<readonly ReminderSummary[]> {
     const dir = await this.remindersDir();
     this.idToFile.clear();
     const summaries: ReminderSummary[] = [];
@@ -53,14 +78,34 @@ export class RemindersService {
     return summaries;
   }
 
-  async create(title = '', dueAt?: string): Promise<Reminder> {
+  async create(
+    title = '',
+    dueAt?: string,
+    source?: { kind: ReminderSourceKind; id: string },
+  ): Promise<Reminder> {
+    return this.gate(() => this.createLocked(title, dueAt, source));
+  }
+
+  private async createLocked(
+    title: string,
+    dueAt: string | undefined,
+    source: { kind: ReminderSourceKind; id: string } | undefined,
+  ): Promise<Reminder> {
     const dir = await this.remindersDir();
     const now = new Date().toISOString();
+    const target = dueAt ?? defaultDueAt();
     const reminder: Reminder = {
       id: crypto.randomUUID(),
       title,
-      dueAt: dueAt ?? defaultDueAt(),
+      dueAt: target,
+      // why: seed nextPingAt to the target so the reminder fires at least
+      //      once even before the cadence service first runs. The cadence
+      //      effect will overwrite this with the pre-deadline lead-up slot
+      //      on its next tick.
+      nextPingAt: target,
       done: false,
+      sourceKind: source?.kind ?? null,
+      sourceId: source?.id ?? null,
       createdAt: now,
       updatedAt: now,
       schemaVersion: REMINDER_SCHEMA_VERSION,
@@ -73,13 +118,19 @@ export class RemindersService {
   }
 
   async read(id: string): Promise<Reminder> {
-    const dir = await this.remindersDir();
-    const filename = this.requireFilename(id);
-    const raw = await this.fs.readJson<Reminder>(dir, filename);
-    return this.migrations.migrate<Reminder>(REMINDER_KIND, raw);
+    return this.gate(async () => {
+      const dir = await this.remindersDir();
+      const filename = this.requireFilename(id);
+      const raw = await this.fs.readJson<Reminder>(dir, filename);
+      return this.migrations.migrate<Reminder>(REMINDER_KIND, raw);
+    });
   }
 
   async save(reminder: Reminder): Promise<Reminder> {
+    return this.gate(() => this.saveLocked(reminder));
+  }
+
+  private async saveLocked(reminder: Reminder): Promise<Reminder> {
     const dir = await this.remindersDir();
     const filename = this.requireFilename(reminder.id);
     const updated: Reminder = { ...reminder, updatedAt: new Date().toISOString() };
@@ -91,15 +142,21 @@ export class RemindersService {
   }
 
   async restore(reminder: Reminder): Promise<Reminder> {
-    const dir = await this.remindersDir();
-    const filename = `${reminder.id}${REMINDER_FILE_SUFFIX}`;
-    await this.fs.writeFileAtomic(dir, filename, JSON.stringify(reminder, null, 2));
-    this.idToFile.set(reminder.id, filename);
-    this.summariesSignal.update((curr) => sortSummaries([this.toSummary(reminder), ...curr]));
-    return reminder;
+    return this.gate(async () => {
+      const dir = await this.remindersDir();
+      const filename = `${reminder.id}${REMINDER_FILE_SUFFIX}`;
+      await this.fs.writeFileAtomic(dir, filename, JSON.stringify(reminder, null, 2));
+      this.idToFile.set(reminder.id, filename);
+      this.summariesSignal.update((curr) => sortSummaries([this.toSummary(reminder), ...curr]));
+      return reminder;
+    });
   }
 
   async deleteToTrash(id: string): Promise<void> {
+    return this.gate(() => this.deleteToTrashLocked(id));
+  }
+
+  private async deleteToTrashLocked(id: string): Promise<void> {
     const root = this.requireRoot();
     const dir = await this.remindersDir();
     const filename = this.requireFilename(id);
@@ -146,7 +203,10 @@ export class RemindersService {
       id: r.id,
       title: r.title,
       dueAt: r.dueAt,
+      nextPingAt: r.nextPingAt ?? r.dueAt,
       done: r.done,
+      sourceKind: r.sourceKind ?? null,
+      sourceId: r.sourceId ?? null,
       updatedAt: r.updatedAt,
     };
   }

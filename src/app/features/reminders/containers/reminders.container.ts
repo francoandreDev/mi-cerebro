@@ -16,6 +16,7 @@ import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { CreationIntentService } from '@core/intents/creation-intent.service';
+import { GoalRemindersSyncService } from '@core/reminders/goal-reminders-sync.service';
 import { ShortcutsService } from '@core/shortcuts/shortcuts.service';
 import { IconComponent } from '@shared/icon/icon.component';
 import type { IconName } from '@shared/icon/icons.data';
@@ -64,6 +65,7 @@ export class RemindersContainer {
   private readonly errors = inject(ErrorService);
   private readonly i18n = inject(I18nService);
   private readonly creationIntent = inject(CreationIntentService);
+  private readonly goalSync = inject(GoalRemindersSyncService);
   private readonly shortcuts = inject(ShortcutsService);
   private readonly destroyRef = inject(DestroyRef);
   private lastCreationAt = 0;
@@ -229,6 +231,26 @@ export class RemindersContainer {
   }
 
   protected async onDelete(summary: ReminderSummary): Promise<void> {
+    // why: goal-sourced reminders re-appear from sync if just deleted —
+    //      the user action is "stop the goal from nudging me", so we ask
+    //      explicit confirmation and toggle the source off (the sync then
+    //      removes the file). No undo: re-enabling lives on the goal page.
+    if (summary.sourceKind === 'goal' && summary.sourceId !== null) {
+      const ok = confirm(
+        this.t('reminders.deleteGoalConfirm').replace(
+          '{title}',
+          summary.title || this.t('reminders.untitled'),
+        ),
+      );
+      if (!ok) return;
+      try {
+        await this.workspace.ensureWritable();
+        await this.goalSync.disableForGoal(summary.sourceId);
+      } catch (e) {
+        this.errors.report(this.withReauth(e));
+      }
+      return;
+    }
     try {
       const current = await this.reminders.read(summary.id);
       await this.reminders.deleteToTrash(summary.id);

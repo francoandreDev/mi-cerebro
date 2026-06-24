@@ -132,9 +132,20 @@
                     <mc-icon name="x" />
                   </button>
                 } @else {
-                  <button type="button" class="title-btn" (click)="onStartEdit(r)">
+                  <button
+                    type="button"
+                    class="title-btn"
+                    (click)="onStartEdit(r)"
+                    [disabled]="r.sourceKind === 'goal'"
+                  >
                     {{ r.title || t('reminders.untitled') }}
                   </button>
+                  @if (r.sourceKind === 'goal') {
+                    <span class="source-badge" [title]="t('reminders.sourceGoalBadge')">
+                      <mc-icon name="target" />
+                      {{ t('reminders.sourceGoalBadge') }}
+                    </span>
+                  }
                   <span class="due" [title]="r.dueAt">{{ r.dueAt | mcDate: true }}</span>
                   <div class="actions">
                     <button

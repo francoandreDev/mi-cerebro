@@ -25,6 +25,27 @@ Cada entidad persistida lleva un `schemaVersion`. Cuando aumentamos esa versión
 - **Mapeo:** `injectBlockIds(body)` recorre el doc y rellena `attrs.blockId` con `crypto.randomUUID()` donde falta. Idempotente: ids válidos existentes se preservan; duplicados (típicamente por copy/paste) se reemplazan. Si la entidad no tiene `body` (caso Book bajo `BOOK_KIND`, que comparte la cadena con Chapter), sólo se bump-ea `schemaVersion`.
 - **Compatibilidad:** la extensión `mcBlockId` de TipTap mantiene esta invariante en runtime, así que cualquier doc abierto en el editor (incluso ya migrado) sigue ganando ids para bloques nuevos. Backup automático antes de aplicar la migración por entidad (regla §4.15).
 
+### goal v4 → v5 (2026-06-23)
+
+- **Qué cambia:** se agrega `reminder: { enabled: boolean }` para que las metas alimenten recordatorios automáticos vía `GoalRemindersSyncService` (§14).
+- **Por qué:** unifica el "banner de meta" pre-rediseño con el sistema de Recordatorios. La cadencia es derivada del deadline (no configurable), pero el toggle por meta vive acá.
+- **Mapeo:** `enabled = (deadline !== null && !completed)` — son las metas que el banner aleatorio anterior habría empujado de todos modos. Si la meta ya tenía `reminder`, se respeta.
+- **Compatibilidad:** `GoalsService.save` enforza la invariante "completed o sin deadline ⇒ enabled=false" para que el sync nunca tenga que adivinar.
+
+### reminder v1 → v2 (2026-06-23)
+
+- **Qué cambia:** se agregan opcionales `sourceKind?: 'goal' | null` y `sourceId?: string | null` para distinguir recordatorios creados por el usuario (sin source) de los autogenerados por una meta.
+- **Por qué:** el toast y la lista de `/reminders` necesitan saber el origen para enrutar "Abrir" a `/goals/<id>` y para que "borrar" desactive el toggle de la meta (en vez de dejar el sync re-creando el archivo).
+- **Mapeo:** no-op; los reminders viejos quedan como user-created (`sourceKind` ausente/`null`).
+- **Compatibilidad:** todos los flujos existentes siguen funcionando idénticos para reminders sin source.
+
+### reminder v2 → v3 (2026-06-24)
+
+- **Qué cambia:** se agrega `nextPingAt: string` requerido. `dueAt` deja de ser el momento de disparo y pasa a representar el objetivo del usuario; `nextPingAt` es lo que el scheduler usa para disparar.
+- **Por qué:** §14 unifica la cadencia de avisos para todo reminder (manual o derivado de meta). `RemindersCadenceService` mantiene `nextPingAt = nextSlotFor(dueAt, now, settings.reminders.leadMinutes)`. Antes solo los goal-sourced tenían serie densificante; ahora también los manuales.
+- **Mapeo:** `nextPingAt = dueAt` (los reminders viejos disparan exactamente en su `dueAt`, igual que antes; la cadence service los re-agendará al siguiente tick según el lead-time vigente).
+- **Compatibilidad:** ningún consumidor leía `nextPingAt`; el scheduler ahora lo lee en vez de `dueAt`. El campo de settings `goals.reminderLeadMinutes` quedó renombrado a `reminders.leadMinutes` con fallback de lectura para no resetear configuraciones existentes.
+
 ### Plantilla
 
 ```markdown

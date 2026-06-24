@@ -4,7 +4,9 @@ import { Router } from '@angular/router';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { ReminderSchedulerService } from '@core/reminders/reminder-scheduler.service';
+import type { ReminderSummary } from '../models/reminder.types';
 import { IconComponent } from '@shared/icon/icon.component';
+import type { IconName } from '@shared/icon/icons.data';
 
 @Component({
   selector: 'mc-reminder-toast',
@@ -14,11 +16,14 @@ import { IconComponent } from '@shared/icon/icon.component';
     @if (scheduler.active(); as r) {
       <div role="status" class="toast">
         <div class="body">
-          <strong><mc-icon name="bell" /> {{ t('reminders.toast.title') }}</strong>
+          <strong>
+            <mc-icon [name]="iconFor(r)" />
+            {{ titleFor(r) }}
+          </strong>
           <span class="title">{{ r.title || t('reminders.untitled') }}</span>
         </div>
         <div class="actions">
-          <button type="button" class="link" (click)="goToReminders()">
+          <button type="button" class="link" (click)="open(r)">
             {{ t('reminders.toast.open') }}
           </button>
           <button type="button" class="ghost" (click)="scheduler.dismiss()" aria-label="Cerrar">
@@ -80,8 +85,22 @@ export class ReminderToastContainer {
     return this.i18n.t(key);
   }
 
-  protected goToReminders(): void {
-    void this.router.navigate(['/reminders']);
+  protected iconFor(r: ReminderSummary): IconName {
+    return r.sourceKind === 'goal' ? 'target' : 'bell';
+  }
+
+  protected titleFor(r: ReminderSummary): string {
+    return r.sourceKind === 'goal'
+      ? this.t('reminders.toast.goalTitle')
+      : this.t('reminders.toast.title');
+  }
+
+  protected open(r: ReminderSummary): void {
+    if (r.sourceKind === 'goal' && r.sourceId) {
+      void this.router.navigate(['/goals', r.sourceId]);
+    } else {
+      void this.router.navigate(['/reminders']);
+    }
     this.scheduler.dismiss();
   }
 }

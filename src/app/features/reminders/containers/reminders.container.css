@@ -289,8 +289,23 @@
   padding: 2px var(--mc-space-2);
   border-radius: var(--mc-radius-sm);
 }
-.title-btn:hover {
+.title-btn:hover:not(:disabled) {
   background: var(--mc-bg-hover);
+}
+.title-btn:disabled {
+  cursor: default;
+  opacity: 0.85;
+}
+.source-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: var(--mc-font-size-xs);
+  color: var(--mc-fg-muted);
+  border: 1px solid var(--mc-border-default);
+  border-radius: var(--mc-radius-sm);
+  padding: 0 var(--mc-space-1);
+  white-space: nowrap;
 }
 .due {
   color: var(--mc-fg-muted);

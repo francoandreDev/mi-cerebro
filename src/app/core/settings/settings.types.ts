@@ -18,6 +18,14 @@ export interface Settings {
   readonly goals: {
     readonly dormantThresholdDays: number;
   };
+  readonly reminders: {
+    // why: how many minutes before the target the reminder ping-series
+    //      starts (applies to every reminder, goal-derived or manual).
+    //      The cadence itself is fixed (a sequence of ever-tighter pings
+    //      down to the target + a couple after); the user only chooses
+    //      how far in advance to start being nudged.
+    readonly leadMinutes: number;
+  };
   readonly theme: {
     readonly override: ThemeOverride;
     readonly customBgHue?: number;
@@ -39,5 +47,6 @@ export const DEFAULT_SETTINGS: Settings = {
   },
   variants: { dormantThresholdDays: 30 },
   goals: { dormantThresholdDays: 30 },
+  reminders: { leadMinutes: 1440 },
   theme: { override: 'auto' },
 };

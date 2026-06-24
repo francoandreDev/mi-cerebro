@@ -16,6 +16,7 @@ import { ErrorService } from '@core/errors/error.service';
 import { ExportZipService } from '@core/export/export-zip.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { LEAD_PRESETS } from '@core/reminders/goal-cadence.utils';
 import { SettingsService, isValidTimezone } from '@core/settings/settings.service';
 import type { BgSatLevel, ThemeOverride } from '@core/settings/settings.types';
 import {
@@ -84,6 +85,7 @@ export class SettingsContainer {
     { id: 'versioning', labelKey: 'settings.section.versioning', icon: 'clock-counter-clockwise' },
     { id: 'variants', labelKey: 'settings.section.variants', icon: 'copy' },
     { id: 'export', labelKey: 'settings.export.section.title', icon: 'archive' },
+    { id: 'reminders', labelKey: 'settings.section.reminders', icon: 'bell' },
     { id: 'goals', labelKey: 'settings.section.goals', icon: 'target' },
   ];
   protected readonly activeSection = signal<SectionId>(readStoredSection());
@@ -112,6 +114,8 @@ export class SettingsContainer {
   protected readonly error = signal(false);
   protected readonly dormantDraft = signal(0);
   protected readonly autocommitDraft = signal(0);
+  protected readonly leadPresets = LEAD_PRESETS;
+  protected readonly currentLead = computed(() => this.state().reminders.leadMinutes);
 
   protected readonly remoteConfig = this.remote.config;
   protected readonly remoteLastPushAt = this.remote.lastPushAt;
@@ -127,6 +131,15 @@ export class SettingsContainer {
     effect(() => this.draft.set(this.state().timezone));
     effect(() => this.dormantDraft.set(this.state().variants.dormantThresholdDays));
     effect(() => this.autocommitDraft.set(this.state().versioning.autocommitMinutes));
+  }
+
+  protected selectLeadPreset(minutes: number): void {
+    if (this.currentLead() === minutes) return;
+    this.settings.setReminderLeadMinutes(minutes);
+  }
+
+  protected asKey(key: string): TranslationKey {
+    return key as TranslationKey;
   }
 
   protected onAutocommitInput(event: Event): void {
@@ -275,7 +288,15 @@ export class SettingsContainer {
   }
 }
 
-type SectionId = 'general' | 'theme' | 'remote' | 'versioning' | 'variants' | 'export' | 'goals';
+type SectionId =
+  | 'general'
+  | 'theme'
+  | 'remote'
+  | 'versioning'
+  | 'variants'
+  | 'export'
+  | 'reminders'
+  | 'goals';
 
 const SECTION_STORAGE_KEY = 'mc.settings.section';
 const VALID_SECTIONS: ReadonlySet<SectionId> = new Set<SectionId>([
@@ -285,6 +306,7 @@ const VALID_SECTIONS: ReadonlySet<SectionId> = new Set<SectionId>([
   'versioning',
   'variants',
   'export',
+  'reminders',
   'goals',
 ]);
 

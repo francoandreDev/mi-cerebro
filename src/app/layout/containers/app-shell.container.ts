@@ -4,6 +4,7 @@ import { RouterOutlet } from '@angular/router';
 import { ContinuityService } from '@core/continuity/continuity.service';
 import { ErrorService } from '@core/errors/error.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
+import { GoalRemindersSyncService } from '@core/reminders/goal-reminders-sync.service';
 import { SettingsService } from '@core/settings/settings.service';
 import { KeyboardHelpDialogComponent } from '@core/shortcuts/keyboard-help-dialog.component';
 import { ThemeService } from '@core/theme/theme.service';
@@ -12,7 +13,6 @@ import { AutoPushService } from '@core/versioning/auto-push.service';
 import { CompactionSchedulerService } from '@core/versioning/compaction-scheduler.service';
 import { SwitchVariantService } from '@core/versioning/switch-variant.service';
 import { VariantsService } from '@core/versioning/variants.service';
-import { GoalReminderContainer } from '@features/goals/containers/goal-reminder.container';
 import { OnboardingContainer } from '@features/onboarding/containers/onboarding.container';
 import { ReminderToastContainer } from '@features/reminders/containers/reminder-toast.container';
 import { CommandPaletteContainer } from '@features/search/containers/command-palette.container';
@@ -33,7 +33,6 @@ import { WorkspaceSidebarContainer } from './workspace-sidebar.container';
     OnboardingContainer,
     CommandPaletteContainer,
     WorkspaceSidebarContainer,
-    GoalReminderContainer,
     ReminderToastContainer,
     MiniPlayerContainer,
     VariantSwitchOverlayContainer,
@@ -51,7 +50,6 @@ import { WorkspaceSidebarContainer } from './workspace-sidebar.container';
       </div>
       <mc-command-palette />
       <mc-keyboard-help-dialog />
-      <mc-goal-reminder />
       <mc-reminder-toast />
       <mc-mini-player />
       <mc-variant-switch-overlay />
@@ -94,11 +92,15 @@ export class AppShellContainer {
   private readonly switchVariant = inject(SwitchVariantService);
   private readonly settings = inject(SettingsService);
   private readonly continuity = inject(ContinuityService);
+  // why: instantiate eagerly so its effect on goals/reminders summaries
+  //      starts watching at boot; otherwise no consumer would pull it in.
+  private readonly goalRemindersSync = inject(GoalRemindersSyncService);
 
   constructor() {
     this.continuity.start();
     this.autoPush.start();
     this.compactionScheduler.start();
+    void this.goalRemindersSync;
     this.workspace
       .bootstrap()
       .then(async () => {
