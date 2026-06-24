@@ -1,6 +1,6 @@
 import type { JSONContent } from '@tiptap/core';
 
-export const GOAL_SCHEMA_VERSION = 4;
+export const GOAL_SCHEMA_VERSION = 7;
 export const GOAL_KIND = 'goal';
 export const GOALS_DIR = 'goals';
 export const GOAL_FILE_SUFFIX = '.json';
@@ -24,12 +24,52 @@ export interface Goal {
   // why: §13 — manual 0–100 progress. Invariant: completed ⇒ progress=100.
   //      Service enforces on save; migration backfills from completed.
   readonly progress: number;
+  // why: §14 — auto-generates a Reminder per goal with deadline, cadence
+  //      derived from proximity (see core/reminders/goal-cadence.utils).
+  //      Toggle lives on the goal; cadence is fixed for now (YAGNI).
+  readonly reminder: GoalReminderConfig;
+  // why: §13 — sub-pasos del objetivo. Cada step = una estrella de la
+  //      constelación en /goals. Cuando hay ≥1 step, progress se deriva
+  //      (done/total*100); con cero steps, progress sigue siendo manual.
+  readonly steps: readonly GoalStep[];
+  // why: §13 — centro de la constelación en el wall si el usuario la arrastró;
+  //      ausente cae al hash determinístico de `constellationCenter(goal.id)`.
+  readonly wallCenter?: { readonly x: number; readonly y: number };
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly schemaVersion: number;
   readonly position?: string;
   readonly [key: string]: unknown;
 }
+
+export interface GoalReminderConfig {
+  readonly enabled: boolean;
+}
+
+export const DEFAULT_GOAL_REMINDER: GoalReminderConfig = { enabled: false };
+
+export interface GoalStep {
+  readonly id: string;
+  readonly title: string;
+  readonly done: boolean;
+  // why: §13 — el editor permite "sembrar" pasos clickeando el lienzo;
+  //      x/y en % del canvas persisten esa posición. Si están ausentes,
+  //      la wall/editor caen al fallback hash-based determinístico.
+  readonly x?: number;
+  readonly y?: number;
+}
+
+export const newGoalStep = (title = '', x?: number, y?: number): GoalStep => {
+  const base: GoalStep = { id: crypto.randomUUID(), title, done: false };
+  if (typeof x === 'number' && typeof y === 'number') return { ...base, x, y };
+  return base;
+};
+
+export const deriveProgressFromSteps = (steps: readonly GoalStep[]): number | null => {
+  if (steps.length === 0) return null;
+  const done = steps.reduce((n, s) => n + (s.done ? 1 : 0), 0);
+  return Math.round((done / steps.length) * 100);
+};
 
 export interface GoalSummary {
   readonly id: string;
@@ -38,10 +78,19 @@ export interface GoalSummary {
   readonly completed: boolean;
   readonly priority: GoalPriority;
   readonly progress: number;
+  readonly reminder: GoalReminderConfig;
   readonly updatedAt: string;
   readonly tags: readonly string[];
   readonly folder: string;
   readonly position: string;
+  // why: wall renderiza una constelación por meta; necesita las estrellas
+  //      (pasos) sin abrir el archivo completo de cada goal. Lista plana
+  //      con `id/title/done` por step — basta para posicionar, dibujar y
+  //      togglear desde la wall.
+  readonly steps: readonly GoalStep[];
+  readonly stepsTotal: number;
+  readonly stepsDone: number;
+  readonly wallCenter?: { readonly x: number; readonly y: number };
 }
 
 export const clampProgress = (n: number): number => {

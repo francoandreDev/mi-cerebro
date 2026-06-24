@@ -1,89 +1,33 @@
-<header class="bar">
-  <label class="done">
+<mc-goal-constellation-editor
+  [goal]="goal()"
+  [editable]="editable()"
+  [status]="status()"
+  (stepsChange)="stepsChange.emit($event)"
+  (priorityChange)="priorityChange.emit($event)"
+  (deadlineChange)="deadlineChange.emit($event)"
+  (titleChange)="titleChange.emit($event)"
+  (completedChange)="completedChange.emit($event)"
+  (removeGoal)="removeGoal.emit()"
+/>
+
+<section class="meta reminder">
+  <mc-icon name="bell" class="meta-icon" />
+  <label class="reminder-toggle">
     <input
       type="checkbox"
-      [checked]="goal().completed"
-      [disabled]="!editable()"
-      (change)="onCompletedToggle($event)"
+      [checked]="goal().reminder.enabled"
+      [disabled]="!editable() || goal().completed || goal().deadline === null"
+      (change)="onReminderToggle($event)"
     />
-    <span class="sr-only">{{ t('goals.completed.label') }}</span>
+    <span>{{ t('goals.reminder.toggleLabel') }}</span>
   </label>
-  <mc-icon
-    [name]="goal().completed ? 'check-square' : 'target'"
-    class="title-icon"
-    [class.mc-anim-check]="goal().completed"
-  />
-  <input
-    type="text"
-    class="title-input"
-    [class.done]="goal().completed"
-    [value]="goal().title"
-    [placeholder]="t('goals.placeholderTitle')"
-    [attr.aria-label]="t('goals.placeholderTitle')"
-    [readOnly]="!editable()"
-    (input)="onTitleInput($event)"
-  />
-  <span class="status" [attr.data-status]="status()">
-    <mc-icon
-      [name]="statusIcon()"
-      [class.mc-anim-spin]="status() === 'saving'"
-      [class.mc-anim-pulse]="status() === 'unsaved'"
-    />
-    {{ statusLabel() }}
-  </span>
-  @if (editable()) {
-    <button type="button" class="danger mc-hover-wiggle" (click)="removeGoal.emit()">
-      <mc-icon name="trash" />
-      <span>{{ t('goals.delete') }}</span>
-    </button>
+  @if (goal().deadline === null) {
+    <span class="reminder-hint">{{ t('goals.reminder.requiresDeadline') }}</span>
+  } @else if (goal().reminder.enabled) {
+    <span class="reminder-hint">{{ t('goals.reminder.toggleHint') }}</span>
   }
-</header>
-<section class="meta">
-  <mc-icon name="flag" class="meta-icon" />
-  <span class="label">{{ t('goals.deadline.label') }}:</span>
-  <mc-deadline-picker
-    [deadline]="goal().deadline"
-    [editable]="editable()"
-    (deadlineChange)="deadlineChange.emit($event)"
-  />
 </section>
-<section class="meta">
-  <mc-icon name="star" class="meta-icon" />
-  <span class="label">{{ t('goals.priority.label') }}:</span>
-  <div class="priority-chips" role="radiogroup" [attr.aria-label]="t('goals.priority.label')">
-    @for (p of priorities; track p) {
-      <button
-        type="button"
-        class="chip"
-        role="radio"
-        [class.active]="goal().priority === p"
-        [attr.aria-checked]="goal().priority === p"
-        [disabled]="!editable()"
-        (click)="onPrioritySelect(p)"
-      >
-        {{ t(priorityKey(p)) }}
-      </button>
-    }
-  </div>
-</section>
-<section class="meta">
-  <mc-icon name="hourglass-medium" class="meta-icon" />
-  <span class="label">{{ t('goals.progress.label') }}:</span>
-  <input
-    type="range"
-    class="progress-range"
-    min="0"
-    max="100"
-    step="5"
-    [value]="goal().completed ? 100 : goal().progress"
-    [disabled]="!editable() || goal().completed"
-    [attr.aria-label]="t('goals.progress.label')"
-    (input)="onProgressInput($event)"
-  />
-  <span class="progress-value" aria-live="polite">
-    {{ goal().completed ? 100 : goal().progress }}%
-  </span>
-</section>
+
 <mc-tag-picker
   [availableTags]="availableTags()"
   [selectedIds]="goal().tags"

@@ -21,7 +21,7 @@ Una idea distinta por página. No replicar el mismo patrón: cada entidad tiene 
 | `/history`   | (heredado, sin section pane)                                                             | ✅     |
 | `/variants`  | (heredado, sin section pane)                                                             | ✅     |
 | `/notes`     | Muro de stickies (CSS columns) + card "nueva" inline + chips de filtro                   | ✅     |
-| `/tasks`     | Tres columnas por horizonte (Hoy / Esta semana / Backlog) + búsqueda local               | ✅     |
+| `/tasks`     | Jardín de tres canteros (floración/brote/semilla) + trasplantar (DnD) + cosecha + riego  | ⏳     |
 | `/goals`     | Wallboard tipográfico: posters grandes en grid auto-fit + filtros + hero create          | ✅     |
 | `/lists`     | Pizarra-directorio: chalkboard + rail A–Z/tag + flow multi-columna, search dim+highlight | ✅     |
 | `/writings`  | Biblioteca de borrador: shelf de cards tipográficas + editor full-bleed centrado         | ✅     |

@@ -35,24 +35,37 @@
   display: inline-flex;
   align-items: center;
   gap: var(--mc-space-2);
-  background: var(--mc-bg-elevated);
-  border: 1px dashed var(--mc-accent-primary);
-  border-radius: var(--mc-radius-md);
-  padding: var(--mc-space-1) var(--mc-space-2);
+  background: rgba(10, 18, 40, 0.55);
+  border: 1px dashed rgba(170, 215, 255, 0.55);
+  border-radius: 999px;
+  padding: 4px 14px;
   flex: 1;
   min-width: 260px;
   max-width: 480px;
+  transition:
+    border-color 200ms ease,
+    box-shadow 200ms ease;
+}
+.new:focus-within {
+  border-color: rgba(180, 220, 255, 0.95);
+  border-style: solid;
+  box-shadow: 0 0 14px -2px rgba(170, 215, 255, 0.6);
 }
 .new-icon {
-  color: var(--mc-accent-primary);
+  color: rgba(180, 220, 255, 0.85);
+  filter: drop-shadow(0 0 3px rgba(170, 215, 255, 0.45));
 }
 .new-input {
   flex: 1;
   background: transparent;
   border: 0;
-  color: var(--mc-fg-primary);
+  color: #eaf3ff;
   font-size: var(--mc-font-size-base);
   min-width: 0;
+}
+.new-input::placeholder {
+  color: rgba(200, 215, 245, 0.4);
+  font-style: italic;
 }
 .new-input:focus {
   outline: none;
@@ -60,15 +73,21 @@
 .new-submit {
   background: transparent;
   border: 0;
-  color: var(--mc-accent-primary);
+  color: rgba(180, 220, 255, 0.95);
   cursor: pointer;
-  padding: 2px 6px;
-  border-radius: var(--mc-radius-sm);
+  padding: 4px 8px;
+  border-radius: 999px;
   display: inline-flex;
   align-items: center;
+  transition: all 180ms ease;
+}
+.new-submit:not(:disabled):hover {
+  color: #ffffff;
+  background: rgba(170, 215, 255, 0.12);
+  box-shadow: 0 0 10px -2px rgba(170, 215, 255, 0.7);
 }
 .new-submit:disabled {
-  color: var(--mc-fg-muted);
+  color: rgba(200, 215, 245, 0.3);
   cursor: not-allowed;
 }
 .wall-controls {
@@ -181,18 +200,75 @@
   border-radius: var(--mc-radius-lg, 12px);
   background:
     radial-gradient(
-      ellipse at 30% 20%,
-      rgba(120, 140, 200, 0.08),
-      transparent 60%
-    ),
-    radial-gradient(
-      ellipse at 70% 80%,
-      rgba(180, 140, 200, 0.06),
+      ellipse at 28% 22%,
+      rgba(90, 140, 220, 0.18),
       transparent 55%
     ),
-    linear-gradient(180deg, #0b1020 0%, #060912 100%);
+    radial-gradient(
+      ellipse at 72% 78%,
+      rgba(120, 110, 200, 0.14),
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at 50% 50%,
+      rgba(30, 50, 110, 0.45),
+      transparent 70%
+    ),
+    linear-gradient(180deg, #05091e 0%, #010207 100%);
   overflow: hidden;
   border: 1px solid var(--mc-border-default);
+}
+/* why: starfield decorativo de fondo (puntitos blancos) usando box-shadow múltiple. */
+.sky::before,
+.sky::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  background: transparent;
+  pointer-events: none;
+  border-radius: 50%;
+}
+.sky::before {
+  box-shadow:
+    6vw 9vh 0 0.5px rgba(255, 255, 255, 0.55),
+    14vw 22vh 0 0.5px rgba(255, 255, 255, 0.4),
+    22vw 5vh 0 0.5px rgba(255, 255, 255, 0.5),
+    31vw 17vh 0 0.5px rgba(255, 255, 255, 0.35),
+    38vw 41vh 0 0.5px rgba(255, 255, 255, 0.45),
+    45vw 12vh 0 0.5px rgba(255, 255, 255, 0.5),
+    52vw 34vh 0 0.5px rgba(255, 255, 255, 0.3),
+    61vw 7vh 0 0.5px rgba(255, 255, 255, 0.55),
+    68vw 25vh 0 0.5px rgba(255, 255, 255, 0.4),
+    74vw 47vh 0 0.5px rgba(255, 255, 255, 0.35),
+    82vw 18vh 0 0.5px rgba(255, 255, 255, 0.5),
+    89vw 38vh 0 0.5px rgba(255, 255, 255, 0.45),
+    94vw 11vh 0 0.5px rgba(255, 255, 255, 0.3),
+    3vw 55vh 0 0.5px rgba(255, 255, 255, 0.5),
+    12vw 71vh 0 0.5px rgba(255, 255, 255, 0.4),
+    19vw 84vh 0 0.5px rgba(255, 255, 255, 0.3),
+    27vw 62vh 0 0.5px rgba(255, 255, 255, 0.5),
+    36vw 78vh 0 0.5px rgba(255, 255, 255, 0.45),
+    44vw 91vh 0 0.5px rgba(255, 255, 255, 0.35),
+    53vw 67vh 0 0.5px rgba(255, 255, 255, 0.5),
+    62vw 83vh 0 0.5px rgba(255, 255, 255, 0.4),
+    71vw 73vh 0 0.5px rgba(255, 255, 255, 0.3),
+    79vw 89vh 0 0.5px rgba(255, 255, 255, 0.5),
+    86vw 60vh 0 0.5px rgba(255, 255, 255, 0.4),
+    92vw 79vh 0 0.5px rgba(255, 255, 255, 0.45);
+  animation: mc-bg-twinkle 6s ease-in-out infinite;
+}
+.sky::after {
+  box-shadow:
+    9vw 33vh 0 0 rgba(200, 220, 255, 0.7),
+    25vw 49vh 0 0 rgba(220, 230, 255, 0.6),
+    41vw 23vh 0 0 rgba(255, 240, 200, 0.6),
+    57vw 58vh 0 0 rgba(220, 230, 255, 0.5),
+    73vw 31vh 0 0 rgba(200, 220, 255, 0.65),
+    85vw 66vh 0 0 rgba(255, 230, 200, 0.5);
+  animation: mc-bg-twinkle 4s ease-in-out infinite reverse;
 }
 .sky-lines {
   position: absolute;
@@ -202,13 +278,18 @@
   pointer-events: none;
 }
 .link {
-  stroke: rgba(180, 200, 255, 0.18);
-  stroke-width: 0.08;
+  stroke: rgba(180, 220, 255, 0.78);
+  stroke-width: 1.4;
+  stroke-linecap: round;
   vector-effect: non-scaling-stroke;
-  transition: stroke 200ms ease;
+  filter: drop-shadow(0 0 3px rgba(140, 190, 255, 0.7));
+  transition:
+    stroke 200ms ease,
+    opacity 200ms ease;
 }
 .link.dim {
-  stroke: rgba(180, 200, 255, 0.05);
+  stroke: rgba(180, 200, 255, 0.08);
+  filter: none;
 }
 .stars {
   position: absolute;
@@ -226,62 +307,101 @@
   opacity: 0.18;
 }
 .star-slot.dim .star-label,
-.star-slot.dim .star-meta {
+.star-slot.dim .star-sublabel {
   visibility: hidden;
 }
 .star {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
+  display: block;
   background: transparent;
   border: 0;
-  padding: 6px;
-  cursor: pointer;
+  padding: 0;
+  cursor: grab;
+  touch-action: none;
   color: #e8edff;
   font-family: inherit;
-  --star-color: #fff5cc;
-  --star-glow-color: rgba(255, 230, 150, 0.55);
+  --star-color: #eaf3ff;
+  --star-glow-color: rgba(170, 215, 255, 0.7);
 }
+.star.dragging { cursor: grabbing; }
+.star-slot:has(.star.dragging) { transition: none; z-index: 3; }
 .star.completed {
-  --star-color: #9bb4ff;
-  --star-glow-color: rgba(120, 150, 220, 0.35);
+  --star-color: #a8c0ff;
+  --star-glow-color: rgba(130, 160, 230, 0.4);
   opacity: 0.7;
 }
+.star.step.done:not(.completed) {
+  --star-color: #bcd0ff;
+  --star-glow-color: rgba(150, 180, 230, 0.38);
+}
+.star.step.done .star-core {
+  fill: #d6e0ff;
+}
 .star.overdue {
-  --star-color: #ff9b9b;
-  --star-glow-color: rgba(255, 120, 120, 0.55);
+  --star-color: #ffb0b0;
+  --star-glow-color: rgba(255, 130, 130, 0.6);
 }
 .star.soon {
-  --star-color: #ffd28a;
-  --star-glow-color: rgba(255, 180, 100, 0.55);
+  --star-color: #ffd9a0;
+  --star-glow-color: rgba(255, 190, 110, 0.55);
 }
-.star-dot {
+.star-svg {
   display: block;
-  width: var(--star-size, 16px);
-  height: var(--star-size, 16px);
-  border-radius: 50%;
-  background: radial-gradient(
-    circle at 40% 35%,
-    #ffffff 0%,
-    var(--star-color) 45%,
-    rgba(255, 255, 255, 0) 70%
-  );
-  box-shadow:
-    0 0 var(--star-glow, 12px) var(--star-glow-color),
-    0 0 calc(var(--star-glow, 12px) * 0.4) var(--star-glow-color);
+  width: calc(var(--star-size, 16px) * 2.4);
+  height: calc(var(--star-size, 16px) * 2.4);
+  overflow: visible;
   opacity: var(--star-opacity, 1);
+  filter:
+    drop-shadow(0 0 calc(var(--star-glow, 12px) * 0.2) #ffffff)
+    drop-shadow(0 0 calc(var(--star-glow, 12px) * 0.5) var(--star-glow-color))
+    drop-shadow(0 0 var(--star-glow, 12px) var(--star-glow-color));
+  transition: transform 200ms ease;
+  transform-origin: 50% 50%;
 }
-.star.pulsing .star-dot {
-  animation: mc-star-pulse 2.4s ease-in-out infinite;
+/* why: dos halos circulares concéntricos dan el bloom redondo
+        tipo cuerpo celeste; los spikes quedan como detalle fino. */
+.star-halo {
+  fill: var(--star-glow-color);
+  filter: blur(7px);
+  opacity: 0.55;
+}
+.star-halo-mid {
+  fill: var(--star-color);
+  filter: blur(3.5px);
+  opacity: 0.5;
+}
+.star-spike {
+  fill: var(--star-color);
+  filter: blur(0.7px);
+  opacity: 0.85;
+}
+.star-spike-diag {
+  opacity: 0.35;
+  filter: blur(0.6px);
+}
+.star-core {
+  fill: #ffffff;
+}
+.star.completed .star-core {
+  fill: #d6e0ff;
+}
+.star.pulsing .star-svg {
+  animation: mc-star-pulse 2.6s ease-in-out infinite;
+}
+.star:not(.pulsing):not(.completed) .star-spike-diag {
+  animation: mc-star-twinkle 3.8s ease-in-out infinite;
+  transform-origin: 50% 50%;
 }
 .star-label {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
   font-size: var(--mc-font-size-sm);
   color: #e8edff;
-  max-width: 160px;
+  max-width: 180px;
   text-align: center;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -289,10 +409,15 @@
   transition: opacity 150ms ease;
   pointer-events: none;
 }
-.star-meta {
+.star-sublabel {
+  position: absolute;
+  top: calc(100% + 22px);
+  left: 50%;
+  transform: translateX(-50%);
   font-size: var(--mc-font-size-xs, 0.72rem);
-  color: rgba(232, 237, 255, 0.7);
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+  color: rgba(232, 237, 255, 0.6);
+  font-style: italic;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
   white-space: nowrap;
   opacity: 0;
   transition: opacity 150ms ease;
@@ -300,8 +425,8 @@
 }
 .star:hover .star-label,
 .star:focus-visible .star-label,
-.star:hover .star-meta,
-.star:focus-visible .star-meta {
+.star:hover .star-sublabel,
+.star:focus-visible .star-sublabel {
   opacity: 1;
 }
 .star:focus-visible {
@@ -309,12 +434,9 @@
   outline-offset: 4px;
   border-radius: var(--mc-radius-sm);
 }
-.star:hover .star-dot,
-.star:focus-visible .star-dot {
-  transform: scale(1.12);
-}
-.star-dot {
-  transition: transform 150ms ease;
+.star:hover .star-svg,
+.star:focus-visible .star-svg {
+  transform: scale(1.18) rotate(4deg);
 }
 .sky-empty {
   position: absolute;
@@ -338,16 +460,41 @@
   0%,
   100% {
     transform: scale(1);
-    filter: brightness(1);
+    filter:
+      drop-shadow(0 0 calc(var(--star-glow, 12px) * 0.45) var(--star-glow-color))
+      drop-shadow(0 0 var(--star-glow, 12px) var(--star-glow-color));
   }
   50% {
-    transform: scale(1.18);
-    filter: brightness(1.35);
+    transform: scale(1.22);
+    filter:
+      drop-shadow(0 0 calc(var(--star-glow, 12px) * 0.7) var(--star-glow-color))
+      drop-shadow(0 0 calc(var(--star-glow, 12px) * 1.6) var(--star-glow-color));
+  }
+}
+@keyframes mc-star-twinkle {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+@keyframes mc-bg-twinkle {
+  0%,
+  100% {
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 0.4;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .star.pulsing .star-dot {
+  .star.pulsing .star-svg,
+  .star .star-gleam,
+  .sky::before,
+  .sky::after {
     animation: none;
   }
 }

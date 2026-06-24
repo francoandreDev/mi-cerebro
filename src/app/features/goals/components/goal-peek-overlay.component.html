@@ -1,0 +1,137 @@
+<button
+  type="button"
+  class="backdrop"
+  [attr.aria-label]="t('goals.wall.peekClose')"
+  (click)="closed.emit()"
+></button>
+<div
+  class="panel"
+  role="dialog"
+  [attr.aria-label]="
+    t('goals.wall.peekAria').replace('{title}', summary().title || t('goals.untitledTitle'))
+  "
+  [style.left.%]="anchorX()"
+  [style.top.%]="anchorY()"
+>
+  <div class="head">
+    <label class="done-toggle" [attr.aria-label]="t('goals.completed.label')">
+      <input type="checkbox" [checked]="summary().completed" (change)="onCompletedToggle($event)" />
+      <mc-icon
+        [name]="summary().completed ? 'check-square' : 'target'"
+        class="head-icon"
+        [class.mc-anim-check]="summary().completed"
+      />
+    </label>
+    @if (renaming()) {
+      <input
+        type="text"
+        class="title-rename"
+        mcAutofocus
+        [value]="titleDraft()"
+        [attr.aria-label]="t('goals.wall.peekTitleAria')"
+        (input)="onTitleInput($event)"
+        (keydown)="onTitleKey($event)"
+        (blur)="commitTitle()"
+      />
+    } @else {
+      <button
+        type="button"
+        class="title-button"
+        [class.done]="summary().completed"
+        (click)="onTitleEditStart()"
+      >
+        {{ summary().title || t('goals.untitledTitle') }}
+        <mc-icon name="pencil-simple" class="title-edit-hint" aria-hidden="true" />
+      </button>
+    }
+    <button
+      type="button"
+      class="close-btn mc-hover-wiggle"
+      [attr.aria-label]="t('goals.wall.peekClose')"
+      (click)="onCloseClick($event)"
+    >
+      <mc-icon name="x" />
+    </button>
+  </div>
+
+  <div class="deadline-row" [class.has-deadline]="summary().deadline !== null">
+    <button
+      type="button"
+      class="deadline-chip"
+      [attr.aria-label]="t('goals.editor.deadlineAria')"
+      (click)="onDeadlineClick()"
+    >
+      <mc-icon [name]="summary().deadline ? 'moon' : 'calendar-blank'" />
+      @if (summary().deadline) {
+        <span>{{ daysLabel() }} · {{ summary().deadline | mcDate }}</span>
+      } @else {
+        <span>{{ t('goals.editor.seedDeadline') }}</span>
+      }
+      @if (summary().deadline) {
+        <span
+          class="deadline-clear"
+          role="button"
+          tabindex="0"
+          [attr.aria-label]="t('goals.deadline.remove')"
+          (click)="onDeadlineClear($event)"
+          (keydown.enter)="onDeadlineClear($event)"
+        >
+          <mc-icon name="x" />
+        </span>
+      }
+    </button>
+    @if (deadlineOpen()) {
+      <input
+        type="date"
+        class="deadline-picker"
+        mcAutofocus
+        [value]="summary().deadline ?? ''"
+        (change)="onDeadlinePick($event)"
+        (blur)="deadlineOpen.set(false)"
+      />
+    }
+  </div>
+
+  <div class="progress-block" aria-live="polite">
+    <div class="progress-head">
+      <mc-icon name="hourglass-medium" class="progress-icon" />
+      <span class="progress-text">{{ progressLabel() }}</span>
+    </div>
+    <div class="progress-track" [class.empty]="summary().stepsTotal === 0">
+      <span class="progress-fill" [style.width.%]="progressPct()"></span>
+    </div>
+  </div>
+
+  <div class="priority-stars" role="radiogroup" [attr.aria-label]="t('goals.editor.priorityAria')">
+    @for (p of priorities; track p) {
+      <button
+        type="button"
+        role="radio"
+        class="prio-btn"
+        [class]="'prio-btn prio-' + p"
+        [class.active]="summary().priority === p"
+        [attr.aria-checked]="summary().priority === p"
+        (click)="onPriorityClick(p)"
+      >
+        <span class="prio-star" aria-hidden="true"></span>
+        <span class="prio-label">{{ t(priorityKey(p)) }}</span>
+      </button>
+    }
+  </div>
+
+  <div class="actions">
+    <button type="button" class="open-map" (click)="onOpenMapClick($event)">
+      <mc-icon name="sparkle" />
+      <span>{{ t('goals.wall.peekOpenMap') }}</span>
+      <mc-icon name="arrow-right" />
+    </button>
+    <button
+      type="button"
+      class="delete-btn mc-hover-wiggle"
+      [attr.aria-label]="t('goals.delete')"
+      (click)="onDeleteClick($event)"
+    >
+      <mc-icon name="trash" />
+    </button>
+  </div>
+</div>

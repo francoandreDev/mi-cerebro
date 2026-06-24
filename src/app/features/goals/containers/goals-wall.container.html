@@ -3,7 +3,7 @@
     <h1 class="wall-title">
       <mc-icon name="target" class="title-icon" aria-hidden="true" />
       {{ t('goals.title') }}
-      <span class="count" aria-hidden="true">· {{ stars().length }}</span>
+      <span class="count" aria-hidden="true">· {{ summaries().length }}</span>
     </h1>
     <form class="new" (submit)="onCreateSubmit($event)">
       <mc-icon name="plus" class="new-icon" aria-hidden="true" />
@@ -99,7 +99,7 @@
         aria-hidden="true"
         focusable="false"
       >
-        @for (link of links(); track link.a + '|' + link.b) {
+        @for (link of links(); track link.goalId + '|' + link.a + '|' + link.b) {
           <line
             class="link"
             [class.dim]="link.dim"
@@ -111,7 +111,7 @@
         }
       </svg>
       <ul class="stars" [attr.aria-label]="t('goals.title')">
-        @for (star of stars(); track star.goal.id) {
+        @for (star of stars(); track star.key) {
           <li
             class="star-slot"
             [style.left.%]="star.x"
@@ -125,30 +125,74 @@
               [class.overdue]="star.state === 'overdue'"
               [class.soon]="star.state === 'soon'"
               [class.pulsing]="star.pulsing"
+              [class.done]="star.done"
+              [class.step]="star.stepId !== null"
               [style.--star-size.px]="star.size"
               [style.--star-glow.px]="star.glow"
               [style.--star-opacity]="star.opacity"
+              [class.dragging]="dragCenter()?.goalId === star.goalId"
               [attr.aria-label]="ariaLabelFor(star)"
-              (click)="onOpen(star.goal.id)"
+              [attr.aria-pressed]="star.stepId !== null ? star.done : null"
+              (pointerdown)="onStarDown(star, $event)"
+              (pointermove)="onStarMove($event)"
+              (pointerup)="onStarUp(star, $event)"
             >
-              <span class="star-dot" aria-hidden="true"></span>
-              <span class="star-label">
-                {{ star.goal.title || untitledLabel() }}
-              </span>
-              <span class="star-meta" aria-hidden="true">
-                {{ star.progressDisplay }}%
-                @if (star.state === 'overdue') {
-                  · {{ t('goals.wall.overdueBadge') }}
-                } @else if (star.state === 'completed') {
-                  · {{ t('goals.wall.completedBadge') }}
-                }
-              </span>
+              <svg
+                class="star-svg"
+                viewBox="-50 -50 100 100"
+                preserveAspectRatio="xMidYMid meet"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <circle class="star-halo" cx="0" cy="0" r="26" />
+                <circle class="star-halo-mid" cx="0" cy="0" r="12" />
+                <ellipse class="star-spike" rx="44" ry="0.45" cx="0" cy="0" />
+                <ellipse class="star-spike" rx="0.45" ry="44" cx="0" cy="0" />
+                <ellipse
+                  class="star-spike star-spike-diag"
+                  rx="22"
+                  ry="0.3"
+                  cx="0"
+                  cy="0"
+                  transform="rotate(45)"
+                />
+                <ellipse
+                  class="star-spike star-spike-diag"
+                  rx="22"
+                  ry="0.3"
+                  cx="0"
+                  cy="0"
+                  transform="rotate(-45)"
+                />
+                <circle class="star-core" cx="0" cy="0" r="3" />
+              </svg>
+              <span class="star-label">{{ star.title }}</span>
+              @if (star.stepId !== null) {
+                <span class="star-sublabel" aria-hidden="true">{{ star.goalTitle }}</span>
+              }
             </button>
           </li>
         }
       </ul>
       @if (hasFilter() && allDim()) {
         <p class="sky-empty">{{ t('goals.wall.noMatch') }}</p>
+      }
+      @if (peekSummary(); as peek) {
+        @if (peekAnchor(); as anchor) {
+          <mc-goal-peek-overlay
+            [summary]="peek"
+            [anchorX]="anchor.x"
+            [anchorY]="anchor.y"
+            [today]="today()"
+            (titleChange)="onPeekTitleChange($event)"
+            (completedChange)="onPeekCompletedChange($event)"
+            (deadlineChange)="onPeekDeadlineChange($event)"
+            (priorityChange)="onPeekPriorityChange($event)"
+            (removeGoal)="onPeekRemove()"
+            (openMap)="onPeekOpenMap()"
+            (closed)="onPeekClose()"
+          />
+        }
       }
     </div>
   }

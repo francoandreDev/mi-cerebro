@@ -6,18 +6,17 @@ import type { TranslationKey } from '@core/i18n/i18n.types';
 import type { Tag } from '@core/tags/tag.types';
 import { EditorComponent } from '@shared/editor/editor.component';
 import { IconComponent } from '@shared/icon/icon.component';
-import type { IconName } from '@shared/icon/icons.data';
 import { TagPickerComponent } from '@shared/tags/tag-picker.component';
 
-import { GOAL_PRIORITIES, type Goal, type GoalPriority } from '../models/goal.types';
-import { DeadlinePickerComponent } from './deadline-picker.component';
+import { type Goal, type GoalPriority, type GoalStep } from '../models/goal.types';
+import { GoalConstellationEditorComponent } from './goal-constellation-editor.component';
 
 export type SaveStatus = 'saved' | 'saving' | 'unsaved';
 
 @Component({
   selector: 'mc-goal-editor-pane',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [EditorComponent, TagPickerComponent, DeadlinePickerComponent, IconComponent],
+  imports: [EditorComponent, TagPickerComponent, IconComponent, GoalConstellationEditorComponent],
   templateUrl: './goal-editor-pane.component.html',
   styleUrl: './goal-editor-pane.component.css',
 })
@@ -34,40 +33,14 @@ export class GoalEditorPaneComponent {
   readonly addTag = output<string>();
   readonly removeTag = output<string>();
   readonly priorityChange = output<GoalPriority>();
-  readonly progressChange = output<number>();
-
-  protected readonly priorities = GOAL_PRIORITIES;
+  readonly reminderEnabledChange = output<boolean>();
+  readonly stepsChange = output<readonly GoalStep[]>();
 
   private readonly i18n = inject(I18nService);
   protected t(key: TranslationKey): string {
     return this.i18n.t(key);
   }
-  protected statusLabel(): string {
-    return this.t(`goals.status.${this.status()}` as TranslationKey);
-  }
-  protected statusIcon(): IconName {
-    const s = this.status();
-    if (s === 'saving') return 'spinner-gap';
-    if (s === 'unsaved') return 'warning';
-    return 'check';
-  }
-  protected onTitleInput(event: Event): void {
-    const target = event.target as HTMLInputElement | null;
-    if (target) this.titleChange.emit(target.value);
-  }
-  protected onCompletedToggle(event: Event): void {
-    this.completedChange.emit((event.target as HTMLInputElement).checked);
-  }
-  protected onPrioritySelect(p: GoalPriority): void {
-    if (this.goal().priority !== p) this.priorityChange.emit(p);
-  }
-  protected onProgressInput(event: Event): void {
-    const target = event.target as HTMLInputElement | null;
-    if (!target) return;
-    const n = Number(target.value);
-    if (Number.isFinite(n)) this.progressChange.emit(n);
-  }
-  protected priorityKey(p: GoalPriority): TranslationKey {
-    return `goals.priority.${p}` as TranslationKey;
+  protected onReminderToggle(event: Event): void {
+    this.reminderEnabledChange.emit((event.target as HTMLInputElement).checked);
   }
 }

@@ -1,0 +1,292 @@
+<div class="canvas-wrap" [attr.data-tone]="skyTone()">
+  <div class="nameplate">
+    <label class="done-toggle" [attr.aria-label]="t('goals.completed.label')">
+      <input
+        type="checkbox"
+        [checked]="goal().completed"
+        [disabled]="!editable()"
+        (change)="onCompletedToggle($event)"
+      />
+      <mc-icon
+        [name]="goal().completed ? 'check-square' : 'target'"
+        class="nameplate-icon"
+        [class.mc-anim-check]="goal().completed"
+      />
+    </label>
+    @if (renamingTitle()) {
+      <input
+        type="text"
+        class="title-rename"
+        mcAutofocus
+        [value]="titleDraft()"
+        [attr.aria-label]="t('goals.placeholderTitle')"
+        (input)="onTitleInput($event)"
+        (keydown)="onTitleKey($event)"
+        (blur)="commitTitle()"
+      />
+    } @else {
+      <button
+        type="button"
+        class="title-button"
+        [class.done]="goal().completed"
+        [disabled]="!editable()"
+        (click)="onTitleEditStart()"
+      >
+        {{ goal().title || t('goals.placeholderTitle') }}
+        @if (editable()) {
+          <mc-icon name="pencil-simple" class="title-edit-hint" aria-hidden="true" />
+        }
+      </button>
+    }
+  </div>
+
+  <div class="chrome">
+    <div class="deadline-chip-wrap" [class.has-deadline]="goal().deadline !== null">
+      <button
+        type="button"
+        class="deadline-chip"
+        [attr.aria-label]="t('goals.editor.deadlineAria')"
+        [disabled]="!editable()"
+        (click)="onHorizonClick()"
+      >
+        <mc-icon [name]="goal().deadline ? 'moon' : 'calendar-blank'" />
+        @if (goal().deadline) {
+          <span>{{ daysLabel() }} · {{ goal().deadline | mcDate }}</span>
+        } @else {
+          <span>{{ t('goals.editor.seedDeadline') }}</span>
+        }
+        @if (goal().deadline && editable()) {
+          <span
+            class="deadline-clear"
+            role="button"
+            tabindex="0"
+            [attr.aria-label]="t('goals.deadline.remove')"
+            (click)="onDeadlineClear($event)"
+            (keydown.enter)="onDeadlineClear($event)"
+          >
+            <mc-icon name="x" />
+          </span>
+        }
+      </button>
+      @if (deadlineOpen()) {
+        <input
+          type="date"
+          class="deadline-picker"
+          mcAutofocus
+          [value]="goal().deadline ?? ''"
+          (change)="onDeadlinePick($event)"
+          (blur)="deadlineOpen.set(false)"
+        />
+      }
+    </div>
+    <span class="save-status" [attr.data-status]="status()" [attr.title]="statusLabel()">
+      <mc-icon
+        [name]="statusIcon()"
+        [class.mc-anim-spin]="status() === 'saving'"
+        [class.mc-anim-pulse]="status() === 'unsaved'"
+      />
+    </span>
+    @if (editable()) {
+      <button
+        type="button"
+        class="delete-btn mc-hover-wiggle"
+        [attr.aria-label]="t('goals.delete')"
+        (click)="onDeleteClick($event)"
+      >
+        <mc-icon name="trash" />
+      </button>
+    }
+  </div>
+
+  <svg
+    class="canvas"
+    viewBox="0 0 100 100"
+    preserveAspectRatio="none"
+    role="application"
+    tabindex="0"
+    [attr.aria-label]="t('goals.editor.canvasAria')"
+    (click)="onCanvasClick($event)"
+    (keydown.enter)="onCanvasKey()"
+  >
+    @for (link of links(); track link.a + '|' + link.x2 + '|' + link.y2) {
+      <line
+        class="link"
+        [attr.x1]="link.x1"
+        [attr.y1]="link.y1"
+        [attr.x2]="link.x2"
+        [attr.y2]="link.y2"
+      />
+    }
+    @for (star of stars(); track star.id) {
+      <g
+        class="star"
+        [class.done]="star.done"
+        [class.popover-open]="popoverId() === star.id"
+        [class.dragging]="dragPos()?.id === star.id"
+        [attr.transform]="'translate(' + star.x + ' ' + star.y + ')'"
+        [attr.aria-label]="star.title || t('goals.steps.placeholder')"
+        role="button"
+        tabindex="0"
+        (pointerdown)="onStarDown(star, $event)"
+        (pointermove)="onStarMove($event)"
+        (pointerup)="onStarUp(star, $event)"
+        (contextmenu)="onStarContextMenu(star.id, $event)"
+      >
+        <circle class="halo" r="5.2" />
+        <circle class="halo-mid" r="2.4" />
+        <ellipse class="spike" rx="4.4" ry="0.18" />
+        <ellipse class="spike" rx="0.18" ry="4.4" />
+        <ellipse class="spike diag" rx="2.2" ry="0.12" transform="rotate(45)" />
+        <ellipse class="spike diag" rx="2.2" ry="0.12" transform="rotate(-45)" />
+        <circle class="core" r="0.7" />
+      </g>
+    }
+  </svg>
+
+  @if (goal().steps.length === 0 && !creating()) {
+    <p class="canvas-hint" aria-hidden="true">
+      <mc-icon name="sparkle" class="hint-icon" />
+      <span>{{ t('goals.editor.canvasHint') }}</span>
+    </p>
+  }
+
+  @for (star of stars(); track star.id) {
+    <span
+      class="star-label"
+      [class.lit]="popoverId() === star.id || renamingId() === star.id"
+      [style.left.%]="star.x"
+      [style.top.%]="star.y"
+      aria-hidden="true"
+    >
+      @if (renamingId() === star.id) {
+        <input
+          type="text"
+          class="rename-input"
+          mcAutofocus
+          [value]="renameDraft()"
+          [attr.aria-label]="t('goals.editor.newStepAria')"
+          (input)="onRenameInput($event)"
+          (keydown)="onRenameKey($event)"
+          (blur)="commitRename()"
+        />
+      } @else {
+        {{ star.title || t('goals.steps.placeholder') }}
+      }
+    </span>
+  }
+
+  @if (popoverFor(popoverId()); as star) {
+    <div
+      class="popover"
+      [style.left.%]="star.x"
+      [style.top.%]="star.y"
+      role="menu"
+      [attr.aria-label]="t('goals.editor.starMenuAria')"
+    >
+      <button type="button" class="pop-item" role="menuitem" (click)="onRenameStart(star.id)">
+        <mc-icon name="pencil-simple" /><span>{{ t('goals.editor.starRename') }}</span>
+      </button>
+      <button
+        type="button"
+        class="pop-item"
+        role="menuitem"
+        (click)="toggleStep(star.id); popoverId.set(null)"
+      >
+        <mc-icon [name]="star.done ? 'arrow-counter-clockwise' : 'check'" />
+        <span>{{ t('goals.editor.starToggle') }}</span>
+      </button>
+      <button
+        type="button"
+        class="pop-item danger"
+        role="menuitem"
+        (click)="onRemoveStep(star.id, $event)"
+      >
+        <mc-icon name="trash" /><span>{{ t('goals.editor.starRemove') }}</span>
+      </button>
+    </div>
+  }
+
+  @if (creating(); as pos) {
+    <div class="creating" [style.left.%]="pos.x" [style.top.%]="pos.y">
+      <span class="seed-star" aria-hidden="true"></span>
+      <input
+        type="text"
+        class="creating-input"
+        mcAutofocus
+        [value]="draft()"
+        [placeholder]="t('goals.editor.newStepPlaceholder')"
+        [attr.aria-label]="t('goals.editor.newStepAria')"
+        (input)="onDraftInput($event)"
+        (keydown)="onDraftKey($event)"
+        (blur)="commitNewStep()"
+      />
+    </div>
+  }
+
+  @if (showHint()) {
+    <div class="onboard-hint" role="status">
+      <mc-icon name="sparkle" class="onboard-icon" />
+      <span>{{ t('goals.editor.firstStarHint') }}</span>
+      <button
+        type="button"
+        class="onboard-dismiss"
+        [attr.aria-label]="t('common.close')"
+        (click)="dismissHint()"
+      >
+        <mc-icon name="x" />
+      </button>
+    </div>
+  }
+</div>
+
+<div class="controls">
+  <div class="priority-stars" role="radiogroup" [attr.aria-label]="t('goals.editor.priorityAria')">
+    @for (p of priorities; track p) {
+      <button
+        type="button"
+        role="radio"
+        class="prio-btn"
+        [class]="'prio-btn prio-' + p"
+        [class.active]="goal().priority === p"
+        [attr.aria-checked]="goal().priority === p"
+        [disabled]="!editable()"
+        (click)="onPriorityClick(p)"
+      >
+        <span class="prio-star" aria-hidden="true"></span>
+        <span class="prio-label">{{ t(priorityKey(p)) }}</span>
+      </button>
+    }
+  </div>
+
+  <div class="progress-block" aria-live="polite">
+    <div class="progress-head">
+      <mc-icon name="hourglass-medium" class="progress-icon" />
+      <span class="progress-text">
+        @if (goal().steps.length > 0) {
+          {{
+            t('goals.editor.progressPill')
+              .replace('{done}', '' + stepsDone())
+              .replace('{total}', '' + goal().steps.length)
+              .replace('{pct}', '' + progress())
+          }}
+        } @else {
+          {{ t('goals.editor.progressEmpty') }}
+        }
+      </span>
+    </div>
+    <div class="progress-track" [class.empty]="goal().steps.length === 0">
+      <span class="progress-fill" [style.width.%]="progress()"></span>
+    </div>
+  </div>
+
+  @if (goal().deadline) {
+    <div class="horizon-strip" aria-hidden="true">
+      <mc-icon name="moon" class="horizon-icon moon" />
+      <span class="horizon-track">
+        <span class="horizon-fill" [style.width.%]="horizonPercent()"></span>
+        <span class="horizon-now" [style.left.%]="horizonPercent()"></span>
+      </span>
+      <mc-icon name="sun" class="horizon-icon sun" />
+    </div>
+  }
+</div>

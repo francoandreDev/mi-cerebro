@@ -5,7 +5,7 @@ import { FsService } from '@core/fs/fs.service';
 import { FsStub, WorkspaceStub } from '@core/fs/fs.stub';
 import { WorkspaceService } from '@core/fs/workspace.service';
 
-import { GOAL_KIND } from '../models/goal.types';
+import { GOAL_KIND, newGoalStep } from '../models/goal.types';
 import { GoalsService } from './goals.service';
 
 describe('GoalsService', () => {
@@ -28,9 +28,11 @@ describe('GoalsService', () => {
     const goal = await svc.create('Aprender ruso');
     expect(goal.completed).toBe(false);
     expect(goal.deadline).toBeNull();
-    expect(goal.schemaVersion).toBe(4);
+    expect(goal.schemaVersion).toBe(7);
+    expect(goal.steps).toEqual([]);
     expect(goal.priority).toBe('med');
     expect(goal.progress).toBe(0);
+    expect(goal.reminder).toEqual({ enabled: false });
     expect(goal.position).toBeTypeOf('string');
     const goals = fs.root.dirs.get('goals')!;
     expect(goals.files.has('aprender-ruso.json')).toBe(true);
@@ -90,5 +92,46 @@ describe('GoalsService', () => {
     expect(low.progress).toBe(0);
     const high = await svc.save({ ...goal, progress: 150 });
     expect(high.progress).toBe(100);
+  });
+
+  it('derives progress from steps when present (overrides manual progress)', async () => {
+    const goal = await svc.create('Aprender ruso');
+    const s1 = newGoalStep('Alfabeto');
+    const s2 = newGoalStep('Saludos');
+    const s3 = newGoalStep('100 palabras');
+    const s4 = newGoalStep('Conversación básica');
+    const saved = await svc.save({
+      ...goal,
+      progress: 7,
+      steps: [{ ...s1, done: true }, { ...s2, done: true }, s3, s4],
+    });
+    expect(saved.progress).toBe(50);
+  });
+
+  it('keeps manual progress when goal has no steps', async () => {
+    const goal = await svc.create('X');
+    const saved = await svc.save({ ...goal, progress: 42, steps: [] });
+    expect(saved.progress).toBe(42);
+  });
+
+  it('completed=true forces progress to 100 even with partial steps', async () => {
+    const goal = await svc.create('X');
+    const saved = await svc.save({
+      ...goal,
+      completed: true,
+      steps: [newGoalStep('a'), newGoalStep('b')],
+    });
+    expect(saved.progress).toBe(100);
+  });
+
+  it('summary exposes stepsTotal and stepsDone', async () => {
+    const goal = await svc.create('X');
+    const a = newGoalStep('a');
+    const b = newGoalStep('b');
+    await svc.save({ ...goal, steps: [{ ...a, done: true }, b] });
+    const list = await svc.refresh();
+    const s = list.find((x) => x.id === goal.id)!;
+    expect(s.stepsTotal).toBe(2);
+    expect(s.stepsDone).toBe(1);
   });
 });

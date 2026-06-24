@@ -25,16 +25,22 @@ import { toSlug, withSuffix } from '@shared/utils/slug';
 
 import {
   DEFAULT_GOAL_PRIORITY,
+  DEFAULT_GOAL_REMINDER,
   GOAL_FILE_SUFFIX,
   GOAL_KIND,
   GOAL_SCHEMA_VERSION,
   GOALS_DIR,
   clampProgress,
+  deriveProgressFromSteps,
   emptyDoc,
   type Goal,
+  type GoalStep,
   type GoalSummary,
 } from '../models/goal.types';
 import { goalPriorityProgressMigrationStep } from './priority-progress.migration';
+import { goalReminderConfigMigrationStep } from './reminder-config.migration';
+import { goalStepPositionsMigrationStep } from './step-positions.migration';
+import { goalStepsMigrationStep } from './steps.migration';
 
 const TRASH_DIR = '.mi-cerebro';
 const TRASH_SUBDIR = 'trash';
@@ -62,6 +68,9 @@ export class GoalsService {
         blockIdMigrationStep(1),
         positionSeedMigrationStep(2),
         goalPriorityProgressMigrationStep(3),
+        goalReminderConfigMigrationStep(4),
+        goalStepsMigrationStep(5),
+        goalStepPositionsMigrationStep(6),
       ],
     });
   }
@@ -119,6 +128,8 @@ export class GoalsService {
       completed: false,
       priority: DEFAULT_GOAL_PRIORITY,
       progress: 0,
+      reminder: DEFAULT_GOAL_REMINDER,
+      steps: [],
       createdAt: now,
       updatedAt: now,
       schemaVersion: GOAL_SCHEMA_VERSION,
@@ -147,11 +158,28 @@ export class GoalsService {
   async save(goal: Goal): Promise<Goal> {
     const dir = await this.goalsDir();
     const cleanTags = this.dropStaleTags(goal.tags);
-    const progress = goal.completed ? 100 : clampProgress(goal.progress);
+    const steps = sanitizeSteps(goal.steps);
+    // why: con ≥1 step el progress es derivado (done/total); sin steps,
+    //      cae al manual. Completed sigue forzando 100 en cualquier caso.
+    const derived = deriveProgressFromSteps(steps);
+    const progress = goal.completed
+      ? 100
+      : derived !== null
+        ? derived
+        : clampProgress(goal.progress);
+    // why: completed goals shouldn't keep nudging; deadlineless goals can't
+    //      drive a proximity cadence. Enforce both invariants on save so
+    //      callers (and the sync service) don't have to repeat the check.
+    const reminder =
+      goal.completed || goal.deadline === null
+        ? { enabled: false }
+        : (goal.reminder ?? DEFAULT_GOAL_REMINDER);
     const updated: Goal = {
       ...goal,
       tags: cleanTags,
+      steps,
       progress,
+      reminder,
       updatedAt: new Date().toISOString(),
     };
     const { folder, filename } = splitRelativePath(await this.findPath(dir, goal.id));
@@ -163,6 +191,20 @@ export class GoalsService {
     );
     await this.search.upsert(this.toSearchDoc(updated));
     return updated;
+  }
+
+  async toggleStep(goalId: string, stepId: string): Promise<Goal> {
+    const goal = await this.read(goalId);
+    const steps = goal.steps.map((s) => (s.id === stepId ? { ...s, done: !s.done } : s));
+    return this.save({ ...goal, steps });
+  }
+
+  // why: peek overlay del wall edita meta (title/deadline/priority/completed)
+  //      sin abrir el editor; necesita un read+save atómico sin reimplementar
+  //      la lógica de save() en cada container.
+  async patch(id: string, partial: Partial<Goal>): Promise<Goal> {
+    const current = await this.read(id);
+    return this.save({ ...current, ...partial });
   }
 
   async setPosition(id: string, position: string): Promise<void> {
@@ -287,18 +329,25 @@ export class GoalsService {
   }
 
   private toSummary(goal: Goal, folder: string): GoalSummary {
-    return {
+    const steps = goal.steps ?? [];
+    const stepsDone = steps.reduce((n, s) => n + (s.done ? 1 : 0), 0);
+    const base: GoalSummary = {
       id: goal.id,
       title: goal.title,
       deadline: goal.deadline,
       completed: goal.completed,
       priority: goal.priority,
       progress: goal.progress,
+      reminder: goal.reminder ?? DEFAULT_GOAL_REMINDER,
       updatedAt: goal.updatedAt,
       tags: goal.tags,
       folder,
       position: goal.position ?? '',
+      steps,
+      stepsTotal: steps.length,
+      stepsDone,
     };
+    return goal.wallCenter ? { ...base, wallCenter: goal.wallCenter } : base;
   }
 
   private toSearchDoc(goal: Goal): SearchDoc {
@@ -322,6 +371,19 @@ export class GoalsService {
     return tagIds.filter((id) => this.tags.byId(id) !== undefined);
   }
 }
+
+const sanitizeSteps = (steps: readonly GoalStep[] | undefined): readonly GoalStep[] => {
+  if (!steps || steps.length === 0) return [];
+  return steps
+    .filter((s) => typeof s.id === 'string' && s.id.length > 0)
+    .map((s) => {
+      const base: GoalStep = { id: s.id, title: s.title ?? '', done: s.done === true };
+      if (typeof s.x === 'number' && typeof s.y === 'number') {
+        return { ...base, x: s.x, y: s.y };
+      }
+      return base;
+    });
+};
 
 const compareSummaries = (a: GoalSummary, b: GoalSummary): number => {
   if (a.completed !== b.completed) return a.completed ? 1 : -1;
