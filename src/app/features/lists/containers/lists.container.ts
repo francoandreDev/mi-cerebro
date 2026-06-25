@@ -14,6 +14,7 @@ import { IconComponent } from '@shared/icon/icon.component';
 import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
 
 import { ListEditorPaneComponent, type SaveStatus } from '../components/list-editor-pane.component';
+import type { ChalkLayer } from '../models/chalk.types';
 import { LIST_KIND, type List } from '../models/list.types';
 import { ListsService } from '../services/lists.service';
 
@@ -61,6 +62,14 @@ export class ListsContainer {
     const current = this.active();
     if (!current || !this.lock.guardWrite()) return;
     const next = { ...current, title };
+    this.active.set(next);
+    this.scheduleSave(next);
+  }
+
+  protected onChalkLayersChange(chalkLayers: readonly ChalkLayer[]): void {
+    const current = this.active();
+    if (!current || !this.lock.guardWrite()) return;
+    const next = { ...current, chalkLayers };
     this.active.set(next);
     this.scheduleSave(next);
   }

@@ -1,0 +1,45 @@
+<div class="root">
+  <mc-chalk-toolbar
+    [active]="active() && editable()"
+    [tool]="tool()"
+    [color]="color()"
+    [size]="size()"
+    [layersOpen]="layersOpen()"
+    [canClear]="activeLayerHasStrokes()"
+    (toggleActive)="onToggleActive()"
+    (toolChange)="tool.set($event)"
+    (colorChange)="color.set($event)"
+    (sizeChange)="size.set($event)"
+    (clearActive)="onClearActive()"
+    (toggleLayers)="onToggleLayers()"
+  />
+
+  <div class="surface">
+    <ng-content />
+    <mc-chalk-board
+      [layers]="layers()"
+      [active]="active() && editable()"
+      [tool]="tool()"
+      [color]="color()"
+      [size]="size()"
+      (strokeFinished)="onStrokeFinished($event)"
+      (erasePoint)="onErase($event)"
+    />
+    @if (layersOpen()) {
+      <div class="layers-float">
+        <mc-chalk-layers-panel
+          [layers]="layers()"
+          [activeId]="activeLayerId()"
+          (addLayer)="onAddLayer()"
+          (selectLayer)="onSelectLayer($event)"
+          (renameLayer)="onRenameLayer($event)"
+          (toggleVisible)="onToggleVisible($event)"
+          (toggleLocked)="onToggleLocked($event)"
+          (removeLayer)="onRemoveLayer($event)"
+          (moveLayer)="onMoveLayer($event)"
+          (closeRequested)="onToggleLayers()"
+        />
+      </div>
+    }
+  </div>
+</div>

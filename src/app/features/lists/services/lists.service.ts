@@ -18,6 +18,7 @@ import { nextPositionAfter, seedMissingPositions } from '@core/ordering/seed-pos
 import { positionSeedMigrationStep } from '@core/ordering/position.migration';
 import { SearchIndexService } from '@core/search/search-index.service';
 import { blockIdMigrationStep } from '@core/tiptap/block-id/block-id.migration';
+import { chalkLayersMigrationStep } from './chalk-layers.migration';
 import type { SearchDoc } from '@core/search/search.types';
 import { extractPlainText } from '@core/search/tiptap-text';
 import { TagsService } from '@core/tags/tags.service';
@@ -56,7 +57,7 @@ export class ListsService {
     this.migrations.register({
       kind: LIST_KIND,
       latest: LIST_SCHEMA_VERSION,
-      steps: [blockIdMigrationStep(1), positionSeedMigrationStep(2)],
+      steps: [blockIdMigrationStep(1), positionSeedMigrationStep(2), chalkLayersMigrationStep(3)],
     });
   }
 
@@ -113,6 +114,7 @@ export class ListsService {
       updatedAt: now,
       schemaVersion: LIST_SCHEMA_VERSION,
       position,
+      chalkLayers: [],
     };
     const filename = await this.allocFilename(targetDir, title);
     await this.fs.writeFileAtomic(targetDir, filename, JSON.stringify(list, null, 2));

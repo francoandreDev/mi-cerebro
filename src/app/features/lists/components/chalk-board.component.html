@@ -1,0 +1,41 @@
+<svg
+  #svg
+  class="board"
+  [class.active]="active()"
+  [attr.data-tool]="tool()"
+  viewBox="0 0 1 1"
+  preserveAspectRatio="none"
+  (pointerdown)="onPointerDown($event)"
+  (pointermove)="onPointerMove($event)"
+  (pointerup)="onPointerUp($event)"
+  (pointercancel)="onPointerUp($event)"
+>
+  @for (layer of renderedLayers(); track layer.id) {
+    <g>
+      @for (s of layer.strokes; track s.id) {
+        <path
+          [attr.d]="s.d"
+          [attr.stroke]="s.stroke"
+          [attr.stroke-width]="s.widthPx"
+          fill="none"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          vector-effect="non-scaling-stroke"
+          opacity="0.92"
+        />
+      }
+    </g>
+  }
+  @if (active() && tool() === 'chalk' && previewPath() !== '') {
+    <path
+      [attr.d]="previewPath()"
+      [attr.stroke]="previewColorHex()"
+      [attr.stroke-width]="previewStrokePx()"
+      fill="none"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      vector-effect="non-scaling-stroke"
+      opacity="0.92"
+    />
+  }
+</svg>

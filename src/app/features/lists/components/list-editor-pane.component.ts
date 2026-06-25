@@ -9,14 +9,16 @@ import { IconComponent } from '@shared/icon/icon.component';
 import type { IconName } from '@shared/icon/icons.data';
 import { TagPickerComponent } from '@shared/tags/tag-picker.component';
 
+import type { ChalkLayer } from '../models/chalk.types';
 import type { List } from '../models/list.types';
+import { ChalkboardOverlayComponent } from './chalkboard-overlay.component';
 
 export type SaveStatus = 'saved' | 'saving' | 'unsaved';
 
 @Component({
   selector: 'mc-list-editor-pane',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [EditorComponent, TagPickerComponent, IconComponent],
+  imports: [EditorComponent, TagPickerComponent, IconComponent, ChalkboardOverlayComponent],
   template: `
     <header class="bar">
       <mc-icon name="list-bullets" class="title-icon" />
@@ -51,15 +53,22 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
       (addTag)="addTag.emit($event)"
       (removeTag)="removeTag.emit($event)"
     />
-    <mc-editor
-      class="editor"
-      [value]="list().body"
-      [placeholder]="t('lists.placeholderBody')"
+    <mc-chalkboard-overlay
+      class="board"
+      [layers]="list().chalkLayers"
       [editable]="editable()"
-      [entityId]="list().id"
-      [entityTitle]="list().title"
-      (valueChange)="bodyChange.emit($event)"
-    />
+      (layersChange)="chalkLayersChange.emit($event)"
+    >
+      <mc-editor
+        class="editor"
+        [value]="list().body"
+        [placeholder]="t('lists.placeholderBody')"
+        [editable]="editable()"
+        [entityId]="list().id"
+        [entityTitle]="list().title"
+        (valueChange)="bodyChange.emit($event)"
+      />
+    </mc-chalkboard-overlay>
   `,
   styles: `
     :host {
@@ -122,8 +131,15 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
       color: var(--mc-danger, #d04a4a);
       border-color: var(--mc-danger, #d04a4a);
     }
+    .board {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
     .editor {
       flex: 1;
+      min-height: 0;
     }
   `,
 })
@@ -137,6 +153,7 @@ export class ListEditorPaneComponent {
   readonly removeList = output<void>();
   readonly addTag = output<string>();
   readonly removeTag = output<string>();
+  readonly chalkLayersChange = output<readonly ChalkLayer[]>();
 
   private readonly i18n = inject(I18nService);
   protected t(key: TranslationKey): string {

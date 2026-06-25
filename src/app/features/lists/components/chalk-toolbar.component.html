@@ -1,0 +1,96 @@
+<div class="bar" [class.active]="active()">
+  <button
+    type="button"
+    class="mode"
+    [class.on]="active()"
+    [attr.aria-pressed]="active()"
+    [attr.aria-label]="t('lists.chalk.toggleAria')"
+    [title]="t('lists.chalk.toggle')"
+    (click)="toggleActive.emit()"
+  >
+    <mc-icon name="note-pencil" />
+    <span>{{ active() ? t('lists.chalk.on') : t('lists.chalk.off') }}</span>
+  </button>
+
+  @if (active()) {
+    <div class="group" role="radiogroup" [attr.aria-label]="t('lists.chalk.toolAria')">
+      <button
+        type="button"
+        class="tool"
+        role="radio"
+        [attr.aria-checked]="tool() === 'chalk'"
+        [class.sel]="tool() === 'chalk'"
+        [title]="t('lists.chalk.tool.chalk')"
+        (click)="toolChange.emit('chalk')"
+      >
+        <mc-icon name="paint-brush" />
+      </button>
+      <button
+        type="button"
+        class="tool"
+        role="radio"
+        [attr.aria-checked]="tool() === 'eraser'"
+        [class.sel]="tool() === 'eraser'"
+        [title]="t('lists.chalk.tool.eraser')"
+        (click)="toolChange.emit('eraser')"
+      >
+        <mc-icon name="x" />
+      </button>
+    </div>
+
+    <div class="group palette" role="radiogroup" [attr.aria-label]="t('lists.chalk.colorAria')">
+      @for (c of palette; track c.id) {
+        <button
+          type="button"
+          class="chalk chalk-{{ c.id }}"
+          role="radio"
+          [attr.aria-checked]="color() === c.id"
+          [class.sel]="color() === c.id"
+          [title]="colorLabel(c.id)"
+          [attr.aria-label]="colorLabel(c.id)"
+          (click)="colorChange.emit(c.id)"
+        ></button>
+      }
+    </div>
+
+    <div class="group sizes" role="radiogroup" [attr.aria-label]="t('lists.chalk.sizeAria')">
+      @for (s of sizes; track s) {
+        <button
+          type="button"
+          class="size size-{{ s }}"
+          role="radio"
+          [attr.aria-checked]="size() === s"
+          [class.sel]="size() === s"
+          [title]="sizeLabel(s)"
+          [attr.aria-label]="sizeLabel(s)"
+          (click)="sizeChange.emit(s)"
+        >
+          <span class="dot"></span>
+        </button>
+      }
+    </div>
+
+    <button
+      type="button"
+      class="ghost"
+      [disabled]="!canClear()"
+      [title]="t('lists.chalk.clear')"
+      (click)="onClear()"
+    >
+      <mc-icon name="trash" />
+      <span>{{ t('lists.chalk.clear') }}</span>
+    </button>
+
+    <button
+      type="button"
+      class="ghost"
+      [class.on]="layersOpen()"
+      [attr.aria-pressed]="layersOpen()"
+      [title]="t('lists.chalk.layers')"
+      (click)="toggleLayers.emit()"
+    >
+      <mc-icon name="list-bullets" />
+      <span>{{ t('lists.chalk.layers') }}</span>
+    </button>
+  }
+</div>

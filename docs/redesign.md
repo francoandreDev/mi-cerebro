@@ -12,24 +12,25 @@ Una idea distinta por página. No replicar el mismo patrón: cada entidad tiene 
 
 ## Estado por página
 
-| Ruta         | Idea del redesign                                                                        | Estado |
-| ------------ | ---------------------------------------------------------------------------------------- | ------ |
-| `/books`     | Estantería + page-turn 3D flip con paper bend en lectura                                 | ✅     |
-| `/images`    | Gallery wall index + justified inner grid                                                | ✅     |
-| `/trash`     | Grid visual de cards con filtro por kind, búsqueda y modal detalle                       | ✅     |
-| `/settings`  | Tabs verticales sticky + panel (sección activa única)                                    | ✅     |
-| `/history`   | (heredado, sin section pane)                                                             | ✅     |
-| `/variants`  | (heredado, sin section pane)                                                             | ✅     |
-| `/notes`     | Muro de stickies (CSS columns) + card "nueva" inline + chips de filtro                   | ✅     |
-| `/tasks`     | Jardín de tres canteros (floración/brote/semilla) + trasplantar (DnD) + cosecha + riego  | ✅     |
-| `/goals`     | Wallboard tipográfico: posters grandes en grid auto-fit + filtros + hero create          | ✅     |
-| `/lists`     | Pizarra-directorio: chalkboard + rail A–Z/tag + flow multi-columna, search dim+highlight | ✅     |
-| `/writings`  | Biblioteca de borrador: shelf de cards tipográficas + editor full-bleed centrado         | ✅     |
-| `/files`     | Rail interno fijo (260px) con árbol jerárquico + DnD + workbench full-width              | ✅     |
-| `/music`     | 3 zonas: playlists rail / biblioteca densa / now playing + cola                          | ✅     |
-| `/calendar`  | Wallboard: grid mes/año + columna cards colapsables por kind + modal de día              | ✅     |
-| `/reminders` | pendiente                                                                                | ⏳     |
-| `/sync`      | pendiente                                                                                | ⏳     |
+| Ruta         | Idea del redesign                                                                                                                                                          | Estado |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| `/books`     | Estantería + page-turn 3D flip con paper bend en lectura                                                                                                                   | ✅     |
+| `/images`    | Gallery wall index + justified inner grid                                                                                                                                  | ✅     |
+| `/trash`     | Grid visual de cards con filtro por kind, búsqueda y modal detalle                                                                                                         | ✅     |
+| `/settings`  | Tabs verticales sticky + panel (sección activa única)                                                                                                                      | ✅     |
+| `/history`   | (heredado, sin section pane)                                                                                                                                               | ✅     |
+| `/variants`  | (heredado, sin section pane)                                                                                                                                               | ✅     |
+| `/notes`     | Muro de stickies (CSS columns) + card "nueva" inline + chips de filtro                                                                                                     | ✅     |
+| `/tasks`     | Jardín de tres canteros (floración/brote/semilla) + trasplantar (DnD) + cosecha + riego                                                                                    | ✅     |
+| `/goals`     | Wallboard tipográfico: posters grandes en grid auto-fit + filtros + hero create                                                                                            | ✅     |
+| `/lists`     | Pizarra-directorio: chalkboard + rail A–Z/tag + flow multi-columna, search dim+highlight                                                                                   | ✅     |
+| `/lists/:id` | Editor + capa de tiza (toggle off por default): paleta de tizas, goma, capas con visibilidad/lock/reorden — persistencia en el JSON de la lista (`chalkLayers`, schema v4) | ✅     |
+| `/writings`  | Biblioteca de borrador: shelf de cards tipográficas + editor full-bleed centrado                                                                                           | ✅     |
+| `/files`     | Rail interno fijo (260px) con árbol jerárquico + DnD + workbench full-width                                                                                                | ✅     |
+| `/music`     | 3 zonas: playlists rail / biblioteca densa / now playing + cola                                                                                                            | ✅     |
+| `/calendar`  | Wallboard: grid mes/año + columna cards colapsables por kind + modal de día                                                                                                | ✅     |
+| `/reminders` | pendiente                                                                                                                                                                  | ⏳     |
+| `/sync`      | pendiente                                                                                                                                                                  | ⏳     |
 
 ## Checklist al migrar una página
 

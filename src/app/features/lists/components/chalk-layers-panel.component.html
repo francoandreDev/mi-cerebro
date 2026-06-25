@@ -1,0 +1,94 @@
+<aside class="panel">
+  <header>
+    <h3>{{ t('lists.chalk.layers') }}</h3>
+    <button
+      type="button"
+      class="icon"
+      [attr.aria-label]="t('common.close')"
+      [title]="t('common.close')"
+      (click)="closeRequested.emit()"
+    >
+      <mc-icon name="x" />
+    </button>
+  </header>
+
+  <button type="button" class="add" (click)="addLayer.emit()">
+    <mc-icon name="plus" />
+    <span>{{ t('lists.chalk.addLayer') }}</span>
+  </button>
+
+  @if (layers().length === 0) {
+    <p class="empty">{{ t('lists.chalk.layersEmpty') }}</p>
+  }
+
+  <ul class="rows">
+    @for (layer of layers(); track layer.id; let i = $index) {
+      <li class="row" [class.active]="activeId() === layer.id">
+        <button
+          type="button"
+          class="select"
+          [attr.aria-pressed]="activeId() === layer.id"
+          [title]="t('lists.chalk.selectLayer')"
+          (click)="selectLayer.emit(layer.id)"
+        >
+          <span class="dot" [class.on]="activeId() === layer.id"></span>
+        </button>
+        <input
+          type="text"
+          class="name"
+          [value]="layer.name"
+          [attr.aria-label]="t('lists.chalk.layerName')"
+          (input)="onRenameInput(layer.id, $event)"
+        />
+        <span class="count">{{ layer.strokes.length }}</span>
+        <button
+          type="button"
+          class="icon"
+          [attr.aria-label]="layer.visible ? t('lists.chalk.hide') : t('lists.chalk.show')"
+          [title]="layer.visible ? t('lists.chalk.hide') : t('lists.chalk.show')"
+          (click)="toggleVisible.emit(layer.id)"
+        >
+          <mc-icon [name]="layer.visible ? 'eye' : 'eye-slash'" />
+        </button>
+        <button
+          type="button"
+          class="icon"
+          [attr.aria-label]="layer.locked ? t('lists.chalk.unlock') : t('lists.chalk.lock')"
+          [title]="layer.locked ? t('lists.chalk.unlock') : t('lists.chalk.lock')"
+          (click)="toggleLocked.emit(layer.id)"
+        >
+          <mc-icon [name]="layer.locked ? 'lock' : 'lock-open'" />
+        </button>
+        <button
+          type="button"
+          class="icon"
+          [disabled]="i === 0"
+          [attr.aria-label]="t('lists.chalk.moveUp')"
+          [title]="t('lists.chalk.moveUp')"
+          (click)="moveLayer.emit({ id: layer.id, direction: -1 })"
+        >
+          <mc-icon name="arrow-up" />
+        </button>
+        <button
+          type="button"
+          class="icon"
+          [disabled]="i === layers().length - 1"
+          [attr.aria-label]="t('lists.chalk.moveDown')"
+          [title]="t('lists.chalk.moveDown')"
+          (click)="moveLayer.emit({ id: layer.id, direction: 1 })"
+        >
+          <mc-icon name="arrow-down" />
+        </button>
+        <button
+          type="button"
+          class="icon danger"
+          [attr.aria-label]="t('lists.chalk.removeLayer')"
+          [title]="t('lists.chalk.removeLayer')"
+          (click)="onRemove(layer)"
+        >
+          <mc-icon name="trash" />
+        </button>
+      </li>
+    }
+  </ul>
+</aside>

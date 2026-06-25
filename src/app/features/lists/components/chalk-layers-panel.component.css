@@ -1,0 +1,126 @@
+:host {
+  display: block;
+}
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-2);
+  background: rgba(0, 0, 0, 0.55);
+  color: #f1f5d8;
+  border: 1px dashed rgba(241, 245, 216, 0.4);
+  border-radius: var(--mc-radius-md);
+  padding: var(--mc-space-3);
+  min-width: 280px;
+  max-width: 360px;
+}
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+h3 {
+  margin: 0;
+  font-family: 'Caveat', 'Kalam', cursive;
+  font-size: 1.3rem;
+  color: #f1f5d8;
+}
+.add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  color: #f1f5d8;
+  border: 1px dashed rgba(241, 245, 216, 0.4);
+  border-radius: var(--mc-radius-sm);
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: var(--mc-font-size-sm);
+}
+.add:hover {
+  background: rgba(241, 245, 216, 0.1);
+}
+.empty {
+  margin: var(--mc-space-2) 0;
+  color: rgba(241, 245, 216, 0.6);
+  font-size: var(--mc-font-size-sm);
+  font-style: italic;
+}
+.rows {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.row {
+  display: grid;
+  grid-template-columns: 22px 1fr auto repeat(5, 26px);
+  gap: 4px;
+  align-items: center;
+  padding: 2px 4px;
+  border-radius: var(--mc-radius-sm);
+}
+.row.active {
+  background: rgba(241, 245, 216, 0.1);
+}
+.select {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid rgba(241, 245, 216, 0.5);
+}
+.dot.on {
+  background: #f5d36a;
+  border-color: #f5d36a;
+}
+.name {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid transparent;
+  color: #f1f5d8;
+  font: inherit;
+  padding: 2px 4px;
+  min-width: 0;
+}
+.name:focus {
+  outline: none;
+  border-bottom-color: rgba(241, 245, 216, 0.5);
+}
+.count {
+  font-size: var(--mc-font-size-xs);
+  color: rgba(241, 245, 216, 0.5);
+  padding: 0 4px;
+}
+.icon {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: rgba(241, 245, 216, 0.7);
+  border: none;
+  border-radius: var(--mc-radius-sm);
+  cursor: pointer;
+}
+.icon:hover:not(:disabled) {
+  color: #f1f5d8;
+  background: rgba(241, 245, 216, 0.1);
+}
+.icon:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.icon.danger:hover {
+  color: var(--mc-danger, #d04a4a);
+}

@@ -1,0 +1,27 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: var(--mc-space-2);
+}
+.root {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: var(--mc-space-2);
+}
+.surface {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.layers-float {
+  position: absolute;
+  top: var(--mc-space-2);
+  right: var(--mc-space-2);
+  z-index: 5;
+}

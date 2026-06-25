@@ -1,6 +1,8 @@
 import type { JSONContent } from '@tiptap/core';
 
-export const LIST_SCHEMA_VERSION = 3;
+import type { ChalkLayer } from './chalk.types';
+
+export const LIST_SCHEMA_VERSION = 4;
 export const LIST_KIND = 'list';
 export const LISTS_DIR = 'lists';
 export const LIST_FILE_SUFFIX = '.json';
@@ -14,6 +16,7 @@ export interface List {
   readonly updatedAt: string;
   readonly schemaVersion: number;
   readonly position?: string;
+  readonly chalkLayers: readonly ChalkLayer[];
   readonly [key: string]: unknown;
 }
 
