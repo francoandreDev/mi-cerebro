@@ -369,3 +369,29 @@ Formato por entrada:
 - **Qué**: el `@hint` actual soporta hoy/mañana/pasado, días de la semana, "en Nh/Nm/Nd" y horas (24h y am/pm). Faltan: "viernes que viene", "fin de semana", "próximo mes", fechas absolutas "15/07", parsing dentro del título sin `@`.
 - **Por qué se difirió**: cobertura actual cubre los casos cotidianos; lo demás suma complejidad de parser y ambigüedad UX (cuándo `Llamar 15` significa hora 15 vs día 15). Mejor evaluar uso real antes de extender.
 - **Target**: sin asignar.
+
+## Tareas (origen: rediseño /tasks — jardín de tres canteros)
+
+### Animaciones orgánicas de DnD (raíces colgando, terrones cayendo, plop)
+
+- **Qué**: al arrastrar una card aparecen 3-4 hilitos de raíces colgando, microspans de tierra cayendo, y al soltar un "plop" + morfismo del glyph (⋄ → ╿ → ❀) con 260 ms ease-out.
+- **Por qué se difirió**: la mecánica funcional (DnD HTML5 nativo entre canteros + cambio de stage al soltar) ya está; la coreografía requiere un drag-image custom, partículas y morfismo SVG. Es polish puro, no bloquea uso.
+- **Target**: sin asignar — abrir si el jardín se siente "duro" en uso real.
+
+### Riego con cursor regadera + click para subir prioridad
+
+- **Qué**: con el toggle 🚿 activo, mostrar cursor regadera flotante; click sobre una task de semana/backlog dispara micro-chorro y la mueve una posición arriba en su cantero.
+- **Por qué se difirió**: el toggle ya persiste su estado, pero la interacción concreta requiere capturar mouse global, animación SVG, y operación de reorden de `position` (existe `setPosition` en `TasksService` pero hay que decidir cuánto saltar). Bajo riesgo de uso real hasta que el jardín se llene.
+- **Target**: sin asignar.
+
+### Cesta de cosecha con salto en arco
+
+- **Qué**: al marcar done, la card vuela en arco hasta la cesta del borde inferior del cantero HOY. Hoy se mueve por re-render sin animación.
+- **Por qué se difirió**: la pieza visual (cestita) está implementada, lo que falta es FLIP/animación de salida. Similar al ítem de animaciones orgánicas — polish.
+- **Target**: sin asignar.
+
+### "Cargar más" en backlog (semillas que emergen)
+
+- **Qué**: paginar el cantero de backlog cuando supera N elementos; mostrar contador de "sumergidas" + botón "cargar más" con animación de emerger.
+- **Por qué se difirió**: aún no hay dolor de scroll en backlog. La lista completa cabe en el cantero con overflow-y. Cuando aparezca la fricción, se decide N de cutoff.
+- **Target**: sin asignar.

@@ -1,0 +1,100 @@
+:host {
+  display: block;
+  min-width: 0;
+  height: 100%;
+}
+
+.planter {
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  gap: var(--mc-space-2);
+  height: 100%;
+  padding: var(--mc-space-3);
+  background: var(--mc-garden-planter-wood-bg);
+  border: 2px solid var(--mc-garden-planter-wood-fg);
+  border-radius: var(--mc-radius-md);
+  color: var(--mc-garden-planter-wood-fg);
+  position: relative;
+  transition: box-shadow 160ms ease;
+}
+
+.planter--over {
+  box-shadow: 0 0 0 2px var(--mc-focus-ring);
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--mc-space-2);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--mc-font-size-md);
+  font-family: var(--mc-font-mono);
+  letter-spacing: 0.04em;
+  color: var(--mc-garden-planter-wood-fg);
+  text-transform: uppercase;
+}
+
+.count {
+  font-family: var(--mc-font-mono);
+  color: var(--mc-garden-planter-wood-fg);
+  opacity: 0.7;
+}
+
+.bed {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-2);
+  overflow-y: auto;
+  min-height: 0;
+  padding: var(--mc-space-2);
+}
+
+.empty {
+  margin: 0;
+  padding: var(--mc-space-3) 0;
+  color: var(--mc-garden-planter-wood-fg);
+  opacity: 0.65;
+  font-style: italic;
+  font-size: var(--mc-font-size-sm);
+  text-align: center;
+}
+
+.soil {
+  height: 14px;
+  border-radius: 0 0 var(--mc-radius-sm) var(--mc-radius-sm);
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0 4px,
+    rgba(0, 0, 0, 0.18) 4px 5px
+  );
+}
+
+.soil--fertile {
+  background-color: var(--mc-garden-soil-fertile);
+}
+
+.soil--dirty {
+  background-color: var(--mc-garden-soil-dirty);
+}
+
+.soil--dry {
+  background-color: var(--mc-garden-soil-dry);
+}
+
+.basket-slot {
+  min-height: 0;
+}
+
+.basket-slot:empty {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .planter {
+    transition: none;
+  }
+}

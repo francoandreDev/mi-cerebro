@@ -1,0 +1,113 @@
+:host {
+  display: block;
+}
+
+.card {
+  display: grid;
+  grid-template-rows: auto auto;
+  gap: 4px;
+  padding: var(--mc-space-2);
+  background: var(--mc-bg-elevated);
+  border: 1px solid var(--mc-border-default);
+  border-radius: var(--mc-radius-md);
+  cursor: grab;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    opacity 160ms ease;
+}
+
+.card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--mc-shadow-sm);
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--mc-focus-ring);
+  outline-offset: 2px;
+}
+
+.card--done {
+  opacity: 0.55;
+}
+
+.card--done .title {
+  text-decoration: line-through;
+}
+
+.glyph {
+  display: block;
+  width: 40px;
+  height: 40px;
+  margin: 0 auto;
+}
+
+.card--seed .glyph {
+  width: 22px;
+  height: 22px;
+}
+
+.card--sprout .glyph {
+  width: 32px;
+  height: 32px;
+}
+
+.card--bloom .glyph {
+  width: 48px;
+  height: 48px;
+}
+
+.card--wilting .glyph {
+  transform: rotate(-6deg);
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.title {
+  font-size: var(--mc-font-size-sm);
+  color: var(--mc-fg-primary);
+  overflow-wrap: anywhere;
+}
+
+.card--seed .title {
+  font-family: var(--mc-font-mono);
+  font-size: var(--mc-font-size-xs);
+  text-transform: lowercase;
+  color: var(--mc-fg-dim);
+}
+
+.card--sprout .title {
+  font-size: var(--mc-font-size-sm);
+  text-transform: lowercase;
+  color: var(--mc-fg-muted);
+}
+
+.card--bloom .title {
+  font-size: var(--mc-font-size-md);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--mc-fg-primary);
+}
+
+.tag {
+  font-size: var(--mc-font-size-xs);
+  font-family: var(--mc-font-mono);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+  .card:hover {
+    transform: none;
+  }
+  .card--wilting .glyph {
+    transform: none;
+  }
+}

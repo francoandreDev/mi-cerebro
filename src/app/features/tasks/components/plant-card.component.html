@@ -1,0 +1,22 @@
+@let s = entry().summary;
+<article
+  class="card"
+  [class.card--seed]="stage() === 'seed'"
+  [class.card--sprout]="stage() === 'sprout'"
+  [class.card--bloom]="stage() === 'bloom'"
+  [class.card--wilting]="wilting()"
+  [class.card--done]="s.done"
+  [attr.aria-label]="ariaLabel()"
+  tabindex="0"
+  draggable="true"
+  (click)="onClick()"
+  (keydown)="onTransplantKey($event)"
+>
+  <div class="glyph" [style.color]="petalColor()" [innerHTML]="glyph()"></div>
+  <div class="label">
+    <span class="title">{{ displayTitle() }}</span>
+    @if (primaryTag(); as tag) {
+      <span class="tag" [style.color]="tag.color">#{{ tag.label }}</span>
+    }
+  </div>
+</article>

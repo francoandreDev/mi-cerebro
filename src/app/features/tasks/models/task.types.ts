@@ -1,6 +1,6 @@
 import type { JSONContent } from '@tiptap/core';
 
-export const TASK_SCHEMA_VERSION = 3;
+export const TASK_SCHEMA_VERSION = 4;
 export const TASK_KIND = 'task';
 export const TASKS_DIR = 'tasks';
 export const TASK_FILE_SUFFIX = '.json';
@@ -19,6 +19,10 @@ export interface Task {
   readonly updatedAt: string;
   readonly schemaVersion: number;
   readonly position?: string;
+  // why: timestamp del momento en que la task entró al cantero HOY. Se usa
+  //      para calcular marchitamiento (>3 días sin cerrar). undefined cuando
+  //      la task está en SEMANA/BACKLOG. Migrado en v4.
+  readonly enteredHoyAt?: string;
   readonly [key: string]: unknown;
 }
 
@@ -31,6 +35,7 @@ export interface TaskSummary {
   readonly tags: readonly string[];
   readonly folder: string;
   readonly position: string;
+  readonly enteredHoyAt?: string;
 }
 
 export const emptyDoc = (): JSONContent => ({

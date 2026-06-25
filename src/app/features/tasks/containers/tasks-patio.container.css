@@ -1,0 +1,73 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+.patio {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-4);
+  padding: var(--mc-space-4);
+  height: 100%;
+  background: var(--mc-garden-sky);
+  overflow-y: auto;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-3);
+}
+
+.back {
+  background: var(--mc-bg-elevated);
+  border: 1px solid var(--mc-border-default);
+  border-radius: var(--mc-radius-pill);
+  color: var(--mc-fg-primary);
+  padding: 4px var(--mc-space-3);
+  font-size: var(--mc-font-size-sm);
+  cursor: pointer;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--mc-font-size-xl);
+  color: var(--mc-fg-primary);
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--mc-fg-muted);
+  font-size: var(--mc-font-size-sm);
+}
+
+.empty {
+  color: var(--mc-fg-muted);
+  font-style: italic;
+  margin: var(--mc-space-5) auto;
+}
+
+.month {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-3);
+  padding: var(--mc-space-3);
+  background: color-mix(in srgb, var(--mc-garden-soil-fertile) 12%, transparent);
+  border-radius: var(--mc-radius-md);
+}
+
+.month-label {
+  margin: 0;
+  font-family: var(--mc-font-mono);
+  font-size: var(--mc-font-size-sm);
+  text-transform: lowercase;
+  color: var(--mc-fg-muted);
+  letter-spacing: 0.04em;
+}
+
+.grove {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: var(--mc-space-3);
+  align-items: end;
+}

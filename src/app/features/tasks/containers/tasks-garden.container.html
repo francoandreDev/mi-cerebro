@@ -1,0 +1,156 @@
+<section class="garden" [class.garden--night]="night()">
+  <header class="head">
+    <h1 class="title">{{ t('tasks.garden.headerTitle') }}</h1>
+    <form class="compose" (submit)="onComposeSubmit($event)">
+      <input
+        name="title"
+        type="text"
+        class="compose-input"
+        autocomplete="off"
+        [placeholder]="t('tasks.garden.newPlaceholder')"
+        [disabled]="creating()"
+      />
+      <button type="submit" class="compose-submit" [disabled]="creating()">
+        + {{ t('tasks.garden.newAction') }}
+      </button>
+    </form>
+    <div class="head-controls">
+      <div class="search">
+        <input
+          type="search"
+          class="search-input"
+          [value]="query()"
+          [attr.aria-label]="t('tasks.garden.searchAria')"
+          [placeholder]="t('tasks.garden.searchPlaceholder')"
+          (input)="onQueryInput($event)"
+        />
+        @if (query()) {
+          <button
+            type="button"
+            class="search-clear"
+            [attr.aria-label]="t('tasks.garden.searchClear')"
+            (click)="onClearQuery()"
+          >
+            ×
+          </button>
+        }
+      </div>
+      <button type="button" class="toggle" [attr.aria-pressed]="night()" (click)="onToggleNight()">
+        {{ night() ? '🌙' : '🌞' }}
+        {{ night() ? t('tasks.garden.toggleNight') : t('tasks.garden.toggleDay') }}
+      </button>
+      <button
+        type="button"
+        class="toggle"
+        [class.toggle--on]="watering()"
+        [attr.aria-pressed]="watering()"
+        (click)="onToggleWatering()"
+      >
+        🚿 {{ t('tasks.garden.toggleWatering') }}
+      </button>
+      <span class="counts" aria-hidden="true">{{ counts() }}</span>
+      @if (devMode) {
+        <button
+          type="button"
+          class="dev-btn"
+          title="dev: envejecer y cosechar una tarea"
+          (click)="onDevAgeOne()"
+        >
+          🌳 dev
+        </button>
+      }
+    </div>
+  </header>
+
+  <div class="planters">
+    <mc-planter
+      stage="bloom"
+      bucket="today"
+      [title]="t('tasks.garden.planterToday')"
+      [emptyLabel]="t('tasks.garden.empty.today')"
+      [count]="pending().today.length"
+      [dragOver]="dragOverBucket() === 'today'"
+      (dragEnter)="onDragEnter($event)"
+      (dragLeaveBucket)="onDragLeaveBucket($event)"
+      (dropOn)="onDrop($event)"
+    >
+      @for (entry of pending().today; track entry.summary.id) {
+        <mc-plant-card
+          [entry]="entry"
+          stage="bloom"
+          [availableTags]="tags()"
+          [untitledLabel]="untitledLabel()"
+          [wiltDays]="wiltDaysFor(entry.summary)"
+          (open)="onOpen($event)"
+          (transplant)="onTransplant($event)"
+          (harvest)="onHarvest($event)"
+          (remove)="onDelete($event)"
+          (dragstart)="onDragStart($event, entry.summary.id)"
+          (dragend)="onDragEnd()"
+        />
+      }
+      <div basket class="basket-stack">
+        <mc-harvest-basket [harvested]="harvested()" />
+        <button type="button" class="patio-link" (click)="onOpenPatio()">
+          {{ t('tasks.garden.openPatio') }} →
+        </button>
+      </div>
+    </mc-planter>
+
+    <mc-planter
+      stage="sprout"
+      bucket="week"
+      [title]="t('tasks.garden.planterWeek')"
+      [emptyLabel]="t('tasks.garden.empty.week')"
+      [count]="pending().week.length"
+      [dragOver]="dragOverBucket() === 'week'"
+      (dragEnter)="onDragEnter($event)"
+      (dragLeaveBucket)="onDragLeaveBucket($event)"
+      (dropOn)="onDrop($event)"
+    >
+      @for (entry of pending().week; track entry.summary.id) {
+        <mc-plant-card
+          [entry]="entry"
+          stage="sprout"
+          [availableTags]="tags()"
+          [untitledLabel]="untitledLabel()"
+          (open)="onOpen($event)"
+          (transplant)="onTransplant($event)"
+          (harvest)="onHarvest($event)"
+          (remove)="onDelete($event)"
+          (dragstart)="onDragStart($event, entry.summary.id)"
+          (dragend)="onDragEnd()"
+        />
+      }
+    </mc-planter>
+
+    <mc-planter
+      stage="seed"
+      bucket="backlog"
+      [title]="t('tasks.garden.planterBacklog')"
+      [emptyLabel]="t('tasks.garden.empty.backlog')"
+      [count]="pending().backlog.length"
+      [dragOver]="dragOverBucket() === 'backlog'"
+      (dragEnter)="onDragEnter($event)"
+      (dragLeaveBucket)="onDragLeaveBucket($event)"
+      (dropOn)="onDrop($event)"
+    >
+      @for (entry of pending().backlog; track entry.summary.id) {
+        <mc-plant-card
+          [entry]="entry"
+          stage="seed"
+          [availableTags]="tags()"
+          [untitledLabel]="untitledLabel()"
+          (open)="onOpen($event)"
+          (transplant)="onTransplant($event)"
+          (harvest)="onHarvest($event)"
+          (remove)="onDelete($event)"
+          (dragstart)="onDragStart($event, entry.summary.id)"
+          (dragend)="onDragEnd()"
+        />
+      }
+    </mc-planter>
+  </div>
+
+  <p class="sr-live" aria-live="polite">{{ announce() }}</p>
+</section>

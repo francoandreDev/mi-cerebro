@@ -4,7 +4,12 @@ export const tasksRoutes: Routes = [
   {
     path: '',
     loadComponent: () =>
-      import('./containers/tasks-board.container').then((m) => m.TasksBoardContainer),
+      import('./containers/tasks-garden.container').then((m) => m.TasksGardenContainer),
+  },
+  {
+    path: 'patio',
+    loadComponent: () =>
+      import('./containers/tasks-patio.container').then((m) => m.TasksPatioContainer),
   },
   {
     path: ':id',

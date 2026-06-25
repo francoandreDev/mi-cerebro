@@ -18,6 +18,7 @@ import { nextPositionAfter, seedMissingPositions } from '@core/ordering/seed-pos
 import { positionSeedMigrationStep } from '@core/ordering/position.migration';
 import { SearchIndexService } from '@core/search/search-index.service';
 import { blockIdMigrationStep } from '@core/tiptap/block-id/block-id.migration';
+import { enteredHoyAtMigrationStep } from './entered-hoy-at.migration';
 import type { SearchDoc } from '@core/search/search.types';
 import { extractPlainText } from '@core/search/tiptap-text';
 import { TagsService } from '@core/tags/tags.service';
@@ -33,6 +34,7 @@ import {
   type Task,
   type TaskSummary,
 } from '../models/task.types';
+import { type Bucket, bucketToDueDate } from './task-buckets';
 
 const TRASH_DIR = '.mi-cerebro';
 const TRASH_SUBDIR = 'trash';
@@ -56,7 +58,7 @@ export class TasksService {
     this.migrations.register({
       kind: TASK_KIND,
       latest: TASK_SCHEMA_VERSION,
-      steps: [blockIdMigrationStep(1), positionSeedMigrationStep(2)],
+      steps: [blockIdMigrationStep(1), positionSeedMigrationStep(2), enteredHoyAtMigrationStep(3)],
     });
   }
 
@@ -154,6 +156,37 @@ export class TasksService {
     );
     await this.search.upsert(this.toSearchDoc(updated));
     return updated;
+  }
+
+  async transplant(id: string, bucket: Bucket, now: Date = new Date()): Promise<Task> {
+    const task = await this.read(id);
+    const dueDates = sortDueDates(bucketToDueDate(bucket, now));
+    const wasInHoy = task.enteredHoyAt !== undefined;
+    const goesToHoy = bucket === 'today';
+    const enteredHoyAt = goesToHoy ? (wasInHoy ? task.enteredHoyAt : now.toISOString()) : undefined;
+    const { enteredHoyAt: _drop, ...rest } = task;
+    void _drop;
+    const next: Task = {
+      ...rest,
+      dueDates,
+      ...(enteredHoyAt !== undefined ? { enteredHoyAt } : {}),
+    };
+    return this.save(next);
+  }
+
+  async harvest(id: string, now: Date = new Date()): Promise<Task> {
+    const task = await this.read(id);
+    return this.save({ ...task, done: true, updatedAt: now.toISOString() });
+  }
+
+  // why: dev-only helper — retrocede `enteredHoyAt` y marca `done` para poder
+  //      verificar el patio (umbral árbol = 14 días). Sólo se invoca tras
+  //      check de `isDevMode()` desde la UI; igual queda en el service para
+  //      no diseminar lógica de retrodatado por containers.
+  async devAgeAndHarvest(id: string, daysAgo: number): Promise<Task> {
+    const task = await this.read(id);
+    const aged = new Date(Date.now() - daysAgo * 86_400_000).toISOString();
+    return this.save({ ...task, enteredHoyAt: aged, done: true });
   }
 
   async setPosition(id: string, position: string): Promise<void> {
@@ -287,6 +320,7 @@ export class TasksService {
       tags: task.tags,
       folder,
       position: task.position ?? '',
+      ...(task.enteredHoyAt !== undefined ? { enteredHoyAt: task.enteredHoyAt } : {}),
     };
   }
 

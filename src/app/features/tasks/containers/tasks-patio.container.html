@@ -1,0 +1,33 @@
+<section class="patio">
+  <header class="head">
+    <button type="button" class="back" (click)="onBack()">
+      ← {{ t('tasks.patio.backToGarden') }}
+    </button>
+    <div class="head-text">
+      <h1 class="title">{{ t('tasks.patio.title') }}</h1>
+      <p class="subtitle">{{ t('tasks.patio.subtitle') }}</p>
+    </div>
+  </header>
+
+  @if (empty()) {
+    <p class="empty">{{ t('tasks.patio.empty') }}</p>
+  } @else {
+    @for (group of groups(); track group.key) {
+      <section class="month">
+        <h2 class="month-label">{{ group.label }}</h2>
+        <div class="grove">
+          @for (item of group.items; track item.summary.id) {
+            <mc-harvested-plant
+              [summary]="item.summary"
+              [shape]="item.shape"
+              [availableTags]="tags()"
+              [untitledLabel]="untitledLabel()"
+              [longevityDays]="item.longevityDays"
+              (open)="onOpen($event)"
+            />
+          }
+        </div>
+      </section>
+    }
+  }
+</section>

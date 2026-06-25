@@ -40,6 +40,22 @@
 // LIGHT — default fallback. Used when no data-theme attr is set
 // and the OS does not request dark.
 :root {
+  // garden (tasks redesign — modo día por defecto)
+  --mc-garden-sky: #e9dfc6;
+  --mc-garden-soil-fertile: #5b3a1b;
+  --mc-garden-soil-dirty: #7d5a36;
+  --mc-garden-soil-dry: #b89972;
+  --mc-garden-planter-wood-bg: #8a5a2b;
+  --mc-garden-planter-wood-fg: #4a2f15;
+  --mc-garden-stem: #4f7a2d;
+  --mc-garden-leaf: #3f7a3a;
+  --mc-garden-leaf-hi: #62a050;
+  --mc-garden-leaf-shade: #2e5a2a;
+  --mc-garden-petal-default: #ffffff;
+  --mc-garden-petal-wilted: #d6c66a;
+  --mc-garden-bioluminescent-halo: transparent;
+  --mc-garden-night-bg: #0a1a2a;
+
   --mc-bg-base: #cfc8b8;
   --mc-bg-surface: #c2bba9;
   --mc-bg-elevated: #d8d2c3;
@@ -106,6 +122,22 @@
 
 // DARK forced by user via [data-theme="dark"].
 :root[data-theme='dark'] {
+  // garden — dark theme defaults (modo día se invierte vía .mc-garden--night)
+  --mc-garden-sky: #1c2630;
+  --mc-garden-soil-fertile: #3a2614;
+  --mc-garden-soil-dirty: #4a361f;
+  --mc-garden-soil-dry: #6b553a;
+  --mc-garden-planter-wood-bg: #4a2f15;
+  --mc-garden-planter-wood-fg: #d6b58a;
+  --mc-garden-stem: #6fa847;
+  --mc-garden-leaf: #5a8a3a;
+  --mc-garden-leaf-hi: #82b85a;
+  --mc-garden-leaf-shade: #3d6028;
+  --mc-garden-petal-default: #f4ecd0;
+  --mc-garden-petal-wilted: #b8a448;
+  --mc-garden-bioluminescent-halo: rgba(180, 230, 200, 0.18);
+  --mc-garden-night-bg: #060f1c;
+
   --mc-bg-base: #0d1117;
   --mc-bg-surface: #161b22;
   --mc-bg-elevated: #1c232c;

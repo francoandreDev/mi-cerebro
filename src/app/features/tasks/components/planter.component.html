@@ -1,0 +1,25 @@
+<section
+  class="planter"
+  [class.planter--over]="dragOver()"
+  [attr.aria-label]="title()"
+  (dragover)="onDragOver($event)"
+  (dragenter)="onDragEnter()"
+  (dragleave)="onDragLeave()"
+  (drop)="onDrop($event)"
+>
+  <header class="head">
+    <h2 class="title">{{ title() }}</h2>
+    <span class="count" aria-hidden="true">{{ count() }}</span>
+  </header>
+  <div class="bed">
+    @if (count() === 0) {
+      <p class="empty">{{ emptyLabel() }}</p>
+    } @else {
+      <ng-content></ng-content>
+    }
+  </div>
+  <div [class]="soilClass()" aria-hidden="true"></div>
+  <div class="basket-slot">
+    <ng-content select="[basket]"></ng-content>
+  </div>
+</section>
