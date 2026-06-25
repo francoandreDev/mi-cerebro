@@ -435,3 +435,25 @@
   opacity: 0.3;
   cursor: not-allowed;
 }
+
+/* rename overlay (covers caption area while editing) */
+.rename-overlay {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  bottom: 18px;
+  z-index: 4;
+}
+.rename-input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--mc-accent-primary);
+  border-radius: var(--mc-radius-sm);
+  background: var(--mc-bg-surface);
+  color: var(--mc-fg-primary);
+  font-family: inherit;
+  font-size: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+  outline: none;
+}
+.rename-input:focus { border-color: var(--mc-accent-primary); }

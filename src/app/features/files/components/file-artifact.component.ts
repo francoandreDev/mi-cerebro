@@ -1,10 +1,23 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { IconComponent } from '@shared/icon/icon.component';
 
-import { extFromName, formatBytes, type FileItem } from '../models/file-collection.types';
+import {
+  displayLabel,
+  extFromName,
+  formatBytes,
+  type FileItem,
+} from '../models/file-collection.types';
 
 export type FileArtifactVariant =
   | 'polaroid'
@@ -52,6 +65,12 @@ export class FileArtifactComponent {
   readonly remove = output<void>();
   readonly moveUp = output<void>();
   readonly moveDown = output<void>();
+  readonly rename = output<string>();
+
+  protected readonly editing = signal(false);
+  protected readonly editValue = signal('');
+
+  protected readonly label = computed(() => displayLabel(this.item()));
 
   private readonly i18n = inject(I18nService);
 
@@ -118,5 +137,31 @@ export class FileArtifactComponent {
   protected onMoveDown(event: MouseEvent): void {
     event.stopPropagation();
     this.moveDown.emit();
+  }
+  protected onStartRename(event: MouseEvent): void {
+    event.stopPropagation();
+    this.editValue.set(this.label());
+    this.editing.set(true);
+  }
+  protected onRenameInput(event: Event): void {
+    this.editValue.set((event.target as HTMLInputElement).value);
+  }
+  protected onRenameKey(event: KeyboardEvent): void {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      this.commitRename();
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      this.editing.set(false);
+    }
+  }
+  protected onRenameBlur(): void {
+    if (this.editing()) this.commitRename();
+  }
+  private commitRename(): void {
+    const next = this.editValue().trim();
+    this.editing.set(false);
+    if (next === this.label()) return;
+    this.rename.emit(next);
   }
 }

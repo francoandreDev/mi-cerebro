@@ -26,7 +26,7 @@ Una idea distinta por página. No replicar el mismo patrón: cada entidad tiene 
 | `/lists`     | Pizarra-directorio: chalkboard + rail A–Z/tag + flow multi-columna, search dim+highlight                                                                                   | ✅     |
 | `/lists/:id` | Editor + capa de tiza (toggle off por default): paleta de tizas, goma, capas con visibilidad/lock/reorden — persistencia en el JSON de la lista (`chalkLayers`, schema v4) | ✅     |
 | `/writings`  | Biblioteca de borrador: shelf de cards tipográficas + editor full-bleed centrado                                                                                           | ✅     |
-| `/files`     | Rail interno fijo (260px) con árbol jerárquico + DnD + workbench full-width                                                                                                | ✅     |
+| `/files`     | Pared de lockers numerados (color = primer tag) + apertura inline (≤6 archivos) u overlay (más)                                                                            | ✅     |
 | `/music`     | 3 zonas: playlists rail / biblioteca densa / now playing + cola                                                                                                            | ✅     |
 | `/calendar`  | Wallboard: grid mes/año + columna cards colapsables por kind + modal de día                                                                                                | ✅     |
 | `/reminders` | pendiente                                                                                                                                                                  | ⏳     |

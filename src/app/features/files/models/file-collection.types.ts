@@ -7,11 +7,15 @@ export const ITEMS_DIR = 'items';
 export interface FileItem {
   readonly id: string;
   readonly originalName: string;
+  readonly displayName?: string;
   readonly mime: string;
   readonly ext: string;
   readonly bytes: number;
   readonly addedAt: string;
 }
+
+export const displayLabel = (item: FileItem): string =>
+  item.displayName && item.displayName.trim() !== '' ? item.displayName : item.originalName;
 
 export interface FileCollection {
   readonly id: string;

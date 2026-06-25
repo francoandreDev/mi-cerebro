@@ -33,6 +33,7 @@ export class FileGridComponent {
   readonly moveUp = output<string>();
   readonly moveDown = output<string>();
   readonly reorder = output<{ from: string; to: string }>();
+  readonly rename = output<{ id: string; name: string }>();
 
   private readonly i18n = inject(I18nService);
   protected t(key: TranslationKey): string {

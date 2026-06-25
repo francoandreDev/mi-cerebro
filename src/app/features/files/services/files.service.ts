@@ -225,6 +225,21 @@ export class FilesService {
     await this.saveCollection({ ...collection, order });
   }
 
+  async renameFile(collectionId: string, itemId: string, name: string): Promise<void> {
+    const collection = await this.readCollection(collectionId);
+    const trimmed = name.trim();
+    const items = collection.items.map((it) => {
+      if (it.id !== itemId) return it;
+      if (trimmed === '' || trimmed === it.originalName) {
+        const next: FileItem = { ...it };
+        delete (next as { displayName?: string }).displayName;
+        return next;
+      }
+      return { ...it, displayName: trimmed };
+    });
+    await this.saveCollection({ ...collection, items });
+  }
+
   async deleteCollectionToTrash(id: string): Promise<void> {
     const root = this.requireRoot();
     const loc = this.requireLoc(id);
@@ -395,7 +410,9 @@ export class FilesService {
       .map((id) => this.tags.byId(id)?.label ?? '')
       .filter((l) => l !== '')
       .join(' ');
-    const itemNames = collection.items.map((i) => i.originalName).join(' ');
+    const itemNames = collection.items
+      .flatMap((i) => (i.displayName ? [i.originalName, i.displayName] : [i.originalName]))
+      .join(' ');
     return {
       id: collection.id,
       kind: FILE_KIND,

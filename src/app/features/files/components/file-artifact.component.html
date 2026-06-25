@@ -7,7 +7,7 @@
     </svg>
   </span>
 
-  <button type="button" class="body" (click)="onDownload()" [title]="item().originalName">
+  <button type="button" class="body" (click)="onDownload()" [title]="label()">
     @switch (variant()) {
       @case ('polaroid') {
         <span class="washi" aria-hidden="true"></span>
@@ -18,7 +18,7 @@
             <span class="shot-fallback"><mc-icon name="image" /></span>
           }
         </span>
-        <span class="caption polaroid-caption">{{ item().originalName }}</span>
+        <span class="caption polaroid-caption">{{ label() }}</span>
       }
 
       @case ('pdf-sheet') {
@@ -33,7 +33,7 @@
           <span class="dog-ear"></span>
           <span class="stamp">PDF</span>
         </span>
-        <span class="caption">{{ item().originalName }}</span>
+        <span class="caption">{{ label() }}</span>
       }
 
       @case ('thermal-receipt') {
@@ -44,7 +44,7 @@
           </span>
           <span class="receipt-zigzag"></span>
         </span>
-        <span class="caption">{{ item().originalName }}</span>
+        <span class="caption">{{ label() }}</span>
       }
 
       @case ('envelope') {
@@ -55,7 +55,7 @@
             <span>{{ extLabel() }}</span>
           </span>
         </span>
-        <span class="caption">{{ item().originalName }}</span>
+        <span class="caption">{{ label() }}</span>
       }
 
       @case ('cassette') {
@@ -65,7 +65,7 @@
           <span class="cassette-window"></span>
           <span class="cassette-label">{{ extLabel() }}</span>
         </span>
-        <span class="caption">{{ item().originalName }}</span>
+        <span class="caption">{{ label() }}</span>
       }
 
       @case ('vhs') {
@@ -75,7 +75,7 @@
             <span class="vhs-tape">{{ extLabel() }}</span>
           </span>
         </span>
-        <span class="caption">{{ item().originalName }}</span>
+        <span class="caption">{{ label() }}</span>
       }
 
       @default {
@@ -83,15 +83,40 @@
           <mc-icon name="paperclip" class="postit-icon" />
           <span class="postit-ext">{{ extLabel() }}</span>
         </span>
-        <span class="caption">{{ item().originalName }}</span>
+        <span class="caption">{{ label() }}</span>
       }
     }
 
     <span class="bytes">{{ sizeLabel() }}</span>
   </button>
 
+  @if (editable() && editing()) {
+    <div class="rename-overlay">
+      <input
+        type="text"
+        class="rename-input"
+        [value]="editValue()"
+        [placeholder]="t('files.items.renamePlaceholder')"
+        [attr.aria-label]="t('files.items.rename')"
+        (input)="onRenameInput($event)"
+        (keydown)="onRenameKey($event)"
+        (blur)="onRenameBlur()"
+        (click)="$event.stopPropagation()"
+      />
+    </div>
+  }
+
   @if (editable()) {
     <div class="ops">
+      <button
+        type="button"
+        class="ghost"
+        (click)="onStartRename($event)"
+        [attr.aria-label]="t('files.items.rename')"
+        [title]="t('files.items.rename')"
+      >
+        <mc-icon name="pencil-simple" />
+      </button>
       <button
         type="button"
         class="ghost"

@@ -64,6 +64,7 @@
             (remove)="remove.emit(item.id)"
             (moveUp)="moveUp.emit(item.id)"
             (moveDown)="moveDown.emit(item.id)"
+            (rename)="rename.emit({ id: item.id, name: $event })"
           />
         </li>
       }

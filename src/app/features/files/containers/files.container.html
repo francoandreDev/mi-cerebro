@@ -1,10 +1,55 @@
-@if (active(); as collection) {
-  <div class="workbench full">
+<div class="wall-wrap">
+  <header class="wall-head">
+    <h2>{{ t('files.title') }}</h2>
+    <button type="button" class="primary mc-hover-grow" (click)="onCreateCollection()">
+      <mc-icon name="plus" />
+      <span>{{ t('files.wall.newCollection') }}</span>
+    </button>
+  </header>
+
+  <div class="wall-board">
+    @if (filesService.summaries().length === 0) {
+      <div class="wall-empty">
+        <p>{{ t('files.wall.empty') }}</p>
+      </div>
+    } @else {
+      <ul class="wall-grid">
+        @for (summary of filesService.summaries(); track summary.id; let i = $index) {
+          <li class="wall-slot">
+            <mc-file-locker
+              [summary]="summary"
+              [availableTags]="tags()"
+              [untitledLabel]="t('files.untitledTitle')"
+              [number]="i + 1"
+              [isOpen]="active()?.id === summary.id"
+              (open)="onOpenCollection($event)"
+            />
+          </li>
+          @if (active() && active()!.id === summary.id && inlineMode()) {
+            <li class="wall-drawer" aria-live="polite">
+              <ng-container *ngTemplateOutlet="drawerContent; context: { $implicit: active()! }" />
+            </li>
+          }
+        }
+      </ul>
+    }
+  </div>
+</div>
+
+@if (active() && !inlineMode()) {
+  <div class="wall-overlay-backdrop" role="presentation" (click)="onBackToIndex()"></div>
+  <section class="wall-overlay" role="dialog" aria-modal="true" (keydown.escape)="onBackToIndex()">
+    <ng-container *ngTemplateOutlet="drawerContent; context: { $implicit: active()! }" />
+  </section>
+}
+
+<ng-template #drawerContent let-collection>
+  <div class="drawer-inner">
     <button
       type="button"
       class="back"
-      [attr.aria-label]="t('files.backToIndex')"
-      [title]="t('files.backToIndex')"
+      [attr.aria-label]="t('files.wall.closeAria')"
+      [title]="t('files.wall.closeAria')"
       (click)="onBackToIndex()"
     >
       <mc-icon name="arrow-left" />
@@ -49,50 +94,7 @@
       (moveUp)="onMoveUp($event)"
       (moveDown)="onMoveDown($event)"
       (reorder)="onReorder($event)"
+      (rename)="onRenameItem($event)"
     />
   </div>
-} @else {
-  <div class="shelf-wrap">
-    <header class="shelf-head">
-      <h2>{{ t('files.title') }}</h2>
-      <button type="button" class="primary mc-hover-grow" (click)="onCreateCollection()">
-        <mc-icon name="plus" />
-        <span>{{ t('files.shelf.newCollection') }}</span>
-      </button>
-    </header>
-    <div class="shelf-board">
-      @if (filesService.summaries().length === 0) {
-        <div class="shelf-empty">
-          <span class="empty-pin" aria-hidden="true">
-            <svg viewBox="0 0 24 24">
-              <circle cx="12" cy="9" r="6" fill="#c44545" />
-              <ellipse cx="14" cy="7" rx="1.7" ry="1" fill="rgba(255,255,255,0.55)" />
-              <path
-                d="M12 14 L12 22"
-                stroke="#2b2b2b"
-                stroke-width="1.6"
-                stroke-linecap="round"
-                fill="none"
-                opacity="0.6"
-              />
-            </svg>
-          </span>
-          <p>{{ t('files.shelf.empty') }}</p>
-        </div>
-      } @else {
-        <ul class="shelf-grid">
-          @for (summary of filesService.summaries(); track summary.id) {
-            <li class="shelf-slot">
-              <mc-file-shelf-card
-                [summary]="summary"
-                [availableTags]="tags()"
-                [untitledLabel]="t('files.untitledTitle')"
-                (open)="onOpenCollection($event)"
-              />
-            </li>
-          }
-        </ul>
-      }
-    </div>
-  </div>
-}
+</ng-template>

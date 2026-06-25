@@ -1,7 +1,9 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  computed,
   effect,
   inject,
   input,
@@ -26,8 +28,13 @@ import {
   type FileCollectionSaveStatus,
 } from '../components/file-collection-meta-bar.component';
 import { FileGridComponent } from '../components/file-grid.component';
-import { FileShelfCardComponent } from '../components/file-shelf-card.component';
-import { FILE_KIND, type FileCollection } from '../models/file-collection.types';
+import { FileLockerComponent } from '../components/file-locker.component';
+import { FILE_KIND, displayLabel, type FileCollection } from '../models/file-collection.types';
+
+// why: under this threshold the open locker expands inline within the wall;
+//      above it, the content jumps to an overlay so it doesn't shove the rest
+//      of the wall off-screen.
+const INLINE_ITEMS_THRESHOLD = 6;
 import { FilesService } from '../services/files.service';
 
 @Component({
@@ -36,9 +43,10 @@ import { FilesService } from '../services/files.service';
   imports: [
     FileCollectionMetaBarComponent,
     FileGridComponent,
-    FileShelfCardComponent,
+    FileLockerComponent,
     IconComponent,
     LockBannerComponent,
+    NgTemplateOutlet,
   ],
   templateUrl: './files.container.html',
   styleUrl: './files.container.css',
@@ -58,6 +66,10 @@ export class FilesContainer {
   protected readonly tags = this.tagsService.tags;
   protected readonly active = signal<FileCollection | null>(null);
   protected readonly status = signal<FileCollectionSaveStatus>('saved');
+  protected readonly inlineMode = computed(() => {
+    const c = this.active();
+    return c !== null && c.items.length <= INLINE_ITEMS_THRESHOLD;
+  });
   protected readonly previewUrls = signal<Record<string, string>>({});
   protected readonly lock = new EntityLockController(FILE_KIND, this.active);
 
@@ -199,7 +211,7 @@ export class FilesContainer {
     if (!current || !this.lock.guardWrite()) return;
     const item = current.items.find((i) => i.id === itemId);
     if (!item) return;
-    if (!confirm(this.t('files.items.deleteConfirm').replace('{name}', item.originalName))) return;
+    if (!confirm(this.t('files.items.deleteConfirm').replace('{name}', displayLabel(item)))) return;
     try {
       await this.filesService.removeFile(current.id, itemId);
       const next = await this.filesService.readCollection(current.id);
@@ -216,6 +228,18 @@ export class FilesContainer {
 
   protected async onMoveDown(itemId: string): Promise<void> {
     await this.swap(itemId, +1);
+  }
+
+  protected async onRenameItem(payload: { id: string; name: string }): Promise<void> {
+    const current = this.active();
+    if (!current || !this.lock.guardWrite()) return;
+    try {
+      await this.filesService.renameFile(current.id, payload.id, payload.name);
+      const next = await this.filesService.readCollection(current.id);
+      this.active.set(next);
+    } catch (e) {
+      this.errors.report(e);
+    }
   }
 
   protected async onReorder(payload: { from: string; to: string }): Promise<void> {
@@ -241,7 +265,7 @@ export class FilesContainer {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = item.originalName;
+      a.download = downloadName(item);
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -307,3 +331,17 @@ export class FilesContainer {
     return withReauthIfNeeded(error, () => this.workspace.reauthorize(), retry);
   }
 }
+
+// why: preserve the original extension when downloading a renamed file so the
+//      OS still recognises the format even if the user dropped or changed it.
+const downloadName = (item: {
+  originalName: string;
+  displayName?: string;
+  ext: string;
+}): string => {
+  const chosen =
+    item.displayName && item.displayName.trim() !== '' ? item.displayName : item.originalName;
+  if (chosen === item.originalName) return item.originalName;
+  const hasExt = chosen.toLowerCase().endsWith(`.${item.ext.toLowerCase()}`);
+  return hasExt ? chosen : `${chosen}.${item.ext}`;
+};
