@@ -1,0 +1,95 @@
+@let isPreview = mode() === 'preview';
+<section
+  class="sala"
+  [class.preview]="isPreview"
+  (dragover)="onDragOver($event)"
+  (drop)="onDrop($event)"
+>
+  <header class="sala-bar">
+    <span class="cuarto-label">{{ cuartoLabel() }}</span>
+    @if (editable() && !isPreview) {
+      <button type="button" class="add" (click)="onPick()">
+        <mc-icon name="plus" />
+        <span>{{ t('images.images.add') }}</span>
+      </button>
+      <input type="file" accept="image/*" multiple hidden (change)="onPickerChange($event)" />
+    }
+  </header>
+
+  <div class="wall">
+    <div class="floor"></div>
+    <div class="light"></div>
+
+    @if (isEmpty()) {
+      <div class="empty">
+        <mc-icon name="image-square" class="empty-icon mc-anim-float" />
+        <span>{{ t('images.museum.emptyRoom') }}</span>
+        @if (editable() && !isPreview) {
+          <button type="button" class="add ghost" (click)="onPick()">
+            <mc-icon name="plus" />
+            <span>{{ t('images.images.add') }}</span>
+          </button>
+        }
+      </div>
+    } @else {
+      <ol class="frames">
+        @for (frame of frames(); track frame.image.id) {
+          <li
+            class="frame"
+            [class.size-s]="frame.size === 'S'"
+            [class.size-m]="frame.size === 'M'"
+            [class.size-l]="frame.size === 'L'"
+            [style.width.px]="frame.width"
+            [style.margin-top.px]="frame.offsetY"
+            [attr.aria-label]="frame.indexLabel"
+          >
+            <button
+              type="button"
+              class="frame-btn"
+              [attr.aria-label]="frame.label"
+              (click)="onOpen(frame.image.id)"
+            >
+              <div class="mat">
+                @if (frame.url) {
+                  <img [src]="frame.url" [alt]="frame.label" loading="lazy" />
+                } @else {
+                  <div class="placeholder"></div>
+                }
+              </div>
+            </button>
+            <p class="cartelita">{{ frame.label }}</p>
+            @if (editable() && !isPreview) {
+              <button
+                type="button"
+                class="frame-del"
+                [attr.aria-label]="t('images.images.delete')"
+                (click)="onRemove($event, frame.image.id)"
+              >
+                <mc-icon name="trash" />
+              </button>
+            }
+          </li>
+        }
+
+        @if (hasNext()) {
+          <li class="next-cta">
+            <button type="button" (click)="onNext()">
+              <span>{{ t('images.museum.nextCuarto') }}</span>
+            </button>
+          </li>
+        }
+      </ol>
+    }
+  </div>
+
+  @if (cuartos() > 1 && !isPreview) {
+    <footer class="sala-nav">
+      <button type="button" [disabled]="!hasPrev()" (click)="onPrev()">
+        {{ t('images.museum.prevCuarto') }}
+      </button>
+      <button type="button" [disabled]="!hasNext()" (click)="onNext()">
+        {{ t('images.museum.nextCuarto') }}
+      </button>
+    </footer>
+  }
+</section>

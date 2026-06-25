@@ -1,0 +1,21 @@
+@if (cuartos().length > 1) {
+  <nav class="minimap" [attr.aria-label]="t('images.museum.planLabel')">
+    @for (cuarto of cuartos(); track cuarto.index) {
+      <button
+        type="button"
+        class="cuarto"
+        [class.active]="cuarto.active"
+        [attr.aria-current]="cuarto.active ? 'true' : null"
+        [attr.aria-label]="cuarto.label"
+        (click)="onJump(cuarto.index)"
+      >
+        <span class="dots">
+          @for (i of dotIndices(cuarto.count); track i) {
+            <span class="dot"></span>
+          }
+        </span>
+        <span class="chip">{{ cuarto.index + 1 }}</span>
+      </button>
+    }
+  </nav>
+}

@@ -15,7 +15,7 @@ Una idea distinta por página. No replicar el mismo patrón: cada entidad tiene 
 | Ruta         | Idea del redesign                                                                                                                                                          | Estado |
 | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
 | `/books`     | Estantería + page-turn 3D flip con paper bend en lectura                                                                                                                   | ✅     |
-| `/images`    | Gallery wall index + justified inner grid                                                                                                                                  | ✅     |
+| `/images`    | Museo: planta + salas con cuartos auto-paginados + mini-mapa                                                                                                               | ✅     |
 | `/trash`     | Grid visual de cards con filtro por kind, búsqueda y modal detalle                                                                                                         | ✅     |
 | `/settings`  | Tabs verticales sticky + panel (sección activa única)                                                                                                                      | ✅     |
 | `/history`   | (heredado, sin section pane)                                                                                                                                               | ✅     |

@@ -29,16 +29,23 @@
       (addTag)="onAddTag($event)"
       (removeTag)="onRemoveTag($event)"
     />
-    <mc-image-grid
-      [gallery]="gallery"
+    <mc-museum-room
+      [images]="currentCuarto()"
       [urls]="thumbUrls()"
+      [cuartoIndex]="cuartoIndex()"
+      [cuartos]="cuartosCount()"
       [editable]="lock.editable()"
-      (addFiles)="onAddFiles($event)"
+      mode="full"
       (open)="onOpenImage($event)"
       (remove)="onRemoveImage($event)"
-      (moveUp)="onMoveUp($event)"
-      (moveDown)="onMoveDown($event)"
-      (reorder)="onReorder($event)"
+      (addFiles)="onAddFiles($event)"
+      (nextCuarto)="onNextCuarto()"
+      (prevCuarto)="onPrevCuarto()"
+    />
+    <mc-room-minimap
+      [cuartoSizes]="cuartoSizes()"
+      [cuartoIndex]="cuartoIndex()"
+      (jump)="onJumpCuarto($event)"
     />
     @if (openImage(); as img) {
       <mc-image-lightbox

@@ -50,46 +50,51 @@
       <span>{{ t('images.new') }}</span>
     </button>
   </div>
-} @else if (views().length === 0) {
+} @else if (cells().length === 0) {
   <p class="empty-soft">
     <mc-icon name="magnifying-glass" class="empty-icon-soft mc-anim-pulse" />
     {{ t('images.index.noMatch') }}
   </p>
 } @else {
-  <ul class="wall">
-    @for (v of views(); track v.summary.id) {
-      <li class="card">
+  <section class="planta" [attr.aria-label]="t('images.museum.planLabel')">
+    <div class="planta-grid">
+      @for (cell of cells(); track cell.summary.id) {
         <button
           type="button"
-          class="card-btn"
-          [attr.aria-label]="v.summary.title || t('images.untitledTitle')"
-          (click)="openGallery(v.summary.id)"
+          class="plant-cell"
+          [class.active]="cell.active"
+          [style.background]="cell.bg"
+          [style.color]="cell.fg"
+          [attr.aria-label]="cell.title"
+          [attr.aria-current]="cell.active ? 'true' : null"
+          (click)="onSelectCell(cell.summary.id)"
+          (dblclick)="openGallery(cell.summary.id)"
         >
-          <mc-gallery-cover
-            [coverImageIds]="v.summary.coverImageIds"
-            [imageCount]="v.summary.imageCount"
-            [urls]="coverUrlsFor(v.summary)"
-            [moreLabel]="moreLabelFor(v.summary)"
-          />
-          <div class="meta">
-            <span class="title">{{ v.summary.title || t('images.untitledTitle') }}</span>
-            <span class="subtitle">{{ v.subtitle }}</span>
-            @if (v.tagLabels.length > 0) {
-              <span class="tags">
-                @for (label of v.tagLabels; track label) {
-                  <span class="tag">#{{ label }}</span>
-                }
-              </span>
-            }
-          </div>
+          <span class="plant-title">{{ cell.title }}</span>
+          <span class="plant-sub">{{ cell.subtitle }}</span>
         </button>
-      </li>
-    }
-    <li class="card new">
-      <button type="button" class="new-btn mc-hover-grow" (click)="createGallery()">
-        <mc-icon name="plus-circle" class="plus mc-anim-pulse" />
-        <span class="new-label">{{ t('images.index.newCard') }}</span>
-      </button>
-    </li>
-  </ul>
+      }
+    </div>
+  </section>
+
+  @if (activeCell(); as active) {
+    <section class="sala-wrap">
+      <header class="sala-head">
+        <span class="sala-name">{{ active.title }}</span>
+        <button type="button" class="walk" (click)="onOpenActive()">
+          <span>{{ t('images.museum.walk') }}</span>
+          <mc-icon name="arrow-right" />
+        </button>
+      </header>
+      <mc-museum-room
+        [images]="previewImages()"
+        [urls]="previewUrls()"
+        [cuartoIndex]="0"
+        [cuartos]="1"
+        [editable]="false"
+        mode="preview"
+        (open)="onPreviewOpen($event)"
+      />
+    </section>
+  }
 }

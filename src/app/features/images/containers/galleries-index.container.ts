@@ -16,24 +16,30 @@ import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { TagsService } from '@core/tags/tags.service';
 import { IconComponent } from '@shared/icon/icon.component';
+import { hashColor } from '@shared/utils/hash-color';
+import { ROOM_SIZE, orderItems } from '@shared/utils/museum-asymmetry';
 
-import { GalleryCoverComponent } from '../components/gallery-cover.component';
-import type { GallerySummary } from '../models/gallery.types';
+import { MuseumRoomComponent } from '../components/museum-room.component';
+import type { Gallery, GalleryImage, GallerySummary } from '../models/gallery.types';
 import { GalleriesService } from '../services/galleries.service';
 import { formatAgoImages } from './format-ago-images';
 
 type SortKey = 'recent' | 'title';
 
-interface GalleryView {
+interface PlantCell {
   readonly summary: GallerySummary;
+  readonly title: string;
   readonly subtitle: string;
   readonly tagLabels: readonly string[];
+  readonly bg: string;
+  readonly fg: string;
+  readonly active: boolean;
 }
 
 @Component({
   selector: 'mc-galleries-index',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [GalleryCoverComponent, IconComponent],
+  imports: [IconComponent, MuseumRoomComponent],
   templateUrl: './galleries-index.container.html',
   styleUrl: './galleries-index.container.css',
 })
@@ -51,9 +57,11 @@ export class GalleriesIndexContainer {
   protected readonly query = signal<string>('');
   protected readonly sortKey = signal<SortKey>('recent');
   protected readonly tagFilter = signal<string>('');
-  protected readonly thumbUrls = signal<Record<string, string>>({});
+  protected readonly activeRoomId = signal<string | null>(null);
+  protected readonly activeGallery = signal<Gallery | null>(null);
+  protected readonly previewUrls = signal<Record<string, string>>({});
 
-  protected readonly views = computed<readonly GalleryView[]>(() => {
+  protected readonly filteredSummaries = computed<readonly GallerySummary[]>(() => {
     const q = this.query().trim().toLowerCase();
     const filterTag = this.tagFilter();
     const sort = this.sortKey();
@@ -68,7 +76,7 @@ export class GalleriesIndexContainer {
       }
       return false;
     });
-    const sorted = [...list].sort((a, b) => {
+    return [...list].sort((a, b) => {
       if (sort === 'title') {
         const at = (a.title || '').toLowerCase();
         const bt = (b.title || '').toLowerCase();
@@ -76,37 +84,76 @@ export class GalleriesIndexContainer {
       }
       return b.updatedAt.localeCompare(a.updatedAt);
     });
-    return sorted.map((s) => this.toView(s));
+  });
+
+  protected readonly cells = computed<readonly PlantCell[]>(() => {
+    const active = this.activeRoomId();
+    return this.filteredSummaries().map((s) => {
+      const seed = s.tags[0] ?? s.id;
+      const color = hashColor(seed);
+      const ago = formatAgoImages(s.updatedAt, (k, p) => this.t(k, p));
+      const count =
+        s.imageCount === 0
+          ? this.t('images.index.coverCount.empty')
+          : s.imageCount === 1
+            ? this.t('images.index.coverCount.one')
+            : this.t('images.index.coverCount.many', { count: s.imageCount });
+      return {
+        summary: s,
+        title: s.title || this.t('images.untitledTitle'),
+        subtitle: ago ? `${count} · ${ago}` : count,
+        tagLabels: s.tags
+          .map((id) => this.tagsService.byId(id)?.label ?? '')
+          .filter((l) => l !== ''),
+        bg: color.bg,
+        fg: color.fg,
+        active: s.id === active,
+      };
+    });
+  });
+
+  protected readonly activeCell = computed<PlantCell | null>(() => {
+    const id = this.activeRoomId();
+    if (!id) return null;
+    return this.cells().find((c) => c.summary.id === id) ?? null;
+  });
+
+  protected readonly previewImages = computed<readonly GalleryImage[]>(() => {
+    const g = this.activeGallery();
+    if (!g) return [];
+    return orderItems(g.images, g.order).slice(0, ROOM_SIZE);
   });
 
   constructor() {
+    // why: keep activeRoomId in sync with the filtered list so the preview always
+    //      shows something. If the active was filtered out, fall back to the first.
     effect(() => {
-      const needed = new Set<string>();
-      for (const v of this.views()) {
-        for (const id of v.summary.coverImageIds) needed.add(`${v.summary.id}:${id}`);
+      const list = this.filteredSummaries();
+      const current = this.activeRoomId();
+      if (list.length === 0) {
+        if (current !== null) this.activeRoomId.set(null);
+        return;
       }
-      this.syncThumbs(needed).catch((e) => console.warn('[images-index] thumb sync failed', e));
+      if (!current || !list.some((s) => s.id === current)) {
+        this.activeRoomId.set(list[0]!.id);
+      }
     });
-    this.destroyRef.onDestroy(() => this.revokeAll());
+
+    effect(() => {
+      const id = this.activeRoomId();
+      if (!id) {
+        this.activeGallery.set(null);
+        this.revokePreviewUrls();
+        return;
+      }
+      void this.loadActiveGallery(id);
+    });
+
+    this.destroyRef.onDestroy(() => this.revokePreviewUrls());
   }
 
   protected t(key: TranslationKey, params?: Record<string, string | number>): string {
     return this.i18n.t(key, params);
-  }
-
-  protected coverUrlsFor(summary: GallerySummary): Record<string, string> {
-    const all = this.thumbUrls();
-    const out: Record<string, string> = {};
-    for (const id of summary.coverImageIds) {
-      const url = all[`${summary.id}:${id}`];
-      if (url) out[id] = url;
-    }
-    return out;
-  }
-
-  protected moreLabelFor(summary: GallerySummary): string {
-    const extra = Math.max(0, summary.imageCount - summary.coverImageIds.length);
-    return this.t('images.index.coverMore', { count: extra });
   }
 
   protected onQuery(event: Event): void {
@@ -126,8 +173,21 @@ export class GalleriesIndexContainer {
     if (target) this.tagFilter.set(target.value);
   }
 
+  protected onSelectCell(id: string): void {
+    this.activeRoomId.set(id);
+  }
+
+  protected onOpenActive(): void {
+    const id = this.activeRoomId();
+    if (id) void this.router.navigate(['/images', id]);
+  }
+
   protected openGallery(id: string): void {
     void this.router.navigate(['/images', id]);
+  }
+
+  protected onPreviewOpen(_imageId: string): void {
+    this.onOpenActive();
   }
 
   protected async createGallery(): Promise<void> {
@@ -140,51 +200,45 @@ export class GalleriesIndexContainer {
     }
   }
 
-  private toView(summary: GallerySummary): GalleryView {
-    const ago = formatAgoImages(summary.updatedAt, (k, p) => this.t(k, p));
-    const count =
-      summary.imageCount === 0
-        ? this.t('images.index.coverCount.empty')
-        : summary.imageCount === 1
-          ? this.t('images.index.coverCount.one')
-          : this.t('images.index.coverCount.many', { count: summary.imageCount });
-    const subtitle = ago ? `${count} · ${ago}` : count;
-    const tagLabels = summary.tags
-      .map((id) => this.tagsService.byId(id)?.label ?? '')
-      .filter((l) => l !== '');
-    return { summary, subtitle, tagLabels };
+  private async loadActiveGallery(id: string): Promise<void> {
+    try {
+      const gallery = await this.galleriesService.readGallery(id);
+      if (this.activeRoomId() !== id) return;
+      this.activeGallery.set(gallery);
+      await this.refreshPreviewUrls(gallery);
+    } catch (cause) {
+      console.warn('[images-index] active gallery load failed', id, cause);
+      this.activeGallery.set(null);
+    }
   }
 
-  private async syncThumbs(needed: Set<string>): Promise<void> {
-    const current = this.thumbUrls();
-    const next: Record<string, string> = { ...current };
-    let changed = false;
-    for (const key of Object.keys(current)) {
-      if (!needed.has(key)) {
-        URL.revokeObjectURL(current[key]!);
-        delete next[key];
-        changed = true;
+  private async refreshPreviewUrls(gallery: Gallery): Promise<void> {
+    const slice = gallery.order.slice(0, ROOM_SIZE);
+    const needed = new Set(slice);
+    const current = this.previewUrls();
+    const next: Record<string, string> = {};
+    for (const [key, url] of Object.entries(current)) {
+      if (needed.has(key)) {
+        next[key] = url;
+      } else {
+        URL.revokeObjectURL(url);
       }
     }
-    for (const key of needed) {
-      if (next[key]) continue;
-      const sepIdx = key.indexOf(':');
-      const galleryId = key.slice(0, sepIdx);
-      const imageId = key.slice(sepIdx + 1);
+    for (const imageId of slice) {
+      if (next[imageId]) continue;
       try {
-        const thumb = await this.galleriesService.readThumbBlob(galleryId, imageId);
-        const blob = thumb ?? (await this.galleriesService.readOriginalBlob(galleryId, imageId));
-        next[key] = URL.createObjectURL(blob);
-        changed = true;
+        const thumb = await this.galleriesService.readThumbBlob(gallery.id, imageId);
+        const blob = thumb ?? (await this.galleriesService.readOriginalBlob(gallery.id, imageId));
+        next[imageId] = URL.createObjectURL(blob);
       } catch (cause) {
-        console.warn('[images-index] thumb load failed', key, cause);
+        console.warn('[images-index] preview thumb failed', imageId, cause);
       }
     }
-    if (changed) this.thumbUrls.set(next);
+    this.previewUrls.set(next);
   }
 
-  private revokeAll(): void {
-    for (const url of Object.values(this.thumbUrls())) URL.revokeObjectURL(url);
-    this.thumbUrls.set({});
+  private revokePreviewUrls(): void {
+    for (const url of Object.values(this.previewUrls())) URL.revokeObjectURL(url);
+    this.previewUrls.set({});
   }
 }

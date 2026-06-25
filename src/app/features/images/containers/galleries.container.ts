@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  computed,
   effect,
   inject,
   input,
@@ -19,16 +20,18 @@ import { EntityLockController } from '@core/locks/entity-lock.controller';
 import { TagsService } from '@core/tags/tags.service';
 import { IconComponent } from '@shared/icon/icon.component';
 import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
-import { reorderById } from '@shared/utils/reorder';
+import { orderItems, paginateCuartos } from '@shared/utils/museum-asymmetry';
 
 import {
   GalleryMetaBarComponent,
   type GallerySaveStatus,
 } from '../components/gallery-meta-bar.component';
-import { ImageGridComponent } from '../components/image-grid.component';
 import { ImageLightboxComponent } from '../components/image-lightbox.component';
+import { MuseumRoomComponent } from '../components/museum-room.component';
+import { RoomMinimapComponent } from '../components/room-minimap.component';
 import { IMAGE_KIND, type Gallery, type GalleryImage } from '../models/gallery.types';
 import { GalleriesService } from '../services/galleries.service';
+import { GalleryUrlCache } from './gallery-url-cache';
 
 @Component({
   selector: 'mc-galleries',
@@ -36,9 +39,10 @@ import { GalleriesService } from '../services/galleries.service';
   imports: [
     GalleryMetaBarComponent,
     IconComponent,
-    ImageGridComponent,
     ImageLightboxComponent,
     LockBannerComponent,
+    MuseumRoomComponent,
+    RoomMinimapComponent,
   ],
   templateUrl: './galleries.container.html',
   styleUrl: './galleries.container.css',
@@ -58,10 +62,31 @@ export class GalleriesContainer {
   protected readonly tags = this.tagsService.tags;
   protected readonly active = signal<Gallery | null>(null);
   protected readonly status = signal<GallerySaveStatus>('saved');
-  protected readonly thumbUrls = signal<Record<string, string>>({});
-  protected readonly originalUrls = signal<Record<string, string>>({});
+  private readonly urls = new GalleryUrlCache(this.galleriesService);
+  protected readonly thumbUrls = this.urls.thumbs;
+  protected readonly originalUrls = this.urls.originals;
   protected readonly openImageId = signal<string | null>(null);
+  protected readonly cuartoIndex = signal<number>(0);
   protected readonly lock = new EntityLockController(IMAGE_KIND, this.active);
+
+  protected readonly orderedImages = computed<readonly GalleryImage[]>(() => {
+    const g = this.active();
+    return g ? orderItems(g.images, g.order) : [];
+  });
+
+  protected readonly cuartos = computed<readonly (readonly GalleryImage[])[]>(() =>
+    paginateCuartos(this.orderedImages()),
+  );
+
+  protected readonly cuartoSizes = computed<readonly number[]>(() =>
+    this.cuartos().map((c) => c.length),
+  );
+
+  protected readonly currentCuarto = computed<readonly GalleryImage[]>(
+    () => this.cuartos()[this.cuartoIndex()] ?? [],
+  );
+
+  protected readonly cuartosCount = computed<number>(() => this.cuartos().length);
 
   constructor() {
     effect(() => {
@@ -70,7 +95,7 @@ export class GalleriesContainer {
       if (!wanted) {
         if (current) {
           this.active.set(null);
-          this.revokeAll();
+          this.urls.revokeAll();
         }
         return;
       }
@@ -78,7 +103,11 @@ export class GalleriesContainer {
         void this.loadGallery(wanted);
       }
     });
-    this.destroyRef.onDestroy(() => this.revokeAll());
+    effect(() => {
+      const max = Math.max(0, this.cuartosCount() - 1);
+      if (this.cuartoIndex() > max) this.cuartoIndex.set(max);
+    });
+    this.destroyRef.onDestroy(() => this.urls.revokeAll());
     const onPaste = (event: ClipboardEvent): void => this.handlePaste(event);
     document.addEventListener('paste', onPaste);
     this.destroyRef.onDestroy(() => document.removeEventListener('paste', onPaste));
@@ -161,7 +190,7 @@ export class GalleriesContainer {
       await this.galleriesService.deleteGalleryToTrash(current.id);
       await this.autosave.clear(current.id);
       this.active.set(null);
-      this.revokeAll();
+      this.urls.revokeAll();
       await this.router.navigate(['/images']);
     } catch (e) {
       this.errors.report(e);
@@ -178,7 +207,7 @@ export class GalleriesContainer {
       }
       const next = await this.galleriesService.readGallery(current.id);
       this.active.set(next);
-      await this.refreshUrlsFor(next);
+      await this.urls.refreshThumbs(next);
     } catch (e) {
       this.errors.report(this.withReauthIfNeeded(e));
     }
@@ -194,44 +223,33 @@ export class GalleriesContainer {
       await this.galleriesService.removeImage(current.id, imageId);
       const next = await this.galleriesService.readGallery(current.id);
       this.active.set(next);
-      this.revokeOne(imageId);
+      this.urls.revokeOne(imageId);
       if (this.openImageId() === imageId) this.openImageId.set(null);
     } catch (e) {
       this.errors.report(e);
     }
   }
 
-  protected async onMoveUp(imageId: string): Promise<void> {
-    await this.swap(imageId, -1);
+  protected onNextCuarto(): void {
+    const next = Math.min(this.cuartoIndex() + 1, this.cuartosCount() - 1);
+    this.cuartoIndex.set(next);
   }
 
-  protected async onMoveDown(imageId: string): Promise<void> {
-    await this.swap(imageId, +1);
+  protected onPrevCuarto(): void {
+    this.cuartoIndex.set(Math.max(this.cuartoIndex() - 1, 0));
   }
 
-  protected async onReorder(payload: { from: string; to: string }): Promise<void> {
-    const current = this.active();
-    if (!current || !this.lock.guardWrite()) return;
-    const order = reorderById(current.order, payload.from, payload.to);
-    if (order === current.order) return;
-    try {
-      await this.galleriesService.reorderImages(current.id, order);
-      this.active.set(await this.galleriesService.readGallery(current.id));
-    } catch (e) {
-      this.errors.report(e);
-    }
+  protected onJumpCuarto(index: number): void {
+    const clamped = Math.max(0, Math.min(index, this.cuartosCount() - 1));
+    this.cuartoIndex.set(clamped);
   }
 
   protected async onOpenImage(imageId: string): Promise<void> {
     const current = this.active();
     if (!current) return;
     this.openImageId.set(imageId);
-    const urls = this.originalUrls();
-    if (urls[imageId]) return;
     try {
-      const blob = await this.galleriesService.readOriginalBlob(current.id, imageId);
-      const url = URL.createObjectURL(blob);
-      this.originalUrls.update((map) => ({ ...map, [imageId]: url }));
+      await this.urls.loadOriginal(current.id, imageId);
     } catch (e) {
       this.errors.report(e);
     }
@@ -241,90 +259,18 @@ export class GalleriesContainer {
     this.openImageId.set(null);
   }
 
-  private async swap(imageId: string, delta: number): Promise<void> {
-    const current = this.active();
-    if (!current || !this.lock.guardWrite()) return;
-    const order = [...current.order];
-    const idx = order.indexOf(imageId);
-    if (idx < 0) return;
-    const target = idx + delta;
-    if (target < 0 || target >= order.length) return;
-    const a = order[idx];
-    const b = order[target];
-    if (a === undefined || b === undefined) return;
-    order[idx] = b;
-    order[target] = a;
-    try {
-      await this.galleriesService.reorderImages(current.id, order);
-      this.active.set(await this.galleriesService.readGallery(current.id));
-    } catch (e) {
-      this.errors.report(e);
-    }
-  }
-
   private async loadGallery(id: string): Promise<void> {
     try {
       const gallery = await this.galleriesService.readGallery(id);
       this.active.set(gallery);
+      this.cuartoIndex.set(0);
       this.status.set('saved');
-      this.revokeAll();
-      await this.refreshUrlsFor(gallery);
+      this.urls.revokeAll();
+      await this.urls.refreshThumbs(gallery);
     } catch (e) {
       this.errors.report(e);
       this.active.set(null);
     }
-  }
-
-  private async refreshUrlsFor(gallery: Gallery): Promise<void> {
-    const next: Record<string, string> = { ...this.thumbUrls() };
-    const existing = new Set(Object.keys(next));
-    for (const img of gallery.images) {
-      if (next[img.id]) {
-        existing.delete(img.id);
-        continue;
-      }
-      try {
-        const thumb = await this.galleriesService.readThumbBlob(gallery.id, img.id);
-        if (thumb) {
-          next[img.id] = URL.createObjectURL(thumb);
-        } else {
-          const original = await this.galleriesService.readOriginalBlob(gallery.id, img.id);
-          next[img.id] = URL.createObjectURL(original);
-        }
-      } catch (cause) {
-        console.warn('[images] thumb load failed', img.id, cause);
-      }
-      existing.delete(img.id);
-    }
-    for (const orphan of existing) {
-      URL.revokeObjectURL(next[orphan]!);
-      delete next[orphan];
-    }
-    this.thumbUrls.set(next);
-  }
-
-  private revokeOne(imageId: string): void {
-    const thumbs = this.thumbUrls();
-    const originals = this.originalUrls();
-    if (thumbs[imageId]) {
-      URL.revokeObjectURL(thumbs[imageId]);
-      const { [imageId]: _t, ...rest } = thumbs;
-      void _t;
-      this.thumbUrls.set(rest);
-    }
-    if (originals[imageId]) {
-      URL.revokeObjectURL(originals[imageId]);
-      const { [imageId]: _o, ...rest } = originals;
-      void _o;
-      this.originalUrls.set(rest);
-    }
-  }
-
-  private revokeAll(): void {
-    for (const url of Object.values(this.thumbUrls())) URL.revokeObjectURL(url);
-    for (const url of Object.values(this.originalUrls())) URL.revokeObjectURL(url);
-    this.thumbUrls.set({});
-    this.originalUrls.set({});
   }
 
   private scheduleSave(gallery: Gallery): void {
