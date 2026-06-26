@@ -33,6 +33,10 @@ export class ReminderSchedulerService {
     let best: ReminderSummary | null = null;
     for (const r of this.reminders.summaries()) {
       if (r.done) continue;
+      // why: pausing should silence both future fires and any catch-up
+      //      ping that would normally trigger as soon as `nextPingAt`
+      //      passes. Resuming makes them eligible again on the next tick.
+      if (r.paused) continue;
       if (this.firedAt.get(r.id) === r.nextPingAt) continue;
       const t = parseLocal(r.nextPingAt);
       if (t === null) continue;

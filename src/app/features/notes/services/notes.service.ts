@@ -77,7 +77,7 @@ export class NotesService {
         summaries.push(this.toSummary(note, entry.folder));
         indexDocs.push(this.toSearchDoc(note));
       } catch (cause) {
-        console.warn('[notes] skipped unreadable file', entry.relativePath, cause);
+        await this.dropIfEmpty(entry.dirHandle, entry.filename, entry.relativePath, cause);
       }
     }
     summaries.sort(compareLegacy);
@@ -205,6 +205,29 @@ export class NotesService {
     if (newFolder !== '' && !this.foldersSet().has(newFolder)) {
       this.foldersSignal.update((list) => [...list, newFolder]);
     }
+  }
+
+  // why: zero-byte JSONs are leftovers from an aborted write — they can't
+  //      be parsed and clutter the workspace forever. Drop them on refresh
+  //      so the user sees a clean list. Anything else (truly corrupt JSON,
+  //      permission failure) we leave in place and just log.
+  private async dropIfEmpty(
+    dir: FsDirectoryHandle,
+    filename: string,
+    relativePath: string,
+    cause: unknown,
+  ): Promise<void> {
+    const size = await this.fs.fileSize(dir, filename);
+    if (size === 0) {
+      try {
+        await this.fs.removeEntry(dir, filename);
+        console.info('[notes] dropped empty file', relativePath);
+        return;
+      } catch {
+        /* fall through to warn */
+      }
+    }
+    console.warn('[notes] skipped unreadable file', relativePath, cause);
   }
 
   setKnownPath(id: string, relativePath: string): void {

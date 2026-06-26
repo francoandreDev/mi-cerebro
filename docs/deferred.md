@@ -308,6 +308,28 @@ Formato por entrada:
 
 ---
 
+## Recordatorios — Palomar (origen: rediseño palomar 2026-06-25)
+
+### Animaciones de snooze / "tomar papelito" manual
+
+- **Qué**: gestos manuales del paso 5 todavía sin cablear. El disparo del scheduler ya está implementado (puerta de la jaula se abre progresivamente, paloma vuela hasta el rail icon de `/reminders`, picotea, vuelve a la jaula si es recurrente o cae si es puntual). Falta: snooze posa la paloma en la repisa con animación; marcar hecho manual hace volar la paloma fuera de pantalla.
+- **Por qué se difirió**: las animaciones disparadas por el scheduler son las críticas para que el palomar "funcione" como metáfora; los gestos manuales pueden quedar para una pasada de pulido sin perder lectura del estado.
+- **Target**: sesión siguiente del redesign de `/reminders`.
+
+### Detalles bonitos: plumitas que caen, plumaje rico, ronroneo
+
+- **Qué**: paso 6 del plan. El aleteo ya quedó (la paloma voladora flapea el ala durante el vuelo). Faltan: plumitas que caen al pasar la paloma, plumaje más detallado en palomas recurrentes con muchos ciclos cumplidos, ronroneo/preview de mensaje en hover sostenido.
+- **Por qué se difirió**: pulido visual de baja prioridad. Requiere modelo extra (`recurrence.cyclesCompleted`) para el plumaje y SVG más rico — no entra en el MVP del palomar.
+- **Target**: sesión siguiente, después de las animaciones manuales.
+
+### Palomares temáticos por categoría (como salas del museo)
+
+- **Qué**: opcional mencionado en el plan original: separar el palomar en sub-palomares por tag/categoría, navegables como las salas del museo. Hoy se resuelve con filtros (fecha + nombre) sobre un único palomar.
+- **Por qué se difirió**: los filtros del MVP ya resuelven el riesgo de saturación visual. Multi-palomar agrega complejidad de navegación que sólo vale si el usuario lo pide.
+- **Target**: sin asignar.
+
+---
+
 ## Recordatorios — Mejoras UI (origen: rediseño 2026-06-19)
 
 ### Snooze 1d / Duplicar / menú de acciones extendido

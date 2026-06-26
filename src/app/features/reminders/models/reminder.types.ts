@@ -1,4 +1,4 @@
-export const REMINDER_SCHEMA_VERSION = 3;
+export const REMINDER_SCHEMA_VERSION = 4;
 export const REMINDER_KIND = 'reminder';
 export const REMINDERS_DIR = 'reminders';
 export const REMINDER_FILE_SUFFIX = '.json';
@@ -9,6 +9,19 @@ export const REMINDER_FILE_SUFFIX = '.json';
 //      what lets "delete" disable the toggle on the goal instead of being
 //      re-created next sync tick.
 export type ReminderSourceKind = 'goal';
+
+export type RecurrenceUnit = 'day' | 'week' | 'month' | 'year';
+
+// why: minimal recurrence model — `every N units` is enough for daily/
+//      weekly/monthly/yearly without dragging in an rrule parser. The
+//      palomar maps recurrence presence to "anillo de colores" vs anillo
+//      simple para puntuales. When the lead-up series of a recurring
+//      reminder exhausts, the cadence service rolls `dueAt` forward by
+//      this rule instead of marking done.
+export interface Recurrence {
+  readonly every: number;
+  readonly unit: RecurrenceUnit;
+}
 
 export interface Reminder {
   readonly id: string;
@@ -22,6 +35,8 @@ export interface Reminder {
   readonly dueAt: string;
   readonly nextPingAt: string;
   readonly done: boolean;
+  readonly paused: boolean;
+  readonly recurrence: Recurrence | null;
   readonly sourceKind?: ReminderSourceKind | null;
   readonly sourceId?: string | null;
   readonly createdAt: string;
@@ -36,6 +51,8 @@ export interface ReminderSummary {
   readonly dueAt: string;
   readonly nextPingAt: string;
   readonly done: boolean;
+  readonly paused: boolean;
+  readonly recurrence: Recurrence | null;
   readonly sourceKind: ReminderSourceKind | null;
   readonly sourceId: string | null;
   readonly updatedAt: string;

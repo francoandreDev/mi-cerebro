@@ -177,6 +177,172 @@
   animation: mc-anim-wiggle-kf 0.5s ease-in-out;
 }
 
+// Messenger paloma flight: spawned by ReminderToastContainer whenever the
+// scheduler fires. Lives on <body> with fixed positioning so the keyframes
+// are global (not view-encapsulated). Coordinates come from inline CSS vars.
+//
+// Timeline:
+//   1. fly (wandering path, dynamic keyframes) — bird leaves cage, wanders
+//      the viewport, may briefly exit, then lands at the rail bell.
+//   2. peck ×3 at the bell.
+//   3. one-shot: die (falls rotating).
+//      recurrent: bird perches at the bell until the user clicks the now-
+//      empty cage to recall it home (also a wandering path, dynamic kfs).
+//
+// Outbound & recall paths are generated per spawn (see paloma-flight.ts
+// → keyframesFor). Dense stops let CSS polyline interpolation read as a
+// smooth curve. Only stationary keyframes (peck, die, final, bob, wings)
+// live statically here.
+@keyframes mc-paloma-peck-kf {
+  0%,
+  100% {
+    transform: translate(var(--to-x), var(--to-y));
+  }
+  35% {
+    transform: translate(var(--to-x), calc(var(--to-y) + 12px));
+  }
+  70% {
+    transform: translate(var(--to-x), var(--to-y));
+  }
+}
+@keyframes mc-paloma-die-kf {
+  0% {
+    transform: translate(var(--to-x), var(--to-y)) rotate(0deg);
+    opacity: 1;
+  }
+  35% {
+    transform: translate(calc(var(--to-x) + 6px), calc(var(--to-y) + 30px)) rotate(35deg);
+    opacity: 0.95;
+  }
+  75% {
+    transform: translate(calc(var(--to-x) + 22px), calc(var(--to-y) + 140px)) rotate(110deg);
+    opacity: 0.55;
+  }
+  100% {
+    transform: translate(calc(var(--to-x) + 34px), calc(var(--to-y) + 260px)) rotate(190deg);
+    opacity: 0;
+  }
+}
+// Wing pose swap: down-stroke pose vs up-stroke pose, hard cuts via opacity.
+// One full flap cycle = `--flap`. The bird also bobs vertically in sync:
+// it gains a bit of altitude on each down-stroke and loses some on the
+// up-stroke — flight speed is therefore implicitly tied to flap rate.
+@keyframes mc-paloma-wing-down-kf {
+  0%,
+  49.9% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes mc-paloma-wing-up-kf {
+  0%,
+  49.9% {
+    opacity: 0;
+  }
+  50%,
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes mc-paloma-bob-kf {
+  0% {
+    transform: translateY(0);
+  }
+  20% {
+    transform: translateY(-4px);
+  } /* peak just after down-stroke */
+  50% {
+    transform: translateY(0);
+  }
+  80% {
+    transform: translateY(3px);
+  } /* sinks during up-stroke */
+  100% {
+    transform: translateY(0);
+  }
+}
+@keyframes mc-paloma-final {
+  to {
+    opacity: var(--mc-paloma-final-opacity, 1);
+  }
+}
+
+// Flap rate drives perceived flight power. ~2.4Hz (0.42s/cycle) reads
+// clearly without looking robotic. fly/recall/peck/die durations live in
+// paloma-flight.ts because keyframes are generated at runtime; only flap
+// is needed here (it drives bob & wing pose swap).
+$mc-paloma-flap: 0.42s;
+
+.mc-flying-paloma {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 80px;
+  height: 60px;
+  pointer-events: none;
+  z-index: 9999;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+  // The full `animation:` shorthand (fly + peck + return-or-die + final) is
+  // assigned inline by launchPaloma so it can reference the dynamically
+  // generated keyframe name. Fates are differentiated via [data-fate] only
+  // for the bob/wing modifiers below.
+}
+.mc-flying-paloma[data-fate='return'] {
+  --mc-paloma-final-opacity: 1;
+}
+.mc-flying-paloma[data-fate='die'] {
+  --mc-paloma-final-opacity: 0;
+}
+.mc-flying-paloma .paloma-bob {
+  width: 100%;
+  height: 100%;
+  animation: mc-paloma-bob-kf #{$mc-paloma-flap} ease-in-out infinite;
+}
+.mc-flying-paloma svg {
+  width: 100%;
+  height: 100%;
+  // Heading is baked into the parent's translate+rotate per keyframe —
+  // no scaleX flip needed here.
+}
+.mc-flying-paloma .body {
+  fill: #f4f1e8;
+}
+.mc-flying-paloma .tail {
+  fill: #d8d2c0;
+}
+.mc-flying-paloma .wing-down,
+.mc-flying-paloma .wing-up {
+  fill: #d8d2c0;
+  stroke: #a8a395;
+  stroke-width: 0.4;
+  animation-duration: #{$mc-paloma-flap};
+  animation-timing-function: steps(1, end);
+  animation-iteration-count: infinite;
+}
+.mc-flying-paloma .wing-down {
+  animation-name: mc-paloma-wing-down-kf;
+}
+.mc-flying-paloma .wing-up {
+  animation-name: mc-paloma-wing-up-kf;
+}
+.mc-flying-paloma .head {
+  fill: #f7f4ec;
+}
+.mc-flying-paloma .beak {
+  fill: #caa040;
+}
+.mc-flying-paloma .eye {
+  fill: #1c1308;
+}
+.mc-flying-paloma .paper {
+  fill: #e9d99c;
+  stroke: #a48f4a;
+  stroke-width: 0.6;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .mc-anim-spark,
   .mc-anim-pulse,
@@ -191,5 +357,10 @@
   .mc-anim-fade-in,
   .mc-anim-check {
     animation-duration: 0.001s;
+  }
+  .mc-flying-paloma,
+  .mc-flying-paloma[data-fate='return'],
+  .mc-flying-paloma[data-fate='die'] {
+    animation: mc-paloma-final 0.001s forwards;
   }
 }

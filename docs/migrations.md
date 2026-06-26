@@ -46,6 +46,13 @@ Cada entidad persistida lleva un `schemaVersion`. Cuando aumentamos esa versión
 - **Mapeo:** `nextPingAt = dueAt` (los reminders viejos disparan exactamente en su `dueAt`, igual que antes; la cadence service los re-agendará al siguiente tick según el lead-time vigente).
 - **Compatibilidad:** ningún consumidor leía `nextPingAt`; el scheduler ahora lo lee en vez de `dueAt`. El campo de settings `goals.reminderLeadMinutes` quedó renombrado a `reminders.leadMinutes` con fallback de lectura para no resetear configuraciones existentes.
 
+### reminder v3 → v4 (2026-06-25)
+
+- **Qué cambia:** se agregan `paused: boolean` y `recurrence: { every: number; unit: 'day'|'week'|'month'|'year' } | null`.
+- **Por qué:** el redesign de `/reminders` como palomar (ver `docs/redesign.md`) mapea recurrencia a "anillo de colores" de la paloma y `paused` a "cortinita corrida en el nicho". El modelo previo no tenía concepto de recurrencia (la cadencia sólo densificaba pings _antes_ del `dueAt` y luego marcaba `done`); ahora las palomas recurrentes vuelven al nicho con un papelito fresco rolleando `dueAt` al próximo ciclo.
+- **Mapeo:** `paused = false`, `recurrence = null` para todos los reminders existentes — comportamiento idéntico al previo hasta que el usuario active alguno de los dos campos en el panel de detalle.
+- **Compatibilidad:** `RemindersCadenceService.advance` y el sync loop ahora ruedan `dueAt` hacia adelante cuando la serie se agota y el reminder es recurrente, en vez de marcarlo `done`. `ReminderSchedulerService` ignora reminders `paused` (ni los dispara ni los marca como vencidos automáticos — siguen ahí esperando).
+
 ### Plantilla
 
 ```markdown

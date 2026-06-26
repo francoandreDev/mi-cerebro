@@ -12,205 +12,239 @@
         [attr.aria-label]="t('reminders.searchPlaceholder')"
       />
     </label>
-    <button type="button" class="primary" (click)="onQuickAddSubmit($event)">
+    <div class="date-range" role="group" [attr.aria-label]="t('reminders.dateRange')">
+      <label class="date-field">
+        <span>{{ t('reminders.dateFrom') }}</span>
+        <input type="date" [value]="fromDate()" (input)="onFromDate(asInput($event).value)" />
+      </label>
+      <label class="date-field">
+        <span>{{ t('reminders.dateTo') }}</span>
+        <input type="date" [value]="toDate()" (input)="onToDate(asInput($event).value)" />
+      </label>
+      @if (fromDate() || toDate()) {
+        <button
+          type="button"
+          class="ghost icon"
+          (click)="onClearDateRange()"
+          [attr.aria-label]="t('reminders.dateClear')"
+          [title]="t('reminders.dateClear')"
+        >
+          <mc-icon name="x" />
+        </button>
+      }
+    </div>
+    <button type="button" class="primary" (click)="focusQuickAdd()">
       + {{ t('reminders.new') }} <kbd>N</kbd>
     </button>
   </header>
 
-  <div class="layout">
-    <aside class="rail" aria-label="Filtros">
-      <h4 class="rail-section">{{ t('reminders.filter.section') }}</h4>
-      @for (k of filterChips; track k) {
-        <button
-          type="button"
-          class="chip"
-          [class.active]="filter() === k"
-          [class.danger]="k === 'overdue'"
-          (click)="onFilter(k)"
-        >
-          <mc-icon [name]="iconFor(k)" />
-          <span class="chip-label">{{ filterLabel(k) }}</span>
-          <span class="chip-count">{{ counts().get(k) ?? 0 }}</span>
-        </button>
-      }
-      <div class="rail-sep"></div>
-      <button
-        type="button"
-        class="chip"
-        [class.active]="showDone()"
-        (click)="onToggleDoneSection()"
-      >
-        <mc-icon [name]="showDone() ? 'caret-down' : 'caret-right'" />
-        <span class="chip-label">{{ t('reminders.bucket.done') }}</span>
-        <span class="chip-count">{{ counts().get('done') ?? 0 }}</span>
-      </button>
-    </aside>
-
-    <main class="main">
-      <form class="quick-add" (submit)="onQuickAddSubmit($event)">
-        <mc-icon name="plus-circle" class="quick-plus" />
-        <input
-          #quickAddInput
-          type="text"
-          [value]="quickAdd()"
-          (input)="onQuickAddInput(asInput($event).value)"
-          [placeholder]="t('reminders.quickAddPlaceholder')"
-          [attr.aria-label]="t('reminders.quickAddPlaceholder')"
-        />
-        <span class="quick-hint">{{ t('reminders.quickAddHint') }}</span>
-      </form>
-
-      @if (buckets().length === 0 && doneItems().length === 0) {
-        <div class="empty">
-          <div class="empty-art">
-            <mc-icon name="bell" class="empty-icon" />
-            <mc-icon name="sparkle" class="empty-spark spark-a" />
-            <mc-icon name="sparkle" class="empty-spark spark-b" />
-            <mc-icon name="sparkle" class="empty-spark spark-c" />
+  <div class="stage">
+    <div class="palomar" [class.has-selection]="selected() !== null">
+      <div class="roof" aria-hidden="true"></div>
+      <div class="wall">
+        @if (inNichos().length === 0 && onPerch().length === 0) {
+          <div class="empty">
+            <p>{{ t('reminders.emptyPalomar') }}</p>
+            <button type="button" class="primary subtle" (click)="focusQuickAdd()">
+              <mc-icon name="plus-circle" />
+              {{ t('reminders.createFirst') }}
+            </button>
           </div>
-          <p>{{ t('reminders.emptyPending') }}</p>
-          <button type="button" class="primary subtle" (click)="focusQuickAdd()">
-            <mc-icon name="plus-circle" />
-            {{ t('reminders.createFirst') }}
-          </button>
-        </div>
-      }
-
-      @for (group of buckets(); track group.key) {
-        <section class="group" [attr.data-bucket]="group.key">
-          <h3>
-            <mc-icon [name]="iconFor(group.key)" />
-            <span>{{ bucketLabel(group.key) }}</span>
-            <span class="group-count">{{ group.items.length }}</span>
-          </h3>
-          <ul class="list">
-            @for (r of group.items; track r.id) {
-              <li
-                class="row"
-                [class.editing]="editingId() === r.id"
-                [class.overdue]="isOverdue(r)"
-                [attr.data-bucket]="group.key"
-              >
-                <input
-                  type="checkbox"
-                  [checked]="r.done"
-                  (change)="onToggleDone(r)"
-                  [attr.aria-label]="t('reminders.markDone')"
-                />
-                @if (editingId() === r.id) {
-                  <input
-                    type="text"
-                    class="title-input"
-                    [value]="editTitle()"
-                    (input)="onEditTitle(asInput($event).value)"
-                    (keydown.enter)="onSaveEdit()"
-                    (keydown.escape)="cancelEdit()"
-                    [placeholder]="t('reminders.titlePlaceholder')"
-                  />
-                  <input
-                    type="datetime-local"
-                    class="due-input"
-                    [value]="editDue()"
-                    (input)="onEditDue(asInput($event).value)"
-                    (keydown.enter)="onSaveEdit()"
-                    (keydown.escape)="cancelEdit()"
-                  />
-                  <button
-                    type="button"
-                    class="ghost icon"
-                    (click)="onSaveEdit()"
-                    [attr.aria-label]="t('common.confirm')"
-                  >
-                    <mc-icon name="check" />
-                  </button>
-                  <button
-                    type="button"
-                    class="ghost icon"
-                    (click)="cancelEdit()"
-                    [attr.aria-label]="t('common.cancel')"
-                  >
-                    <mc-icon name="x" />
-                  </button>
-                } @else {
-                  <button
-                    type="button"
-                    class="title-btn"
-                    (click)="onStartEdit(r)"
-                    [disabled]="r.sourceKind === 'goal'"
-                  >
-                    {{ r.title || t('reminders.untitled') }}
-                  </button>
-                  @if (r.sourceKind === 'goal') {
-                    <span class="source-badge" [title]="t('reminders.sourceGoalBadge')">
-                      <mc-icon name="target" />
-                      {{ t('reminders.sourceGoalBadge') }}
-                    </span>
+        }
+        <div class="nichos">
+          @for (p of inNichos(); track p.summary.id) {
+            <button
+              type="button"
+              class="nicho"
+              [attr.data-paloma-id]="p.summary.id"
+              [class.is-paused]="p.summary.paused"
+              [class.is-selected]="selectedId() === p.summary.id"
+              [class.is-goal]="p.fromGoal"
+              [attr.data-bucket]="p.bucket"
+              [attr.data-door]="p.door"
+              (click)="onSelectPaloma(p)"
+              [attr.aria-label]="p.summary.title || t('reminders.untitled')"
+              [title]="(p.summary.title || t('reminders.untitled')) + ' · ' + bucketLabel(p.bucket)"
+            >
+              <span class="nicho-mouth"></span>
+              <span class="paloma" [style.--ring]="p.ringColor">
+                <svg viewBox="0 0 60 60" aria-hidden="true">
+                  <ellipse class="body" cx="30" cy="38" rx="18" ry="13" />
+                  <ellipse class="wing" cx="26" cy="38" rx="10" ry="6" />
+                  <circle class="head" cx="42" cy="22" r="8" />
+                  <polygon class="beak" points="50,22 56,21 50,25" />
+                  @if (p.summary.paused) {
+                    <path class="eye-shut" d="M41 19 L46 19" />
+                  } @else {
+                    <circle class="eye" cx="44" cy="20" r="1.3" />
                   }
-                  <span class="due" [title]="r.dueAt">{{ r.dueAt | mcDate: true }}</span>
-                  <div class="actions">
-                    <button
-                      type="button"
-                      class="ghost icon"
-                      (click)="onSnooze(r, 1)"
-                      [attr.aria-label]="t('reminders.snooze1h')"
-                      [title]="t('reminders.snooze1h')"
-                    >
-                      <mc-icon name="clock-counter-clockwise" />
-                    </button>
-                    <button
-                      type="button"
-                      class="ghost icon"
-                      (click)="onDelete(r)"
-                      [attr.aria-label]="t('common.delete')"
-                      [title]="t('common.delete')"
-                    >
-                      <mc-icon name="trash" />
-                    </button>
-                  </div>
-                }
-              </li>
-            }
-          </ul>
-        </section>
-      }
+                  <rect class="paper" x="46" y="24" width="11" height="5" rx="1.2" />
+                  <ellipse class="ring" cx="28" cy="50" rx="7" ry="2" />
+                  @if (p.fromGoal) {
+                    <circle class="badge" cx="20" cy="30" r="2.4" />
+                  }
+                </svg>
+              </span>
+              <span class="door" aria-hidden="true"></span>
+              @if (p.summary.paused) {
+                <span class="curtain" aria-hidden="true"></span>
+              }
+            </button>
+          }
+        </div>
+      </div>
+      <div class="repisa" [class.has-items]="onPerch().length > 0">
+        @if (onPerch().length === 0) {
+          <span class="repisa-empty">{{ t('reminders.repisaEmpty') }}</span>
+        }
+        @for (p of onPerch(); track p.summary.id) {
+          <button
+            type="button"
+            class="paloma-perch"
+            [class.is-selected]="selectedId() === p.summary.id"
+            (click)="onSelectPaloma(p)"
+            [attr.aria-label]="p.summary.title || t('reminders.untitled')"
+            [title]="(p.summary.title || t('reminders.untitled')) + ' · ' + bucketLabel('overdue')"
+          >
+            <span class="paloma tired" [style.--ring]="p.ringColor">
+              <svg viewBox="0 0 60 60" aria-hidden="true">
+                <ellipse class="body" cx="30" cy="42" rx="18" ry="11" />
+                <ellipse class="wing" cx="26" cy="42" rx="10" ry="5" />
+                <circle class="head" cx="42" cy="30" r="7" />
+                <polygon class="beak" points="49,30 55,29 49,33" />
+                <path class="eye-shut" d="M41 28 L45 28" />
+                <rect class="paper" x="46" y="32" width="11" height="5" rx="1.2" />
+                <ellipse class="ring" cx="28" cy="51" rx="7" ry="2" />
+              </svg>
+            </span>
+          </button>
+        }
+      </div>
+    </div>
 
-      @if (showDone() && doneItems().length > 0) {
-        <section class="group" data-bucket="done">
-          <h3>
-            <mc-icon name="check" />
-            <span>{{ t('reminders.bucket.done') }}</span>
-            <span class="group-count">{{ doneItems().length }}</span>
-          </h3>
-          <ul class="list">
-            @for (r of doneItems(); track r.id) {
-              <li class="row done">
-                <input
-                  type="checkbox"
-                  [checked]="r.done"
-                  (change)="onToggleDone(r)"
-                  [attr.aria-label]="t('reminders.markPending')"
-                />
-                <span class="title-btn done-title">{{ r.title || t('reminders.untitled') }}</span>
-                <span class="due">{{ r.dueAt | mcDate: true }}</span>
-                <div class="actions">
-                  <button
-                    type="button"
-                    class="ghost icon"
-                    (click)="onDelete(r)"
-                    [attr.aria-label]="t('common.delete')"
-                  >
-                    <mc-icon name="trash" />
-                  </button>
-                </div>
-              </li>
-            }
-          </ul>
-        </section>
-      }
+    <form class="quick-add" (submit)="onQuickAddSubmit($event)">
+      <mc-icon name="plus-circle" class="quick-plus" />
+      <input
+        #quickAddInput
+        type="text"
+        [value]="quickAdd()"
+        (input)="onQuickAddInput(asInput($event).value)"
+        [placeholder]="t('reminders.quickAddPlaceholder')"
+        [attr.aria-label]="t('reminders.quickAddPlaceholder')"
+      />
+      <span class="quick-hint">{{ t('reminders.quickAddHint') }}</span>
+    </form>
 
-      <p class="hints">{{ t('reminders.shortcuts.hint') }}</p>
-    </main>
+    <footer class="ribbon">
+      <button type="button" class="ribbon-toggle" (click)="onToggleRegistry()">
+        <mc-icon [name]="showRegistry() ? 'caret-down' : 'caret-right'" />
+        <span>{{ t('reminders.registry') }}</span>
+        <span class="ribbon-count">{{ registry().length }}</span>
+      </button>
+      <span class="hints">{{ t('reminders.shortcuts.hint') }}</span>
+    </footer>
+
+    @if (showRegistry() && registry().length > 0) {
+      <ul class="registry-list">
+        @for (r of registry(); track r.id) {
+          <li>
+            <button type="button" class="registry-item" (click)="onTakeNote(r)">
+              <mc-icon name="check" />
+              <span class="registry-title">{{ r.title || t('reminders.untitled') }}</span>
+              <span class="registry-due">{{ r.dueAt | mcDate: true }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
   </div>
+
+  @if (selected(); as s) {
+    @if (editing(); as e) {
+      <aside class="detail" role="dialog" [attr.aria-label]="t('reminders.detailTitle')">
+        <header class="detail-head">
+          <h3>{{ t('reminders.detailTitle') }}</h3>
+          <button
+            type="button"
+            class="ghost icon"
+            (click)="onCloseDetail()"
+            [attr.aria-label]="t('common.close')"
+          >
+            <mc-icon name="x" />
+          </button>
+        </header>
+        <div class="detail-body">
+          <label class="field">
+            <span>{{ t('reminders.titlePlaceholder') }}</span>
+            <input
+              type="text"
+              [value]="e.title"
+              [disabled]="e.readOnlyTitle"
+              (input)="onEditField('title', asInput($event).value)"
+            />
+          </label>
+          @if (e.readOnlyTitle) {
+            <p class="field-hint">{{ t('reminders.sourceGoalBadge') }}</p>
+          }
+          <label class="field">
+            <span>{{ t('reminders.dueAtLabel') }}</span>
+            <input
+              type="datetime-local"
+              [value]="e.dueAt"
+              (input)="onEditField('dueAt', asInput($event).value)"
+            />
+          </label>
+          <fieldset class="field recurrence">
+            <legend>{{ t('reminders.recurrenceLabel') }}</legend>
+            <select [value]="e.recurrence" (change)="onEditRecurrence(asInput($event).value)">
+              <option value="none">{{ t('reminders.recurrence.none') }}</option>
+              <option value="day">{{ t('reminders.recurrence.day') }}</option>
+              <option value="week">{{ t('reminders.recurrence.week') }}</option>
+              <option value="month">{{ t('reminders.recurrence.month') }}</option>
+              <option value="year">{{ t('reminders.recurrence.year') }}</option>
+            </select>
+            @if (e.recurrence !== 'none') {
+              <label class="every">
+                <span>{{ t('reminders.recurrence.every') }}</span>
+                <input
+                  type="number"
+                  min="1"
+                  [value]="e.every"
+                  (input)="onEditEvery(asInput($event).value)"
+                />
+              </label>
+            }
+          </fieldset>
+          <label class="field check">
+            <input
+              type="checkbox"
+              [checked]="e.paused"
+              (change)="onEditField('paused', asInput($event).checked)"
+            />
+            <span>{{ t('reminders.pausedLabel') }}</span>
+          </label>
+        </div>
+        <footer class="detail-actions">
+          <button type="button" class="ghost" (click)="onSnooze(s, 1)">
+            <mc-icon name="clock-counter-clockwise" />
+            {{ t('reminders.snooze1h') }}
+          </button>
+          <button type="button" class="ghost" (click)="onTakeNote(s)">
+            <mc-icon name="check" />
+            {{ s.done ? t('reminders.markPending') : t('reminders.markDone') }}
+          </button>
+          <button type="button" class="ghost danger" (click)="onDelete(s)">
+            <mc-icon name="trash" />
+            {{ t('common.delete') }}
+          </button>
+          <button type="button" class="primary" (click)="onSaveEdit()">
+            <mc-icon name="check" />
+            {{ t('common.save') }}
+          </button>
+        </footer>
+      </aside>
+    }
+  }
 
   @if (undo(); as u) {
     <div class="toast" role="status" aria-live="polite">

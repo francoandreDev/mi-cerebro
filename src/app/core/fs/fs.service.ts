@@ -68,20 +68,15 @@ export class FsService {
     return true;
   }
 
-  // why: createWritable() in the FS Access API is itself atomic — it writes
-  //      to an internal swap file and only commits on close(). No need for
-  //      our own .tmp + move() dance, which was breaking on save() because
-  //      move() over an existing destination is flaky across Chromium
-  //      versions.
+  // why: createWritable({keepExistingData:false}) truncates the destination
+  //      immediately, so any failure between createWritable() and close()
+  //      leaves an empty file on disk. We instead stage the bytes in a
+  //      sibling `<name>.tmp`, then swap atomically: remove the old dest
+  //      (if any) and move the tmp into place. If anything fails before
+  //      the swap, dest is untouched; if it fails during cleanup, the
+  //      .tmp remains and the next refresh ignores it (suffix mismatch).
   async writeFileAtomic(parent: FsDirectoryHandle, name: string, contents: string): Promise<void> {
-    try {
-      const handle = await parent.getFileHandle(name, { create: true });
-      const writable = await handle.createWritable({ keepExistingData: false });
-      await writable.write(contents);
-      await writable.close();
-    } catch (cause) {
-      throw this.classifyFsError(cause, { name, op: 'write' });
-    }
+    await this.writeAtomicViaTmp(parent, name, (w) => w.write(contents));
   }
 
   async writeFileAtomicBinary(
@@ -89,13 +84,47 @@ export class FsService {
     name: string,
     data: Blob | ArrayBuffer,
   ): Promise<void> {
+    await this.writeAtomicViaTmp(parent, name, (w) => w.write(data));
+  }
+
+  private async writeAtomicViaTmp(
+    parent: FsDirectoryHandle,
+    name: string,
+    write: (w: FileSystemWritableFileStream) => Promise<void>,
+  ): Promise<void> {
+    const tmp = `${name}.tmp`;
+    let staged = false;
     try {
-      const handle = await parent.getFileHandle(name, { create: true });
-      const writable = await handle.createWritable({ keepExistingData: false });
-      await writable.write(data);
+      const tmpHandle = (await parent.getFileHandle(tmp, { create: true })) as FsFileHandle;
+      const writable = await tmpHandle.createWritable({ keepExistingData: false });
+      await write(writable);
       await writable.close();
+      staged = true;
+      try {
+        await parent.removeEntry(name);
+      } catch {
+        /* may not exist yet */
+      }
+      await tmpHandle.move(parent, name);
     } catch (cause) {
+      if (!staged) {
+        try {
+          await parent.removeEntry(tmp);
+        } catch {
+          /* best effort */
+        }
+      }
       throw this.classifyFsError(cause, { name, op: 'write' });
+    }
+  }
+
+  async fileSize(parent: FsDirectoryHandle, name: string): Promise<number | null> {
+    try {
+      const handle = await parent.getFileHandle(name);
+      const file = await handle.getFile();
+      return file.size;
+    } catch {
+      return null;
     }
   }
 

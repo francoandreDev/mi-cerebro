@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { I18nService } from '@core/i18n/i18n.service';
@@ -7,6 +7,7 @@ import { ReminderSchedulerService } from '@core/reminders/reminder-scheduler.ser
 import type { ReminderSummary } from '../models/reminder.types';
 import { IconComponent } from '@shared/icon/icon.component';
 import type { IconName } from '@shared/icon/icons.data';
+import { launchPaloma } from '../utils/paloma-flight';
 
 @Component({
   selector: 'mc-reminder-toast',
@@ -80,6 +81,23 @@ export class ReminderToastContainer {
   protected readonly scheduler = inject(ReminderSchedulerService);
   private readonly router = inject(Router);
   private readonly i18n = inject(I18nService);
+  private lastLaunchedKey: string | null = null;
+
+  constructor() {
+    // why: the messenger paloma must fly even when the user is not on
+    //      /reminders — the cage may not be in the DOM at all. This toast
+    //      container is always mounted (consumes scheduler.active), so the
+    //      flight effect lives here. The flight module handles the cage-
+    //      missing case by flying in from the right edge of the viewport.
+    effect(() => {
+      const fired = this.scheduler.active();
+      if (!fired) return;
+      const key = `${fired.id}:${fired.nextPingAt}`;
+      if (key === this.lastLaunchedKey) return;
+      this.lastLaunchedKey = key;
+      queueMicrotask(() => launchPaloma(fired));
+    });
+  }
 
   protected t(key: TranslationKey): string {
     return this.i18n.t(key);

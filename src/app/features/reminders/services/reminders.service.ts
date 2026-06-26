@@ -12,11 +12,13 @@ import {
   REMINDER_KIND,
   REMINDER_SCHEMA_VERSION,
   REMINDERS_DIR,
+  type Recurrence,
   type Reminder,
   type ReminderSourceKind,
   type ReminderSummary,
 } from '../models/reminder.types';
 import { reminderCadenceMigrationStep } from './reminder-cadence.migration';
+import { reminderRecurrenceMigrationStep } from './reminder-recurrence.migration';
 import { reminderSourceMigrationStep } from './reminder-source.migration';
 
 const TRASH_DIR = '.mi-cerebro';
@@ -50,7 +52,11 @@ export class RemindersService {
     this.migrations.register({
       kind: REMINDER_KIND,
       latest: REMINDER_SCHEMA_VERSION,
-      steps: [reminderSourceMigrationStep(1), reminderCadenceMigrationStep(2)],
+      steps: [
+        reminderSourceMigrationStep(1),
+        reminderCadenceMigrationStep(2),
+        reminderRecurrenceMigrationStep(3),
+      ],
     });
   }
 
@@ -70,7 +76,7 @@ export class RemindersService {
         this.idToFile.set(reminder.id, name);
         summaries.push(this.toSummary(reminder));
       } catch (cause) {
-        console.warn('[reminders] skipped unreadable file', name, cause);
+        await this.dropIfEmpty(dir, name, cause);
       }
     }
     summaries.sort(compareSummaries);
@@ -82,14 +88,16 @@ export class RemindersService {
     title = '',
     dueAt?: string,
     source?: { kind: ReminderSourceKind; id: string },
+    options?: { recurrence?: Recurrence | null; paused?: boolean },
   ): Promise<Reminder> {
-    return this.gate(() => this.createLocked(title, dueAt, source));
+    return this.gate(() => this.createLocked(title, dueAt, source, options));
   }
 
   private async createLocked(
     title: string,
     dueAt: string | undefined,
     source: { kind: ReminderSourceKind; id: string } | undefined,
+    options: { recurrence?: Recurrence | null; paused?: boolean } | undefined,
   ): Promise<Reminder> {
     const dir = await this.remindersDir();
     const now = new Date().toISOString();
@@ -104,6 +112,8 @@ export class RemindersService {
       //      on its next tick.
       nextPingAt: target,
       done: false,
+      paused: options?.paused ?? false,
+      recurrence: options?.recurrence ?? null,
       sourceKind: source?.kind ?? null,
       sourceId: source?.id ?? null,
       createdAt: now,
@@ -167,6 +177,26 @@ export class RemindersService {
     this.summariesSignal.update((curr) => curr.filter((s) => s.id !== id));
   }
 
+  // why: zero-byte JSONs come from aborted writes and can't be parsed —
+  //      drop them on refresh so the dir stays clean.
+  private async dropIfEmpty(
+    dir: FsDirectoryHandle,
+    filename: string,
+    cause: unknown,
+  ): Promise<void> {
+    const size = await this.fs.fileSize(dir, filename);
+    if (size === 0) {
+      try {
+        await this.fs.removeEntry(dir, filename);
+        console.info('[reminders] dropped empty file', filename);
+        return;
+      } catch {
+        /* fall through to warn */
+      }
+    }
+    console.warn('[reminders] skipped unreadable file', filename, cause);
+  }
+
   setKnownFilename(id: string, filename: string): void {
     this.idToFile.set(id, filename);
   }
@@ -205,6 +235,8 @@ export class RemindersService {
       dueAt: r.dueAt,
       nextPingAt: r.nextPingAt ?? r.dueAt,
       done: r.done,
+      paused: r.paused ?? false,
+      recurrence: r.recurrence ?? null,
       sourceKind: r.sourceKind ?? null,
       sourceId: r.sourceId ?? null,
       updatedAt: r.updatedAt,

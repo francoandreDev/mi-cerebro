@@ -19,19 +19,27 @@ import { CreationIntentService } from '@core/intents/creation-intent.service';
 import { GoalRemindersSyncService } from '@core/reminders/goal-reminders-sync.service';
 import { ShortcutsService } from '@core/shortcuts/shortcuts.service';
 import { IconComponent } from '@shared/icon/icon.component';
-import type { IconName } from '@shared/icon/icons.data';
 import { McDatePipe } from '@shared/pipes/mc-date.pipe';
 
-import type { Reminder, ReminderSummary } from '../models/reminder.types';
+import type {
+  Recurrence,
+  RecurrenceUnit,
+  Reminder,
+  ReminderSummary,
+} from '../models/reminder.types';
 import { RemindersService } from '../services/reminders.service';
-import { PENDING_BUCKETS, bucketOf, groupByBucket, type BucketKey } from '../utils/buckets';
+import { bucketOf, type BucketKey } from '../utils/buckets';
+import { recallPaloma } from '../utils/paloma-flight';
 import { parseQuickAdd } from '../utils/parse-due';
 
-type FilterKey = 'all' | BucketKey;
+type RecurrencePreset = 'none' | RecurrenceUnit;
 
-interface BucketView {
-  readonly key: BucketKey;
-  readonly items: readonly ReminderSummary[];
+interface Paloma {
+  readonly summary: ReminderSummary;
+  readonly bucket: BucketKey;
+  readonly door: 0 | 1 | 2 | 3; // cage door openness (0 = closed, 3 = wide open at fire time)
+  readonly ringColor: string; // CSS color for recurrence ring (or transparent)
+  readonly fromGoal: boolean;
 }
 
 interface PendingUndo {
@@ -41,15 +49,21 @@ interface PendingUndo {
 
 const UNDO_TIMEOUT_MS = 6000;
 
-const FILTER_ICONS: Record<FilterKey | 'done', IconName> = {
-  all: 'flag',
-  overdue: 'alarm',
-  today: 'hourglass-medium',
-  tomorrow: 'sun-horizon',
-  thisWeek: 'calendar-blank',
-  later: 'calendar-check',
-  undated: 'circle-dashed',
-  done: 'check',
+const RING_COLORS: Record<RecurrenceUnit, string> = {
+  day: '#c8553d',
+  week: '#e3a93a',
+  month: '#5b9279',
+  year: '#6b73a8',
+};
+
+const DOOR_BY_BUCKET: Record<BucketKey, 0 | 1 | 2 | 3> = {
+  overdue: 0, // overdue lives on the perch, cage no longer relevant
+  today: 3, // wide open — about to fly
+  tomorrow: 2,
+  thisWeek: 1,
+  later: 0,
+  undated: 0,
+  done: 0,
 };
 
 @Component({
@@ -78,14 +92,13 @@ export class RemindersContainer {
 
   protected readonly summaries = this.reminders.summaries;
   protected readonly query = signal('');
-  protected readonly filter = signal<FilterKey>('all');
-  protected readonly showDone = signal(false);
-  protected readonly editingId = signal<string | null>(null);
-  protected readonly editTitle = signal('');
-  protected readonly editDue = signal('');
+  protected readonly fromDate = signal('');
+  protected readonly toDate = signal('');
   protected readonly quickAdd = signal('');
+  protected readonly selectedId = signal<string | null>(null);
+  protected readonly showRegistry = signal(false);
+  protected readonly editing = signal<EditingState | null>(null);
   protected readonly undo = signal<PendingUndo | null>(null);
-  protected readonly filterChips: readonly FilterKey[] = ['all', ...PENDING_BUCKETS];
 
   constructor() {
     effect(() => {
@@ -98,37 +111,44 @@ export class RemindersContainer {
     this.registerShortcuts();
   }
 
-  protected readonly counts = computed<ReadonlyMap<FilterKey, number>>(() => {
-    const map = new Map<FilterKey, number>();
-    map.set('all', this.summaries().filter((r) => !r.done).length);
-    const grouped = groupByBucket(this.summaries());
-    for (const k of PENDING_BUCKETS) map.set(k, grouped.get(k)?.length ?? 0);
-    map.set('done', grouped.get('done')?.length ?? 0);
-    return map;
-  });
-
-  protected readonly filteredPending = computed<readonly ReminderSummary[]>(() => {
+  protected readonly filteredActive = computed<readonly ReminderSummary[]>(() => {
     const q = this.query().trim().toLowerCase();
-    const f = this.filter();
+    const from = parseDay(this.fromDate());
+    const to = parseDay(this.toDate(), 1); // inclusive end-of-day
     return this.summaries().filter((r) => {
       if (r.done) return false;
       if (q && !r.title.toLowerCase().includes(q)) return false;
-      if (f === 'all') return true;
-      return bucketOf(r) === f;
+      if (from !== null || to !== null) {
+        const t = parseLocalMs(r.dueAt);
+        if (t === null) return false;
+        if (from !== null && t < from) return false;
+        if (to !== null && t >= to) return false;
+      }
+      return true;
     });
   });
 
-  protected readonly buckets = computed<readonly BucketView[]>(() => {
-    const grouped = groupByBucket(this.filteredPending());
-    return PENDING_BUCKETS.flatMap((k) => {
-      const items = grouped.get(k);
-      return items && items.length > 0 ? [{ key: k, items }] : [];
-    });
-  });
+  protected readonly inNichos = computed<readonly Paloma[]>(() =>
+    this.filteredActive()
+      .filter((r) => bucketOf(r) !== 'overdue')
+      .map((r) => toPaloma(r)),
+  );
 
-  protected readonly doneItems = computed<readonly ReminderSummary[]>(() => {
+  protected readonly onPerch = computed<readonly Paloma[]>(() =>
+    this.filteredActive()
+      .filter((r) => bucketOf(r) === 'overdue')
+      .map((r) => toPaloma(r)),
+  );
+
+  protected readonly registry = computed<readonly ReminderSummary[]>(() => {
     const q = this.query().trim().toLowerCase();
     return this.summaries().filter((r) => r.done && (!q || r.title.toLowerCase().includes(q)));
+  });
+
+  protected readonly selected = computed<ReminderSummary | null>(() => {
+    const id = this.selectedId();
+    if (!id) return null;
+    return this.summaries().find((r) => r.id === id) ?? null;
   });
 
   protected t(key: TranslationKey): string {
@@ -139,12 +159,17 @@ export class RemindersContainer {
     this.query.set(value);
   }
 
-  protected onFilter(key: FilterKey): void {
-    this.filter.set(key);
+  protected onFromDate(value: string): void {
+    this.fromDate.set(value);
   }
 
-  protected onToggleDoneSection(): void {
-    this.showDone.update((v) => !v);
+  protected onToDate(value: string): void {
+    this.toDate.set(value);
+  }
+
+  protected onClearDateRange(): void {
+    this.fromDate.set('');
+    this.toDate.set('');
   }
 
   protected onQuickAddInput(value: string): void {
@@ -165,47 +190,76 @@ export class RemindersContainer {
     }
   }
 
-  protected onStartEdit(summary: ReminderSummary): void {
-    this.editingId.set(summary.id);
-    this.editTitle.set(summary.title);
-    this.editDue.set(summary.dueAt);
-    queueMicrotask(() => {
-      const inputs = document.querySelectorAll<HTMLInputElement>('.row.editing .title-input');
-      inputs[0]?.focus();
-      inputs[0]?.select();
+  protected onSelectPaloma(p: Paloma): void {
+    // why: if a messenger paloma is perched at the rail bell waiting after
+    //      firing, clicking its (now empty) cage recalls it home instead of
+    //      opening the detail panel. Reminders only auto-return on user call.
+    if (recallPaloma(p.summary.id)) return;
+    this.selectedId.set(p.summary.id);
+    this.editing.set({
+      title: p.summary.title,
+      dueAt: p.summary.dueAt,
+      recurrence: presetOf(p.summary.recurrence),
+      every: p.summary.recurrence?.every ?? 1,
+      paused: p.summary.paused,
+      readOnlyTitle: p.fromGoal,
     });
   }
 
-  protected onEditTitle(value: string): void {
-    this.editTitle.set(value);
+  protected onCloseDetail(): void {
+    this.selectedId.set(null);
+    this.editing.set(null);
   }
 
-  protected onEditDue(value: string): void {
-    this.editDue.set(value);
+  protected onEditField<K extends keyof EditingState>(key: K, value: EditingState[K]): void {
+    this.editing.update((curr) => (curr ? { ...curr, [key]: value } : curr));
+  }
+
+  protected onEditRecurrence(value: string): void {
+    this.onEditField('recurrence', value as RecurrencePreset);
+  }
+
+  protected onEditEvery(value: string): void {
+    const n = Math.max(1, Math.floor(Number(value) || 1));
+    this.onEditField('every', n);
   }
 
   protected async onSaveEdit(): Promise<void> {
-    const id = this.editingId();
-    if (!id) return;
+    const id = this.selectedId();
+    const draft = this.editing();
+    if (!id || !draft) return;
     try {
       await this.workspace.ensureWritable();
       const current = await this.reminders.read(id);
+      const recurrence: Recurrence | null =
+        draft.recurrence === 'none' ? null : { every: draft.every, unit: draft.recurrence };
       await this.reminders.save({
         ...current,
-        title: this.editTitle(),
-        dueAt: this.editDue(),
+        title: draft.readOnlyTitle ? current.title : draft.title,
+        dueAt: draft.dueAt,
+        paused: draft.paused,
+        recurrence,
       });
-      this.cancelEdit();
+      this.onCloseDetail();
     } catch (e) {
       this.errors.report(this.withReauth(e));
     }
   }
 
-  protected cancelEdit(): void {
-    this.editingId.set(null);
+  protected async onTogglePaused(summary: ReminderSummary): Promise<void> {
+    try {
+      await this.workspace.ensureWritable();
+      const current = await this.reminders.read(summary.id);
+      await this.reminders.save({ ...current, paused: !current.paused });
+    } catch (e) {
+      this.errors.report(this.withReauth(e));
+    }
   }
 
-  protected async onToggleDone(summary: ReminderSummary): Promise<void> {
+  protected async onTakeNote(summary: ReminderSummary): Promise<void> {
+    // why: "tomar el papelito" = marcar como hecho. Recurrent reminders
+    //      roll forward via the cadence service the next time they fire;
+    //      one-shots stay in the registry.
     try {
       await this.workspace.ensureWritable();
       const current = await this.reminders.read(summary.id);
@@ -222,19 +276,13 @@ export class RemindersContainer {
       const base = new Date(current.dueAt);
       const next = Number.isNaN(base.getTime()) ? new Date() : base;
       next.setTime(next.getTime() + hours * 3600_000);
-      const pad = (n: number): string => n.toString().padStart(2, '0');
-      const iso = `${next.getFullYear()}-${pad(next.getMonth() + 1)}-${pad(next.getDate())}T${pad(next.getHours())}:${pad(next.getMinutes())}`;
-      await this.reminders.save({ ...current, dueAt: iso });
+      await this.reminders.save({ ...current, dueAt: toLocalIso(next) });
     } catch (e) {
       this.errors.report(this.withReauth(e));
     }
   }
 
   protected async onDelete(summary: ReminderSummary): Promise<void> {
-    // why: goal-sourced reminders re-appear from sync if just deleted —
-    //      the user action is "stop the goal from nudging me", so we ask
-    //      explicit confirmation and toggle the source off (the sync then
-    //      removes the file). No undo: re-enabling lives on the goal page.
     if (summary.sourceKind === 'goal' && summary.sourceId !== null) {
       const ok = confirm(
         this.t('reminders.deleteGoalConfirm').replace(
@@ -246,6 +294,7 @@ export class RemindersContainer {
       try {
         await this.workspace.ensureWritable();
         await this.goalSync.disableForGoal(summary.sourceId);
+        this.onCloseDetail();
       } catch (e) {
         this.errors.report(this.withReauth(e));
       }
@@ -255,6 +304,7 @@ export class RemindersContainer {
       const current = await this.reminders.read(summary.id);
       await this.reminders.deleteToTrash(summary.id);
       this.scheduleUndo({ reminder: current, title: current.title });
+      this.onCloseDetail();
     } catch (e) {
       this.errors.report(this.withReauth(e));
     }
@@ -278,25 +328,20 @@ export class RemindersContainer {
     this.undo.set(null);
   }
 
+  protected onToggleRegistry(): void {
+    this.showRegistry.update((v) => !v);
+  }
+
   protected bucketLabel(key: BucketKey): string {
     return this.t(`reminders.bucket.${key}` as TranslationKey);
   }
 
-  protected filterLabel(key: FilterKey): string {
-    if (key === 'all') return this.t('reminders.filter.all');
-    return this.bucketLabel(key);
-  }
-
-  protected iconFor(key: FilterKey | 'done'): IconName {
-    return FILTER_ICONS[key];
-  }
-
-  protected isOverdue(summary: ReminderSummary): boolean {
-    return !summary.done && bucketOf(summary) === 'overdue';
-  }
-
   protected asInput(event: Event): HTMLInputElement {
     return event.target as HTMLInputElement;
+  }
+
+  protected focusQuickAdd(): void {
+    queueMicrotask(() => this.quickAddInput?.nativeElement.focus());
   }
 
   private scheduleUndo(undo: PendingUndo): void {
@@ -313,10 +358,6 @@ export class RemindersContainer {
       clearTimeout(this.undoTimer);
       this.undoTimer = null;
     }
-  }
-
-  protected focusQuickAdd(): void {
-    queueMicrotask(() => this.quickAddInput?.nativeElement.focus());
   }
 
   private focusSearch(): void {
@@ -347,3 +388,45 @@ export class RemindersContainer {
     return withReauthIfNeeded(e, () => this.workspace.reauthorize());
   }
 }
+
+interface EditingState {
+  readonly title: string;
+  readonly dueAt: string;
+  readonly recurrence: RecurrencePreset;
+  readonly every: number;
+  readonly paused: boolean;
+  readonly readOnlyTitle: boolean;
+}
+
+const toPaloma = (r: ReminderSummary): Paloma => {
+  const b = bucketOf(r);
+  const ringColor = r.recurrence ? RING_COLORS[r.recurrence.unit] : 'transparent';
+  return {
+    summary: r,
+    bucket: b,
+    door: r.paused ? 0 : DOOR_BY_BUCKET[b],
+    ringColor,
+    fromGoal: r.sourceKind === 'goal',
+  };
+};
+
+const presetOf = (rec: Recurrence | null): RecurrencePreset => (rec === null ? 'none' : rec.unit);
+
+const parseDay = (raw: string, addDays = 0): number | null => {
+  if (!raw) return null;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+  if (!m) return null;
+  const d = new Date(+m[1]!, +m[2]! - 1, +m[3]! + addDays, 0, 0, 0, 0);
+  return d.getTime();
+};
+
+const parseLocalMs = (iso: string): number | null => {
+  if (!iso) return null;
+  const t = new Date(iso).getTime();
+  return Number.isNaN(t) ? null : t;
+};
+
+const pad = (n: number): string => n.toString().padStart(2, '0');
+
+const toLocalIso = (d: Date): string =>
+  `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
