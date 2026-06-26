@@ -1,70 +1,44 @@
 <section class="page">
   <div class="zones">
-    <aside class="rail" aria-label="Playlists">
+    <!-- LEFT: biblioteca de álbumes (Fase 7 reemplaza el placeholder) -->
+    <aside class="zone zone-left" aria-label="Biblioteca">
       <header class="zone-head">
-        <h3><mc-icon name="music-notes" class="zone-head-icon" /> {{ t('music.playlists') }}</h3>
-        <button
-          type="button"
-          class="icon-btn mc-hover-grow"
-          (click)="onCreatePlaylist()"
-          [title]="t('music.newPlaylist')"
-          [attr.aria-label]="t('music.newPlaylist')"
-        >
-          <mc-icon name="plus" />
-        </button>
+        <h3>
+          <mc-icon name="music-note" class="zone-head-icon" />
+          {{ t('music.library') }} ({{ tracks().length }})
+        </h3>
+        <label class="primary mc-hover-grow">
+          <mc-icon name="upload-simple" />
+          <span>{{ t('music.upload') }}</span>
+          <input
+            type="file"
+            accept="audio/mpeg,.mp3"
+            multiple
+            hidden
+            (change)="onPickFiles($event)"
+          />
+        </label>
       </header>
-      @if (playlistSummaries().length === 0) {
-        <p class="empty">
-          <mc-icon name="star" class="empty-icon mc-anim-float" />
-          <span>{{ t('music.sidebar.emptyFavorites') }}</span>
-        </p>
-      } @else {
-        <ul class="pl-list">
-          @for (p of playlistSummaries(); track p.id) {
-            <li>
-              <button
-                type="button"
-                [class.selected]="active()?.id === p.id"
-                [class.drop-target]="railDropTargetId() === p.id"
-                [class.now-playing]="currentSourceId() === p.id"
-                (click)="onSelectPlaylist(p)"
-                (dragover)="onRailDragOver(p.id, $event)"
-                (dragleave)="onRailDragLeave()"
-                (drop)="onRailDrop(p.id, $event)"
-              >
-                <span class="pl-title">
-                  @if (currentSourceId() === p.id) {
-                    <span class="eq" aria-hidden="true"> <i></i><i></i><i></i> </span>
-                  } @else if (p.favorite) {
-                    <mc-icon name="star-fill" />
-                  }
-                  {{ p.title || t('music.untitledPlaylist') }}
-                </span>
-                <span class="count">{{ p.trackCount }}</span>
-              </button>
-            </li>
-          }
-        </ul>
-      }
-    </aside>
 
-    <section class="center">
-      @if (active(); as playlist) {
-        <mc-playlist-editor
-          [playlist]="playlist"
-          (back)="onEditorBack()"
-          (changed)="onEditorChanged($event)"
-          (deleted)="onEditorDeleted()"
-        />
-      } @else {
-        <header class="zone-head">
-          <h3>
-            <mc-icon name="music-note" class="zone-head-icon" />
-            {{ t('music.library') }} ({{ tracks().length }})
-          </h3>
-          <label class="primary mc-hover-grow">
-            <mc-icon name="upload-simple" />
-            <span>{{ t('music.upload') }}</span>
+      <p class="placeholder-tag">
+        <mc-icon name="hourglass-medium" />
+        <span>{{ t('music.placeholder.albumLibrary') }}</span>
+      </p>
+
+      <div
+        class="lib-zone"
+        [class.drop-active]="dragOver()"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave($event)"
+        (drop)="onDrop($event)"
+      >
+        @if (tracks().length === 0) {
+          <label class="drop-zone">
+            <mc-icon name="music-notes" />
+            <strong>{{
+              dragOver() ? t('music.dropZone.dragging') : t('music.dropZone.title')
+            }}</strong>
+            <span>{{ t('music.dropZone.hint') }}</span>
             <input
               type="file"
               accept="audio/mpeg,.mp3"
@@ -73,141 +47,194 @@
               (change)="onPickFiles($event)"
             />
           </label>
-        </header>
-        <div
-          class="lib-zone"
-          [class.drop-active]="dragOver()"
-          (dragover)="onDragOver($event)"
-          (dragleave)="onDragLeave($event)"
-          (drop)="onDrop($event)"
-        >
-          @if (tracks().length === 0) {
-            <label class="drop-zone">
-              <mc-icon name="music-notes" />
-              <strong>{{
-                dragOver() ? t('music.dropZone.dragging') : t('music.dropZone.title')
-              }}</strong>
-              <span>{{ t('music.dropZone.hint') }}</span>
-              <input
-                type="file"
-                accept="audio/mpeg,.mp3"
-                multiple
-                hidden
-                (change)="onPickFiles($event)"
-              />
-            </label>
-          } @else {
-            <div class="lib-search-wrap">
-              <mc-icon name="magnifying-glass" class="lib-search-icon" />
-              <input
-                #libSearch
-                type="search"
-                class="search-input lib-search"
-                [value]="libraryQuery()"
-                (input)="onLibraryQueryInput(asInput($event.target).value)"
-                [placeholder]="t('music.searchTracks')"
-              />
+        } @else {
+          <div class="lib-search-wrap">
+            <mc-icon name="magnifying-glass" class="lib-search-icon" />
+            <input
+              #libSearch
+              type="search"
+              class="search-input lib-search"
+              [value]="libraryQuery()"
+              (input)="onLibraryQueryInput(asInput($event.target).value)"
+              [placeholder]="t('music.searchTracks')"
+            />
+          </div>
+          @if (selectedCount() > 0) {
+            <div class="bulk-bar" role="toolbar">
+              <span class="bulk-count">{{ bulkCountLabel() }}</span>
+              <button type="button" class="ghost mc-hover-wiggle" (click)="onBulkDelete()">
+                <mc-icon name="trash" />
+                <span>{{ t('music.bulk.delete') }}</span>
+              </button>
+              <select
+                class="bulk-select"
+                (change)="onBulkAddToPlaylist($event)"
+                [attr.aria-label]="t('music.bulk.addTo')"
+              >
+                <option value="">{{ t('music.bulk.addTo') }}</option>
+                @for (p of playlistSummaries(); track p.id) {
+                  <option [value]="p.id">{{ p.title || t('music.untitledPlaylist') }}</option>
+                }
+              </select>
+              <button type="button" class="ghost mc-hover-grow" (click)="onClearSelection()">
+                <mc-icon name="x" />
+                <span>{{ t('music.bulk.clear') }}</span>
+              </button>
             </div>
-            @if (selectedCount() > 0) {
-              <div class="bulk-bar" role="toolbar">
-                <span class="bulk-count">{{ bulkCountLabel() }}</span>
-                <button type="button" class="ghost mc-hover-wiggle" (click)="onBulkDelete()">
-                  <mc-icon name="trash" />
-                  <span>{{ t('music.bulk.delete') }}</span>
-                </button>
-                <select
-                  class="bulk-select"
-                  (change)="onBulkAddToPlaylist($event)"
-                  [attr.aria-label]="t('music.bulk.addTo')"
-                >
-                  <option value="">{{ t('music.bulk.addTo') }}</option>
-                  @for (p of playlistSummaries(); track p.id) {
-                    <option [value]="p.id">{{ p.title || t('music.untitledPlaylist') }}</option>
-                  }
-                </select>
-                <button type="button" class="ghost mc-hover-grow" (click)="onClearSelection()">
-                  <mc-icon name="x" />
-                  <span>{{ t('music.bulk.clear') }}</span>
-                </button>
-              </div>
-            }
-            @if (libraryRows().length === 0) {
-              <p class="empty">
-                <mc-icon name="magnifying-glass" class="mc-anim-pulse" />
-                <span>{{ t('music.noTracksMatch') }}</span>
-              </p>
-            } @else {
-              <div class="lib-table" role="table">
-                <div class="lib-thead" role="row">
-                  <span role="columnheader"></span>
-                  <span role="columnheader"></span>
-                  <span role="columnheader">{{ t('music.col.title') }}</span>
-                  <span role="columnheader" class="num">{{ t('music.col.duration') }}</span>
-                  <span role="columnheader" class="num">{{ t('music.col.size') }}</span>
-                  <span role="columnheader" class="num">{{ t('music.col.added') }}</span>
-                  <span role="columnheader"></span>
-                </div>
-                <div class="lib-tbody">
-                  @for (row of libraryRows(); track row.id) {
-                    <div
-                      class="lib-row"
-                      role="row"
-                      draggable="true"
-                      (dragstart)="onRowDragStart(row.id, $event)"
-                      [class.playing]="currentTrackId() === row.id"
-                      [class.selected]="isSelected(row.id)"
-                    >
-                      <button
-                        type="button"
-                        class="sel"
-                        role="cell"
-                        (click)="onToggleSelect(row.id, $event)"
-                        [attr.aria-label]="t('music.bulk.selectRow')"
-                        [attr.aria-pressed]="isSelected(row.id)"
-                      >
-                        @if (isSelected(row.id)) {
-                          <mc-icon name="check" />
-                        }
-                      </button>
-                      <button type="button" class="play" (click)="onPlayRow(row.id)" role="cell">
-                        @if (currentTrackId() === row.id && isPlaying()) {
-                          <mc-icon name="pause" />
-                        } @else {
-                          <mc-icon name="play" />
-                        }
-                      </button>
-                      <span class="title" role="cell">
-                        @if (currentTrackId() === row.id) {
-                          <span class="eq" [class.paused]="!isPlaying()" aria-hidden="true">
-                            <i></i><i></i><i></i>
-                          </span>
-                        }
-                        {{ row.originalName }}
-                      </span>
-                      <span class="num" role="cell">{{ row.duration }}</span>
-                      <span class="num" role="cell">{{ row.size }}</span>
-                      <span class="num" role="cell">{{ row.added }}</span>
-                      <button
-                        type="button"
-                        class="ghost mc-hover-wiggle"
-                        role="cell"
-                        (click)="onDeleteRow(row.id)"
-                        [attr.aria-label]="t('common.delete')"
-                      >
-                        <mc-icon name="trash" />
-                      </button>
-                    </div>
-                  }
-                </div>
-              </div>
-            }
           }
+          @if (libraryRows().length === 0) {
+            <p class="empty">
+              <mc-icon name="magnifying-glass" class="mc-anim-pulse" />
+              <span>{{ t('music.noTracksMatch') }}</span>
+            </p>
+          } @else {
+            <div class="lib-table" role="table">
+              <div class="lib-thead" role="row">
+                <span role="columnheader"></span>
+                <span role="columnheader"></span>
+                <span role="columnheader">{{ t('music.col.title') }}</span>
+                <span role="columnheader" class="num">{{ t('music.col.duration') }}</span>
+                <span role="columnheader"></span>
+              </div>
+              <div class="lib-tbody">
+                @for (row of libraryRows(); track row.id) {
+                  <div
+                    class="lib-row"
+                    role="row"
+                    draggable="true"
+                    (dragstart)="onRowDragStart(row.id, $event)"
+                    [class.playing]="currentTrackId() === row.id"
+                    [class.selected]="isSelected(row.id)"
+                  >
+                    <button
+                      type="button"
+                      class="sel"
+                      role="cell"
+                      (click)="onToggleSelect(row.id, $event)"
+                      [attr.aria-label]="t('music.bulk.selectRow')"
+                      [attr.aria-pressed]="isSelected(row.id)"
+                    >
+                      @if (isSelected(row.id)) {
+                        <mc-icon name="check" />
+                      }
+                    </button>
+                    <button type="button" class="play" (click)="onPlayRow(row.id)" role="cell">
+                      @if (currentTrackId() === row.id && isPlaying()) {
+                        <mc-icon name="pause" />
+                      } @else {
+                        <mc-icon name="play" />
+                      }
+                    </button>
+                    <span class="title" role="cell">
+                      @if (currentTrackId() === row.id) {
+                        <span class="eq" [class.paused]="!isPlaying()" aria-hidden="true">
+                          <i></i><i></i><i></i>
+                        </span>
+                      }
+                      {{ row.originalName }}
+                    </span>
+                    <span class="num" role="cell">{{ row.duration }}</span>
+                    <button
+                      type="button"
+                      class="ghost mc-hover-wiggle"
+                      role="cell"
+                      (click)="onDeleteRow(row.id)"
+                      [attr.aria-label]="t('common.delete')"
+                    >
+                      <mc-icon name="trash" />
+                    </button>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        }
+      </div>
+
+      <!-- why: playlists conviven en el rail provisorio hasta Fase 11 (modal). -->
+      <details class="playlists-fallback">
+        <summary>
+          <mc-icon name="list-bullets" />
+          <span>{{ t('music.placeholder.playlistsModal') }}</span>
+          <span class="count">{{ playlistSummaries().length }}</span>
+        </summary>
+        <div class="pl-fallback-body">
+          <button
+            type="button"
+            class="ghost mc-hover-grow pl-fallback-new"
+            (click)="onCreatePlaylist()"
+            [title]="t('music.newPlaylist')"
+          >
+            <mc-icon name="plus" />
+            <span>{{ t('music.newPlaylist') }}</span>
+          </button>
+          @if (playlistSummaries().length === 0) {
+            <p class="empty">
+              <mc-icon name="star" class="empty-icon mc-anim-float" />
+              <span>{{ t('music.sidebar.emptyFavorites') }}</span>
+            </p>
+          } @else {
+            <ul class="pl-list">
+              @for (p of playlistSummaries(); track p.id) {
+                <li>
+                  <button
+                    type="button"
+                    [class.selected]="active()?.id === p.id"
+                    [class.drop-target]="railDropTargetId() === p.id"
+                    [class.now-playing]="currentSourceId() === p.id"
+                    (click)="onSelectPlaylist(p)"
+                    (dragover)="onRailDragOver(p.id, $event)"
+                    (dragleave)="onRailDragLeave()"
+                    (drop)="onRailDrop(p.id, $event)"
+                  >
+                    <span class="pl-title">
+                      @if (currentSourceId() === p.id) {
+                        <span class="eq" aria-hidden="true"> <i></i><i></i><i></i> </span>
+                      } @else if (p.favorite) {
+                        <mc-icon name="star-fill" />
+                      }
+                      {{ p.title || t('music.untitledPlaylist') }}
+                    </span>
+                    <span class="count">{{ p.trackCount }}</span>
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      </details>
+    </aside>
+
+    <!-- CENTER: superficie resonante (top) + waveform/metadata (bottom). Editor toma todo cuando hay playlist activa. -->
+    <section class="zone zone-center">
+      @if (active(); as playlist) {
+        <mc-playlist-editor
+          [playlist]="playlist"
+          (back)="onEditorBack()"
+          (changed)="onEditorChanged($event)"
+          (deleted)="onEditorDeleted()"
+        />
+      } @else {
+        <div class="center-top placeholder-card" role="region" aria-label="Superficie resonante">
+          <mc-icon name="music-notes" class="placeholder-icon mc-anim-float" />
+          <p class="placeholder-tag">
+            <mc-icon name="hourglass-medium" />
+            <span>{{ t('music.placeholder.resonantSurface') }}</span>
+          </p>
+        </div>
+        <div class="center-bottom placeholder-card" role="region" aria-label="Now playing">
+          <p class="placeholder-tag">
+            <mc-icon name="hourglass-medium" />
+            <span>{{ t('music.placeholder.waveform') }}</span>
+          </p>
+          <mc-now-playing />
         </div>
       }
     </section>
 
-    <aside class="now-playing" aria-label="Now playing">
-      <mc-now-playing />
+    <!-- RIGHT: cola -->
+    <aside class="zone zone-right" aria-label="Cola">
+      <mc-queue-panel />
     </aside>
   </div>
 </section>

@@ -23,6 +23,7 @@ import { formatBytes, formatDuration, formatShortDate } from '../utils/music-for
 
 import { NowPlayingContainer } from './now-playing.container';
 import { PlaylistEditorContainer } from './playlist-editor.container';
+import { QueuePanelContainer } from './queue-panel.container';
 import { registerMusicShortcuts } from './music.shortcuts';
 
 export interface LibraryRow {
@@ -36,7 +37,7 @@ export interface LibraryRow {
 @Component({
   selector: 'mc-music',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent, PlaylistEditorContainer, NowPlayingContainer],
+  imports: [IconComponent, PlaylistEditorContainer, NowPlayingContainer, QueuePanelContainer],
   templateUrl: './music.container.html',
   styleUrl: './music.container.css',
 })

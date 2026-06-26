@@ -31,7 +31,7 @@ Principio: cada fase termina con la app **funcionando**. Las fases de datos/pers
 | 3   | ID3 extractor (`jsmediatags`) + hook en `addTracks` (imports nuevos completos)                        | ✅ 2026-06-26 |
 | 4   | Backfill batched en `refresh()` para tracks viejos                                                    | ✅ 2026-06-26 |
 | 5   | WebAudio en `PlayerService`: AudioContext lazy + AnalyserNode expuesto                                | ✅ 2026-06-26 |
-| 6   | Layout reflow a 3 columnas finales con placeholders                                                   | ⏳ pendiente  |
+| 6   | Layout reflow a 3 columnas finales con placeholders                                                   | ✅ 2026-06-26 |
 | 7   | `album-library.component` (izq): agrupar + search + click → cola                                      | ⏳ pendiente  |
 | 8   | `resonant-surface.component` (centro arriba): canvas 2D + pileta + RAF + analyser                     | ⏳ pendiente  |
 | 9   | Centro abajo: waveform real + metadata + progreso + portada                                           | ⏳ pendiente  |
@@ -104,3 +104,20 @@ Principio: cada fase termina con la app **funcionando**. Las fases de datos/pers
 - Sin error code nuevo: el branch es no-fatal y no hay UI todavía que pueda surface el código con feedback. Cuando Fase 8 monte la superficie, se decide si vale crear `MCB-MUS-001` con banner contextual. Entrada en `docs/deferred.md` (sección Música).
 - Sin cambios en `PROYECTO.md`: la fase implementa una pieza ya prevista del rediseño, no muta decisión arquitectónica.
 - Archivos: `core/music/audio-graph.ts` (nuevo), `core/music/player.service.ts`.
+
+### Fase 6 — layout reflow a 3 columnas con placeholders (2026-06-26)
+
+- `containers/music.container.html` + `.css` reflowados a la grilla v2 `biblioteca-álbumes | superficie+waveform+metadata | cola`. Grid `minmax(280px, 1fr) minmax(0, 1.5fr) 280px`. Media query <1100px oculta la cola (igual que antes ocultaba el now-playing en v1).
+- **Placeholders honestos** (no mienten — declaran qué fase los reemplaza):
+  - Izq: badge "Biblioteca de álbumes — próximamente (Fase 7)" sobre la tabla de tracks que sigue funcionando como fallback temporal. La tabla recortada a 5 columnas (sel/play/título/duración/borrar) por el ancho menor; las columnas `size` y `added` se eliminaron, no se reintegran — Fase 7 reemplaza toda la columna por agrupación por álbum.
+  - Centro arriba: card con borde dasheado + ícono `music-notes` flotando + tag "Superficie resonante — próximamente (Fase 8)". Reserva visible del 55% del alto del centro.
+  - Centro abajo: tag "Waveform y metadata real — próximamente (Fase 9)" enmarcando `<mc-now-playing />` con sus controles de transporte. Se sigue pudiendo reproducir, pausar, seek, prev/next, shuffle/repeat, stop.
+  - Der: `<mc-queue-panel />` nuevo con header propio "Cola" + estado vacío honesto ("La cola está vacía. Tocá ▶ en cualquier track.").
+- **Playlists provisorias** en `<details>` colapsable al pie de la columna izquierda. Hereda toda la funcionalidad del rail v1 (crear, seleccionar, drag-drop de tracks a playlist, indicador de favorita/now-playing). Tag visible "Playlists (provisional — modal en Fase 11)". El editor sigue tomando la columna central completa cuando hay playlist activa (`@if (active())` preservado).
+- **Componente nuevo `mc-queue-panel`** (`containers/queue-panel.container.{ts,html,css}`): extraído de `NowPlayingContainer`. Reusa señales de `PlayerService` y `MusicLibraryService` para `queueTracks`. Esto es la "reubicación" anticipada de Fase 10 — Fase 10 ya no tiene trabajo real, lo dejo abierto para confirmar/pulir.
+- `NowPlayingContainer` perdió: `queueTracks` computed, `onJumpTo`/`onRemoveFromQueue`/`onClearQueue`, el bloque de cola en el HTML y los estilos `.queue*` del CSS. Sigue dueña de `np-card` + transport + seek + source title. Fase 9 la reemplaza entera por waveform+metadata real.
+- **i18n** nuevas: `music.queue.empty`, `music.placeholder.albumLibrary`, `music.placeholder.resonantSurface`, `music.placeholder.waveform`, `music.placeholder.playlistsModal`. `music.queue.title` cambiada de "En cola" → "Cola" (encaja mejor como header de columna).
+- **§4.4 (tamaño de archivo) — preexistente, no resuelto en esta fase**: `music.container.ts` queda en 344 líneas (>300 hard limit); ya estaba en 343 antes de Fase 6 (sólo sumé 1 import). El split natural ocurre en Fase 7 cuando la lógica de biblioteca (search/bulk/drag-drop/library state) se muda a `album-library.component`, lo que va a tirar el container abajo de 200. `music.container.css` queda en 481 líneas por la misma razón; también se libera en Fase 7. Si Fase 7 no resuelve, escalar a split forzado entonces.
+- Sin entradas a `errors.md` (sin códigos nuevos). Sin entradas a `deferred.md` (lo único provisorio — playlists fallback y dimensión recortada de la tabla — tiene fase de destino explícita en el roadmap, no es diferimiento abierto).
+- Sin cambios en `PROYECTO.md`: la fase implementa el reflow ya previsto del rediseño, no muta decisión arquitectónica.
+- Archivos: `containers/music.container.html`, `containers/music.container.css`, `containers/music.container.ts`, `containers/now-playing.container.{ts,html,css}`, `containers/queue-panel.container.{ts,html,css}` (nuevo), `core/i18n/locales/es.ts`.

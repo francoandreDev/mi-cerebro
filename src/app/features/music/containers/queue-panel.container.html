@@ -1,0 +1,50 @@
+<header class="zone-head">
+  <h3>
+    <mc-icon name="list-bullets" class="zone-head-icon" />
+    {{ t('music.queue.title') }}
+    @if (queueTracks().length > 0) {
+      <span class="count">({{ queueTracks().length }})</span>
+    }
+  </h3>
+  @if (queueTracks().length > 0) {
+    <button type="button" class="ghost mc-hover-wiggle" (click)="onClearQueue()">
+      <mc-icon name="x" />
+      <span>{{ t('music.queue.clear') }}</span>
+    </button>
+  }
+</header>
+@if (queueTracks().length === 0) {
+  <p class="empty">
+    <mc-icon name="music-notes" class="empty-icon mc-anim-float" />
+    <span>{{ t('music.queue.empty') }}</span>
+  </p>
+} @else {
+  <ul class="queue-list">
+    @for (row of queueTracks(); track row.id + '@' + row.index) {
+      <li class="queue-row" [class.current]="row.isCurrent">
+        <button
+          type="button"
+          class="queue-play"
+          (click)="onJumpTo(row.index)"
+          [attr.aria-label]="t('music.queue.jumpTo')"
+        >
+          @if (row.isCurrent && isPlaying()) {
+            <span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>
+          } @else {
+            <mc-icon name="play" />
+          }
+        </button>
+        <span class="queue-title">{{ row.originalName }}</span>
+        <button
+          type="button"
+          class="ghost"
+          (click)="onRemoveFromQueue(row.index)"
+          [disabled]="row.isCurrent"
+          [attr.aria-label]="t('music.queue.remove')"
+        >
+          <mc-icon name="x" />
+        </button>
+      </li>
+    }
+  </ul>
+}
