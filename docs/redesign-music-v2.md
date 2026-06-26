@@ -30,7 +30,7 @@ Principio: cada fase termina con la app **funcionando**. Las fases de datos/pers
 | 2   | Infra cover: `sha1(blob)` + helpers de FS para `music/covers/`                                        | ✅ 2026-06-26 |
 | 3   | ID3 extractor (`jsmediatags`) + hook en `addTracks` (imports nuevos completos)                        | ✅ 2026-06-26 |
 | 4   | Backfill batched en `refresh()` para tracks viejos                                                    | ✅ 2026-06-26 |
-| 5   | WebAudio en `PlayerService`: AudioContext lazy + AnalyserNode expuesto                                | ⏳ pendiente  |
+| 5   | WebAudio en `PlayerService`: AudioContext lazy + AnalyserNode expuesto                                | ✅ 2026-06-26 |
 | 6   | Layout reflow a 3 columnas finales con placeholders                                                   | ⏳ pendiente  |
 | 7   | `album-library.component` (izq): agrupar + search + click → cola                                      | ⏳ pendiente  |
 | 8   | `resonant-surface.component` (centro arriba): canvas 2D + pileta + RAF + analyser                     | ⏳ pendiente  |
@@ -93,3 +93,14 @@ Principio: cada fase termina con la app **funcionando**. Las fases de datos/pers
 - Failure por track (FS read throw, mp3 ausente) → `console.warn` y skip; el track queda como estaba y se reintenta en el próximo `refresh()`. Failure de `readId3` ya devuelve `null` (Fase 3) → el track gana `metadataProbedAt` honesto sin metadata, no se reintenta.
 - Sin entradas a `errors.md` (los failures de FS/parser son no-ops silenciosos, ya capturados por logs de capa inferior cuando corresponde). Sin entradas a `deferred.md`.
 - Archivos: `services/music-library.service.ts`.
+
+### Fase 5 — WebAudio en PlayerService (2026-06-26)
+
+- `core/music/audio-graph.ts` (nuevo): clase `AudioGraph` que envuelve el ciclo `AudioContext` → `MediaElementAudioSourceNode` → `AnalyserNode` → `destination`. `fftSize: 2048`, `smoothingTimeConstant: 0.8`. Expone `analyser: Signal<AnalyserNode | null>` (null hasta que el grafo se haya inicializado). Method `ensure()` idempotente: crea el grafo en la primera llamada, en posteriores sólo hace `resume()` si el contexto quedó suspendido por el navegador.
+- `PlayerService.analyser` re-exporta la signal del grafo. Listo para que Fase 8 (resonant-surface) y Fase 9 (waveform real) la consuman sin tocar el servicio.
+- `ensure()` se invoca sólo desde paths con gesto del usuario: `toggle()` cuando viene de pausa, y `loadCurrent(autoPlay=true, …)` (que cubre `playTrack`, `playPlaylist`, `next`, `prev`, `jumpTo`). `restoreFromStorage` llama `loadCurrent(false, currentTime)` → el grafo **no** se inicializa al boot, respetando la regla de "AudioContext sólo tras user gesture" del audit. La cola queda restaurada y paused; el primer play del usuario monta el grafo.
+- Gotcha resuelto: `createMediaElementSource` intercepta el output por defecto del `<audio>`; **siempre** hay que conectar el analyser a `destination` o se corta el sonido. Cubierto dentro del `ensure()`.
+- Failure honesto: si `AudioContext` no está definido (caso teórico fuera de Chromium) o si el constructor tira, `failed = true` y el analyser queda `null` para siempre. La música igual reproduce porque el flag se setea **antes** de crear el `MediaElementAudioSourceNode` — sin source node, el audio sigue por el path por defecto. Log a consola, sin toast: la UI de Fase 8 leerá `analyser() === null` como "sin visualización" y lo mostrará así (no miente).
+- Sin error code nuevo: el branch es no-fatal y no hay UI todavía que pueda surface el código con feedback. Cuando Fase 8 monte la superficie, se decide si vale crear `MCB-MUS-001` con banner contextual. Entrada en `docs/deferred.md` (sección Música).
+- Sin cambios en `PROYECTO.md`: la fase implementa una pieza ya prevista del rediseño, no muta decisión arquitectónica.
+- Archivos: `core/music/audio-graph.ts` (nuevo), `core/music/player.service.ts`.

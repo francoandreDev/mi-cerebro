@@ -242,6 +242,17 @@ Formato por entrada:
 
 ---
 
+## Música — WebAudio (origen: redesign-music-v2 Fase 5)
+
+### Error code `MCB-MUS-001` para AudioContext no disponible
+
+- **Qué**: el `AudioGraph` (`core/music/audio-graph.ts`) cae a `failed = true` y deja el analyser en `null` si `AudioContext` no está definido o si su construcción tira. Hoy sólo se loguea a consola; no hay código de error catalogado ni feedback al usuario.
+- **Por qué se difirió**: Fase 5 todavía no monta UI que use el analyser. La música igual reproduce por el path por defecto del `<audio>`; el único "síntoma" sería que la futura superficie resonante (Fase 8) renderice su estado vacío. Surfacing como `MCB-MUS-001` con banner contextual sólo tiene sentido cuando esa UI exista y pueda mostrar feedback útil.
+- **Target**: Fase 8 (`resonant-surface.component`) del redesign-music-v2.
+- **Origen**: redesign-music-v2 Fase 5.
+
+---
+
 ## Música — Cover art / Waveform ID3 (origen: redesign-music Fase 9)
 
 ### Cover art y duración leídos de ID3 con `jsmediatags`

@@ -1,6 +1,8 @@
-import { Injectable, computed, effect, inject, signal } from '@angular/core';
+import { Injectable, type Signal, computed, effect, inject, signal } from '@angular/core';
 
 import { MusicLibraryService } from '@features/music/services/music-library.service';
+
+import { AudioGraph } from './audio-graph';
 
 type RepeatMode = 'off' | 'all';
 
@@ -28,6 +30,8 @@ export class PlayerService {
   private readonly library = inject(MusicLibraryService);
 
   private readonly audio: HTMLAudioElement;
+  private readonly audioGraph: AudioGraph;
+  readonly analyser: Signal<AnalyserNode | null>;
   private currentBlobUrl: string | null = null;
   private lastSeekSaveAt = 0;
   private restored = false;
@@ -64,6 +68,8 @@ export class PlayerService {
   constructor() {
     this.audio = new Audio();
     this.audio.preload = 'auto';
+    this.audioGraph = new AudioGraph(this.audio);
+    this.analyser = this.audioGraph.analyser;
     this.audio.addEventListener('ended', () => void this.handleEnded());
     this.audio.addEventListener('play', () => this.playingSignal.set(true));
     this.audio.addEventListener('pause', () => this.playingSignal.set(false));
@@ -114,8 +120,10 @@ export class PlayerService {
 
   async toggle(): Promise<void> {
     if (!this.currentTrackId()) return;
-    if (this.audio.paused) await this.audio.play();
-    else this.audio.pause();
+    if (this.audio.paused) {
+      await this.audioGraph.ensure();
+      await this.audio.play();
+    } else this.audio.pause();
   }
 
   async next(): Promise<void> {
@@ -247,7 +255,10 @@ export class PlayerService {
         };
         this.audio.addEventListener('loadedmetadata', apply);
       }
-      if (autoPlay) await this.audio.play();
+      if (autoPlay) {
+        await this.audioGraph.ensure();
+        await this.audio.play();
+      }
       void this.library.incrementPlayCount(id);
       this.persist();
     } catch (cause) {
