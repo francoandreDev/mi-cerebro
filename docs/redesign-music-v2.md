@@ -32,7 +32,7 @@ Principio: cada fase termina con la app **funcionando**. Las fases de datos/pers
 | 4   | Backfill batched en `refresh()` para tracks viejos                                                    | ✅ 2026-06-26 |
 | 5   | WebAudio en `PlayerService`: AudioContext lazy + AnalyserNode expuesto                                | ✅ 2026-06-26 |
 | 6   | Layout reflow a 3 columnas finales con placeholders                                                   | ✅ 2026-06-26 |
-| 7   | `album-library.component` (izq): agrupar + search + click → cola                                      | ⏳ pendiente  |
+| 7   | `album-library.component` (izq): agrupar + search + click → cola                                      | ✅ 2026-06-26 |
 | 8   | `resonant-surface.component` (centro arriba): canvas 2D + pileta + RAF + analyser                     | ⏳ pendiente  |
 | 9   | Centro abajo: waveform real + metadata + progreso + portada                                           | ⏳ pendiente  |
 | 10  | Cola a columna derecha (reubicación, no rewrite)                                                      | ⏳ pendiente  |
@@ -121,3 +121,20 @@ Principio: cada fase termina con la app **funcionando**. Las fases de datos/pers
 - Sin entradas a `errors.md` (sin códigos nuevos). Sin entradas a `deferred.md` (lo único provisorio — playlists fallback y dimensión recortada de la tabla — tiene fase de destino explícita en el roadmap, no es diferimiento abierto).
 - Sin cambios en `PROYECTO.md`: la fase implementa el reflow ya previsto del rediseño, no muta decisión arquitectónica.
 - Archivos: `containers/music.container.html`, `containers/music.container.css`, `containers/music.container.ts`, `containers/now-playing.container.{ts,html,css}`, `containers/queue-panel.container.{ts,html,css}` (nuevo), `core/i18n/locales/es.ts`.
+
+### Fase 7 — album-library: agrupar + search + click → cola (2026-06-26)
+
+- **Naming**: la fila de la tabla decía `album-library.component` pero por §4.5 (smart components viven en `containers/` con sufijo `.container.ts`) el archivo final es `containers/album-library.container.ts`. Inyecta `MusicLibraryService`, `PlayerService`, `PlaylistsService`, `WorkspaceService`, `ErrorService`, `I18nService` — claramente smart.
+- **Agrupación**: `utils/album-grouping.ts` con `groupTracksByAlbum(tracks)`. Llave `${albumArtist||artist}::${album}::${year}`. Tracks sin `album` van todos al bucket "Sin álbum" al final, en orden alfabético por `originalName`. Albums ordenados por artista → año → álbum. Tracks dentro de un álbum: `discNumber` → `trackNumber` → `originalName`. Honesto: un track sin disc/track number cae con `Infinity`, no se infiere posición.
+- **Búsqueda**: filtra contra `originalName`, `title`, `album`, `artist`, `albumArtist` (cualquier match). Filtra **antes** de agrupar → álbumes sin matches desaparecen. Cuando hay filtro activo no se inventa orden ni metadata.
+- **Cover**: placeholder `mc-icon name="music-note"` por ahora. Fase 9 cierra el render real de portada en `center-bottom`. Documentado acá para no duplicar trabajo. (No se carga blob URL para covers en esta fase para evitar el churn de `URL.createObjectURL`/`revokeObjectURL` que recién tiene dueño claro cuando la portada en grande exista.)
+- **Click → reproducir**: usa la cola visible (álbumes filtrados aplanados en orden de render) como playlist. `next`/`prev` siguen al usuario, no a "biblioteca completa".
+- **DnD compartido**: `containers/music.dnd.ts` (nuevo, 26 líneas) extrae `TRACK_DRAG_MIME`, `hasFiles`, `hasTrackDrag`, `parseTrackDragPayload`. Ambos containers (`album-library` source, `music` rail target) lo importan — el MIME tiene que coincidir o el drop a playlists se rompe silenciosamente.
+- **MusicContainer** queda como shell de 133 líneas (era 344): retiene playlists fallback, drop target del rail, `active` playlist signal, atajos. `focusSearch` se delega vía `viewChild(AlbumLibraryContainer).focusSearch()`. `LibraryRow` interface eliminada (vivía en MusicContainer; ahora el grouping va por `Track` directo).
+- **Trade-off de output**: `mc-album-library` emite `(tracksTouched)` con los IDs eliminados/agregados; `MusicContainer.onTracksTouched` corre `refreshActiveIfTouched` (refresca la playlist activa si está abierta y un track suyo cambió). Si `[]` se interpreta como "tracks añadidos a playlist, refrescá igual" — convención mínima documentada en el handler.
+- **§4.4 resuelto vs Fase 6**: `music.container.ts` 344→133, `music.container.css` 481→243. `album-library.container.ts` 238 (>200 warn, <300 hard, justificado: container que concentra search+grupos+bulk+drag), `album-library.container.css` 257 (mismo perfil). Ningún archivo cruza 300.
+- **i18n nuevas**: `music.album.noAlbum`, `music.album.unknownArtist`, `music.album.tracksCount`, `music.album.tracksCountOne`, `music.album.empty`. Eliminada `music.placeholder.albumLibrary` (la columna ya no es placeholder).
+- **No nuevos error codes**: failures de FS/red ya pasan por `ErrorService.report`. Sin entradas en `errors.md`.
+- **No deferred**: el placeholder de cover en album-head no es diferimiento abierto — Fase 9 ya tiene la portada real en su scope (centro abajo).
+- **No cambios en `PROYECTO.md`**: la fase implementa la extracción ya prevista, no muta decisión arquitectónica.
+- Archivos: `containers/album-library.container.{ts,html,css}` (nuevos), `containers/music.dnd.ts` (nuevo), `containers/music.container.{ts,html,css}`, `utils/album-grouping.ts` (nuevo), `core/i18n/locales/es.ts`.
