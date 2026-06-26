@@ -29,7 +29,7 @@ Una idea distinta por página. No replicar el mismo patrón: cada entidad tiene 
 | `/files`     | Pared de lockers numerados (color = primer tag) + apertura inline (≤6 archivos) u overlay (más)                                                                                                                                                                                                                                                        | ✅     |
 | `/music`     | v1 3 zonas (✅). v2 planificado: membrana/superficie resonante central que vibra con waveform real + biblioteca + cola. Ver detalle abajo.                                                                                                                                                                                                             | 🔄     |
 | `/calendar`  | v1 wallboard (✅). v2 planificado: vista temporal unificada — mesa de luz con acetatos (mes) + agenda de cuero (semana/día). Ver detalle abajo.                                                                                                                                                                                                        | 🔄     |
-| `/reminders` | Palomar de jaulas con palomas mensajeras: puertas se abren progresivamente, paloma vuela (ruta wandering, usa toda la pantalla) al rail icon y picotea al disparar; recurrentes se posan en la campana hasta que el usuario clickea la jaula vacía para llamarla de vuelta; puntuales caen tras picotear. Filtros por fecha/nombre. Ver detalle abajo. | 🔄     |
+| `/reminders` | Palomar de jaulas con palomas mensajeras: puertas se abren progresivamente, paloma vuela (ruta wandering, usa toda la pantalla) al rail icon y picotea al disparar; recurrentes se posan en la campana hasta que el usuario clickea la jaula vacía para llamarla de vuelta; puntuales caen tras picotear. Filtros por fecha/nombre. Ver detalle abajo. | ✅     |
 | `/sync`      | pendiente                                                                                                                                                                                                                                                                                                                                              | ⏳     |
 
 ## Planes detallados
@@ -97,7 +97,7 @@ Una idea distinta por página. No replicar el mismo patrón: cada entidad tiene 
 2. ✅ Componente palomar con jaulas + palomas. Jaula = arco oscuro + grilla de barrotes como puerta, con bisagra superior; abre progresivamente según el bucket (cerrada `later/undated`, leve `thisWeek`, media `tomorrow`, abierta `today`). v1 con schema v4 (recurrence + paused) en su lugar.
 3. ✅ Filtros por fecha y nombre.
 4. ✅ Estados: recurrente vs puntual (anillo de colores), pausado (cortinita + puerta cerrada forzada), vencido (repisa), próximo a sonar (puerta más abierta + glow).
-5. 🔄 Animación de disparo del scheduler implementada (paloma sale de la jaula, vuela en ruta wandering por la pantalla — puede salirse un momento y volver — hasta el rail icon, picotea 3 veces; recurrente se posa en la campana hasta que el usuario haga click en la jaula vacía para llamarla de vuelta, también en ruta wandering; puntual cae rotando tras picotear — flapeo durante todo el vuelo). Snooze y "tomar papelito" manual diferidos a `docs/deferred.md`.
+5. ✅ Animación de disparo del scheduler implementada (paloma sale de la jaula, vuela en ruta wandering por la pantalla — puede salirse un momento y volver — hasta el rail icon, picotea 3 veces; recurrente se posa en la campana hasta que el usuario haga click en la jaula vacía para llamarla de vuelta, también en ruta wandering; puntual cae rotando tras picotear — flapeo durante todo el vuelo). Snooze y "tomar papelito" manual diferidos a `docs/deferred.md`.
 6. ⏳ Detalles opcionales (plumitas, ronroneo, plumaje). → `docs/deferred.md`.
 
 ### `/music` v2 — Membrana resonante con waveform real
@@ -106,9 +106,10 @@ Una idea distinta por página. No replicar el mismo patrón: cada entidad tiene 
 
 **Layout (3 columnas):**
 
-- Izquierda: biblioteca de álbumes con búsqueda.
-- Centro: la superficie resonante grande + waveform en vivo + metadata del track + barra de progreso real.
+- Izquierda: biblioteca de álbumes con búsqueda. Álbumes reales vía ID3 (no se renombran las playlists — eso mentiría). Tracks sin ID3 caen en sección "Sin álbum" honesta al final.
+- Centro: la superficie resonante grande + waveform en vivo + metadata del track + barra de progreso real. Portada con placeholder genérico claramente vacío cuando no hay cover.
 - Derecha: cola de reproducción.
+- Playlists: dejan de ocupar columna; pasan a un modal accesible desde el rail/atajo. Siguen existiendo y siendo editables, pero no compiten con el modelo "álbum".
 
 **Qué afirma cada elemento visual y por qué no miente:**
 
@@ -125,14 +126,16 @@ Silencio → arena dispersa / agua quieta. Se lee correctamente como "no hay son
 
 **Orden de trabajo (multi-sesión):**
 
-1. Auditar `music.service.ts` y modelos: track actual, queue, biblioteca, metadata.
-2. Asegurar acceso al audio en vivo: WebAudio API + AnalyserNode para FFT y waveform; verificar que el reproductor actual lo permita o adaptarlo.
-3. Layout 3 columnas estático (biblioteca / superficie placeholder / cola).
-4. Visualización central: arrancar con la **variante más simple (pileta con ondas)** — más legible y permite validar la pipeline de audio. Patrones de Chladni quedan como upgrade visual.
-5. Waveform inferior + metadata + progreso real.
-6. Pulido: materiales (cobre/madera del recipiente, textura del agua o parche), transiciones al cambiar track, búsqueda/filtros en biblioteca.
+1. ✅ Auditar `music.service.ts` y modelos: schema actual de Track sin metadata musical, persistido en `music/_library.json` sin `schemaVersion`.
+2. Migración de schema: Track gana `title?/artist?/album?/albumArtist?/year?/trackNumber?/discNumber?/coverPath?/id3ReadAt?`. `MusicLibrary` gana `schemaVersion: 2`. Migración lazy en `refresh()` con backfill batched (lectura ID3 de tracks existentes, una escritura JSON al final).
+3. Extracción ID3 al importar: `jsmediatags` (~30KB). Portada se persiste como archivo separado en `music/covers/<sha1>.jpg` (dedup por hash, blob URL para mostrar). Tracks sin tags → bucket "Sin álbum".
+4. Acceso al audio en vivo: WebAudio API + `AudioContext` + `MediaElementAudioSourceNode` + `AnalyserNode` enchufados al `<audio>` privado de `PlayerService`. Cuidar autoplay policy (contexto arranca en primer gesto del usuario, `restoreFromStorage` queda paused hasta el primer play).
+5. Layout 3 columnas estático (biblioteca álbumes / superficie placeholder / cola). Playlists migran a modal.
+6. Visualización central: arrancar con la **variante más simple (pileta con ondas)** — más legible y permite validar la pipeline de audio. Patrones de Chladni quedan como upgrade visual (la pipeline FFT/canvas se reusa).
+7. Waveform inferior + metadata + progreso real + portada con placeholder genérico cuando falta.
+8. Pulido: materiales (cobre/madera del recipiente, textura del agua o parche), transiciones al cambiar track, búsqueda/filtros en biblioteca.
 
-**Decisiones de diseño detrás del descarte de otras opciones:** se descartaron pianola, caja musical de cilindro con púas, y orquesta automática porque mostrar teclas/púas/instrumentos específicos requeriría datos MIDI/transcripción/stems separados que no tenemos. La UI no debe fingir información que no posee — los detalles visuales que parecen contar algo deben ser verdaderos o no contarlo.
+**Decisiones de diseño detrás del descarte de otras opciones:** se descartaron pianola, caja musical de cilindro con púas, y orquesta automática porque mostrar teclas/púas/instrumentos específicos requeriría datos MIDI/transcripción/stems separados que no tenemos. La UI no debe fingir información que no posee — los detalles visuales que parecen contar algo deben ser verdaderos o no contarlo. Por el mismo principio, la biblioteca usa álbumes ID3 reales en vez de renombrar las playlists, y la portada faltante se muestra con un placeholder claramente vacío (no inventa carátulas).
 
 ## Checklist al migrar una página
 
