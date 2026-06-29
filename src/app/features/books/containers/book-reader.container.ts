@@ -6,6 +6,7 @@ import {
   inject,
   input,
   signal,
+  viewChild,
 } from '@angular/core';
 import { Router } from '@angular/router';
 import type { JSONContent } from '@tiptap/core';
@@ -22,6 +23,8 @@ import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
 
 import { ChapterEditorPaneComponent } from '../components/chapter-editor-pane.component';
 import type { BookSaveStatus } from '../components/book-meta-bar.component';
+import { ReaderMetaRailComponent } from '../components/reader-meta-rail.component';
+import { ReaderTocRailComponent } from '../components/reader-toc-rail.component';
 import { BOOK_KIND, type Book, type Chapter, type ChapterSummary } from '../models/book.types';
 import { BooksService } from '../services/books.service';
 import { registerReaderShortcuts } from './book-reader.shortcuts';
@@ -29,7 +32,12 @@ import { registerReaderShortcuts } from './book-reader.shortcuts';
 @Component({
   selector: 'mc-book-reader',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ChapterEditorPaneComponent, LockBannerComponent],
+  imports: [
+    ChapterEditorPaneComponent,
+    LockBannerComponent,
+    ReaderMetaRailComponent,
+    ReaderTocRailComponent,
+  ],
   templateUrl: './book-reader.container.html',
   styleUrl: './book-reader.container.css',
 })
@@ -52,6 +60,7 @@ export class BookReaderContainer {
   protected readonly focusMode = signal<boolean>(false);
   protected readonly indexOpen = signal<boolean>(false);
   protected readonly lock = new EntityLockController(BOOK_KIND, this.book);
+  private readonly paneRef = viewChild(ChapterEditorPaneComponent);
 
   protected readonly activeIndex = computed(() => {
     const ch = this.chapter();
@@ -72,6 +81,8 @@ export class BookReaderContainer {
     registerReaderShortcuts({
       prevChapter: () => this.gotoSibling('prev'),
       nextChapter: () => this.gotoSibling('next'),
+      prevPage: () => this.paneRef()?.prevSpread(),
+      nextPage: () => this.paneRef()?.nextSpread(),
       toggleFocus: () => this.focusMode.update((v) => !v),
       toggleIndex: () => this.indexOpen.update((v) => !v),
     });

@@ -6,6 +6,8 @@ import type { ShortcutBinding } from '@core/shortcuts/shortcuts.types';
 export interface ReaderShortcutHandlers {
   readonly prevChapter: () => void;
   readonly nextChapter: () => void;
+  readonly prevPage: () => void;
+  readonly nextPage: () => void;
   readonly toggleFocus: () => void;
   readonly toggleIndex: () => void;
 }
@@ -25,6 +27,18 @@ export const registerReaderShortcuts = (handlers: ReaderShortcutHandlers): void 
       labelKey: 'books.shortcuts.nextChapter',
       scope: 'global',
       handler: handlers.nextChapter,
+    },
+    {
+      combo: 'PageUp',
+      labelKey: 'books.shortcuts.prevPage',
+      scope: 'global',
+      handler: handlers.prevPage,
+    },
+    {
+      combo: 'PageDown',
+      labelKey: 'books.shortcuts.nextPage',
+      scope: 'global',
+      handler: handlers.nextPage,
     },
     {
       combo: 'Ctrl+.',

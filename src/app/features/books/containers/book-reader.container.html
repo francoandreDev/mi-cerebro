@@ -42,36 +42,62 @@
     </header>
   }
 
-  @if (chapter(); as ch) {
-    <mc-chapter-editor-pane
-      class="pane"
-      [chapter]="ch"
-      [status]="chapterStatus()"
-      [editable]="lock.editable()"
-      [focusMode]="focusMode()"
-      [chapterIndex]="activeIndex()"
-      [chapterTotal]="chapters().length"
-      (titleChange)="onChapterTitleChange($event)"
-      (bodyChange)="onChapterBodyChange($event)"
-      (pageCountChange)="onChapterPageCountChange($event)"
-      (toggleFocus)="onToggleFocus()"
-      (addChapter)="onAddChapter()"
-    />
-  } @else if (chapterLoading()) {
-    <div class="chapter-skeleton" aria-busy="true" [attr.aria-label]="t('app.loading')">
-      <div class="sk-line sk-title"></div>
-      <div class="sk-line sk-body sk-w-95"></div>
-      <div class="sk-line sk-body sk-w-90"></div>
-      <div class="sk-line sk-body sk-w-80"></div>
-    </div>
-  } @else {
-    <div class="empty">{{ t('books.reader.notFound') }}</div>
-  }
+  <div class="body" [class.focus-mode]="focusMode()">
+    @if (!focusMode() && book(); as b) {
+      <mc-reader-toc-rail
+        class="rail-toc"
+        [chapters]="chapters()"
+        [activeChapterId]="chapter()?.id ?? null"
+        [editable]="lock.editable()"
+        (jumpTo)="onJumpTo($event)"
+        (addChapter)="onAddChapter()"
+      />
+    }
+
+    @if (chapter(); as ch) {
+      <mc-chapter-editor-pane
+        class="pane"
+        [chapter]="ch"
+        [status]="chapterStatus()"
+        [editable]="lock.editable()"
+        [focusMode]="focusMode()"
+        [chapterIndex]="activeIndex()"
+        [chapterTotal]="chapters().length"
+        (titleChange)="onChapterTitleChange($event)"
+        (bodyChange)="onChapterBodyChange($event)"
+        (pageCountChange)="onChapterPageCountChange($event)"
+        (toggleFocus)="onToggleFocus()"
+      />
+    } @else if (chapterLoading()) {
+      <div class="chapter-skeleton" aria-busy="true" [attr.aria-label]="t('app.loading')">
+        <div class="sk-line sk-title"></div>
+        <div class="sk-line sk-body sk-w-95"></div>
+        <div class="sk-line sk-body sk-w-90"></div>
+        <div class="sk-line sk-body sk-w-80"></div>
+      </div>
+    } @else {
+      <div class="empty">{{ t('books.reader.notFound') }}</div>
+    }
+
+    @if (!focusMode() && book(); as b) {
+      <mc-reader-meta-rail
+        class="rail-meta"
+        [book]="b"
+        [chapters]="chapters()"
+        [activeIndex]="activeIndex()"
+      />
+    }
+  </div>
 
   @if (!focusMode() && chapter()) {
     <footer class="nav">
       @if (prev(); as p) {
-        <button type="button" class="nav-btn" (click)="onJumpTo(p.id)">
+        <button
+          type="button"
+          class="nav-btn"
+          [title]="t('books.reader.previous') + ' · Alt + ←'"
+          (click)="onJumpTo(p.id)"
+        >
           ‹ {{ indexLabel(activeIndex() - 1) }} · {{ p.title || t('books.chapters.untitled') }}
         </button>
       } @else {
@@ -79,7 +105,12 @@
       }
       <span class="hint">Alt + ← →</span>
       @if (next(); as n) {
-        <button type="button" class="nav-btn next" (click)="onJumpTo(n.id)">
+        <button
+          type="button"
+          class="nav-btn next"
+          [title]="t('books.reader.next') + ' · Alt + →'"
+          (click)="onJumpTo(n.id)"
+        >
           {{ indexLabel(activeIndex() + 1) }} · {{ n.title || t('books.chapters.untitled') }} ›
         </button>
       } @else {
@@ -117,6 +148,11 @@
           </li>
         }
       </ul>
+      @if (lock.editable()) {
+        <button type="button" class="drawer-add" (click)="onAddChapter()">
+          + {{ t('books.editor.newChapter') }}
+        </button>
+      }
     </aside>
   }
 </div>

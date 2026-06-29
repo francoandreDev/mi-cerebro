@@ -210,6 +210,13 @@ Formato por entrada:
 
 ## Books / UI (origen: rediseño de /books)
 
+### IDs de libros legibles / acortados en la URL
+
+- **Qué**: hoy `/books/:bookId/:chapterId` usa UUIDs (`23ad559b-8c33-4817-bf85-2cf8a9eb0af9/35d67ec5-e808-4aaa-b04e-cd9064eda6f9`) — internamente está bien pero externamente es ilegible, impráctico para compartir/recordar y satura la barra del browser. El "patrón id" está extendido a toda la app así que probablemente conviene resolverlo de forma transversal, no sólo en books.
+- **Por qué se difirió**: requiere decidir esquema (slug derivado del título con desambiguación numérica, hash corto base36 de 6-8 chars, mapping bidireccional id↔shortId con índice en disco), migración de URLs viejas (¿redirect 301-like?, ¿soportar ambas?), y resolver colisiones cuando dos entidades distintas generan el mismo slug. Decisión cross-feature (notas, tasks, listas, escritos, libros, galerías, etc.) que merece su propio paso de roadmap, no entra en una sesión de UI de books.
+- **Target**: sin asignar — sub-paso transversal a definir.
+- **Origen**: sesión 2026-06-29 (rediseño /books reader, anotado mientras se enfocaba el espacio desaprovechado en la página).
+
 ### Override de imágenes para portada/reverso de libro y miniaturas de capítulo
 
 - **Qué**: los modelos `Book.cover/back` y `Chapter.image` admiten `kind: 'image'` con ref a un archivo blob en disco. Hoy sólo se usa `kind: 'auto'` (procedural: gradiente + glyph derivados del id) y el usuario no puede subir imagen propia.

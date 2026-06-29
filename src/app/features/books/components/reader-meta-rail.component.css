@@ -1,0 +1,97 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  font-family: var(--mc-font-sans);
+}
+.rail {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  padding: var(--mc-space-3) var(--mc-space-2) var(--mc-space-2);
+  gap: var(--mc-space-3);
+  overflow-y: auto;
+}
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-1);
+  padding: var(--mc-space-2);
+}
+.block-title {
+  margin: 0;
+  font-size: var(--mc-font-size-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--mc-fg-muted);
+  font-weight: 600;
+}
+.book-title {
+  margin: var(--mc-space-1) 0 0;
+  font-family: var(--mc-font-serif);
+  font-size: var(--mc-font-size-md);
+  font-weight: 600;
+  color: var(--mc-fg-primary);
+  line-height: 1.25;
+}
+.book-subtitle {
+  margin: 0;
+  font-family: var(--mc-font-serif);
+  font-size: var(--mc-font-size-sm);
+  color: var(--mc-fg-muted);
+  font-style: italic;
+  line-height: 1.3;
+}
+.stats {
+  margin: var(--mc-space-2) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-1);
+}
+.stat {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--mc-space-2);
+  align-items: baseline;
+  font-size: var(--mc-font-size-sm);
+}
+.stat dt {
+  color: var(--mc-fg-muted);
+}
+.stat dd {
+  margin: 0;
+  color: var(--mc-fg-primary);
+  font-variant-numeric: tabular-nums;
+}
+.progress-label {
+  margin: 0;
+  font-size: var(--mc-font-size-sm);
+  color: var(--mc-fg-primary);
+  font-variant-numeric: tabular-nums;
+}
+.progress-bar {
+  position: relative;
+  height: 4px;
+  margin-top: var(--mc-space-1);
+  background: var(--mc-bg-elevated);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.progress-fill {
+  display: block;
+  height: 100%;
+  width: var(--mc-reader-progress, 0%);
+  background: var(--mc-accent-primary);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+.notes-placeholder {
+  margin: 0;
+  font-size: var(--mc-font-size-sm);
+  color: var(--mc-fg-muted);
+  font-style: italic;
+  opacity: 0.7;
+}

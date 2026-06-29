@@ -1,0 +1,60 @@
+<aside class="rail" [attr.aria-label]="t('books.reader.metaTitle')">
+  <section class="block">
+    <h3 class="block-title">{{ t('books.reader.metaTitle') }}</h3>
+    <p class="book-title">{{ book().title || t('books.untitledTitle') }}</p>
+    @if (book().subtitle) {
+      <p class="book-subtitle">{{ book().subtitle }}</p>
+    }
+    <dl class="stats">
+      <div class="stat">
+        <dt>{{ t('books.reader.statChapters') }}</dt>
+        <dd>{{ totalChapters() }}</dd>
+      </div>
+      <div class="stat">
+        <dt>{{ t('books.reader.statWords') }}</dt>
+        <dd>{{ totalWords() }}</dd>
+      </div>
+      <div class="stat">
+        <dt>{{ t('books.reader.statReading') }}</dt>
+        <dd>{{ readingLabel() }}</dd>
+      </div>
+    </dl>
+  </section>
+
+  @if (activeChapter(); as ch) {
+    <section class="block">
+      <h3 class="block-title">{{ t('books.reader.chapterTitle') }}</h3>
+      <dl class="stats">
+        <div class="stat">
+          <dt>{{ t('books.reader.statWords') }}</dt>
+          <dd>{{ chapterWords() }}</dd>
+        </div>
+        <div class="stat">
+          <dt>{{ t('books.reader.statReading') }}</dt>
+          <dd>{{ chapterReadingLabel() }}</dd>
+        </div>
+      </dl>
+    </section>
+  }
+
+  @if (activeIndex() >= 0 && totalChapters() > 0) {
+    <section class="block">
+      <h3 class="block-title">{{ t('books.reader.progressTitle') }}</h3>
+      <p class="progress-label">{{ progressLabel() }}</p>
+      <div
+        class="progress-bar"
+        role="progressbar"
+        [attr.aria-valuenow]="progressPct()"
+        aria-valuemin="0"
+        aria-valuemax="100"
+      >
+        <span class="progress-fill"></span>
+      </div>
+    </section>
+  }
+
+  <section class="block notes">
+    <h3 class="block-title">{{ t('books.reader.notesTitle') }}</h3>
+    <p class="notes-placeholder">{{ t('books.reader.notesPlaceholder') }}</p>
+  </section>
+</aside>

@@ -312,8 +312,10 @@
 .foot-side {
   text-align: left;
 }
-.foot-side.right {
+.kbd-hint {
   text-align: right;
+  font-size: var(--mc-font-size-xs);
+  letter-spacing: 0.04em;
 }
 .folio {
   font-family: var(--mc-font-serif);
@@ -334,7 +336,18 @@
 .book-frame.focus-mode .page-nav:hover {
   opacity: 1;
 }
+/* why: en foco aprovechamos parte del espacio que dejan los rails
+   pero sin exagerar — un libro mucho más ancho deja columnas de
+   ~110ch (líneas largas) y, peor, con texto corto la columna 2
+   queda vacía porque toda la primera página alcanza. ~1000px
+   mantiene columnas a ~85ch y aumenta la probabilidad de que el
+   spread se llene parejo. La altura del spread NO se toca por la
+   misma razón. */
+.book-frame.focus-mode {
+  max-width: min(1400px, 94vw);
+}
 .book-frame.focus-mode .spread {
+  height: min(84vh, 980px);
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
 }
 .book-frame.focus-mode .spine {

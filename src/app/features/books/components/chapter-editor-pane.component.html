@@ -4,7 +4,7 @@
     class="page-nav prev"
     [disabled]="currentSpread() === 0"
     [attr.aria-label]="t('books.editor.pageTurnPrev')"
-    [title]="t('books.editor.pageTurnPrev')"
+    [title]="t('books.editor.pageTurnPrev') + ' · PgUp'"
     (click)="prevSpread()"
   >
     ‹
@@ -12,16 +12,6 @@
 
   <div class="book">
     <header class="ui-bar">
-      @if (editable()) {
-        <button
-          type="button"
-          class="primary"
-          (click)="addChapter.emit()"
-          [title]="t('books.editor.newChapter')"
-        >
-          + {{ t('books.editor.newChapter') }}
-        </button>
-      }
       <span class="spacer"></span>
       <span class="status" [attr.data-status]="status()">{{ statusLabel() }}</span>
       <button
@@ -88,7 +78,7 @@
     </div>
 
     <footer class="ui-foot" aria-hidden="true">
-      <span class="foot-side">{{ t('books.editor.footerWords', { n: words() }) }}</span>
+      <span class="foot-side"></span>
       <span class="folio">
         {{
           t('books.editor.pageCounter', {
@@ -98,9 +88,7 @@
           })
         }}
       </span>
-      <span class="foot-side right">
-        {{ t('books.editor.footerChars', { n: chars() }) }} · {{ readingLabel() }}
-      </span>
+      <span class="foot-side kbd-hint">{{ t('books.editor.kbdHint') }}</span>
     </footer>
   </div>
 
@@ -109,7 +97,7 @@
     class="page-nav next"
     [disabled]="atLast()"
     [attr.aria-label]="t('books.editor.pageTurnNext')"
-    [title]="t('books.editor.pageTurnNext')"
+    [title]="t('books.editor.pageTurnNext') + ' · PgDn'"
     (click)="nextSpread()"
   >
     ›

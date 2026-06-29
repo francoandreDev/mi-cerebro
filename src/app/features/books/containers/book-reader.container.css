@@ -55,9 +55,53 @@
   background: var(--mc-bg-elevated);
   border-color: var(--mc-border-default);
 }
-.pane {
+.body {
   flex: 1;
   min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-areas: 'pane';
+  position: relative;
+}
+.pane {
+  grid-area: pane;
+  min-height: 0;
+  min-width: 0;
+}
+.rail-toc,
+.rail-meta {
+  display: none;
+}
+/* why: el libro ya consume ~880px + las flechas. Cuando hay >=1280px
+   de viewport sobran ~400-500px que asignamos a TOC fijo y panel meta
+   alrededor del libro. Debajo de eso volvemos al drawer `📑`. */
+@media (min-width: 1280px) {
+  .body {
+    grid-template-columns: 240px minmax(0, 1fr) 240px;
+    grid-template-areas: 'toc pane meta';
+  }
+  /* why: en foco los rails se ocultan; el grid debe colapsar a una sola
+     columna o el pane sigue capado a viewport-480px aunque visualmente
+     los costados estén vacíos. */
+  .body.focus-mode {
+    grid-template-columns: 1fr;
+    grid-template-areas: 'pane';
+  }
+  .rail-toc {
+    grid-area: toc;
+    display: flex;
+    border-right: 1px solid var(--mc-border-default);
+  }
+  .rail-meta {
+    grid-area: meta;
+    display: flex;
+    border-left: 1px solid var(--mc-border-default);
+  }
+  /* why: con TOC siempre visible, el botón y el drawer modal estorban. */
+  .crumb .ghost,
+  .drawer {
+    display: none;
+  }
 }
 .nav {
   display: grid;
@@ -201,6 +245,22 @@
 .drawer-words {
   color: var(--mc-fg-muted);
   font-variant-numeric: tabular-nums;
+}
+.drawer-add {
+  margin: var(--mc-space-2);
+  background: transparent;
+  border: 1px dashed var(--mc-border-default);
+  color: var(--mc-fg-muted);
+  font-family: var(--mc-font-sans);
+  font-size: var(--mc-font-size-sm);
+  padding: var(--mc-space-2);
+  border-radius: var(--mc-radius-md);
+  cursor: pointer;
+}
+.drawer-add:hover {
+  color: var(--mc-accent-primary);
+  border-color: var(--mc-accent-primary);
+  background: var(--mc-bg-base);
 }
 @keyframes mc-sk-pulse {
   0%,

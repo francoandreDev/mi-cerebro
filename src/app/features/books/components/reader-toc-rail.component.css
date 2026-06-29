@@ -1,0 +1,99 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  font-family: var(--mc-font-sans);
+}
+.rail {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  padding: var(--mc-space-3) var(--mc-space-2) var(--mc-space-2);
+  gap: var(--mc-space-2);
+}
+.rail-title {
+  margin: 0;
+  padding: 0 var(--mc-space-2);
+  font-size: var(--mc-font-size-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--mc-fg-muted);
+  font-weight: 600;
+}
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+.item {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 2.2em 1fr auto;
+  align-items: baseline;
+  gap: var(--mc-space-2);
+  background: transparent;
+  border: 0;
+  color: var(--mc-fg-muted);
+  text-align: left;
+  cursor: pointer;
+  padding: var(--mc-space-2);
+  border-radius: var(--mc-radius-md);
+  font-size: var(--mc-font-size-sm);
+  font-family: var(--mc-font-serif);
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+.item:hover {
+  background: var(--mc-bg-elevated);
+  color: var(--mc-fg-primary);
+}
+.item.active {
+  background: var(--mc-bg-elevated);
+  color: var(--mc-fg-primary);
+  box-shadow: inset 3px 0 0 var(--mc-accent-primary);
+  padding-left: calc(var(--mc-space-2) + 3px);
+}
+.roman {
+  font-variant: small-caps;
+  letter-spacing: 0.12em;
+  font-size: var(--mc-font-size-xs);
+  color: var(--mc-fg-muted);
+}
+.title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pages {
+  font-family: var(--mc-font-sans);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--mc-font-size-xs);
+  color: var(--mc-fg-muted);
+  opacity: 0.7;
+}
+.add {
+  margin-top: var(--mc-space-2);
+  background: transparent;
+  border: 1px dashed var(--mc-border-default);
+  color: var(--mc-fg-muted);
+  font-family: var(--mc-font-sans);
+  font-size: var(--mc-font-size-sm);
+  padding: var(--mc-space-2);
+  border-radius: var(--mc-radius-md);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+.add:hover {
+  color: var(--mc-accent-primary);
+  border-color: var(--mc-accent-primary);
+  background: var(--mc-bg-elevated);
+}

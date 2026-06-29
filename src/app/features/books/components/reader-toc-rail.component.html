@@ -1,0 +1,26 @@
+<nav class="rail" [attr.aria-label]="t('books.reader.indexTitle')">
+  <h3 class="rail-title">{{ t('books.reader.indexTitle') }}</h3>
+  <ul class="list">
+    @for (it of items(); track it.id) {
+      <li>
+        <button
+          type="button"
+          class="item"
+          [class.active]="it.id === activeChapterId()"
+          (click)="onJump(it.id)"
+        >
+          <span class="roman">{{ it.roman }}</span>
+          <span class="title">{{ it.title }}</span>
+          @if (it.pageStart > 0 && it.pageEnd >= it.pageStart) {
+            <span class="pages">{{ it.pageStart }}–{{ it.pageEnd }}</span>
+          }
+        </button>
+      </li>
+    }
+  </ul>
+  @if (editable()) {
+    <button type="button" class="add" (click)="addChapter.emit()">
+      + {{ t('books.editor.newChapter') }}
+    </button>
+  }
+</nav>
