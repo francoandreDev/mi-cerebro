@@ -1,0 +1,234 @@
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: block;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  border: 0;
+  padding: 0;
+  cursor: default;
+}
+
+/* SHEET — el "libro abierto" centrado. Fondo pergamino, doble página. */
+.sheet {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(960px, 92vw);
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 240, 210, 0.04) 0%, transparent 60%),
+    linear-gradient(180deg, #f4e7c8 0%, #e9d6a5 100%);
+  color: #2e1e0a;
+  border-radius: 6px;
+  box-shadow:
+    0 30px 60px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -2px 8px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-3);
+  padding: var(--mc-space-3) var(--mc-space-4);
+  border-bottom: 1px solid rgba(120, 80, 30, 0.25);
+  background: linear-gradient(180deg, rgba(255, 240, 210, 0.3) 0%, transparent 100%);
+}
+.title {
+  margin: 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: var(--mc-font-size-lg, 1.2rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #4a2f10;
+}
+.meta {
+  font-family: Georgia, serif;
+  font-style: italic;
+  color: rgba(74, 47, 16, 0.7);
+  font-size: var(--mc-font-size-sm);
+}
+.spacer {
+  flex: 1;
+}
+.filter-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.filter-icon {
+  position: absolute;
+  left: 8px;
+  color: rgba(74, 47, 16, 0.55);
+  pointer-events: none;
+}
+.filter {
+  padding: 6px 8px 6px 28px;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(120, 80, 30, 0.3);
+  border-radius: 4px;
+  font-size: var(--mc-font-size-sm);
+  color: #2e1e0a;
+  min-width: 200px;
+  font-family: inherit;
+}
+.filter:focus {
+  outline: none;
+  border-color: rgba(120, 80, 30, 0.6);
+  background: rgba(255, 255, 255, 0.7);
+}
+.filter::-webkit-search-cancel-button {
+  display: none;
+}
+.close {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid rgba(120, 80, 30, 0.3);
+  border-radius: 50%;
+  color: #4a2f10;
+  font-size: 14px;
+  cursor: pointer;
+}
+.close:hover,
+.close:focus-visible {
+  background: rgba(120, 80, 30, 0.15);
+  outline: none;
+}
+
+/* PAGES — dos columnas con un "lomo" sutil en el medio. */
+.pages {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+.pages::before {
+  content: '';
+  position: absolute;
+  left: calc(100% / 2.5);
+  top: 8px;
+  bottom: 8px;
+  width: 1px;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(120, 80, 30, 0.35) 15%,
+    rgba(120, 80, 30, 0.35) 85%,
+    transparent 100%
+  );
+}
+.page {
+  padding: var(--mc-space-3) var(--mc-space-4);
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.page-title {
+  margin: 0 0 var(--mc-space-2);
+  font-family: Georgia, serif;
+  font-size: var(--mc-font-size-sm);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(74, 47, 16, 0.7);
+}
+
+.shelf-list,
+.book-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.shelf-link {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  color: #2e1e0a;
+  font-family: Georgia, serif;
+  font-size: var(--mc-font-size-sm);
+  cursor: pointer;
+  text-align: left;
+}
+.shelf-link:hover,
+.shelf-link:focus-visible {
+  background: rgba(120, 80, 30, 0.12);
+  outline: none;
+}
+.shelf-link.active {
+  background: rgba(120, 80, 30, 0.2);
+  font-weight: 700;
+}
+.shelf-link-count {
+  color: rgba(74, 47, 16, 0.55);
+  font-style: italic;
+}
+
+.book-link {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 6px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  color: #2e1e0a;
+  font-family: Georgia, serif;
+  font-size: var(--mc-font-size-sm);
+  cursor: pointer;
+  text-align: left;
+}
+.book-link:hover,
+.book-link:focus-visible {
+  background: rgba(120, 80, 30, 0.12);
+  outline: none;
+}
+.book-swatch {
+  width: 6px;
+  height: 22px;
+  border-radius: 1px;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+  background: var(--mc-book-accent, #5a4a35);
+}
+.book-title {
+  font-weight: 600;
+}
+.book-chapters {
+  color: rgba(74, 47, 16, 0.6);
+  font-style: italic;
+  font-size: var(--mc-font-size-xs);
+}
+
+.empty {
+  color: rgba(74, 47, 16, 0.55);
+  font-style: italic;
+  margin: var(--mc-space-3) 0;
+}

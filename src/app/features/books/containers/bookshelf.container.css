@@ -35,6 +35,35 @@
 }
 .search-wrap .filter {
   padding-left: calc(var(--mc-space-2) * 2 + 1em);
+  padding-right: calc(var(--mc-space-2) * 2 + 1em);
+}
+/* why: ocultar la X nativa de type=search para no duplicar con .search-clear */
+.search-wrap .filter::-webkit-search-cancel-button {
+  display: none;
+}
+.search-clear {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: var(--mc-fg-muted);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+}
+.search-clear:hover,
+.search-clear:focus-visible {
+  background: var(--mc-bg-elevated);
+  color: var(--mc-fg-primary);
+  outline: none;
 }
 .ops {
   display: flex;
@@ -169,7 +198,140 @@
 .shelves {
   display: flex;
   flex-direction: column;
-  gap: 26px;
+  gap: 32px;
+}
+
+/* SHELF HEAD — chevron + label + contador */
+.shelf-head {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 var(--mc-space-2);
+  margin-bottom: 4px;
+}
+.shelf-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  background: transparent;
+  border: 0;
+  color: #d6a567;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.15s ease;
+}
+.shelf-chevron:hover,
+.shelf-chevron:focus-visible {
+  opacity: 1;
+  outline: none;
+}
+.shelf-count {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: var(--mc-font-size-xs, 0.75rem);
+  color: rgba(214, 165, 103, 0.55);
+  margin-left: 4px;
+}
+
+.shelf-label {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: var(--mc-font-size-sm, 0.9rem);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #d6a567;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);
+  opacity: 0.85;
+}
+
+/* COLLAPSED — esconde bookends/row/plank, deja sólo el head visible. */
+.shelf.collapsed .bookend,
+.shelf.collapsed .row,
+.shelf.collapsed .plank {
+  display: none;
+}
+.shelf.collapsed {
+  padding-bottom: 0;
+}
+.shelf-label-btn {
+  background: transparent;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  /* why: el hover invita a renombrar — borde dashed sutil aparece al pasar. */
+  border-bottom: 1px dashed transparent;
+  transition:
+    opacity 0.15s ease,
+    border-color 0.15s ease;
+}
+.shelf-label-btn:hover,
+.shelf-label-btn:focus-visible {
+  opacity: 1;
+  border-bottom-color: rgba(214, 165, 103, 0.6);
+  outline: none;
+}
+.shelf-label-root {
+  /* "Sin estante" no es renombrable — sin afford visual. */
+  cursor: default;
+}
+.shelf-label-input {
+  grid-column: 1 / -1;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: var(--mc-font-size-sm, 0.9rem);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #d6a567;
+  background: rgba(20, 14, 8, 0.6);
+  border: 1px solid rgba(214, 165, 103, 0.5);
+  border-radius: var(--mc-radius-sm, 4px);
+  padding: 4px var(--mc-space-2);
+  margin-bottom: 4px;
+  max-width: 320px;
+}
+.shelf-label-input:focus {
+  outline: none;
+  border-color: #d6a567;
+}
+
+.shelf-empty {
+  align-self: center;
+  color: rgba(244, 236, 216, 0.45);
+  font-size: var(--mc-font-size-sm);
+  font-style: italic;
+  padding: 40px var(--mc-space-3);
+}
+
+.create-shelf-btn {
+  align-self: flex-start;
+  margin-top: var(--mc-space-2);
+  background: transparent;
+  border: 1px dashed rgba(214, 165, 103, 0.4);
+  color: rgba(214, 165, 103, 0.75);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: var(--mc-font-size-sm);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 8px 16px;
+  border-radius: var(--mc-radius-sm, 4px);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+.create-shelf-btn:hover,
+.create-shelf-btn:focus-visible {
+  border-color: #d6a567;
+  color: #f4ecd8;
+  outline: none;
+}
+.create-shelf {
+  align-self: flex-start;
+  margin-top: var(--mc-space-2);
 }
 
 .shelf {
@@ -178,7 +340,6 @@
   grid-template-columns: auto 1fr auto;
   align-items: flex-end;
   gap: 6px;
-  min-height: 340px;
   padding-bottom: 18px;
 }
 
@@ -218,10 +379,12 @@
 .row {
   display: flex;
   align-items: flex-end;
-  justify-content: center;
+  /* why: pack izquierdo — los libros se apoyan contra el bookend izquierdo
+     como en una estantería real. Centrarlos con pocos libros los hace flotar
+     en el medio del mueble. */
+  justify-content: flex-start;
   gap: 14px;
   padding: 0 18px;
-  min-height: 320px;
   /* why: contexto 3D propio para la rotación del volumen al hover. */
   transform-style: preserve-3d;
   perspective: 1600px;
@@ -287,12 +450,40 @@
   background: transparent;
   border: 0;
   padding: 0;
-  cursor: pointer;
+  cursor: grab;
   display: inline-block;
   transform-style: preserve-3d;
   transition:
-    opacity 0.25s ease,
+    opacity 0.2s ease,
     transform 0.25s ease;
+}
+.slot:active {
+  cursor: grabbing;
+}
+.slot.dragging {
+  opacity: 0.35;
+  filter: blur(0.5px);
+}
+/* INDEX SLOT — el libro-catálogo no se arrastra ni se reordena. */
+.slot-index {
+  cursor: pointer;
+}
+.slot-index:active {
+  cursor: pointer;
+}
+.shelf-index .shelf-label {
+  color: #f4d27a;
+}
+
+/* DRAG OVER — highlight del shelf que recibirá el drop. */
+.row.drag-over {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(214, 165, 103, 0.08) 0%,
+      rgba(214, 165, 103, 0.18) 100%
+    );
+  border-radius: 4px;
 }
 .slot:focus-visible {
   outline: 2px solid var(--mc-accent-primary);

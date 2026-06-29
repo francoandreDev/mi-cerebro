@@ -23,7 +23,7 @@ import { hashColor } from '@shared/utils/hash-color';
       <div class="cover-face back">
         <span class="back-grain" aria-hidden="true"></span>
       </div>
-      <div class="spine">
+      <div class="spine" [attr.data-orient]="spineOrient()">
         <span class="band top" aria-hidden="true"></span>
         <span class="spine-title">{{ displayTitle() }}</span>
         <span class="band bottom" aria-hidden="true"></span>
@@ -40,6 +40,7 @@ import { hashColor } from '@shared/utils/hash-color';
     '[style.--mc-vol-h]': 'height() + "px"',
     '[style.--mc-vol-w]': 'thickness() + "px"',
     '[style.--mc-vol-d]': 'coverWidth() + "px"',
+    '[style.--mc-spine-font]': 'spineFontSize() + "px"',
   },
 })
 export class BookVolumeComponent {
@@ -50,6 +51,10 @@ export class BookVolumeComponent {
   readonly tallness = input<'short' | 'medium' | 'tall'>('medium');
   readonly chapterCount = input<number>(0);
   readonly accent = input<string | null>(null);
+  // why: density 'compact' reduce dimensiones a ~65% para vistas densas
+  //      (estantería compacta). El lomo sigue legible porque el font escala
+  //      proporcionalmente con `thickness`.
+  readonly density = input<'normal' | 'compact'>('normal');
 
   protected readonly palette = computed(() => {
     const a = this.accent();
@@ -57,25 +62,36 @@ export class BookVolumeComponent {
     return hashColor(this.bookId());
   });
   protected readonly displayTitle = computed(() => this.title() || this.untitledLabel());
+  private readonly densityScale = computed(() => (this.density() === 'compact' ? 0.65 : 1));
   protected readonly height = computed(() => {
-    switch (this.tallness()) {
-      case 'short':
-        return 250;
-      case 'tall':
-        return 320;
-      default:
-        return 285;
-    }
+    const base = this.tallness() === 'short' ? 250 : this.tallness() === 'tall' ? 320 : 285;
+    return Math.round(base * this.densityScale());
   });
   // why: grosor entre 44 y 92 px según capítulos — siente la diferencia
   //      visualmente entre libros chicos y monumentales sin escalar lineal.
   protected readonly thickness = computed(() => {
     const n = this.chapterCount();
-    if (n <= 1) return 48;
-    if (n <= 3) return 58;
-    if (n <= 6) return 68;
-    if (n <= 10) return 78;
-    return 92;
+    const base = n <= 1 ? 48 : n <= 3 ? 58 : n <= 6 ? 68 : n <= 10 ? 78 : 92;
+    return Math.round(base * this.densityScale());
   });
-  protected readonly coverWidth = computed(() => 180);
+  protected readonly coverWidth = computed(() => Math.round(180 * this.densityScale()));
+  // why: tamaño de fuente del lomo escala con el grosor — un libro gordo
+  //      aguanta una tipografía más grande sin desbordar a lo ancho.
+  protected readonly spineFontSize = computed(() => {
+    const t = this.thickness();
+    if (t >= 78) return 17;
+    if (t >= 68) return 16;
+    if (t >= 58) return 15;
+    return 14;
+  });
+  // why: títulos cortos sin espacios leen mejor horizontales (como en libros
+  //      reales con título de una palabra). Condición doble: pocos chars Y
+  //      lomo grueso — sino un "LOBRO" en lomo angosto se trunca a "LO...".
+  protected readonly spineOrient = computed<'horizontal' | 'vertical'>(() => {
+    const title = this.displayTitle().trim();
+    if (title.length === 0 || title.includes(' ')) return 'vertical';
+    if (title.length <= 3) return 'horizontal';
+    if (title.length <= 5 && this.thickness() >= 68) return 'horizontal';
+    return 'vertical';
+  });
 }

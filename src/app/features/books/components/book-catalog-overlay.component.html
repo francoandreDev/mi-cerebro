@@ -1,0 +1,92 @@
+<button
+  type="button"
+  class="backdrop"
+  [attr.aria-label]="t('books.catalog.close')"
+  (click)="onClose()"
+  (keydown.escape)="onClose()"
+></button>
+<div class="sheet" role="dialog" [attr.aria-label]="t('books.catalog.title')">
+  <header class="head">
+    <h2 class="title">{{ t('books.catalog.title') }}</h2>
+    <span class="meta">{{ t('books.catalog.totalBooks', { count: totalBooks() }) }}</span>
+    <span class="spacer"></span>
+    <div class="filter-wrap">
+      <mc-icon name="magnifying-glass" class="filter-icon" />
+      <input
+        type="search"
+        class="filter"
+        [placeholder]="t('books.catalog.filter')"
+        [attr.aria-label]="t('books.catalog.filter')"
+        [value]="query()"
+        (input)="onQuery($event)"
+        (keydown.escape)="onClose()"
+      />
+    </div>
+    <button
+      type="button"
+      class="close"
+      [attr.aria-label]="t('books.catalog.close')"
+      [title]="t('books.catalog.close')"
+      (click)="onClose()"
+    >
+      ✕
+    </button>
+  </header>
+
+  <div class="pages">
+    <section class="page page-left" aria-label="Estantes">
+      <h3 class="page-title">{{ t('books.catalog.shelves') }}</h3>
+      <ul class="shelf-list">
+        <li>
+          <button
+            type="button"
+            class="shelf-link"
+            [class.active]="selectedFolder() === null"
+            (click)="selectShelf(null)"
+          >
+            <span class="shelf-link-label">{{ t('books.catalog.allShelves') }}</span>
+            <span class="shelf-link-count">{{ totalBooks() }}</span>
+          </button>
+        </li>
+        @for (s of shelves(); track s.folder) {
+          <li>
+            <button
+              type="button"
+              class="shelf-link"
+              [class.active]="selectedFolder() === s.folder"
+              (click)="selectShelf(s.folder)"
+            >
+              <span class="shelf-link-label">{{ s.label }}</span>
+              <span class="shelf-link-count">{{ s.books.length }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+    </section>
+
+    <section class="page page-right" aria-label="Libros">
+      <h3 class="page-title">{{ t('books.catalog.books') }}</h3>
+      @if (visibleBooks().length === 0) {
+        <p class="empty">{{ t('books.catalog.empty') }}</p>
+      } @else {
+        <ul class="book-list">
+          @for (b of visibleBooks(); track b.id) {
+            <li>
+              <button type="button" class="book-link" (click)="onBookClick(b.id)">
+                <span
+                  class="book-swatch"
+                  aria-hidden="true"
+                  [style.--mc-book-accent]="b.accent ?? '#5a4a35'"
+                ></span>
+                <span class="book-title">{{ displayTitle(b) }}</span>
+                <span class="book-chapters">{{
+                  t('books.catalog.chapters', { count: b.chapterCount })
+                }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  </div>
+</div>

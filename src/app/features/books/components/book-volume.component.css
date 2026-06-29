@@ -86,32 +86,35 @@
 }
 
 .spine-title {
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 13px;
+  font-size: var(--mc-spine-font, 15px);
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
-  max-height: 100%;
+  /* why: color sólido legible. Antes era un gradient con `background-clip:
+     text + color: transparent` (foil) que sobre fondos saturados quedaba
+     gris bajo. Sombra fuerte da relieve sin matar contraste. */
+  color: var(--mc-vol-fg, #f4ecd8);
   text-shadow:
-    0 1px 0 rgba(0, 0, 0, 0.65),
-    0 0 8px rgba(0, 0, 0, 0.25);
+    0 1px 1px rgba(0, 0, 0, 0.75),
+    0 0 6px rgba(0, 0, 0, 0.35);
   padding: 0 4px;
-  /* why: foil-like — el título "dorado" se logra mezclando el fg con un
-     reflejo cálido. */
-  background: linear-gradient(
-      90deg,
-      color-mix(in srgb, var(--mc-vol-fg, #efefef) 70%, #d4af37 30%) 0%,
-      var(--mc-vol-fg, #efefef) 50%,
-      color-mix(in srgb, var(--mc-vol-fg, #efefef) 70%, #d4af37 30%) 100%
-    );
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+}
+/* Vertical (default): lomo angosto con título rotado. */
+.spine[data-orient='vertical'] .spine-title {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  max-height: 100%;
+}
+/* Horizontal: títulos cortos (≤5 chars) — más legibles en lomo grueso. */
+.spine[data-orient='horizontal'] .spine-title {
+  writing-mode: horizontal-tb;
+  max-width: 100%;
+  text-align: center;
+  font-size: calc(var(--mc-spine-font, 15px) + 1px);
 }
 
 /* COVER FRONT — sale al hover (rotada 90° respecto al spine) */

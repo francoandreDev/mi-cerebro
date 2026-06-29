@@ -220,6 +220,25 @@ export class BooksService {
     await this.refresh();
   }
 
+  // why: rename de un "estante" (= folder en disco) se resuelve moviendo cada
+  //      libro del folder viejo al nuevo. moveBookToFolder ya crea el destino
+  //      si no existe y borra el dir del libro en el origen; al final del loop
+  //      el folder viejo queda vacío (su dir físico puede sobrevivir hasta el
+  //      próximo refresh). Devuelve cantidad de libros movidos.
+  async renameShelf(oldFolder: string, newFolder: string): Promise<number> {
+    if (oldFolder === '' || oldFolder === newFolder.trim()) return 0;
+    const target = newFolder.trim();
+    if (target === '') return 0;
+    const ids = this.summariesSignal()
+      .filter((s) => s.folder === oldFolder)
+      .map((s) => s.id);
+    for (const id of ids) {
+      await this.moveBookToFolder(id, target);
+    }
+    this.foldersSignal.update((curr) => curr.filter((f) => f !== oldFolder));
+    return ids.length;
+  }
+
   async moveBookToFolder(id: string, newFolder: string): Promise<void> {
     const loc = this.requireLoc(id);
     if (loc.folder === newFolder) return;
