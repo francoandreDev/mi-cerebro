@@ -6,6 +6,7 @@ import {
   effect,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { Router } from '@angular/router';
 
@@ -238,7 +239,12 @@ export class GalleriesIndexContainer {
   }
 
   private revokePreviewUrls(): void {
-    for (const url of Object.values(this.previewUrls())) URL.revokeObjectURL(url);
+    // why: called from inside effects — reading previewUrls() would register
+    //      it as a tracked dep, and the subsequent .set({}) creates a new
+    //      object ref that re-triggers the effect, causing an infinite loop.
+    const urls = untracked(() => this.previewUrls());
+    if (Object.keys(urls).length === 0) return;
+    for (const url of Object.values(urls)) URL.revokeObjectURL(url);
     this.previewUrls.set({});
   }
 }

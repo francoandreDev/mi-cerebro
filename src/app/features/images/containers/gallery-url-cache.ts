@@ -1,4 +1,4 @@
-import { signal } from '@angular/core';
+import { signal, untracked } from '@angular/core';
 
 import type { Gallery } from '../models/gallery.types';
 import type { GalleriesService } from '../services/galleries.service';
@@ -55,9 +55,14 @@ export class GalleryUrlCache {
   }
 
   revokeAll(): void {
-    for (const url of Object.values(this.thumbs())) URL.revokeObjectURL(url);
-    for (const url of Object.values(this.originals())) URL.revokeObjectURL(url);
-    this.thumbs.set({});
-    this.originals.set({});
+    // why: called from inside effects — reading thumbs()/originals() would
+    //      register them as tracked deps, and the subsequent .set({}) would
+    //      create new object refs that re-trigger the effect.
+    const thumbs = untracked(() => this.thumbs());
+    const originals = untracked(() => this.originals());
+    for (const url of Object.values(thumbs)) URL.revokeObjectURL(url);
+    for (const url of Object.values(originals)) URL.revokeObjectURL(url);
+    if (Object.keys(thumbs).length > 0) this.thumbs.set({});
+    if (Object.keys(originals).length > 0) this.originals.set({});
   }
 }
