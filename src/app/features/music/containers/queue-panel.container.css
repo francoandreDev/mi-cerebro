@@ -87,13 +87,27 @@
 .queue-row.current {
   background: var(--mc-bg-selected);
 }
-.queue-title {
+.queue-meta {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.queue-title {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: var(--mc-font-size-xs);
+}
+.queue-artist {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+  color: var(--mc-fg-muted);
 }
 .queue-play {
   background: transparent;

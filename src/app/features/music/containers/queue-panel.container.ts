@@ -31,13 +31,21 @@ export class QueuePanelContainer {
     return q.trackIds
       .map((id, i) => {
         const t = byId.get(id);
-        return t
-          ? { id: t.id, originalName: t.originalName, isCurrent: i === q.index, index: i }
-          : null;
+        if (!t) return null;
+        const title = (t.title?.trim() || t.originalName).trim();
+        const artist = t.artist?.trim() ?? null;
+        return { id: t.id, title, artist, isCurrent: i === q.index, index: i };
       })
       .filter(
-        (x): x is { id: string; originalName: string; isCurrent: boolean; index: number } =>
-          x !== null,
+        (
+          x,
+        ): x is {
+          id: string;
+          title: string;
+          artist: string | null;
+          isCurrent: boolean;
+          index: number;
+        } => x !== null,
       );
   });
 

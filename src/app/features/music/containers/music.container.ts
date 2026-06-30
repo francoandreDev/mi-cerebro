@@ -14,9 +14,12 @@ import { PlaylistsService } from '../services/playlists.service';
 import { AlbumLibraryContainer } from './album-library.container';
 import { NowPlayingContainer } from './now-playing.container';
 import { PlaylistEditorContainer } from './playlist-editor.container';
+import { PlaylistsPanelContainer } from './playlists-panel.container';
 import { QueuePanelContainer } from './queue-panel.container';
-import { hasTrackDrag, parseTrackDragPayload } from './music.dnd';
+import { ResonantSurfaceContainer } from './resonant-surface.container';
 import { registerMusicShortcuts } from './music.shortcuts';
+
+type LeftView = 'albums' | 'playlists';
 
 @Component({
   selector: 'mc-music',
@@ -25,8 +28,10 @@ import { registerMusicShortcuts } from './music.shortcuts';
     IconComponent,
     AlbumLibraryContainer,
     PlaylistEditorContainer,
+    PlaylistsPanelContainer,
     NowPlayingContainer,
     QueuePanelContainer,
+    ResonantSurfaceContainer,
   ],
   templateUrl: './music.container.html',
   styleUrl: './music.container.css',
@@ -41,8 +46,7 @@ export class MusicContainer {
   protected readonly playlistSummaries = this.playlists.summaries;
   protected readonly active = signal<Playlist | null>(null);
   protected readonly currentSourceId = this.player.currentSourceId;
-
-  protected readonly railDropTargetId = signal<string | null>(null);
+  protected readonly leftView = signal<LeftView>('albums');
 
   private readonly albumLib = viewChild(AlbumLibraryContainer);
 
@@ -50,7 +54,12 @@ export class MusicContainer {
     registerMusicShortcuts({
       togglePlay: () => void this.player.toggle(),
       newPlaylist: () => void this.onCreatePlaylist(),
-      focusSearch: () => this.albumLib()?.focusSearch(),
+      focusSearch: () => {
+        this.leftView.set('albums');
+        queueMicrotask(() => this.albumLib()?.focusSearch());
+      },
+      togglePlaylistsView: () =>
+        this.leftView.update((v) => (v === 'playlists' ? 'albums' : 'playlists')),
     });
   }
 
@@ -58,33 +67,13 @@ export class MusicContainer {
     return this.i18n.t(key);
   }
 
-  protected onRailDragOver(playlistId: string, event: DragEvent): void {
-    if (!event.dataTransfer || !hasTrackDrag(event)) return;
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'copy';
-    this.railDropTargetId.set(playlistId);
+  protected onSelectLeftView(view: LeftView): void {
+    this.leftView.set(view);
   }
 
-  protected onRailDragLeave(): void {
-    this.railDropTargetId.set(null);
-  }
-
-  protected async onRailDrop(playlistId: string, event: DragEvent): Promise<void> {
-    this.railDropTargetId.set(null);
-    if (!hasTrackDrag(event)) return;
-    event.preventDefault();
-    const ids = parseTrackDragPayload(event);
-    if (ids.length === 0) return;
-    await this.mergeIntoPlaylist(playlistId, ids);
-  }
-
-  private async mergeIntoPlaylist(playlistId: string, ids: readonly string[]): Promise<void> {
+  protected async onSelectPlaylistFromPanel(summary: PlaylistSummary): Promise<void> {
     try {
-      const pl = await this.playlists.read(playlistId);
-      const merged = [...pl.trackIds];
-      for (const id of ids) if (!merged.includes(id)) merged.push(id);
-      const updated = await this.playlists.save({ ...pl, trackIds: merged });
-      if (this.active()?.id === updated.id) this.active.set(updated);
+      this.active.set(await this.playlists.read(summary.id));
     } catch (e) {
       this.errors.report(e);
     }
@@ -97,14 +86,6 @@ export class MusicContainer {
       this.active.set(created);
     } catch (e) {
       this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize()));
-    }
-  }
-
-  protected async onSelectPlaylist(summary: PlaylistSummary): Promise<void> {
-    try {
-      this.active.set(await this.playlists.read(summary.id));
-    } catch (e) {
-      this.errors.report(e);
     }
   }
 

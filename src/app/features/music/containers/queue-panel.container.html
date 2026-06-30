@@ -34,7 +34,12 @@
             <mc-icon name="play" />
           }
         </button>
-        <span class="queue-title">{{ row.originalName }}</span>
+        <span class="queue-meta">
+          <span class="queue-title">{{ row.title }}</span>
+          @if (row.artist) {
+            <span class="queue-artist">{{ row.artist }}</span>
+          }
+        </span>
         <button
           type="button"
           class="ghost"

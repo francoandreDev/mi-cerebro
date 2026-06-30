@@ -1,0 +1,39 @@
+<header class="zone-head">
+  <h3>
+    <mc-icon name="list-bullets" class="zone-head-icon" />
+    {{ t('music.playlists') }} ({{ summaries().length }})
+  </h3>
+  <button type="button" class="primary mc-hover-grow" (click)="onCreate()">
+    <mc-icon name="plus" />
+    <span>{{ t('music.newPlaylist') }}</span>
+  </button>
+</header>
+
+@if (summaries().length === 0) {
+  <p class="empty">
+    <mc-icon name="star" class="empty-icon mc-anim-float" />
+    <span>{{ t('music.modal.playlists.empty') }}</span>
+  </p>
+} @else {
+  <ul class="pl-list">
+    @for (p of summaries(); track p.id) {
+      <li>
+        <button
+          type="button"
+          [class.now-playing]="currentSourceId() === p.id"
+          (click)="onSelect(p)"
+        >
+          <span class="pl-title">
+            @if (currentSourceId() === p.id) {
+              <span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>
+            } @else if (p.favorite) {
+              <mc-icon name="star-fill" />
+            }
+            <span class="pl-name">{{ p.title || t('music.untitledPlaylist') }}</span>
+          </span>
+          <span class="count">{{ p.trackCount }}</span>
+        </button>
+      </li>
+    }
+  </ul>
+}

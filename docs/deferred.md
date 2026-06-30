@@ -274,6 +274,17 @@ Formato por entrada:
 
 ---
 
+## Música — Playlists tab (origen: redesign-music-v2 Fases 11–12)
+
+### Drag-and-drop de tracks de la biblioteca a una playlist
+
+- **Qué**: en v1 las playlists vivían en una columna lateral persistente: el usuario podía arrastrar tracks desde la tabla de biblioteca y soltarlos sobre una fila de playlist para mergearlos. v2 alterna la columna izquierda entre vista "Álbumes" y vista "Playlists" — las dos vistas son mutuamente excluyentes, así que el gesto "arranco un drag desde un álbum y suelto sobre una fila de playlist" no es posible sin un switch de vista en medio del drag.
+- **Por qué se difirió**: la alternativa accesible (auto-switch de tab al pasar el drag sobre el tab "Playlists", o un mini-rail flotante de playlists durante el drag) ramifica la UX sin caso de uso claro. La acción equivalente sigue cubierta sin DnD por la vista del editor de playlist (`mc-playlist-editor` → "+ Añadir canciones" con buscador), así que no se pierde la operación, sólo la conveniencia del drag global.
+- **Target**: sin asignar — abrir si el flujo "agregar tracks a playlist desde la biblioteca" se siente lento en uso real.
+- **Origen**: redesign-music-v2 Fase 11 (modal) → reafirmado en Fase 12 (tab alternable).
+
+---
+
 ## Música — Cover art / Waveform ID3 (origen: redesign-music Fase 9)
 
 ### Cover art y duración leídos de ID3 con `jsmediatags`

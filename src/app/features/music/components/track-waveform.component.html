@@ -1,0 +1,10 @@
+<canvas
+  #canvas
+  class="wf-canvas"
+  [class.loading]="status() === 'loading'"
+  [class.failed]="status() === 'failed'"
+  (pointerdown)="onPointerDown($event)"
+  (pointermove)="onPointerMove($event)"
+  (pointerup)="onPointerUp($event)"
+  (pointerleave)="onPointerLeave()"
+></canvas>

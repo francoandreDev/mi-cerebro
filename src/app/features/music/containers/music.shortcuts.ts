@@ -7,6 +7,7 @@ export interface MusicShortcutHandlers {
   readonly togglePlay: () => void;
   readonly newPlaylist: () => void;
   readonly focusSearch: () => void;
+  readonly togglePlaylistsView: () => void;
 }
 
 export const registerMusicShortcuts = (handlers: MusicShortcutHandlers): void => {
@@ -30,6 +31,12 @@ export const registerMusicShortcuts = (handlers: MusicShortcutHandlers): void =>
       labelKey: 'music.shortcuts.focusSearch',
       scope: 'editable-safe',
       handler: handlers.focusSearch,
+    },
+    {
+      combo: 'p',
+      labelKey: 'music.shortcuts.togglePlaylistsView',
+      scope: 'editable-safe',
+      handler: handlers.togglePlaylistsView,
     },
   ];
   const unsubs = bindings.map((b) => shortcuts.register(b));

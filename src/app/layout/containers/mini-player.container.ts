@@ -86,10 +86,10 @@ import { IconComponent } from '@shared/icon/icon.component';
           </button>
           <button
             type="button"
-            [class.active]="player.repeat() === 'all'"
+            [class.active]="player.repeat() === 'one'"
             (click)="player.toggleRepeat()"
             [attr.aria-label]="t('music.repeat')"
-            [title]="t('music.repeat')"
+            [title]="repeatTitle()"
           >
             <mc-icon name="arrows-clockwise" />
           </button>
@@ -199,6 +199,10 @@ export class MiniPlayerContainer {
 
   protected t(key: TranslationKey): string {
     return this.i18n.t(key);
+  }
+
+  protected repeatTitle(): string {
+    return this.i18n.t(this.player.repeat() === 'one' ? 'music.repeat.one' : 'music.repeat.off');
   }
 
   protected goToMusic(): void {

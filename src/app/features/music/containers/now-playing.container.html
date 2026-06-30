@@ -3,108 +3,51 @@
 </header>
 @if (currentTrack(); as np) {
   <div class="np-card">
-    <div class="np-art" aria-hidden="true">
-      <mc-icon name="music-notes" />
+    <div class="np-art" [class.has-cover]="coverUrlRead() !== null" aria-hidden="true">
+      @if (coverUrlRead(); as url) {
+        <img [src]="url" [alt]="displayAlbum() || displayTitle() || np.originalName" />
+      } @else {
+        <mc-icon name="music-notes" />
+      }
     </div>
-    <p class="np-title">{{ np.originalName }}</p>
-    @if (sourceTitle(); as src) {
-      <p class="np-source">{{ src }}</p>
-    }
-    <div class="np-seek">
-      <span class="np-time">{{ formatTime(currentTime()) }}</span>
-      <input
-        type="range"
-        class="np-seek-input"
-        min="0"
-        [max]="duration() || 0"
-        step="0.5"
-        [value]="currentTime()"
-        (input)="onSeek(asInput($event.target).valueAsNumber)"
-        [attr.aria-label]="t('music.seek')"
+    <div class="np-meta-block">
+      <p class="np-title" [title]="np.originalName">{{ displayTitle() }}</p>
+      @if (displayArtist() || displayAlbum()) {
+        <p class="np-meta">
+          @if (displayArtist(); as a) {
+            <span class="np-artist">{{ a }}</span>
+          }
+          @if (displayArtist() && displayAlbum()) {
+            <span class="np-meta-sep" aria-hidden="true">·</span>
+          }
+          @if (displayAlbum(); as al) {
+            <span class="np-album">{{ al }}</span>
+          }
+        </p>
+      }
+      @if (sourceTitle(); as src) {
+        <p class="np-source">{{ src }}</p>
+      }
+    </div>
+    <div
+      class="np-waveform"
+      role="slider"
+      [attr.aria-label]="t('music.waveform.aria')"
+      [attr.aria-valuemin]="0"
+      [attr.aria-valuemax]="duration() || 0"
+      [attr.aria-valuenow]="currentTime()"
+    >
+      <mc-track-waveform
+        [peaks]="waveformPeaks()"
+        [currentTime]="currentTime()"
+        [duration]="duration()"
+        [status]="waveformStatus()"
+        (seek)="onSeek($event)"
       />
-      <span class="np-time">{{ formatTime(duration()) }}</span>
-    </div>
-    <div class="np-controls">
-      <button
-        type="button"
-        class="icon-btn"
-        [class.fav-active]="shuffle()"
-        (click)="onToggleShuffle()"
-        [title]="t('music.shuffle')"
-        [attr.aria-label]="t('music.shuffle')"
-        [attr.aria-pressed]="shuffle()"
-      >
-        <mc-icon name="shuffle" />
-      </button>
-      <button
-        type="button"
-        class="icon-btn"
-        (click)="onPrev()"
-        [title]="t('music.prev')"
-        [attr.aria-label]="t('music.prev')"
-      >
-        <mc-icon name="skip-back" />
-      </button>
-      <button
-        type="button"
-        class="icon-btn np-skip"
-        (click)="onSkip(-10)"
-        [title]="t('music.skipBack10')"
-        [attr.aria-label]="t('music.skipBack10')"
-      >
-        −10s
-      </button>
-      <button
-        type="button"
-        class="icon-btn np-toggle"
-        (click)="onTogglePlay()"
-        [title]="t('music.playPause')"
-        [attr.aria-label]="t('music.playPause')"
-      >
-        @if (isPlaying()) {
-          <mc-icon name="pause" />
-        } @else {
-          <mc-icon name="play" />
-        }
-      </button>
-      <button
-        type="button"
-        class="icon-btn np-skip"
-        (click)="onSkip(10)"
-        [title]="t('music.skipForward10')"
-        [attr.aria-label]="t('music.skipForward10')"
-      >
-        +10s
-      </button>
-      <button
-        type="button"
-        class="icon-btn"
-        (click)="onNext()"
-        [title]="t('music.next')"
-        [attr.aria-label]="t('music.next')"
-      >
-        <mc-icon name="skip-forward" />
-      </button>
-      <button
-        type="button"
-        class="icon-btn"
-        [class.fav-active]="repeat() === 'all'"
-        (click)="onToggleRepeat()"
-        [title]="t('music.repeat')"
-        [attr.aria-label]="t('music.repeat')"
-        [attr.aria-pressed]="repeat() === 'all'"
-      >
-        <mc-icon name="arrows-clockwise" />
-      </button>
-      <button
-        type="button"
-        class="icon-btn"
-        (click)="onStop()"
-        [title]="t('music.stop')"
-        [attr.aria-label]="t('music.stop')"
-      >
-        ✕
-      </button>
+      <div class="np-times">
+        <span class="np-time">{{ formatTime(currentTime()) }}</span>
+        <span class="np-time">{{ formatTime(duration()) }}</span>
+      </div>
     </div>
   </div>
 } @else {

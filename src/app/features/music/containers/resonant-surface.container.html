@@ -1,0 +1,14 @@
+<div
+  class="surface"
+  role="img"
+  [attr.aria-label]="t('music.surface.aria')"
+  [title]="t('music.surface.volumeNote')"
+>
+  <canvas #canvas class="canvas"></canvas>
+  @if (!hasAudioPipeline()) {
+    <p class="caption caption-warn">{{ t('music.surface.noAudioGraph') }}</p>
+  } @else if (!isPlaying()) {
+    <p class="caption">{{ t('music.surface.idleHint') }}</p>
+    <p class="caption caption-sub">{{ t('music.surface.volumeNote') }}</p>
+  }
+</div>

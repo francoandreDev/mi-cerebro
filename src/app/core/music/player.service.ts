@@ -4,7 +4,7 @@ import { MusicLibraryService } from '@features/music/services/music-library.serv
 
 import { AudioGraph } from './audio-graph';
 
-type RepeatMode = 'off' | 'all';
+type RepeatMode = 'off' | 'one';
 
 interface QueueState {
   readonly trackIds: readonly string[];
@@ -44,7 +44,7 @@ export class PlayerService {
   readonly queue = this.queueSignal.asReadonly();
   private readonly playingSignal = signal(false);
   readonly isPlaying = this.playingSignal.asReadonly();
-  private readonly shuffleSignal = signal(true);
+  private readonly shuffleSignal = signal(false);
   readonly shuffle = this.shuffleSignal.asReadonly();
   private readonly repeatSignal = signal<RepeatMode>('off');
   readonly repeat = this.repeatSignal.asReadonly();
@@ -130,7 +130,9 @@ export class PlayerService {
     const q = this.queueSignal();
     if (q.trackIds.length === 0) return;
     const last = q.index >= q.trackIds.length - 1;
-    if (last && this.repeatSignal() === 'off' && q.trackIds.length > 1) {
+    // why: manual `next` while repeat is active should still advance —
+    // the single-track loop only applies to natural end-of-track (audio.loop).
+    if (last && q.trackIds.length > 1) {
       this.audio.pause();
       return;
     }
@@ -166,9 +168,7 @@ export class PlayerService {
       return;
     }
     if (turningOn) {
-      const startIdx = q.originalOrder.indexOf(currentId);
-      const shuffled = shuffleFrom(q.originalOrder, startIdx >= 0 ? startIdx : 0);
-      this.queueSignal.set({ trackIds: shuffled, index: 0, originalOrder: q.originalOrder });
+      this.applyShuffledQueue(q.originalOrder, currentId);
     } else {
       const order = q.originalOrder.length > 0 ? q.originalOrder : [...q.trackIds];
       const newIdx = Math.max(0, order.indexOf(currentId));
@@ -178,8 +178,16 @@ export class PlayerService {
   }
 
   toggleRepeat(): void {
-    this.repeatSignal.update((m) => (m === 'off' ? 'all' : 'off'));
+    const next: RepeatMode = this.repeatSignal() === 'off' ? 'one' : 'off';
+    this.repeatSignal.set(next);
+    this.audio.loop = next === 'one';
     this.persist();
+  }
+
+  private applyShuffledQueue(originalOrder: readonly string[], currentId: string): void {
+    const startIdx = originalOrder.indexOf(currentId);
+    const shuffled = shuffleFrom(originalOrder, startIdx >= 0 ? startIdx : 0);
+    this.queueSignal.set({ trackIds: shuffled, index: 0, originalOrder });
   }
 
   async jumpTo(index: number): Promise<void> {
@@ -314,7 +322,9 @@ export class PlayerService {
     if (trackIds.length === 0) return;
     const index = Math.min(Math.max(0, parsed.index ?? 0), trackIds.length - 1);
     this.shuffleSignal.set(parsed.shuffle === true);
-    this.repeatSignal.set(parsed.repeat === 'all' ? 'all' : 'off');
+    const repeat: RepeatMode = parsed.repeat === 'one' ? 'one' : 'off';
+    this.repeatSignal.set(repeat);
+    this.audio.loop = repeat === 'one';
     this.currentSourceSignal.set(parsed.sourceId ?? null);
     this.queueSignal.set({ trackIds, index, originalOrder });
     await this.loadCurrent(false, parsed.currentTime || 0);
