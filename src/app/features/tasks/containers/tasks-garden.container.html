@@ -69,9 +69,9 @@
       [title]="t('tasks.garden.planterToday')"
       [emptyLabel]="t('tasks.garden.empty.today')"
       [count]="pending().today.length"
-      [dragOver]="dragOverBucket() === 'today'"
-      (dragEnter)="onDragEnter($event)"
-      (dragLeaveBucket)="onDragLeaveBucket($event)"
+      [dragOver]="dnd.overZone() === 'today'"
+      (dragEnter)="dnd.onDragEnter($event)"
+      (dragLeaveBucket)="dnd.onDragLeave($event)"
       (dropOn)="onDrop($event)"
     >
       @for (entry of pending().today; track entry.summary.id) {
@@ -85,8 +85,8 @@
           (transplant)="onTransplant($event)"
           (harvest)="onHarvest($event)"
           (remove)="onDelete($event)"
-          (dragstart)="onDragStart($event, entry.summary.id)"
-          (dragend)="onDragEnd()"
+          (dragstart)="dnd.onDragStart($event, entry.summary.id)"
+          (dragend)="dnd.onDragEnd()"
         />
       }
       <div basket class="basket-stack">
@@ -103,9 +103,9 @@
       [title]="t('tasks.garden.planterWeek')"
       [emptyLabel]="t('tasks.garden.empty.week')"
       [count]="pending().week.length"
-      [dragOver]="dragOverBucket() === 'week'"
-      (dragEnter)="onDragEnter($event)"
-      (dragLeaveBucket)="onDragLeaveBucket($event)"
+      [dragOver]="dnd.overZone() === 'week'"
+      (dragEnter)="dnd.onDragEnter($event)"
+      (dragLeaveBucket)="dnd.onDragLeave($event)"
       (dropOn)="onDrop($event)"
     >
       @for (entry of pending().week; track entry.summary.id) {
@@ -118,8 +118,8 @@
           (transplant)="onTransplant($event)"
           (harvest)="onHarvest($event)"
           (remove)="onDelete($event)"
-          (dragstart)="onDragStart($event, entry.summary.id)"
-          (dragend)="onDragEnd()"
+          (dragstart)="dnd.onDragStart($event, entry.summary.id)"
+          (dragend)="dnd.onDragEnd()"
         />
       }
     </mc-planter>
@@ -130,9 +130,9 @@
       [title]="t('tasks.garden.planterBacklog')"
       [emptyLabel]="t('tasks.garden.empty.backlog')"
       [count]="pending().backlog.length"
-      [dragOver]="dragOverBucket() === 'backlog'"
-      (dragEnter)="onDragEnter($event)"
-      (dragLeaveBucket)="onDragLeaveBucket($event)"
+      [dragOver]="dnd.overZone() === 'backlog'"
+      (dragEnter)="dnd.onDragEnter($event)"
+      (dragLeaveBucket)="dnd.onDragLeave($event)"
       (dropOn)="onDrop($event)"
     >
       @for (entry of pending().backlog; track entry.summary.id) {
@@ -145,8 +145,8 @@
           (transplant)="onTransplant($event)"
           (harvest)="onHarvest($event)"
           (remove)="onDelete($event)"
-          (dragstart)="onDragStart($event, entry.summary.id)"
-          (dragend)="onDragEnd()"
+          (dragstart)="dnd.onDragStart($event, entry.summary.id)"
+          (dragend)="dnd.onDragEnd()"
         />
       }
     </mc-planter>

@@ -393,14 +393,6 @@ Formato por entrada:
 - **Por qué se difirió**: requiere exponer un signal global de "overdue count" desde `RemindersService` y agregar slot de badge en el rail (que hoy no tiene). Cambio cruza capa de layout — fuera de scope del rediseño de la página en sí.
 - **Target**: sin asignar.
 
-## Tareas (origen: rediseño /tasks)
-
-### Drag & drop entre columnas (Hoy / Semana / Backlog)
-
-- **Qué**: arrastrar una card de tarea entre columnas para cambiar su horizonte (mismo efecto que el patch de `dueDates` que hoy hacen los botones de mover). HTML5 DnD nativo + alternativa por teclado (focused card + Shift+→/← mueve a la columna siguiente/anterior).
-- **Por qué se difirió**: la sesión cerró con botones explícitos "Hoy / Semana / Backlog" en cada card que ya cubren la operación de forma accesible por teclado (tab al botón + enter). DnD nativo agrega un helper compartido en `shared/utils/dnd.ts` + manejo de dragover/drop a nivel column + teclas Shift+flecha que conviene resolver junto con la misma pieza en `/lists` (drag de ítems dentro del detalle) para no duplicar el patrón.
-- **Target**: sin asignar — abrir junto al rediseño de `/lists` o cuando aparezca dolor real.
-
 ## Archivos (origen: rediseño /files — tablero de evidencia)
 
 ### Hilos entre items relacionados
@@ -462,12 +454,6 @@ Formato por entrada:
 - **Target**: sin asignar.
 
 ## Listas — Tiza sobre pizarra (origen: schema v4, 2026-06-25)
-
-### Drag-and-drop para reordenar capas
-
-- **Qué**: hoy el panel de capas en `/lists/:id` ofrece botones ↑/↓ para mover una capa una posición. La forma natural es drag de la fila completa con preview del nuevo z-order.
-- **Por qué se difirió**: el caso con 2-3 capas se cubre con los botones; DnD requiere un helper compartido (mismo `shared/utils/dnd.ts` que ya está deferido para tasks/lists/files). Conviene resolverlo en una pasada cross-feature.
-- **Target**: sin asignar — junto con el DnD compartido.
 
 ### Atajos directos a herramientas y colores
 

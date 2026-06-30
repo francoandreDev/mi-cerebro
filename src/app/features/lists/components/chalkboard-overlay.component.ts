@@ -30,6 +30,7 @@ import {
   pushStroke,
   removeLayer,
   renameLayer,
+  reorderLayer,
   toggleLayerLocked,
   toggleLayerVisible,
 } from './chalk.utils';
@@ -133,6 +134,10 @@ export class ChalkboardOverlayComponent {
 
   protected onMoveLayer(event: { id: string; direction: -1 | 1 }): void {
     this.layersChange.emit(moveLayer(this.layers(), event.id, event.direction));
+  }
+
+  protected onReorderLayer(event: { from: string; to: string }): void {
+    this.layersChange.emit(reorderLayer(this.layers(), event.from, event.to));
   }
 
   protected onToggleLayers(): void {

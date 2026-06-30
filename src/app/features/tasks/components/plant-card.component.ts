@@ -71,6 +71,15 @@ export class PlantCardComponent {
   }
 
   protected onTransplantKey(event: KeyboardEvent): void {
+    if (event.shiftKey && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
+      const order: readonly Bucket[] = ['today', 'week', 'backlog'];
+      const cur = order.indexOf(this.entry().bucket);
+      const next = order[cur + (event.key === 'ArrowRight' ? 1 : -1)];
+      if (!next) return;
+      event.preventDefault();
+      this.transplant.emit({ id: this.entry().summary.id, bucket: next });
+      return;
+    }
     if (event.key !== 'Enter') return;
     // why: Enter abre el selector "trasplantar" (a11y vía teclado, regla doc).
     //      Si está en HOY, ofrecemos cosechar como primera opción.

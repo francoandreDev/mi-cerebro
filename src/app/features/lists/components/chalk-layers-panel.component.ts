@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, inject, input, output } from '@angu
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { IconComponent } from '@shared/icon/icon.component';
+import { createDndController } from '@shared/utils/dnd-controller';
 
 import type { ChalkLayer } from '../models/chalk.types';
 
@@ -24,9 +25,12 @@ export class ChalkLayersPanelComponent {
   readonly toggleLocked = output<string>();
   readonly removeLayer = output<string>();
   readonly moveLayer = output<{ id: string; direction: -1 | 1 }>();
+  readonly reorderLayer = output<{ from: string; to: string }>();
   readonly closeRequested = output<void>();
 
   private readonly i18n = inject(I18nService);
+
+  protected readonly dnd = createDndController<string>();
 
   protected t(key: TranslationKey): string {
     return this.i18n.t(key);
@@ -40,5 +44,12 @@ export class ChalkLayersPanelComponent {
   protected onRemove(layer: ChalkLayer): void {
     const ok = confirm(this.t('lists.chalk.removeConfirm').replace('{name}', layer.name));
     if (ok) this.removeLayer.emit(layer.id);
+  }
+
+  protected onLayerDrop(targetId: string): void {
+    const result = this.dnd.onDrop(targetId);
+    if (result && result.id !== result.zone) {
+      this.reorderLayer.emit({ from: result.id, to: result.zone });
+    }
   }
 }

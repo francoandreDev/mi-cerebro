@@ -87,6 +87,21 @@ export const moveLayer = (
   return copy;
 };
 
+export const reorderLayer = (
+  layers: readonly ChalkLayer[],
+  from: string,
+  to: string,
+): readonly ChalkLayer[] => {
+  if (from === to) return layers;
+  const fromIdx = layers.findIndex((l) => l.id === from);
+  if (fromIdx < 0) return layers;
+  const without = layers.filter((l) => l.id !== from);
+  const toIdx = without.findIndex((l) => l.id === to);
+  if (toIdx < 0) return layers;
+  const moved = layers[fromIdx]!;
+  return [...without.slice(0, toIdx), moved, ...without.slice(toIdx)];
+};
+
 export const clearLayer = (layers: readonly ChalkLayer[], id: string): readonly ChalkLayer[] =>
   layers.map((l) => (l.id === id ? { ...l, strokes: [] } : l));
 

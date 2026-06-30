@@ -23,13 +23,25 @@
 
   <ul class="rows">
     @for (layer of layers(); track layer.id; let i = $index) {
-      <li class="row" [class.active]="activeId() === layer.id">
+      <li
+        class="row"
+        [class.active]="activeId() === layer.id"
+        [class.row--dragging]="dnd.draggingId() === layer.id"
+        [class.row--over]="dnd.overZone() === layer.id && dnd.draggingId() !== layer.id"
+        (dragover)="dnd.onDragOver($event)"
+        (dragenter)="dnd.onDragEnter(layer.id)"
+        (dragleave)="dnd.onDragLeave(layer.id)"
+        (drop)="onLayerDrop(layer.id)"
+      >
         <button
           type="button"
           class="select"
+          draggable="true"
           [attr.aria-pressed]="activeId() === layer.id"
           [title]="t('lists.chalk.selectLayer')"
           (click)="selectLayer.emit(layer.id)"
+          (dragstart)="dnd.onDragStart($event, layer.id)"
+          (dragend)="dnd.onDragEnd()"
         >
           <span class="dot" [class.on]="activeId() === layer.id"></span>
         </button>

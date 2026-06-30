@@ -15,6 +15,7 @@ import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { TagsService } from '@core/tags/tags.service';
+import { createDndController } from '@shared/utils/dnd-controller';
 
 import { HarvestBasketComponent } from '../components/harvest-basket.component';
 import { PlantCardComponent } from '../components/plant-card.component';
@@ -57,9 +58,8 @@ export class TasksGardenContainer {
   protected readonly creating = signal<boolean>(false);
   protected readonly night = signal<boolean>(readBool(NIGHT_KEY));
   protected readonly watering = signal<boolean>(readBool(WATERING_KEY));
-  protected readonly dragOverBucket = signal<Bucket | null>(null);
+  protected readonly dnd = createDndController<Bucket>();
   protected readonly announce = signal<string>('');
-  private readonly draggingId = signal<string | null>(null);
 
   protected readonly untitledLabel = computed(() => this.t('tasks.untitledTitle'));
 
@@ -173,32 +173,10 @@ export class TasksGardenContainer {
     }
   }
 
-  protected onDragStart(event: DragEvent, id: string): void {
-    if (!event.dataTransfer) return;
-    event.dataTransfer.setData('text/plain', id);
-    event.dataTransfer.effectAllowed = 'move';
-    this.draggingId.set(id);
-  }
-
-  protected onDragEnd(): void {
-    this.draggingId.set(null);
-    this.dragOverBucket.set(null);
-  }
-
-  protected onDragEnter(bucket: Bucket): void {
-    this.dragOverBucket.set(bucket);
-  }
-
-  protected onDragLeaveBucket(bucket: Bucket): void {
-    if (this.dragOverBucket() === bucket) this.dragOverBucket.set(null);
-  }
-
   protected async onDrop(bucket: Bucket): Promise<void> {
-    const id = this.draggingId();
-    this.dragOverBucket.set(null);
-    this.draggingId.set(null);
-    if (!id) return;
-    await this.applyTransplant(id, bucket);
+    const result = this.dnd.onDrop(bucket);
+    if (!result) return;
+    await this.applyTransplant(result.id, result.zone);
   }
 
   protected async onTransplant(event: { id: string; bucket: Bucket }): Promise<void> {
