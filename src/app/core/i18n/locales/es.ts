@@ -1554,6 +1554,269 @@ export const es = {
   'sync.autoPush.toggle': 'Pushear automáticamente al commitear',
   'sync.autoPush.throttle.label': 'Throttle (minutos)',
   'sync.autoPush.throttle.hint': 'Mínimo de minutos entre auto-pushes consecutivos. 5 por default.',
+
+  'home.title': 'Inicio',
+  'home.goHome': 'Ir al inicio',
+  'home.intro':
+    'Tu segundo cerebro local. Cada sección tiene su propia metáfora visual — un jardín, un palomar, un muro de stickies, una estantería, un museo — pensada para que entiendas qué pasa con sólo mirar. Acá abajo, qué ves y cómo encadenar piezas.',
+  'home.resume.button': 'Continuar donde quedaste ({route})',
+  'home.workflows.title': 'Flujos típicos',
+  'home.workflows.subtitle':
+    'Recorridos cross-entity que ya funcionan end-to-end hoy. Sugerencias, no recetas.',
+  'home.workflows.future.title': 'Próximamente',
+  'home.workflows.future.subtitle':
+    'Flujos que la metáfora prometería pero que todavía no están cableados. Los pasos describen cómo se sentirán cuando lleguen — los listamos para que la app no mienta sobre lo que sabe hacer.',
+  'home.workflows.future.badge': 'próximamente',
+  'home.group.entities': 'Qué hay (entidades)',
+  'home.group.transversal': 'Herramientas transversales',
+  'home.group.help': 'Configuración y ayuda',
+  'home.steps.label': 'Pasos',
+
+  'home.flow.capture.title': 'Capturar una idea suelta',
+  'home.flow.capture.description':
+    'Para cuando se te ocurre algo y no querés perderlo. Requiere estar (o ir) a /notes — el Ctrl+N global es contextual a la sección actual.',
+  'home.flow.capture.step.1':
+    'Vas a /notes (rail lateral). Apretás Ctrl+N — aparece un sticky nuevo en el muro.',
+  'home.flow.capture.step.2':
+    'Tipeás lo que tengas en la cabeza. El sticky se va llenando y el autosave guarda cada ~2.5 seg.',
+  'home.flow.capture.step.3':
+    'Le ponés uno o dos tags desde el selector — el sticky queda asociado y aparece cuando filtrás por ese tag.',
+  'home.flow.capture.step.4':
+    'Más adelante la encontrás con Ctrl+K (palette global) o con los chips de filtro arriba del muro.',
+
+  'home.flow.project.title': 'Planificar un proyecto chico',
+  'home.flow.project.description':
+    'Desde "quiero lograr X" hasta tener pasos concretos en el calendario.',
+  'home.flow.project.step.1':
+    'En /goals colgás un poster tipográfico nuevo en el wallboard: la meta del proyecto en grande.',
+  'home.flow.project.step.2':
+    'En /writings abrís un escrito desde el shelf de cards — ahí va el plan: contexto, riesgos, decisiones.',
+  'home.flow.project.step.3':
+    'En /tasks plantás las tareas en los canteros (hoy/semana/backlog). A cada una le ponés el tag del proyecto.',
+  'home.flow.project.step.4':
+    'Después, en cada sección filtrás por el tag del proyecto para ver sólo lo asociado: las tareas que florecen hoy, el escrito, etc. /calendar te muestra la distribución temporal (mover fechas es editar cada entidad).',
+
+  'home.flow.writing.title': 'Escribir algo largo (libro, artículo, apunte)',
+  'home.flow.writing.description':
+    'Sesión larga de escritura con red de seguridad: autosave, versionado y recuperación.',
+  'home.flow.writing.step.1':
+    'En /writings, el shelf de cards tipográficas tiene una card "nuevo escrito". La completás con título y entrás.',
+  'home.flow.writing.step.2':
+    'Se abre el editor full-bleed centrado: ancho de lectura cómodo, sin paneles laterales, vos y el texto.',
+  'home.flow.writing.step.3':
+    'Mientras escribís, autosave cada ~2.5 seg y auto-commit periódico capturan snapshots a git local — la red de seguridad corre sola.',
+  'home.flow.writing.step.4':
+    'Si querés explorar un giro arriesgado, creás una variante en /variants y editás ahí; la original queda intacta como rama paralela.',
+  'home.flow.writing.step.5':
+    'Si rompiste algo, abrís /history, ves los snapshots con su diff, y restaurás la versión que te sirve.',
+
+  'home.flow.study.title': 'Estudiar profundizando un tema',
+  'home.flow.study.description':
+    'Mezcla de lectura, notas, imágenes y música de fondo, todo pegado por un tag transversal. Necesita: quick-capture global (Ctrl+Shift+N) desde dentro del reader y vista cross-section por tag — ninguna de las dos existe todavía.',
+  'home.flow.study.step.1':
+    'Subís el libro a /books, estante nombrado con el tema. El lomo queda visible en la estantería.',
+  'home.flow.study.step.2':
+    'Mientras leés en el reader, un atajo global (futuro) abre una nota rápida sin interrumpir la lectura — el sticky aparece en /notes con el tag del tema preseleccionado.',
+  'home.flow.study.step.3':
+    'Mismo atajo permite adjuntar screenshots/diagramas directamente a una sala de /images del tema, también con el tag pre-asignado.',
+  'home.flow.study.step.4':
+    'Al final, una vista cross-section (futuro) te muestra todo lo tagueado con el tema en una sola pantalla: libro, stickies, cuadros del museo, escritos. Hoy hay que revisarlo sección por sección.',
+
+  'home.flow.daily.title': 'Tu rutina del día',
+  'home.flow.daily.description':
+    'Cómo arrancar el día con la app: ver, priorizar, ejecutar, cerrar.',
+  'home.flow.daily.step.1':
+    'Abrís /calendar para ver el panorama: día/mes con todo lo que tiene fecha.',
+  'home.flow.daily.step.2':
+    'Pasás por /goals — los posters del wallboard te recuerdan en grande a dónde apunta el día.',
+  'home.flow.daily.step.3':
+    'Entrás a /tasks: el cantero "floración" tiene lo de hoy. Cosechás (marcás hecha) a medida que avanzás. Las que no terminás siguen floreciendo — trasplantarlas a otro cantero es manual (Shift+←/→ o DnD).',
+  'home.flow.daily.step.4':
+    'Si /reminders tiene palomas asomadas, las despachás. Al cerrar, /sync te deja pushear los cambios al remoto (si configuraste uno); si no, queda todo en commit local en tu carpeta.',
+
+  'home.flow.tagview.title': 'Ver todo lo de un tema',
+  'home.flow.tagview.description':
+    'Un tag como hilo conductor que junta entidades de todas las secciones. Hoy hay tag por entidad y filtro por sección; falta la vista unificada que cruce todas.',
+  'home.flow.tagview.step.1':
+    'Tipeás el nombre del tag en una nueva pantalla de "Vista por tag" (futura).',
+  'home.flow.tagview.step.2':
+    'Ves en una sola pantalla todo lo asociado al tag: stickies del muro, posters del wallboard, libros de la estantería, cuadros del museo, escritos, tareas que florecen, etc — cada uno en su preview visual nativo.',
+  'home.flow.tagview.step.3':
+    'Click en cualquier preview te lleva al lugar real donde vive. Útil para retomar un proyecto, repasar un tema, o ver de qué viene una idea suelta que te encontrás meses después.',
+
+  'home.entity.notes.purpose':
+    'Muro de stickies en columnas (tipo Pinterest). Cada nota es un sticky de formato libre que ocupa lo que necesita. Chips de filtro arriba para acotar el muro.',
+  'home.entity.notes.step.1':
+    'Apretás Ctrl+N o la card "nueva" inline arriba del muro — aparece un sticky nuevo listo para tipear.',
+  'home.entity.notes.step.2':
+    'Escribís — TipTap te da lo justo (negrita, lista, link). El sticky crece con el contenido.',
+  'home.entity.notes.step.3':
+    'Le agregás tags desde el selector lateral. El sticky queda etiquetado y los chips de filtro de arriba lo levantan al activarlos.',
+  'home.entity.notes.step.4':
+    'La encontrás con Ctrl+K (palette global), filtrando por chip de tag, o con Ctrl+P / "/" para acotar el árbol lateral.',
+
+  'home.entity.tasks.purpose':
+    'Jardín de tres canteros: hoy = floración, esta semana = brote, backlog = semilla. Trasplantás entre canteros (DnD o Shift+←/→) y cosechás cuando terminás.',
+  'home.entity.tasks.step.1':
+    'Plantás una tarea en un cantero. Las de "hoy" florecen, las de la semana son brotes, el backlog son semillas.',
+  'home.entity.tasks.step.2':
+    'Si tiene fecha concreta, se la asignás — aparece automáticamente en el calendario y se ubica en el cantero correcto.',
+  'home.entity.tasks.step.3':
+    'Mientras trabajás, la trasplantás de cantero con DnD (arrastrar la planta) o desde el teclado con Shift+←/→.',
+  'home.entity.tasks.step.4':
+    'Cuando la terminás, la cosechás — la flor se cae al canasto y el cambio queda commiteado al historial.',
+
+  'home.entity.goals.purpose':
+    'Wallboard tipográfico: posters grandes en grid auto-fit. Cada objetivo grita su meta en letra grande. Hero create arriba + filtros.',
+  'home.entity.goals.step.1':
+    'Desde el hero create, escribís la meta en una línea y se imprime como poster nuevo en el wallboard.',
+  'home.entity.goals.step.2':
+    'Queda colgado, en grande, cada vez que abrís /goals — recordatorio constante de a dónde vas.',
+  'home.entity.goals.step.3':
+    'Editás el poster cuando cambian las condiciones. Cuando lo lográs (o lo descartás), lo bajás del wallboard.',
+
+  'home.entity.lists.purpose':
+    'Pizarra-directorio: chalkboard con rail A–Z + tags. Click en una lista abre su pizarra individual con paleta de tizas, goma y capas (ocultar/lock/reordenar).',
+  'home.entity.lists.step.1':
+    'En el chalkboard armás una lista nueva — su nombre se suma al rail A–Z lateral.',
+  'home.entity.lists.step.2':
+    'Click en su nombre del rail abre la pizarra individual: el editor con los ítems escritos arriba.',
+  'home.entity.lists.step.3':
+    'Activás el toggle "modo tiza" en la barra: el cursor agarra la tiza, elegís color, y dibujás capas encima del body.',
+  'home.entity.lists.step.4':
+    'Las capas se nombran, se ocultan, se bloquean y se reordenan desde el panel lateral de capas. Todo persiste en el JSON de la lista.',
+
+  'home.entity.writings.purpose':
+    'Biblioteca de borrador: shelf de cards tipográficas con cada escrito. Click en una card abre el editor full-bleed centrado, sólo vos y el texto.',
+  'home.entity.writings.step.1':
+    'En el shelf, una card "nuevo escrito" arranca la pieza. Le ponés título y entrás.',
+  'home.entity.writings.step.2':
+    'Se abre el editor full-bleed: ancho de lectura cómodo, fondo sin distracciones, sin paneles a los costados.',
+  'home.entity.writings.step.3':
+    'Mientras escribís, autosave cada ~2.5 seg + auto-commit a git local capturan snapshots solos.',
+  'home.entity.writings.step.4':
+    'Si rompiste el flow, /history te deja ver el diff y restaurar una versión anterior.',
+
+  'home.entity.books.purpose':
+    'Estantería de libros con estantes nombrados (Filosofía, Pendientes, etc). El lector tiene page-turn 3D con paper bend real cuando das vuelta la página.',
+  'home.entity.books.step.1':
+    'Subís un libro arrastrándolo a la estantería. Aparece como lomo + portada en algún estante.',
+  'home.entity.books.step.2':
+    'Lo mové entre estantes con DnD. Ajustás la densidad del estante para ver más o menos libros por fila.',
+  'home.entity.books.step.3':
+    "Click en el libro abre el lector con flip 3D real. PageUp/Down pasa página, Alt+←/→ salta de capítulo, Ctrl+. activa focus mode, Ctrl+' abre el índice.",
+  'home.entity.books.step.4':
+    'Mientras leés, Ctrl+N captura una nota — la tagueás con el tema del libro para encontrarlas juntas después.',
+
+  'home.entity.images.purpose':
+    'Museo con planta de varios cuartos. Cada galería es una sala, las imágenes son cuadros colgados en las paredes, un mini-mapa abajo te ubica.',
+  'home.entity.images.step.1':
+    'Creás una sala nueva — aparece en la planta del museo como un cuarto más.',
+  'home.entity.images.step.2':
+    'Subís imágenes arrastrándolas a la sala — se cuelgan automáticamente en las paredes; los cuartos se auto-paginan si hay muchas.',
+  'home.entity.images.step.3':
+    'Navegás entre salas desde el mini-mapa o caminando por la planta. Las imágenes son referenciables desde otras entidades (lo que adjuntás es la referencia, no copia).',
+
+  'home.entity.files.purpose':
+    'Pared de lockers numerados. Cada archivo ocupa un locker; el color del frente lo da el primer tag. Apertura inline si hay pocos, overlay si hay muchos.',
+  'home.entity.files.step.1':
+    'Subís un archivo arrastrándolo a /files — se le asigna un locker numerado.',
+  'home.entity.files.step.2':
+    'Le ponés tags — el primer tag pinta el frente del locker para que lo identifiques de un vistazo.',
+  'home.entity.files.step.3':
+    'Click abre el locker: inline si entran (≤6), overlay si son muchos. Descargás o abrís el archivo desde ahí.',
+
+  'home.entity.music.purpose':
+    'Membrana resonante: superficie central que vibra en vivo con tu audio (FFT real). Izquierda biblioteca de álbumes ID3, derecha cola, abajo waveform. La UI no miente — todo lo visible deriva de datos reales.',
+  'home.entity.music.step.1':
+    'Subís MP3s al workspace. La app lee los tags ID3 y arma los álbumes en la biblioteca de la izquierda. Tracks sin ID3 caen en bucket "Sin álbum" (honesto, no inventa).',
+  'home.entity.music.step.2':
+    'Click en un álbum carga sus tracks en la cola lateral derecha. Las playlists propias viven en una tab alternable.',
+  'home.entity.music.step.3':
+    'Le das play: la superficie central empieza a vibrar con el audio real (patrón espectral del FFT), el waveform inferior dibuja la forma de onda, la barra de progreso avanza.',
+  'home.entity.music.step.4':
+    'Si salís de /music, los controles siguen en la mini-barra inferior global. Volvés a la membrana cuando querés.',
+
+  'home.entity.calendar.purpose':
+    'Vista temporal unificada del cerebro. v1 actual: grilla mes/año con día expandible. v2 planificado: mesa de luz con acetatos apilables (mes) + agenda de cuero (semana/día) — pendiente.',
+  'home.entity.calendar.step.1':
+    'Abrís /calendar — vista mensual por default. Cambiás a vista anual desde la toolbar para ver el año en mini-meses.',
+  'home.entity.calendar.step.2':
+    'Click en un día abre un modal con todo lo que tiene fecha ese día: tareas, recordatorios, eventos. Filtrás por tipo desde la barra.',
+  'home.entity.calendar.step.3':
+    'Desde el modal del día creás entrada nueva (tarea o recordatorio) que ya nace con esa fecha.',
+
+  'home.entity.reminders.purpose':
+    'Palomar de jaulas de madera con palomas mensajeras. Cada recordatorio es una paloma con un papelito enrollado; la puerta de la jaula se abre más conforme se acerca la hora.',
+  'home.entity.reminders.step.1':
+    'Creás un recordatorio: escribís el papelito, se enrolla y una paloma nueva ocupa una jaula. Anillo de colores = recurrente; transparente = puntual.',
+  'home.entity.reminders.step.2':
+    'Conforme se acerca la hora, la puerta de la jaula se abre cada vez más. Los vencidos sin atender se acumulan en la repisa, cansados.',
+  'home.entity.reminders.step.3':
+    'Al sonar, la paloma sale volando (ruta wandering por toda la pantalla), picotea el ícono del rail, y vuelve a la jaula (recurrente) o cae rotando (puntual). Filtros por fecha/nombre arriba para no perderse cuando hay muchas.',
+
+  'home.entity.search.title': 'Búsqueda global',
+  'home.entity.search.purpose':
+    'Ctrl+K abre el palette que cruza todas las entidades. Índice incremental en IndexedDB. Ctrl+P (o "/") focusea el filtro del árbol lateral.',
+  'home.entity.search.step.1': 'Apretás Ctrl+K en cualquier pantalla para el palette global.',
+  'home.entity.search.step.2': 'Tipeás texto libre. Los resultados se mezclan por tipo y match.',
+  'home.entity.search.step.3':
+    'Para filtrar por tag, agregás un token tag:nombre (ej: "ideas tag:libro").',
+  'home.entity.search.step.4':
+    'Navegás con flechas y abrís con Enter. Para acotar dentro del árbol, usá Ctrl+P o "/".',
+
+  'home.entity.history.purpose':
+    'Línea de tiempo de cambios. Cada modificación queda commiteada en git local; podés navegar y restaurar.',
+  'home.entity.history.step.1': 'Abrís /history. Ves todos los snapshots ordenados por tiempo.',
+  'home.entity.history.step.2': 'Filtrás por entidad, por rango de fecha, o por mensaje.',
+  'home.entity.history.step.3': 'Click en un snapshot te muestra el diff contra el actual.',
+  'home.entity.history.step.4':
+    'Botón "restaurar" trae esa versión al estado actual (sin perder la actual: queda en el historial).',
+
+  'home.entity.variants.purpose':
+    'Ramas paralelas del cerebro. Útil para explorar versiones alternativas sin tocar la original.',
+  'home.entity.variants.step.1':
+    'En /variants creás una variante con nombre (ej: "borrador-libro-v2").',
+  'home.entity.variants.step.2': 'La activás — todo lo que edites queda en esa rama.',
+  'home.entity.variants.step.3': 'Volvés a la original cuando querés. Las variantes coexisten.',
+  'home.entity.variants.step.4':
+    'Cuando decidís, mergeás los cambios a la original o descartás la variante.',
+
+  'home.entity.trash.purpose':
+    'Grid visual de cards con preview de cada entidad borrada. Filtro por tipo arriba, búsqueda por nombre, retención de 30 días antes de purga automática.',
+  'home.entity.trash.step.1':
+    'Borrás cualquier entidad — su card aparece en /trash con preview de su contenido. No se elimina del disco.',
+  'home.entity.trash.step.2':
+    'Filtrás por tipo (notas, tareas, etc) o buscás por nombre. Click en una card abre el modal de detalle con opción de restaurar.',
+  'home.entity.trash.step.3':
+    'Vaciás manualmente cuando querés. A los 30 días, cada card se purga sola (el countdown se muestra en la card).',
+
+  'home.entity.sync.title': 'Sincronización',
+  'home.entity.sync.purpose':
+    'Backup off-site opcional a un repo Git privado. Auto-commit local siempre activo; push manual o automático.',
+  'home.entity.sync.step.1':
+    'En /sync configurás el remoto (URL del repo Git privado + credenciales).',
+  'home.entity.sync.step.2':
+    'El auto-commit local sigue funcionando como siempre, sin tocar el remoto.',
+  'home.entity.sync.step.3':
+    'Pusheás manual cuando querés, o activás auto-push con throttle (mínimo X minutos entre pushes).',
+  'home.entity.sync.step.4':
+    'Si el remoto diverge (otro dispositivo pusheó), un banner te avisa y te lleva al merge.',
+
+  'home.entity.settings.purpose':
+    'Tabs verticales sticky en la izquierda + panel de la sección activa a la derecha. Tema, idioma, comportamiento — todo persiste en tu carpeta.',
+  'home.entity.settings.step.1': 'Abrís /settings desde el ícono del engranaje en el rail.',
+  'home.entity.settings.step.2':
+    'Elegís una tab de la izquierda (tema, sync, autosave, etc) — el panel derecho cambia a esa sección.',
+  'home.entity.settings.step.3':
+    'Ajustás y los cambios se aplican al instante. Persisten al volver a abrir la app (config en disco, temas custom en IndexedDB).',
+
+  'home.entity.shortcuts.title': 'Atajos de teclado',
+  'home.entity.shortcuts.purpose':
+    'Casi todo es accesible por teclado. Hay un diálogo con la lista completa cubriendo cada sección.',
+  'home.entity.shortcuts.step.1': 'Apretás "?" en cualquier pantalla — abre el diálogo de ayuda.',
+  'home.entity.shortcuts.step.2': 'Ves todos los combos registrados con su descripción.',
+  'home.entity.shortcuts.step.3': 'Cerrás con Escape y volvés a lo tuyo.',
 } as const;
 
 export type EsDictionary = typeof es;

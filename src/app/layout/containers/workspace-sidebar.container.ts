@@ -63,6 +63,7 @@ import { goalBadges, tagBadges, taskBadges } from './tree-badges';
 type EntityKind = 'note' | 'task' | 'goal' | 'list' | 'writing' | 'book' | 'image' | 'file';
 type RailKey =
   | EntityKind
+  | 'home'
   | 'trash'
   | 'calendar'
   | 'reminders'
@@ -177,13 +178,17 @@ export class WorkspaceSidebarContainer {
     this.variantMenuOpenSignal.set(false);
   }
 
-  @HostListener('document:keydown.escape')
-  protected onEscVariant(): void {
-    if (this.variantMenuOpenSignal()) this.variantMenuOpenSignal.set(false);
+  @HostListener('document:keydown.escape', ['$event'])
+  protected onEscVariant(event: Event): void {
+    if (this.variantMenuOpenSignal()) {
+      event.preventDefault();
+      this.variantMenuOpenSignal.set(false);
+    }
   }
 
   protected readonly hidePane = computed(() => {
     const url = this.currentUrl();
+    if (url === '/' || url === '' || url.startsWith('/?')) return true;
     return PANE_HIDDEN_PREFIXES.some(
       (p) => url === p || url.startsWith(`${p}/`) || url.startsWith(`${p}?`),
     );
@@ -233,6 +238,7 @@ export class WorkspaceSidebarContainer {
 
   protected readonly activeKey = computed<RailKey | null>(() => {
     const url = this.currentUrl();
+    if (url === '/' || url === '' || url.startsWith('/?')) return 'home';
     if (url.startsWith('/trash')) return 'trash';
     if (url.startsWith('/calendar')) return 'calendar';
     if (url.startsWith('/reminders')) return 'reminders';
@@ -249,6 +255,7 @@ export class WorkspaceSidebarContainer {
     const k = this.activeKey();
     if (
       k === null ||
+      k === 'home' ||
       k === 'trash' ||
       k === 'calendar' ||
       k === 'reminders' ||
@@ -265,6 +272,7 @@ export class WorkspaceSidebarContainer {
   protected readonly activeTitle = computed<string>(() => {
     const k = this.activeKey();
     if (k === null) return this.t('app.name');
+    if (k === 'home') return this.t('home.title');
     if (k === 'trash') return this.t('trash.title');
     if (k === 'calendar') return this.t('calendar.title');
     if (k === 'reminders') return this.t('reminders.title');
@@ -536,6 +544,10 @@ export class WorkspaceSidebarContainer {
   protected goTo(key: RailKey): void {
     this.query.set('');
     this.cursor.set(0);
+    if (key === 'home') {
+      void this.router.navigateByUrl('/');
+      return;
+    }
     if (key === 'trash') {
       void this.router.navigate(['/trash']);
       return;

@@ -1,6 +1,15 @@
 @if (isReady()) {
   <aside class="rail" [attr.aria-label]="t('tree.type.all')">
-    <span class="rail-brand" [title]="t('app.name')">mc</span>
+    <button
+      type="button"
+      class="rail-brand"
+      [class.active]="activeKey() === 'home'"
+      [title]="t('home.goHome')"
+      [attr.aria-label]="t('home.goHome')"
+      (click)="goTo('home')"
+    >
+      mc
+    </button>
     @for (item of railItems(); track item.key) {
       <button
         type="button"

@@ -1,0 +1,94 @@
+<header class="hero">
+  <h1 class="title">
+    <span class="title-brand">{{ t('app.name') }}</span>
+    <span class="title-tagline">{{ t('app.tagline') }}</span>
+  </h1>
+  <p class="intro">{{ t('home.intro') }}</p>
+  @if (resumeRoute(); as route) {
+    <button type="button" class="resume" (click)="resume()">
+      <mc-icon name="clock-counter-clockwise" aria-hidden="true" />
+      <span>{{ resumeLabel() }}</span>
+    </button>
+  }
+</header>
+
+<section class="workflows">
+  <header class="section-head">
+    <h2 class="section-title">{{ t('home.workflows.title') }}</h2>
+    <p class="section-subtitle">{{ t('home.workflows.subtitle') }}</p>
+  </header>
+  <div class="workflows-list">
+    @for (flow of workflowsToday; track flow.key) {
+      <article class="workflow">
+        <header class="workflow-head">
+          <span class="workflow-icon"><mc-icon [name]="flow.icon" aria-hidden="true" /></span>
+          <div class="workflow-text">
+            <h3 class="workflow-title">{{ t(flow.title) }}</h3>
+            <p class="workflow-desc">{{ t(flow.description) }}</p>
+          </div>
+        </header>
+        <ol class="workflow-steps">
+          @for (step of flow.steps; track $index) {
+            <li>{{ t(step) }}</li>
+          }
+        </ol>
+      </article>
+    }
+  </div>
+</section>
+
+<section class="workflows future">
+  <header class="section-head">
+    <h2 class="section-title">{{ t('home.workflows.future.title') }}</h2>
+    <p class="section-subtitle">{{ t('home.workflows.future.subtitle') }}</p>
+  </header>
+  <div class="workflows-list">
+    @for (flow of workflowsFuture; track flow.key) {
+      <article class="workflow is-future">
+        <header class="workflow-head">
+          <span class="workflow-icon"><mc-icon [name]="flow.icon" aria-hidden="true" /></span>
+          <div class="workflow-text">
+            <h3 class="workflow-title">
+              {{ t(flow.title) }}
+              <span class="badge-future">{{ t('home.workflows.future.badge') }}</span>
+            </h3>
+            <p class="workflow-desc">{{ t(flow.description) }}</p>
+          </div>
+        </header>
+        <ol class="workflow-steps">
+          @for (step of flow.steps; track $index) {
+            <li>{{ t(step) }}</li>
+          }
+        </ol>
+      </article>
+    }
+  </div>
+</section>
+
+@for (group of groups; track group.key) {
+  <section class="group">
+    <h2 class="section-title">{{ t(group.title) }}</h2>
+    <div class="grid">
+      @for (card of group.cards; track card.key) {
+        <article class="card">
+          <header class="card-head">
+            <span class="card-icon"><mc-icon [name]="card.icon" aria-hidden="true" /></span>
+            <div class="card-text">
+              <h3 class="card-title">{{ t(card.title) }}</h3>
+              <p class="card-purpose">{{ t(card.purpose) }}</p>
+            </div>
+          </header>
+          <ol class="card-steps">
+            @for (step of card.steps; track $index) {
+              <li>{{ t(step) }}</li>
+            }
+          </ol>
+          <button type="button" class="card-open" (click)="open(card)">
+            <span>{{ t('common.continue') }}</span>
+            <mc-icon name="arrow-right" aria-hidden="true" />
+          </button>
+        </article>
+      }
+    </div>
+  </section>
+}

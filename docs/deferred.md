@@ -492,3 +492,37 @@ Formato por entrada:
 - **Qué**: convertir la sala del museo en un espacio 3D navegable en primera persona. Stack previsto: **three.js** como motor (escena con paredes `Mesh`, cuadros `PlaneGeometry` texturizados, `PerspectiveCamera` con WASD/drag o pointer-lock, spotlight cenital real, sombras proyectadas, raycasting para hover/click en cuadros) integrado vía **angular-three (NGT)** — wrapper idiomático que expone three con sintaxis declarativa Angular (signals + componentes), evitando manejar manualmente el render loop y la sincronización con el ciclo de vida. Esto entra en una **fase futura cross-página de migración 3D** (no sólo /images: también /books como libro físico real, /lists como pizarra con tiza volumétrica, etc.).
 - **Por qué se difirió**: el v1 del museo es 2D con asimetría auto + luz cenital simulada por CSS gradient. Resuelve la metáfora con cero deps y mantiene la base sólida. El salto a 3D real es una fase de polish transversal que conviene hacer cuando todas las páginas tengan su v1 2D estable, para definir la lib + convenciones una sola vez.
 - **Target**: fase futura de migración 3D (sin número aún en §19).
+
+## Atajos / defaults del navegador (origen: audit 2026-06-30)
+
+### Sobreescritura completa de defaults del navegador en combos consumidos
+
+- **Qué**: la regla §4.6.15 exige que toda combinación de tecla consumida por la app llame `event.preventDefault()` antes de la lógica. Se hizo un sweep agregando `preventDefault()` en handlers ad-hoc (HostListener + `(keydown.*)` en templates) y se confirmó que `ShortcutsService` lo hace en capture-phase, pero **falta una verificación end-to-end de que ningún default del navegador se cuela**. Casos que en navegadores reales pueden seguir disparándose: Ctrl+S (guardar página), Ctrl+P (imprimir — colisiona con palette), Ctrl+N (nueva ventana, en algunos navegadores no se puede prevenir desde JS), Ctrl+W, F1 (ayuda nativa), F3 (find next), F11 (fullscreen). También quedan listeners no auditados en bindings tipo `(keydown.enter)`, `(keydown.arrowdown)` en templates que pueden no estar previniendo aunque consuman.
+- **Por qué se difirió**: el audit fue mecánico (preventDefault donde había un handler). Verificar comportamiento real exige probar combo por combo en cada navegador soportado (Chrome, Edge, Vivaldi, Brave) y ver si el navegador todavía actúa. Algunos defaults son **inprevenibles** desde la página (Ctrl+N, Ctrl+W en la mayoría de Chromium) — esos quedan documentados como "no usar".
+- **Target**: sin asignar. Tarea de QA + posible refactor de combos que choquen con defaults inprevenibles.
+
+## Cross-section / vista unificada (origen: home guide audit, 2026-06-30)
+
+### Quick-capture global de nota desde cualquier sección
+
+- **Qué**: un atajo (ej. `Ctrl+Shift+N`) que abra un overlay para crear una nota nueva **sin salir de la sección actual** (sirve mientras leés un libro, mirás el museo, escuchás música, etc.). Hoy `Ctrl+N` está cableado a `CreationIntentService` que crea la entidad cuya URL estás visitando — en /books crea libro, en /tasks crea tarea. No hay forma de capturar una idea suelta sin perder el contexto visual.
+- **Por qué se difirió**: la app no tiene un layer de overlay/dialog global para entrada de texto que escriba a /notes en segundo plano. Implementarlo bien implica decidir: dónde guardarla en el árbol, qué tags preseleccionar (¿el tag activo de la sección? ¿ninguno?), cómo notificar que se creó. El flow de "estudiar profundizando un tema" en el home depende de esto.
+- **Target**: sin asignar.
+
+### Vista unificada cross-section por tag
+
+- **Qué**: una pantalla que mostrá **todo lo tagueado con X** en una sola vista, con preview visual nativo de cada tipo (sticky para nota, poster para goal, lomo para libro, cuadro para imagen, etc.). Hoy hay filtro por tag por sección y el palette (Ctrl+K) acepta `tag:nombre`, pero no hay vista que cruce todas las secciones simultáneamente con su look propio.
+- **Por qué se difirió**: requiere un componente nuevo de "card universal" capaz de renderizar la miniatura visual de cualquier entidad, más un servicio que junte items por tag desde todos los servicios. El home también la promete (flujo "Ver todo lo de un tema").
+- **Target**: sin asignar.
+
+### Reschedule de tareas con DnD en el calendario
+
+- **Qué**: en /calendar, arrastrar una tarea desde un día a otro para reagendarla, sin abrir su detalle. Hoy el calendario muestra eventos del día en un modal y para mover una tarea hay que editarla manualmente.
+- **Por qué se difirió**: requiere DnD entre celdas de la grilla del mes + reuse del listener de drop del jardín de tareas. No urgente — la edición manual funciona — pero el flow "planificar proyecto" del home lo prometía.
+- **Target**: sin asignar.
+
+### Referencias / links entre entidades desde el editor
+
+- **Qué**: poder linkear entidades entre sí desde dentro del editor (una nota que referencie una imagen, un escrito que linkee otra nota, etc.) tipo `[[wiki-link]]` o picker de "insertar referencia". Hoy las imágenes se referencian visualmente desde notas/escritos (renderización), pero no hay un sistema de links navegables entre entidades arbitrarias.
+- **Por qué se difirió**: implica decidir sintaxis del link, picker de UI, resolución (qué pasa si la entidad target se borra), y cómo se ve el link en el renderizado vs el editor. Pieza grande de UX/datos.
+- **Target**: sin asignar.

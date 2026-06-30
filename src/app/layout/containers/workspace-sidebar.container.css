@@ -26,6 +26,25 @@
   color: var(--mc-fg-muted);
   margin-bottom: var(--mc-space-2);
   letter-spacing: 0.5px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--mc-radius-md);
+  padding: var(--mc-space-1) var(--mc-space-2);
+  cursor: pointer;
+  font-family: inherit;
+}
+.rail-brand:hover {
+  color: var(--mc-fg-primary);
+  background: var(--mc-bg-surface);
+}
+.rail-brand.active {
+  color: var(--mc-accent-primary);
+  border-color: var(--mc-accent-primary);
+  background: var(--mc-bg-surface);
+}
+.rail-brand:focus-visible {
+  outline: 2px solid var(--mc-accent-primary);
+  outline-offset: 1px;
 }
 .rail-btn {
   width: 42px;
