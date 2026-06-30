@@ -143,9 +143,12 @@ export class TrashContainer {
     return value;
   }
 
-  @HostListener('document:keydown.escape')
-  protected onEscape(): void {
-    if (this.viewing()) this.closeView();
+  @HostListener('document:keydown.escape', ['$event'])
+  protected onEscape(event: Event): void {
+    if (this.viewing()) {
+      event.preventDefault();
+      this.closeView();
+    }
   }
 
   protected async onRestore(entry: TrashEntry): Promise<void> {

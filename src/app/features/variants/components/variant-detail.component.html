@@ -16,8 +16,8 @@
           class="rename-input"
           [ngModel]="renameValue()"
           (ngModelChange)="renameValueChange.emit($event)"
-          (keydown.enter)="renameSubmit.emit()"
-          (keydown.escape)="renameCancel.emit()"
+          (keydown.enter)="$event.preventDefault(); renameSubmit.emit()"
+          (keydown.escape)="$event.preventDefault(); renameCancel.emit()"
         />
       } @else {
         <h2 class="name">{{ v.name }}</h2>

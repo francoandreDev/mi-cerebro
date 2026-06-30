@@ -275,8 +275,11 @@ export class CalendarToolbarComponent {
     }
   }
 
-  @HostListener('document:keydown.escape')
-  protected onEsc(): void {
-    if (this.focused()) this.focused.set(false);
+  @HostListener('document:keydown.escape', ['$event'])
+  protected onEsc(event: Event): void {
+    if (this.focused()) {
+      event.preventDefault();
+      this.focused.set(false);
+    }
   }
 }

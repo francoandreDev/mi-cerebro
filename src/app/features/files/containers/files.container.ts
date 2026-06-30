@@ -152,7 +152,8 @@ export class FilesContainer {
     this.scheduleSave(next);
   }
 
-  protected async onBackToIndex(): Promise<void> {
+  protected async onBackToIndex(event?: Event): Promise<void> {
+    event?.preventDefault();
     await this.router.navigate(['/files']);
   }
 

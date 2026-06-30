@@ -120,8 +120,8 @@
                 [placeholder]="t('books.shelf.renamePlaceholder')"
                 [attr.aria-label]="t('books.shelf.renameLabel')"
                 (input)="onRenameInput($event)"
-                (keydown.enter)="submitRename(shelf.folder)"
-                (keydown.escape)="cancelRename()"
+                (keydown.enter)="submitRename(shelf.folder, $event)"
+                (keydown.escape)="cancelRename($event)"
                 (blur)="submitRename(shelf.folder)"
               />
             } @else {
@@ -215,8 +215,8 @@
             [placeholder]="t('books.shelf.renamePlaceholder')"
             [attr.aria-label]="t('books.shelf.createShelfCta')"
             (input)="onCreateInput($event)"
-            (keydown.enter)="submitCreateShelf()"
-            (keydown.escape)="cancelCreateShelf()"
+            (keydown.enter)="submitCreateShelf($event)"
+            (keydown.escape)="cancelCreateShelf($event)"
             (blur)="submitCreateShelf()"
           />
         </div>

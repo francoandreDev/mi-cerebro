@@ -35,8 +35,8 @@
                 list="mc-tz-list"
                 [value]="draft()"
                 (input)="onInput($event)"
-                (keydown.enter)="apply()"
-                (keydown.escape)="revert()"
+                (keydown.enter)="apply($event)"
+                (keydown.escape)="revert($event)"
                 placeholder="Continent/City"
                 autocomplete="off"
                 spellcheck="false"
@@ -171,7 +171,7 @@
                 max="180"
                 [value]="autocommitDraft()"
                 (input)="onAutocommitInput($event)"
-                (keydown.enter)="applyAutocommit()"
+                (keydown.enter)="applyAutocommit($event)"
               />
               <button
                 type="button"
@@ -207,7 +207,7 @@
                 max="365"
                 [value]="dormantDraft()"
                 (input)="onDormantInput($event)"
-                (keydown.enter)="applyDormant()"
+                (keydown.enter)="applyDormant($event)"
               />
               <button
                 type="button"

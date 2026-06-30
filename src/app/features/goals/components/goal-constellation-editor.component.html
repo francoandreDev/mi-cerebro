@@ -106,7 +106,7 @@
     tabindex="0"
     [attr.aria-label]="t('goals.editor.canvasAria')"
     (click)="onCanvasClick($event)"
-    (keydown.enter)="onCanvasKey()"
+    (keydown.enter)="onCanvasKey($event)"
   >
     @for (link of links(); track link.a + '|' + link.x2 + '|' + link.y2) {
       <line

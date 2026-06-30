@@ -174,8 +174,9 @@ export class GoalConstellationEditorComponent {
     this.draft.set('');
   }
 
-  protected onCanvasKey(): void {
+  protected onCanvasKey(event?: Event): void {
     if (!this.editable() || this.popoverId() || this.renamingId() || this.creating()) return;
+    event?.preventDefault();
     this.creating.set({ x: 50, y: 50 });
     this.draft.set('');
   }
@@ -193,7 +194,10 @@ export class GoalConstellationEditorComponent {
     if (event.key === 'Enter') {
       event.preventDefault();
       this.commitNewStep();
-    } else if (event.key === 'Escape') this.creating.set(null);
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      this.creating.set(null);
+    }
   }
 
   protected commitNewStep(): void {
@@ -283,7 +287,10 @@ export class GoalConstellationEditorComponent {
     if (event.key === 'Enter') {
       event.preventDefault();
       this.commitRename();
-    } else if (event.key === 'Escape') this.renamingId.set(null);
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      this.renamingId.set(null);
+    }
   }
 
   protected commitRename(): void {
@@ -319,6 +326,7 @@ export class GoalConstellationEditorComponent {
 
   protected onDeadlineClear(event: Event): void {
     event.stopPropagation();
+    if (event.type === 'keydown') event.preventDefault();
     this.deadlineChange.emit(null);
     this.deadlineOpen.set(false);
   }
@@ -350,7 +358,10 @@ export class GoalConstellationEditorComponent {
     if (event.key === 'Enter') {
       event.preventDefault();
       this.commitTitle();
-    } else if (event.key === 'Escape') this.renamingTitle.set(false);
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      this.renamingTitle.set(false);
+    }
   }
   protected commitTitle(): void {
     const next = this.titleDraft();

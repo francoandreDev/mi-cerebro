@@ -38,7 +38,12 @@
 
 @if (active() && !inlineMode()) {
   <div class="wall-overlay-backdrop" role="presentation" (click)="onBackToIndex()"></div>
-  <section class="wall-overlay" role="dialog" aria-modal="true" (keydown.escape)="onBackToIndex()">
+  <section
+    class="wall-overlay"
+    role="dialog"
+    aria-modal="true"
+    (keydown.escape)="onBackToIndex($event)"
+  >
     <ng-container *ngTemplateOutlet="drawerContent; context: { $implicit: active()! }" />
   </section>
 }

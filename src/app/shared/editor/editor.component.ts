@@ -179,11 +179,20 @@ export class EditorComponent {
     this.commentsCoord.openExisting(commentId, cloudRect(this.host().nativeElement, commentId));
   }
 
-  @HostListener('document:keydown.escape')
-  protected onEscape(): void {
-    if (this.draftSession.active()) return void this.draftSession.end();
-    if (this.commentPopover() !== null) return this.commentsCoord.dismiss();
-    if (this.bubble() !== null) this.bubble.set(null);
+  @HostListener('document:keydown.escape', ['$event'])
+  protected onEscape(event: Event): void {
+    if (this.draftSession.active()) {
+      event.preventDefault();
+      return void this.draftSession.end();
+    }
+    if (this.commentPopover() !== null) {
+      event.preventDefault();
+      return this.commentsCoord.dismiss();
+    }
+    if (this.bubble() !== null) {
+      event.preventDefault();
+      this.bubble.set(null);
+    }
   }
 
   @HostListener('document:mousedown', ['$event'])

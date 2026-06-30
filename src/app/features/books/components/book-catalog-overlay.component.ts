@@ -75,11 +75,13 @@ export class BookCatalogOverlayComponent {
   protected onBookClick(id: string): void {
     this.pick.emit(id);
   }
-  protected onClose(): void {
+  protected onClose(event?: Event): void {
+    event?.preventDefault();
     this.dismiss.emit();
   }
-  @HostListener('document:keydown.escape')
-  protected onEscape(): void {
+  @HostListener('document:keydown.escape', ['$event'])
+  protected onEscape(event: Event): void {
+    event.preventDefault();
     this.dismiss.emit();
   }
   protected displayTitle(b: BookSummary): string {

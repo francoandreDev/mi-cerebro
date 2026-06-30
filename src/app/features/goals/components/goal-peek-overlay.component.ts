@@ -108,6 +108,7 @@ export class GoalPeekOverlayComponent {
   }
   protected onDeadlineClear(event: Event): void {
     event.stopPropagation();
+    if (event.type === 'keydown') event.preventDefault();
     this.deadlineChange.emit(null);
   }
 

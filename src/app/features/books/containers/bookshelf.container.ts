@@ -249,7 +249,8 @@ export class BookshelfContainer {
     this.renamingFolder.set(folder);
     this.renameDraft.set(folder);
   }
-  protected cancelRename(): void {
+  protected cancelRename(event?: Event): void {
+    event?.preventDefault();
     this.renamingFolder.set(null);
     this.renameDraft.set('');
   }
@@ -257,7 +258,8 @@ export class BookshelfContainer {
     const target = event.target as HTMLInputElement | null;
     if (target) this.renameDraft.set(target.value);
   }
-  protected async submitRename(folder: string): Promise<void> {
+  protected async submitRename(folder: string, event?: Event): Promise<void> {
+    event?.preventDefault();
     const next = this.renameDraft().trim();
     if (next === '' || next === folder) {
       this.cancelRename();
@@ -280,7 +282,8 @@ export class BookshelfContainer {
     this.creatingShelf.set(true);
     this.createDraft.set('');
   }
-  protected cancelCreateShelf(): void {
+  protected cancelCreateShelf(event?: Event): void {
+    event?.preventDefault();
     this.creatingShelf.set(false);
     this.createDraft.set('');
   }
@@ -288,7 +291,8 @@ export class BookshelfContainer {
     const target = event.target as HTMLInputElement | null;
     if (target) this.createDraft.set(target.value);
   }
-  protected submitCreateShelf(): void {
+  protected submitCreateShelf(event?: Event): void {
+    event?.preventDefault();
     const name = this.createDraft().trim();
     if (name === '') return;
     // why: no duplicar contra estantes existentes (con libros) ni transitorios.

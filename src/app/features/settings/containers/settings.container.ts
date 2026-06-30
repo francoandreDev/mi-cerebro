@@ -147,7 +147,8 @@ export class SettingsContainer {
     if (!isNaN(v)) this.autocommitDraft.set(v);
   }
 
-  protected applyAutocommit(): void {
+  protected applyAutocommit(event?: Event): void {
+    event?.preventDefault();
     if (this.autocommitDraft() === this.state().versioning.autocommitMinutes) return;
     this.settings.setAutocommitMinutes(this.autocommitDraft());
   }
@@ -157,7 +158,8 @@ export class SettingsContainer {
     if (!isNaN(v)) this.dormantDraft.set(v);
   }
 
-  protected applyDormant(): void {
+  protected applyDormant(event?: Event): void {
+    event?.preventDefault();
     if (this.dormantDraft() === this.state().variants.dormantThresholdDays) return;
     this.settings.setVariantsDormantThreshold(this.dormantDraft());
   }
@@ -171,7 +173,8 @@ export class SettingsContainer {
     this.error.set(false);
   }
 
-  protected apply(): void {
+  protected apply(event?: Event): void {
+    event?.preventDefault();
     const tz = this.draft().trim();
     if (!tz || tz === this.state().timezone) return;
     if (!isValidTimezone(tz)) {
@@ -182,7 +185,8 @@ export class SettingsContainer {
     this.error.set(false);
   }
 
-  protected revert(): void {
+  protected revert(event?: Event): void {
+    event?.preventDefault();
     this.draft.set(this.state().timezone);
     this.error.set(false);
   }

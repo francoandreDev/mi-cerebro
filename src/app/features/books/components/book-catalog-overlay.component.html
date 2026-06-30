@@ -3,7 +3,7 @@
   class="backdrop"
   [attr.aria-label]="t('books.catalog.close')"
   (click)="onClose()"
-  (keydown.escape)="onClose()"
+  (keydown.escape)="onClose($event)"
 ></button>
 <div class="sheet" role="dialog" [attr.aria-label]="t('books.catalog.title')">
   <header class="head">
@@ -19,7 +19,7 @@
         [attr.aria-label]="t('books.catalog.filter')"
         [value]="query()"
         (input)="onQuery($event)"
-        (keydown.escape)="onClose()"
+        (keydown.escape)="onClose($event)"
       />
     </div>
     <button

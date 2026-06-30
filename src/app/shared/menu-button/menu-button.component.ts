@@ -131,8 +131,11 @@ export class MenuButtonComponent {
     this.open.set(false);
   }
 
-  @HostListener('document:keydown.escape')
-  protected onEsc(): void {
-    if (this.open()) this.open.set(false);
+  @HostListener('document:keydown.escape', ['$event'])
+  protected onEsc(event: Event): void {
+    if (this.open()) {
+      event.preventDefault();
+      this.open.set(false);
+    }
   }
 }

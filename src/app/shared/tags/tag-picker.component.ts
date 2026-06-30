@@ -213,9 +213,12 @@ export class TagPickerComponent {
     setTimeout(() => this.open.set(false), 120);
   }
 
-  @HostListener('document:keydown.escape')
-  protected onDocEscape(): void {
-    if (this.open()) this.open.set(false);
+  @HostListener('document:keydown.escape', ['$event'])
+  protected onDocEscape(event: Event): void {
+    if (this.open()) {
+      event.preventDefault();
+      this.open.set(false);
+    }
   }
 
   private commitCursor(): void {

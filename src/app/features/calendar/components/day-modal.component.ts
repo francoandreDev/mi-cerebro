@@ -100,8 +100,9 @@ export class CalendarDayModalComponent {
     return this.i18n.t(key);
   }
 
-  @HostListener('document:keydown.escape')
-  protected onEscape(): void {
+  @HostListener('document:keydown.escape', ['$event'])
+  protected onEscape(event: Event): void {
+    event.preventDefault();
     this.dismiss.emit();
   }
 }
