@@ -31,7 +31,7 @@ export class CreationIntentService {
 
   constructor() {
     const dispose = this.shortcuts.register({
-      combo: 'Ctrl+N',
+      combo: 'Alt+N',
       labelKey: 'shortcuts.create',
       scope: 'global',
       handler: () => this.requestFromUrl(),

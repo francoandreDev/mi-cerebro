@@ -1574,9 +1574,9 @@ export const es = {
 
   'home.flow.capture.title': 'Capturar una idea suelta',
   'home.flow.capture.description':
-    'Para cuando se te ocurre algo y no querés perderlo. Requiere estar (o ir) a /notes — el Ctrl+N global es contextual a la sección actual.',
+    'Para cuando se te ocurre algo y no querés perderlo. Requiere estar (o ir) a /notes — el Alt+N global es contextual a la sección actual.',
   'home.flow.capture.step.1':
-    'Vas a /notes (rail lateral). Apretás Ctrl+N — aparece un sticky nuevo en el muro.',
+    'Vas a /notes (rail lateral). Apretás Alt+N — aparece un sticky nuevo en el muro.',
   'home.flow.capture.step.2':
     'Tipeás lo que tengas en la cabeza. El sticky se va llenando y el autosave guarda cada ~2.5 seg.',
   'home.flow.capture.step.3':
@@ -1647,7 +1647,7 @@ export const es = {
   'home.entity.notes.purpose':
     'Muro de stickies en columnas (tipo Pinterest). Cada nota es un sticky de formato libre que ocupa lo que necesita. Chips de filtro arriba para acotar el muro.',
   'home.entity.notes.step.1':
-    'Apretás Ctrl+N o la card "nueva" inline arriba del muro — aparece un sticky nuevo listo para tipear.',
+    'Apretás Alt+N o la card "nueva" inline arriba del muro — aparece un sticky nuevo listo para tipear.',
   'home.entity.notes.step.2':
     'Escribís — TipTap te da lo justo (negrita, lista, link). El sticky crece con el contenido.',
   'home.entity.notes.step.3':
@@ -1706,7 +1706,7 @@ export const es = {
   'home.entity.books.step.3':
     "Click en el libro abre el lector con flip 3D real. PageUp/Down pasa página, Alt+←/→ salta de capítulo, Ctrl+. activa focus mode, Ctrl+' abre el índice.",
   'home.entity.books.step.4':
-    'Mientras leés, Ctrl+N captura una nota — la tagueás con el tema del libro para encontrarlas juntas después.',
+    'Si querés tomar notas mientras leés, hoy hay que volver a /notes (rail lateral) y crear el sticky ahí — el quick-capture cross-section está en próximamente.',
 
   'home.entity.images.purpose':
     'Museo con planta de varios cuartos. Cada galería es una sala, las imágenes son cuadros colgados en las paredes, un mini-mapa abajo te ubica.',

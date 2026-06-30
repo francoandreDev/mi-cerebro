@@ -12,7 +12,7 @@ import type { ElementRef } from '@angular/core';
 
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
-import { ShortcutsService } from '@core/shortcuts/shortcuts.service';
+import { TreeFilterFocusService } from '@core/shortcuts/tree-filter-focus.service';
 
 import type { FilterDirection } from './tree.types';
 
@@ -203,7 +203,7 @@ export class TreeFilterComponent {
   protected readonly listboxId = `tree-filter-matches-${listboxIdCounter++}`;
   private readonly inputEl = viewChild.required<ElementRef<HTMLInputElement>>('input');
   private readonly i18n = inject(I18nService);
-  private readonly shortcuts = inject(ShortcutsService);
+  private readonly focusShortcut = inject(TreeFilterFocusService);
 
   protected readonly hasDropdown = computed(
     () => this.query().trim() !== '' && this.matches().length > 0,
@@ -223,23 +223,8 @@ export class TreeFilterComponent {
   }
 
   constructor() {
-    const disposers = [
-      this.shortcuts.register({
-        combo: 'Ctrl+P',
-        labelKey: 'shortcuts.treeFilter',
-        scope: 'global',
-        handler: () => this.focus(),
-      }),
-      this.shortcuts.register({
-        combo: '/',
-        labelKey: 'shortcuts.treeFilter',
-        scope: 'editable-safe',
-        handler: () => this.focus(),
-      }),
-    ];
-    inject(DestroyRef).onDestroy(() => {
-      for (const d of disposers) d();
-    });
+    this.focusShortcut.setHandler(() => this.focus());
+    inject(DestroyRef).onDestroy(() => this.focusShortcut.setHandler(null));
   }
 
   protected t(key: TranslationKey): string {
