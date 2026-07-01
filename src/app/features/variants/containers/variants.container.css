@@ -8,6 +8,7 @@
   flex-direction: column;
   height: 100%;
   min-height: 0;
+  position: relative;
 }
 .page-head {
   display: flex;
@@ -28,10 +29,95 @@
 .title-icon {
   color: var(--mc-accent-primary);
 }
-.head-actions .ghost {
+.head-actions .ghost,
+.head-actions .primary {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+.head-actions .icon-only {
+  padding: var(--mc-space-2);
+  gap: 0;
+}
+.head-actions .search-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-width: 220px;
+  max-width: 320px;
+}
+.head-actions .search-icon {
+  position: absolute;
+  left: var(--mc-space-2);
+  color: var(--mc-fg-muted);
+  pointer-events: none;
+}
+.head-actions .search {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  padding-left: calc(var(--mc-space-2) * 2 + 1em);
+}
+
+.legend-anchor {
+  position: relative;
+  display: inline-flex;
+}
+.legend-backdrop {
+  position: fixed;
+  inset: 0;
+  background: transparent;
+  border: none;
+  padding: 0;
+  z-index: 190;
+  cursor: default;
+}
+.legend-pop {
+  position: absolute;
+  top: calc(100% + var(--mc-space-1));
+  right: 0;
+  z-index: 195;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-1);
+  padding: var(--mc-space-3);
+  background: var(--mc-bg-elevated);
+  border: 1px solid var(--mc-border-strong);
+  border-radius: var(--mc-radius-md);
+  box-shadow: var(--mc-shadow-lg);
+  color: var(--mc-fg-primary);
+  font-size: var(--mc-font-size-xs);
+  white-space: nowrap;
+}
+.legend-pop .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.legend-pop .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.legend-pop .dot.pulse {
+  background: var(--mc-accent-primary);
+  animation: mc-legend-pulse 2.2s ease-in-out infinite;
+}
+@keyframes mc-legend-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.25); opacity: 1; }
+}
+.legend-pop .dot.dormant {
+  background: transparent;
+  border: 1px dashed var(--mc-fg-muted);
+  opacity: 0.7;
+}
+.legend-pop .ico {
+  font-family: var(--mc-font-mono, monospace);
+  color: var(--mc-fg-muted);
+  min-width: 10px;
+  text-align: center;
 }
 .modal-actions .ghost,
 .modal-actions .danger {
@@ -55,19 +141,23 @@
   gap: var(--mc-space-2);
 }
 
-.split {
-  display: grid;
-  grid-template-columns: minmax(260px, 320px) 1fr;
+.canvas {
   flex: 1;
   min-height: 0;
+  display: block;
 }
-.pane-left {
-  min-width: 0;
-  min-height: 0;
+.canvas.has-drawer {
+  padding-bottom: 96px;
 }
-.pane-right {
-  min-width: 0;
-  min-height: 0;
+/* why: fixed to the viewport (not just the routed area) — the user wants
+   it clearly pinned at the browser bottom. Offset by the sidebar rail's
+   56px so we don't cover the icon column. */
+.drawer {
+  position: fixed;
+  left: 56px;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
 }
 
 /* Delete modal (still used by container). */

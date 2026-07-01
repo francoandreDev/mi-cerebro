@@ -49,6 +49,11 @@ export class MergeContainer implements OnInit {
   protected readonly outcome = signal<MergeOutcome | null>(null);
   // 13e-iii — when set, "from" is a remote tracking ref instead of a variant.
   protected readonly remoteRefName = signal<string | null>(null);
+  // why: fed back to /variants as a queryParam so the delta can play the
+  //      confluence animation on the arm that just merged. Only set for
+  //      variant→variant merges (not remote sources) and only when the
+  //      last apply had no conflict.
+  private lastMergedFromId: string | null = null;
 
   protected readonly from = computed(() => this.findVariant(this.fromId()));
   protected readonly into = computed(() => this.findVariant(this.intoId()));
@@ -220,6 +225,7 @@ export class MergeContainer implements OnInit {
           : await this.merge.apply(plan, selections);
       this.outcome.set(result);
       if (remoteRef && result.failedAt === null) this.remote.clearDivergence();
+      if (!remoteRef && result.failedAt === null) this.lastMergedFromId = this.fromId();
       await this.loadPlan();
     } catch (e) {
       this.errors.report(e);
@@ -233,7 +239,12 @@ export class MergeContainer implements OnInit {
   }
 
   protected back(): void {
-    void this.router.navigate(['/variants']);
+    const justMerged = this.lastMergedFromId;
+    if (justMerged) {
+      void this.router.navigate(['/variants'], { queryParams: { justMerged } });
+    } else {
+      void this.router.navigate(['/variants']);
+    }
   }
 
   private syncUrl(): void {

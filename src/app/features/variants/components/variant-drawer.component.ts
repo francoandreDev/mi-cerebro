@@ -1,7 +1,9 @@
-// Right pane of /variants: full detail of the selected variant + the
-// action buttons that used to live on the card.
+// Bottom drawer of /variants: 2-line strip with the selected variant's
+// compact info + action buttons. Slides up when a brazo is picked in
+// the delta. Same output surface as the old variant-detail — the
+// container wires them identically.
 
-import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { I18nService } from '@core/i18n/i18n.service';
@@ -14,13 +16,13 @@ import { McDatePipe } from '@shared/pipes/mc-date.pipe';
 import type { VariantOverview } from '../services/variants-stats.service';
 
 @Component({
-  selector: 'mc-variant-detail',
+  selector: 'mc-variant-drawer',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [FormsModule, BgColorDirective, McDatePipe, IconComponent],
-  templateUrl: './variant-detail.component.html',
-  styleUrl: './variant-detail.component.css',
+  templateUrl: './variant-drawer.component.html',
+  styleUrl: './variant-drawer.component.css',
 })
-export class VariantDetailComponent {
+export class VariantDrawerComponent {
   private readonly i18n = inject(I18nService);
 
   readonly variant = input<Variant | null>(null);
@@ -42,6 +44,7 @@ export class VariantDetailComponent {
   readonly renameValueChange = output<string>();
   readonly colorChange = output<string>();
   readonly openCommit = output<string>();
+  readonly selectParent = output<string>();
 
   protected t(key: TranslationKey, params?: Record<string, string | number>): string {
     return this.i18n.t(key, params);
@@ -52,8 +55,7 @@ export class VariantDetailComponent {
   }
 
   protected onColorInput(event: Event): void {
-    const next = (event.target as HTMLInputElement).value;
-    this.colorChange.emit(next);
+    this.colorChange.emit((event.target as HTMLInputElement).value);
   }
 
   protected onHeadClick(): void {
@@ -65,4 +67,35 @@ export class VariantDetailComponent {
     const ms = this.overview()?.milestone;
     if (ms) this.openCommit.emit(ms.oid);
   }
+
+  protected onParentClick(): void {
+    const parentId = this.variant()?.parentId;
+    if (parentId) this.selectParent.emit(parentId);
+  }
+
+  // why: auto-commit subjects follow `auto: <parts> (<stamp>) [reason]`.
+  //      We split them so the drawer can render each piece as its own
+  //      visual chip instead of one wall of text. `stamp` gets dropped —
+  //      the activity pill already carries it. Manual commits fall
+  //      through as a single subject string.
+  protected readonly headParsed = computed(() => {
+    const subject = this.overview()?.head?.subject ?? '';
+    return parseHeadSubject(subject);
+  });
+}
+
+export interface ParsedHead {
+  readonly kind: 'auto' | 'manual' | 'empty';
+  readonly summary: string;
+  readonly reason: string | null;
+}
+
+const AUTO_RE = /^auto:\s+(.+?)\s+\(([^)]+)\)(?:\s+\[([^\]]+)\])?\s*$/;
+
+export function parseHeadSubject(subject: string): ParsedHead {
+  const trimmed = subject.trim();
+  if (!trimmed) return { kind: 'empty', summary: '', reason: null };
+  const m = AUTO_RE.exec(trimmed);
+  if (m) return { kind: 'auto', summary: m[1] ?? '', reason: m[3] ?? null };
+  return { kind: 'manual', summary: trimmed, reason: null };
 }

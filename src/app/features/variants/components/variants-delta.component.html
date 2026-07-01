@@ -1,0 +1,155 @@
+<div class="canvas-wrap">
+  <svg
+    class="delta"
+    [attr.viewBox]="viewBox()"
+    preserveAspectRatio="xMidYMin meet"
+    role="tree"
+    [attr.aria-label]="t('variants.page.title')"
+  >
+    <defs>
+      <filter id="mc-delta-glow" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur stdDeviation="3" result="blur" />
+        <feMerge>
+          <feMergeNode in="blur" />
+          <feMergeNode in="SourceGraphic" />
+        </feMerge>
+      </filter>
+    </defs>
+
+    @for (r of rendered(); track r.arm.variant.id) {
+      <g
+        class="arm"
+        [class.is-active]="isActive(r.arm.variant.id)"
+        [class.is-selected]="isSelected(r.arm.variant.id)"
+        [class.is-dormant]="isDormant(r.arm.variant.id)"
+        [class.is-merging]="isMerging(r.arm.variant.id)"
+        [class.is-dim]="!r.matches"
+        [attr.role]="'treeitem'"
+        [attr.tabindex]="0"
+        [attr.aria-selected]="isSelected(r.arm.variant.id)"
+        [attr.aria-label]="t('variants.delta.arm.aria', { name: r.arm.variant.name })"
+        (click)="pick.emit(r.arm.variant.id)"
+        (keydown)="onArmKey($event, r.arm.variant.id)"
+      >
+        <!-- reeds behind the channel to signal reposo -->
+        @if (isDormant(r.arm.variant.id)) {
+          @for (reed of reedsFor(r.arm); track $index) {
+            <path
+              class="reed"
+              [attr.d]="
+                'M ' +
+                reed.x +
+                ' ' +
+                (reed.y + 10) +
+                ' q -3 -14 0 -24 M ' +
+                (reed.x + 4) +
+                ' ' +
+                (reed.y + 10) +
+                ' q 3 -12 0 -20'
+              "
+            />
+          }
+        }
+
+        <!-- invisible fat path for hit testing -->
+        <path class="hitbox" [attr.d]="r.arm.channelPath" />
+
+        <!-- visible channel -->
+        <path class="channel" [attr.d]="r.arm.channelPath" [attr.stroke]="r.arm.variant.color" />
+
+        <!-- ambient flow: bright dashed ripple travelling downstream -->
+        @if (!isDormant(r.arm.variant.id)) {
+          <path class="flow" [attr.d]="r.arm.channelPath" [attr.stroke]="r.arm.variant.color" />
+        }
+
+        <!-- active pulse: extra soft stroke on top -->
+        @if (isActive(r.arm.variant.id)) {
+          <path
+            class="channel pulse"
+            [attr.d]="r.arm.channelPath"
+            [attr.stroke]="r.arm.variant.color"
+            filter="url(#mc-delta-glow)"
+          />
+        }
+
+        <!-- vado (fork marker) with short hash -->
+        @if (r.arm.forkX !== null && r.arm.forkY !== null && r.forkHash) {
+          <g class="vado" [attr.transform]="'translate(' + r.arm.forkX + ' ' + r.arm.forkY + ')'">
+            <path
+              class="vado-stone"
+              d="M 0 -6 L 6 0 L 0 6 L -6 0 Z"
+              [attr.fill]="r.arm.variant.color"
+            />
+            <text class="vado-hash" x="10" y="-6">{{ r.forkHash }}</text>
+          </g>
+        }
+
+        <!-- HEAD marker at the tail — same rombo language as the vado -->
+        @if (r.headHash) {
+          <g
+            class="head-mark"
+            [attr.transform]="'translate(' + (r.arm.tailX - 120) + ' ' + r.arm.y + ')'"
+          >
+            <path
+              class="vado-stone"
+              d="M 0 -6 L 6 0 L 0 6 L -6 0 Z"
+              [attr.fill]="r.arm.variant.color"
+            />
+            <text class="vado-hash" x="10" y="-6">{{ r.headHash }}</text>
+          </g>
+        }
+
+        <!-- milestone flag near the head of the channel -->
+        @if (r.milestoneName) {
+          <g
+            class="flag"
+            [attr.transform]="'translate(' + (r.arm.tailX - 40) + ' ' + r.arm.y + ')'"
+          >
+            <line class="pole" x1="0" y1="-22" x2="0" y2="0" />
+            <path
+              class="cloth"
+              d="M 0 -22 L 26 -18 L 22 -12 L 26 -6 L 0 -8 Z"
+              [attr.fill]="r.arm.variant.color"
+            />
+            <text class="flag-name" x="30" y="-10">{{ r.milestoneName }}</text>
+            @if (r.milestoneHash) {
+              <text class="flag-hash" x="30" y="2">{{ r.milestoneHash }}</text>
+            }
+          </g>
+        }
+
+        <!-- name label above the channel -->
+        <text class="name" [attr.x]="r.arm.labelX" [attr.y]="r.arm.y - 10">
+          {{ r.arm.variant.name }}
+        </text>
+
+        <!-- confluence: water flowing back toward the fork + splash at the vado -->
+        @if (isMerging(r.arm.variant.id)) {
+          <path
+            class="confluence"
+            [attr.d]="r.arm.channelPath"
+            [attr.stroke]="r.arm.variant.color"
+            pathLength="100"
+            filter="url(#mc-delta-glow)"
+          />
+          @if (r.arm.forkX !== null && r.arm.forkY !== null) {
+            <circle
+              class="splash"
+              [attr.cx]="r.arm.forkX"
+              [attr.cy]="r.arm.forkY"
+              r="4"
+              [attr.fill]="r.arm.variant.color"
+            />
+          }
+        }
+      </g>
+    }
+  </svg>
+
+  @if (!hasMatches()) {
+    <p class="empty" role="status">
+      <mc-icon name="magnifying-glass" class="mc-anim-pulse" />
+      <span>{{ t('variants.filters.empty') }}</span>
+    </p>
+  }
+</div>

@@ -2,10 +2,10 @@
 // by VariantsService (create / rename / delete / setColor / refreshActivity)
 // and the switch flow owned by SwitchVariantService. No git logic here.
 //
-// Two-pane layout: VariantsTreeComponent on the left (hierarchical list
-// + search + create CTA), VariantDetailComponent on the right (full
-// detail of the selected variant + actions). Selection auto-syncs to
-// the active variant on first load and after any switch.
+// Full-canvas delta view: VariantsDeltaComponent renders every family
+// as a channel in an SVG river; VariantDrawerComponent slides under it
+// with the selected variant's compact detail + actions. Selection
+// auto-syncs to the active variant on first load and after any switch.
 
 import {
   ChangeDetectionStrategy,
@@ -16,7 +16,8 @@ import {
   signal,
 } from '@angular/core';
 import type { OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { ErrorService } from '@core/errors/error.service';
 import { I18nService } from '@core/i18n/i18n.service';
@@ -29,14 +30,13 @@ import { PRINCIPAL_VARIANT_ID, type Variant } from '@core/versioning/variants.ty
 
 import { IconComponent } from '@shared/icon/icon.component';
 
-import { VariantDetailComponent } from '../components/variant-detail.component';
+import { VariantDrawerComponent } from '../components/variant-drawer.component';
+import { VariantsDeltaComponent } from '../components/variants-delta.component';
 import {
   VariantsCreateModalComponent,
   type CreateVariantRequest,
 } from '../components/variants-create-modal.component';
-import { VariantsTreeComponent } from '../components/variants-tree.component';
 import { VariantsStatsService, type VariantOverview } from '../services/variants-stats.service';
-import { buildVariantTree } from '../utils/variant-tree';
 
 interface DeleteRequest {
   readonly variant: Variant;
@@ -48,8 +48,9 @@ interface DeleteRequest {
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [VariantsStatsService],
   imports: [
-    VariantsTreeComponent,
-    VariantDetailComponent,
+    FormsModule,
+    VariantsDeltaComponent,
+    VariantDrawerComponent,
     VariantsCreateModalComponent,
     IconComponent,
   ],
@@ -64,6 +65,7 @@ export class VariantsContainer implements OnInit {
   private readonly i18n = inject(I18nService);
   private readonly errors = inject(ErrorService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   protected readonly file = this.variants.file;
   protected readonly switching = this.switcher.switching;
@@ -77,8 +79,6 @@ export class VariantsContainer implements OnInit {
   protected readonly visibleVariants = computed(() =>
     this.file().variants.filter((v) => !v.pendingDelete),
   );
-
-  protected readonly tree = computed(() => buildVariantTree(this.visibleVariants()));
 
   protected readonly dormantIds = computed<ReadonlySet<string>>(() => {
     const now = Date.now();
@@ -98,6 +98,20 @@ export class VariantsContainer implements OnInit {
   protected readonly overviews = signal<Record<string, VariantOverview>>({});
   protected readonly showCreate = signal(false);
   protected readonly selectedId = signal<string | null>(null);
+  // why: set from ?justMerged=<id> on arrival from /variants/merge so
+  //      the delta can play the confluence animation once. Cleared on a
+  //      timer after the animation ends; URL param is stripped on read.
+  protected readonly justMergedId = signal<string | null>(null);
+  private mergedClearTimer: ReturnType<typeof setTimeout> | null = null;
+  protected readonly showLegend = signal(false);
+
+  protected toggleLegend(): void {
+    this.showLegend.update((v) => !v);
+  }
+
+  protected closeLegend(): void {
+    this.showLegend.set(false);
+  }
 
   protected readonly selected = computed<Variant | null>(() => {
     const id = this.selectedId();
@@ -136,9 +150,30 @@ export class VariantsContainer implements OnInit {
     try {
       await this.variants.refresh();
       await this.loadOverviews();
+      this.pickupJustMerged();
     } catch (e) {
       this.errors.report(e);
     }
+  }
+
+  private pickupJustMerged(): void {
+    const raw = this.route.snapshot.queryParamMap.get('justMerged');
+    if (!raw) return;
+    const id = raw.trim();
+    const exists = this.visibleVariants().some((v) => v.id === id);
+    if (!exists) return;
+    this.justMergedId.set(id);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { justMerged: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+    if (this.mergedClearTimer) clearTimeout(this.mergedClearTimer);
+    this.mergedClearTimer = setTimeout(() => {
+      this.justMergedId.set(null);
+      this.mergedClearTimer = null;
+    }, 1800);
   }
 
   protected t(key: TranslationKey, params?: Record<string, string | number>): string {

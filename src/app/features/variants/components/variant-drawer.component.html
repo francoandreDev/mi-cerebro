@@ -1,0 +1,212 @@
+@if (variant(); as v) {
+  <article
+    class="drawer"
+    [class.is-active]="isActive()"
+    [class.is-dormant]="isDormant()"
+    [style.--arm-color]="v.color"
+  >
+    <div class="identity">
+      <label class="droplet" [title]="t('variants.form.color')">
+        <input
+          type="color"
+          [value]="v.color"
+          [disabled]="v.protected"
+          (change)="onColorInput($event)"
+        />
+        <span class="drop" [mcBgColor]="v.color"></span>
+      </label>
+      <div class="name-wrap">
+        @if (renaming()) {
+          <input
+            type="text"
+            class="rename-input"
+            [ngModel]="renameValue()"
+            (ngModelChange)="renameValueChange.emit($event)"
+            (keydown.enter)="$event.preventDefault(); renameSubmit.emit()"
+            (keydown.escape)="$event.preventDefault(); renameCancel.emit()"
+          />
+        } @else {
+          <h3 class="name">{{ v.name }}</h3>
+        }
+        <span class="badges">
+          @if (isActive()) {
+            <span class="badge">{{ t('variants.badge.active') }}</span>
+          }
+          @if (isDormant()) {
+            <span class="badge muted">{{ t('variants.badge.dormant') }}</span>
+          }
+          @if (v.protected) {
+            <span class="badge muted">{{ t('variants.badge.permanent') }}</span>
+          }
+        </span>
+      </div>
+    </div>
+
+    <div class="hero">
+      @if (overview()?.head; as head) {
+        <button
+          type="button"
+          class="head-hero"
+          (click)="onHeadClick()"
+          [title]="t('variants.head.subjectAt', { subject: head.subject, oid: shortOid(head.oid) })"
+          [attr.aria-label]="
+            t('variants.head.subjectAt', { subject: head.subject, oid: shortOid(head.oid) })
+          "
+        >
+          <svg class="head-rombo" viewBox="-8 -8 16 16" aria-hidden="true">
+            <path d="M 0 -6 L 6 0 L 0 6 L -6 0 Z" [attr.fill]="v.color" />
+          </svg>
+          @if (headParsed().kind === 'auto') {
+            <span class="head-kind">{{ t('variants.head.auto') }}</span>
+            <span class="head-summary">{{ headParsed().summary }}</span>
+            @if (headParsed().reason; as reason) {
+              <span class="head-reason">{{ reason }}</span>
+            }
+          } @else {
+            <span class="head-summary">{{ headParsed().summary }}</span>
+          }
+        </button>
+      } @else {
+        <p class="head-empty">
+          <mc-icon name="circle-dashed" />
+          <span>{{ t('variants.head.empty') }}</span>
+        </p>
+      }
+
+      <div class="meta-row">
+        @if (v.parentId) {
+          <button
+            type="button"
+            class="pill pill-link"
+            (click)="onParentClick()"
+            [title]="
+              t('variants.lineage.origin') +
+              ' ' +
+              (parentName() || v.parentId) +
+              (v.forkOid ? ' · ' + shortOid(v.forkOid) : '')
+            "
+          >
+            <mc-icon name="caret-left" class="pill-icon" />
+            <span>{{ parentName() || v.parentId }}</span>
+          </button>
+        } @else {
+          <span class="pill" [title]="t('variants.lineage.root')">
+            <mc-icon name="dot-outline" class="pill-icon" />
+            <span class="muted">{{ t('variants.lineage.root') }}</span>
+          </span>
+        }
+
+        @if (overview()?.milestone; as m) {
+          <button
+            type="button"
+            class="pill pill-link"
+            (click)="onMilestoneClick()"
+            [title]="t('variants.milestone.label') + ' · ' + m.name + ' · ' + shortOid(m.oid)"
+          >
+            <mc-icon name="flag" class="pill-icon" />
+            <span>{{ m.name }}</span>
+          </button>
+        }
+
+        @if (overview(); as ov) {
+          @if (!v.protected && ov.ahead > 0) {
+            <button
+              type="button"
+              class="pill pill-link pill-ahead"
+              (click)="merge.emit()"
+              [title]="
+                t('variants.compare.ahead', { n: ov.ahead }) + ' · ' + t('variants.action.merge')
+              "
+              [disabled]="busy()"
+            >
+              <mc-icon name="caret-up" class="pill-icon" />
+              <span>{{ ov.ahead }} {{ t('variants.compare.ahead.word') }}</span>
+            </button>
+          }
+          @if (!v.protected && ov.behind > 0) {
+            <span class="pill pill-behind" [title]="t('variants.compare.behind', { n: ov.behind })">
+              <mc-icon name="caret-down" class="pill-icon" />
+              <span>{{ ov.behind }} {{ t('variants.compare.behind.word') }}</span>
+            </span>
+          }
+        }
+
+        @if (v.lastActivityAt > 0) {
+          <span
+            class="pill pill-time"
+            [title]="t('variants.activity.label') + ' · ' + (v.lastActivityAt | mcDate)"
+          >
+            <mc-icon name="clock-counter-clockwise" class="pill-icon" />
+            <span>{{ v.lastActivityAt | mcDate }}</span>
+          </span>
+        }
+      </div>
+    </div>
+
+    <div class="actions">
+      @if (renaming()) {
+        <button
+          type="button"
+          class="primary mc-hover-grow"
+          (click)="renameSubmit.emit()"
+          [disabled]="busy()"
+        >
+          <mc-icon name="check" />
+          <span>{{ t('variants.rename.save') }}</span>
+        </button>
+        <button type="button" class="ghost mc-hover-grow" (click)="renameCancel.emit()">
+          <mc-icon name="x" />
+          <span>{{ t('variants.form.cancel') }}</span>
+        </button>
+      } @else {
+        @if (!isActive()) {
+          <button
+            type="button"
+            class="primary mc-hover-grow"
+            (click)="switchTo.emit()"
+            [disabled]="busy() || switching()"
+            [attr.aria-label]="t('variants.action.switch')"
+            [title]="t('variants.action.switch')"
+          >
+            <mc-icon
+              [name]="switching() ? 'spinner-gap' : 'play'"
+              [class.mc-anim-spin]="switching()"
+            />
+          </button>
+        }
+        @if (!v.protected) {
+          <button
+            type="button"
+            class="mc-hover-grow"
+            (click)="renameStart.emit()"
+            [disabled]="busy()"
+            [attr.aria-label]="t('variants.action.rename')"
+            [title]="t('variants.action.rename')"
+          >
+            <mc-icon name="pencil-simple" />
+          </button>
+          <button
+            type="button"
+            class="mc-hover-grow"
+            (click)="merge.emit()"
+            [disabled]="busy()"
+            [attr.aria-label]="t('variants.action.merge')"
+            [title]="t('variants.action.merge')"
+          >
+            <mc-icon name="git-branch" />
+          </button>
+          <button
+            type="button"
+            class="danger mc-hover-wiggle"
+            (click)="delete_.emit()"
+            [disabled]="busy() || isActive()"
+            [attr.aria-label]="t('variants.action.delete')"
+            [title]="t('variants.action.delete')"
+          >
+            <mc-icon name="trash" />
+          </button>
+        }
+      }
+    </div>
+  </article>
+}

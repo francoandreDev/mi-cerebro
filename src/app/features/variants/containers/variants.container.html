@@ -5,34 +5,86 @@
       <p class="subtitle">{{ t('variants.page.subtitle') }}</p>
     </div>
     <div class="head-actions">
+      <div class="search-wrap">
+        <mc-icon name="magnifying-glass" class="search-icon" />
+        <input
+          type="search"
+          class="search"
+          [ngModel]="query()"
+          (ngModelChange)="query.set($event)"
+          [placeholder]="t('variants.filters.search.placeholder')"
+          [attr.aria-label]="t('variants.filters.search')"
+        />
+      </div>
       <button
         type="button"
-        class="ghost mc-hover-grow"
+        class="primary icon-only mc-hover-grow"
+        (click)="openCreate()"
+        [disabled]="busy()"
+        [attr.aria-label]="t('variants.action.new')"
+        [title]="t('variants.action.new')"
+      >
+        <mc-icon name="plus" />
+      </button>
+      <button
+        type="button"
+        class="ghost icon-only mc-hover-grow"
         (click)="refreshActivity()"
         [disabled]="refreshing() || busy()"
+        [attr.aria-label]="refreshing() ? t('variants.refreshing') : t('variants.refresh')"
+        [title]="refreshing() ? t('variants.refreshing') : t('variants.refresh')"
       >
         <mc-icon name="arrows-clockwise" [class.mc-anim-spin]="refreshing()" />
-        <span>{{ refreshing() ? t('variants.refreshing') : t('variants.refresh') }}</span>
       </button>
+      <div class="legend-anchor">
+        <button
+          type="button"
+          class="ghost icon-only mc-hover-grow"
+          (click)="toggleLegend()"
+          [attr.aria-label]="t('variants.legend.aria')"
+          [attr.aria-expanded]="showLegend()"
+          [title]="t('variants.legend.aria')"
+        >
+          <mc-icon name="info" />
+        </button>
+        @if (showLegend()) {
+          <button
+            type="button"
+            class="legend-backdrop"
+            [attr.aria-label]="t('variants.form.cancel')"
+            (click)="closeLegend()"
+          ></button>
+          <div class="legend-pop" role="dialog" aria-modal="false">
+            <span class="chip"
+              ><span class="dot pulse"></span>{{ t('variants.legend.active') }}</span
+            >
+            <span class="chip"
+              ><span class="dot dormant"></span>{{ t('variants.legend.dormant') }}</span
+            >
+            <span class="chip"><span class="ico">◇</span>{{ t('variants.legend.vado') }}</span>
+            <span class="chip"><span class="ico">⚑</span>{{ t('variants.legend.milestone') }}</span>
+          </div>
+        }
+      </div>
     </div>
   </header>
 
-  <div class="split">
-    <mc-variants-tree
-      class="pane-left"
-      [tree]="tree()"
-      [activeId]="file().activeId"
-      [selectedId]="selectedId()"
-      [dormantIds]="dormantIds()"
-      [query]="query()"
-      [busy]="busy()"
-      (pick)="onSelect($event)"
-      (queryChange)="query.set($event)"
-      (createNew)="openCreate()"
-    />
+  <mc-variants-delta
+    class="canvas"
+    [class.has-drawer]="!!selected()"
+    [variants]="visibleVariants()"
+    [overviews]="overviews()"
+    [activeId]="file().activeId"
+    [selectedId]="selectedId()"
+    [dormantIds]="dormantIds()"
+    [query]="query()"
+    [justMergedId]="justMergedId()"
+    (pick)="onSelect($event)"
+  />
 
-    <mc-variant-detail
-      class="pane-right"
+  @if (selected()) {
+    <mc-variant-drawer
+      class="drawer"
       [variant]="selected()"
       [overview]="selectedOverview()"
       [parentName]="selectedParentName()"
@@ -51,8 +103,9 @@
       (renameValueChange)="renameValue.set($event)"
       (colorChange)="onColorChange($event)"
       (openCommit)="onOpenCommit($event)"
+      (selectParent)="onSelect($event)"
     />
-  </div>
+  }
 
   <mc-variants-create-modal
     [visible]="showCreate()"
