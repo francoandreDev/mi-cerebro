@@ -526,3 +526,21 @@ Formato por entrada:
 - **Qué**: poder linkear entidades entre sí desde dentro del editor (una nota que referencie una imagen, un escrito que linkee otra nota, etc.) tipo `[[wiki-link]]` o picker de "insertar referencia". Hoy las imágenes se referencian visualmente desde notas/escritos (renderización), pero no hay un sistema de links navegables entre entidades arbitrarias.
 - **Por qué se difirió**: implica decidir sintaxis del link, picker de UI, resolución (qué pasa si la entidad target se borra), y cómo se ve el link en el renderizado vs el editor. Pieza grande de UX/datos.
 - **Target**: sin asignar.
+
+## Sync — Push a remoto no funciona (origen: uso manual, 2026-07-01)
+
+### Investigar por qué falla `pushAll` contra el remoto real
+
+- **Qué**: en uso real desde `/sync`, disparar "Push todo" no llega a subir los refs al remoto. Falta identificar en qué capa se rompe: credenciales/PAT (`RemoteConfig`), transporte (`isomorphic-git` + CORS proxy), refspec (`heads/<variant>-<facet>`), o el side-effect de `persistLastPushAt` sobre `secrets.json`. La UI del rediseño (tubos, palancas, sello) refleja outcomes que el `RemoteService` reporta — si esos outcomes vienen `error`/`absent`, el problema es aguas arriba de la consola.
+- **Por qué se difirió**: descubierto al final de la sesión que cerró el rediseño de `/sync` (pasos 5-8 del `docs/redesign.md`). Diagnosticar requiere sesión dedicada con acceso al repo remoto real, credenciales de prueba, y probablemente devtools abierto para ver la respuesta HTTP del CORS proxy. La consola de tubos ya está lista para mostrar el diagnóstico honestamente cuando el fix llegue.
+- **Cómo empezar**: reproducir con un remoto configurado, mirar `lastPushOutcomes` en el store y el mensaje real que llega al `AppError` (código `MCB-NET-004` esperado si el push falla); si el error viene de auth, revisar `RemoteConfig` (PAT vs deviceflow) en `secrets.json`; si viene de transporte, revisar el CORS proxy configurado en `versioning/http.ts`.
+- **Target**: sin asignar — próxima sesión dedicada de sync/versionado.
+
+## Historial — Dejar de trackear campos "de la app" (origen: /history rediseño, 2026-07-02)
+
+### No versionar `fields.system` de las entidades del usuario
+
+- **Qué**: hoy el diff service reporta dos grupos de campos por entidad: `fields.user` (lo que el usuario edita — título, cuerpo, tags, fecha, prioridad, etc.) y `fields.system` (timestamps, revisiones, ids, flags internos que mueve la app). El usuario está mirando SU historial personal (mesa de trabajo), no un log técnico — los cambios de sistema son ruido. La UI ya no los muestra (ver `entityRow` en `history.container.html`), pero la infra sigue serializándolos, computando su diff y agregándolos al `EntityDiff.view.fields.system`.
+- **Por qué se difirió**: sacarlos del track cambia el snapshot de cada entidad y por lo tanto el diff base. Requiere: (a) definir por tipo cuáles claves son "system", (b) verificar que ninguna vista aguas abajo dependa del valor (ej. render de una nota necesita el `id` del sistema, pero el diff no debería reportarlo), (c) migración de los commits pasados que sí tienen esos campos serializados (no romper la historia). Cambio de datos con blast radius no acotado — merece sesión dedicada.
+- **Cómo empezar**: revisar `HistoryDiffService`/`entity-diff.utils.ts` en `src/app/features/history/services/`; identificar el punto donde `fields.user` y `fields.system` se separan (probablemente por lista de allow/deny de claves) y decidir si el mejor lugar de filtro es en el snapshot (upstream — no incluir la clave) o en el diff (downstream — computar pero descartar). El primer camino es correcto pero implica auditar todos los tipos de entidad.
+- **Target**: sin asignar.

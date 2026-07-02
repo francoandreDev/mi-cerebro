@@ -22,6 +22,9 @@
   color: var(--mc-accent-primary);
 }
 
+/* El grid del historial ya no es fijo 360|1fr — cada zoom impone su propio
+ * layout porque la metáfora dicta el reparto de espacio, no una regla
+ * genérica compartida.  */
 .split {
   display: grid;
   grid-template-columns: 360px 1fr;
@@ -29,90 +32,113 @@
   min-height: 0;
 }
 
-/* Collapse to rail. Toggle button + vertical label stay visible so the
- * user can find their way back. Hides everything that consumes width. */
-.split.timeline-collapsed {
-  grid-template-columns: 36px 1fr;
-}
-.split.detail-collapsed {
-  grid-template-columns: 360px 36px;
+/* Estratos: la ficha de yacimiento (contenido real) toma el ancho útil.
+ * La columna izquierda queda como rail angosto de switcher entre
+ * yacimientos — no es donde se lee, es donde se elige.  */
+.split.zoom-strata {
+  grid-template-columns: minmax(240px, 300px) 1fr;
 }
 
-.split.timeline-collapsed .timeline > :not(.timeline-head),
-.split.timeline-collapsed .timeline .only-milestones {
-  display: none;
-}
-.split.timeline-collapsed .timeline-head {
-  flex-direction: column;
-  padding: 8px 4px;
-  border-bottom: none;
-  gap: 6px;
-  align-items: center;
-}
-.split.timeline-collapsed .timeline .pane-collapsed-label {
-  display: block;
-}
-.split:not(.timeline-collapsed) .timeline .pane-collapsed-label {
-  display: none;
+/* Cordillera: el paisaje toma casi todo el ancho; la libreta de campo del
+ * naturalista queda como aside estrecho a la derecha.  */
+.split.zoom-panorama {
+  grid-template-columns: 1fr minmax(300px, 360px);
 }
 
-.split.detail-collapsed .detail > :not(.detail-collapse-bar) {
-  display: none;
+/* Zoom cordel: la mesa de revelado (detail pane) baja del costado a la
+ * fila inferior — las polaroids cuelgan y se miran hacia arriba, así que
+ * la ampliación de la seleccionada va abajo, no al lado. La fila del
+ * cordel tiene alto propio (fit-content acotado) para que la mesa quede
+ * debajo y no cubra las polaroids.  */
+.split.zoom-detail-stack {
+  grid-template-columns: 1fr;
+  grid-template-rows: max-content minmax(0, 1fr);
 }
-.split.detail-collapsed .detail .pane-collapsed-label {
-  display: block;
-}
-.split:not(.detail-collapsed) .detail .pane-collapsed-label {
-  display: none;
-}
-
-.detail-collapse-bar {
+.split.zoom-detail-stack .timeline {
+  grid-row: 1;
+  grid-column: 1;
+  border-right: none;
+  border-bottom: 1px solid var(--mc-border-subtle);
+  overflow: hidden;
   display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 6px;
-  border-bottom: 1px solid var(--mc-border-default);
-}
-.split.detail-collapsed .detail-collapse-bar {
   flex-direction: column;
-  align-items: center;
-  border-bottom: none;
-  border-right: 1px solid var(--mc-border-default);
-  height: 100%;
+  min-height: 0;
 }
-.split.detail-collapsed .detail {
-  border-left: 1px solid var(--mc-border-default);
+/* Cabecera del cordel: banda de "cuarto oscuro" con luz cálida detrás
+ * del hilo. Búsqueda tiñada de ámbar y filtros como pinzas de ropa. */
+.split.zoom-detail-stack .timeline-head {
+  background:
+    radial-gradient(
+      ellipse 50% 100% at 50% 100%,
+      rgba(255, 210, 150, 0.25) 0%,
+      transparent 70%
+    ),
+    linear-gradient(to bottom, #2c1e12 0%, #3a2618 100%);
+  color: #f4e8d0;
+  border-bottom: 2px solid rgba(255, 210, 150, 0.28);
+  /* En cordel sólo queda el botón de volver — colapsamos a una fila. */
+  grid-template-columns: auto;
+  grid-template-areas: 'back';
+  padding: 8px 14px;
 }
-
-.pane-toggle {
-  width: 22px;
-  height: 22px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: 1px solid var(--mc-border-default);
-  border-radius: 4px;
-  color: var(--mc-fg-muted);
-  cursor: pointer;
-  font-size: 13px;
-  line-height: 1;
-  flex-shrink: 0;
+.split.zoom-detail-stack .timeline-search-input {
+  background: rgba(255, 240, 210, 0.92);
+  color: #2b1a0a;
+  border-color: rgba(255, 210, 150, 0.6);
+  font-family: 'Caveat', 'Bradley Hand', cursive, sans-serif;
+  font-size: 14px;
 }
-.pane-toggle:hover {
-  background: var(--mc-bg-hover);
-  color: var(--mc-fg-primary);
+.split.zoom-detail-stack .timeline-search-input::placeholder {
+  color: #4a3325;
+  font-family: 'Caveat', 'Bradley Hand', cursive, sans-serif;
+  opacity: 0.75;
 }
-
-.pane-collapsed-label {
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--mc-fg-muted);
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  margin-top: 8px;
+.split.zoom-detail-stack .timeline-search-input:focus {
+  border-color: #ffcc88;
+  box-shadow: 0 0 0 3px rgba(255, 200, 130, 0.35);
+}
+.split.zoom-detail-stack .timeline-search-icon {
+  color: #4a3325;
+}
+.split.zoom-detail-stack .timeline-search-clear {
+  background: rgba(74, 51, 37, 0.2);
+  color: #2b1a0a;
+}
+.split.zoom-detail-stack .facet-chips {
+  background: rgba(255, 210, 150, 0.15);
+}
+.split.zoom-detail-stack .facet-chip {
+  color: #f4e8d0;
+}
+.split.zoom-detail-stack .facet-chip:hover {
+  background: rgba(255, 210, 150, 0.18);
+}
+.split.zoom-detail-stack .only-milestones {
+  border-color: rgba(255, 210, 150, 0.45);
+  color: #f4e8d0;
+  background: rgba(255, 210, 150, 0.08);
+}
+.split.zoom-detail-stack .only-milestones:hover {
+  background: rgba(255, 210, 150, 0.22);
+  border-color: rgba(255, 220, 170, 0.85);
+}
+.split.zoom-detail-stack .zoom-back {
+  color: #f4e8d0;
+  background: rgba(255, 210, 150, 0.12);
+  border-color: rgba(255, 210, 150, 0.5);
+}
+.split.zoom-detail-stack .zoom-back:hover {
+  background: rgba(255, 210, 150, 0.28);
+  border-color: rgba(255, 220, 170, 0.85);
+}
+.split.zoom-detail-stack .detail {
+  grid-row: 2;
+  grid-column: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+.split.zoom-detail-stack .cordel-scroll {
+  flex: 0 0 auto;
 }
 
 .timeline {
@@ -125,17 +151,198 @@
   margin-bottom: 8px;
 }
 
+/* Stratum: cada bucket es un estrato con cabecera que muestra espesor real
+ * (barra log-escalada de 20–96px) tinción por faceta y fósiles anclados.
+ * El espesor NO cambia con el filtro: la geología no miente. */
+.stratum {
+  position: relative;
+}
+
+/* Estrato activo (contiene el commit seleccionado) — ribbon lateral que
+ * conecta visualmente con la ficha de yacimiento a la derecha. */
+.stratum.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--mc-accent-primary);
+  border-radius: 0 2px 2px 0;
+  z-index: 3;
+}
+
+.stratum-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--mc-bg-base, #fff);
+  border-bottom: 1px solid var(--mc-border-subtle, rgba(0, 0, 0, 0.06));
+  padding: 4px 0 6px;
+}
+
+.stratum-head-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 12px;
+}
+
+.stratum .bucket-label {
+  position: static;
+  padding: 0;
+  border-bottom: none;
+  background: transparent;
+}
+
+.stratum-count {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--mc-fg-primary);
+  padding: 1px 8px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--mc-fg-primary) 12%, transparent);
+}
+
+
+.stratum-fossil-legend {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--mc-fg-primary);
+}
+
+.stratum-fossil-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px 2px 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mc-accent-primary) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--mc-accent-primary) 30%, transparent);
+}
+
+.stratum-fossil-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--mc-accent-primary);
+  box-shadow:
+    0 0 0 1.5px rgba(255, 255, 255, 0.6),
+    0 0 0 2.5px color-mix(in srgb, var(--mc-accent-primary) 50%, transparent);
+}
+
+.stratum-fossil-legend-item[data-facet='main'] .stratum-fossil-legend-dot {
+  background: var(--facet-color-main);
+}
+.stratum-fossil-legend-item[data-facet='comments'] .stratum-fossil-legend-dot {
+  background: var(--facet-color-comments);
+}
+.stratum-fossil-legend-item[data-facet='draft'] .stratum-fossil-legend-dot {
+  background: var(--facet-color-draft);
+}
+
+.stratum-fossil-legend-name {
+  background: transparent;
+  border: none;
+  color: inherit;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.stratum-fossil-legend-name:hover {
+  color: var(--mc-fg-primary);
+  text-decoration: underline;
+}
+
+
+/* Bedrock: pie del último estrato con el aviso de compactación pendiente,
+ * enmarcado como lecho de roca (dashed earthy border). Antes vivía arriba;
+ * ahora coincide con la metáfora — lo compactado está al fondo. */
+.bedrock {
+  margin: 12px 12px 24px;
+  padding: 12px 14px;
+  border: 1px dashed color-mix(in srgb, #a97b3f 55%, var(--mc-border-default));
+  border-radius: 6px;
+  background: color-mix(in srgb, #a97b3f 8%, transparent);
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  position: relative;
+}
+
+.bedrock-strata {
+  flex: 0 0 6px;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bedrock-layer {
+  flex: 1;
+  background: color-mix(in srgb, #a97b3f 40%, transparent);
+  border-radius: 2px;
+}
+
+.bedrock-layer:nth-child(2) {
+  background: color-mix(in srgb, #6d4a20 40%, transparent);
+}
+
+.bedrock-layer:nth-child(3) {
+  background: color-mix(in srgb, #3f2a14 45%, transparent);
+}
+
+.bedrock-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bedrock-body strong {
+  font-size: 0.9rem;
+}
+
+.bedrock-body p {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--mc-fg-secondary, var(--mc-text-secondary));
+}
+
+.bedrock-cta {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--mc-accent-primary, var(--mc-accent, var(--mc-text)));
+  text-decoration: none;
+  align-self: flex-start;
+}
+
+.bedrock-cta:hover,
+.bedrock-cta:focus-visible {
+  text-decoration: underline;
+}
+
 .bucket-label {
   position: sticky;
   top: 0;
   margin: 0;
   padding: 6px 12px;
   background: var(--mc-bg-base, #fff);
-  color: var(--mc-fg-secondary, #666);
-  font-size: 11px;
-  font-weight: 600;
+  color: var(--mc-fg-primary);
+  font-size: 12px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   border-bottom: 1px solid var(--mc-border-subtle, rgba(0, 0, 0, 0.05));
   z-index: 1;
 }
@@ -215,13 +422,15 @@
 
 .commit-time {
   font-family: ui-monospace, monospace;
-  color: var(--mc-fg-secondary, #666);
+  color: var(--mc-fg-primary);
+  font-weight: 500;
 }
 
 .commit-message {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: var(--mc-fg-primary);
 }
 
 .commit-oid {
@@ -229,7 +438,8 @@
   grid-column: 3;
   font-family: ui-monospace, monospace;
   font-size: 11px;
-  color: var(--mc-fg-secondary, #888);
+  color: var(--mc-fg-primary);
+  font-weight: 600;
 }
 
 .commit-chips {
@@ -370,89 +580,172 @@
   cursor: not-allowed;
 }
 
+/* Head del pane: barra de herramientas del explorador. Grid en 2 filas
+ * cuando hay espacio — arriba back button + búsqueda, abajo filtros. En
+ * anchos angostos se apila. Colores base por defecto; cada zoom lo pinta
+ * con su paleta abajo. */
 .timeline-head {
-  padding: 8px 12px;
+  padding: 10px 14px;
   border-bottom: 1px solid var(--mc-border-default);
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    'back search'
+    'filters filters';
   align-items: center;
-  gap: 6px;
+  gap: 8px 10px;
+  background: color-mix(in srgb, var(--mc-fg-primary) 3%, transparent);
+}
+.timeline-head > .zoom-back,
+.timeline-head > .zoom-anchor {
+  grid-area: back;
+}
+.timeline-head > .timeline-search {
+  grid-area: search;
+}
+.timeline-head > .facet-chips,
+.timeline-head > .only-milestones {
+  grid-area: filters;
+}
+.timeline-head > .facet-chips {
+  justify-self: start;
+}
+.timeline-head > .only-milestones {
+  justify-self: end;
 }
 
 .timeline-search {
   position: relative;
-  flex: 1 0 100%;
   display: flex;
   align-items: center;
+  min-width: 0;
 }
 .timeline-search-icon {
   position: absolute;
-  left: 8px;
-  color: var(--mc-fg-muted);
+  left: 10px;
+  color: var(--mc-fg-primary);
+  opacity: 0.75;
   pointer-events: none;
-  font-size: 12px;
+  font-size: 13px;
 }
 .timeline-search-input {
   width: 100%;
-  padding: 6px 28px 6px 26px;
+  padding: 7px 30px 7px 30px;
   font: inherit;
-  font-size: 12px;
-  border: 1px solid var(--mc-border-default);
-  border-radius: 4px;
-  background: var(--mc-bg-elevated, transparent);
-  color: inherit;
+  font-size: 12.5px;
+  border: 1px solid var(--mc-fg-secondary);
+  border-radius: 999px;
+  background: var(--mc-bg-base);
+  color: var(--mc-fg-primary);
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.timeline-search-input::placeholder {
+  color: var(--mc-fg-primary);
+  opacity: 0.6;
+  font-style: italic;
+}
+.timeline-search-input:hover {
+  border-color: var(--mc-accent-primary);
 }
 .timeline-search-input:focus {
-  outline: 2px solid color-mix(in srgb, var(--mc-accent-primary) 45%, transparent);
-  outline-offset: -1px;
+  outline: none;
   border-color: var(--mc-accent-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mc-accent-primary) 25%, transparent);
 }
 .timeline-search-clear {
   position: absolute;
-  right: 4px;
-  width: 20px;
-  height: 20px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
+  background: color-mix(in srgb, var(--mc-fg-primary) 10%, transparent);
   border: none;
-  border-radius: 4px;
-  color: var(--mc-fg-muted);
+  border-radius: 999px;
+  color: var(--mc-fg-primary);
   cursor: pointer;
-  font-size: 16px;
+  font-size: 12px;
   line-height: 1;
 }
 .timeline-search-clear:hover {
-  background: var(--mc-bg-hover);
-  color: var(--mc-fg-primary);
+  background: color-mix(in srgb, var(--mc-fg-primary) 20%, transparent);
 }
 
 .only-milestones {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
-  color: var(--mc-fg-muted);
+  padding: 3px 10px 3px 6px;
+  font-size: 11.5px;
+  color: var(--mc-fg-primary);
+  border: 1px solid var(--mc-fg-secondary);
+  border-radius: 999px;
+  background: transparent;
   cursor: pointer;
   user-select: none;
+  font-weight: 500;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+.only-milestones:hover {
+  background: color-mix(in srgb, var(--mc-accent-primary) 10%, transparent);
+  border-color: var(--mc-accent-primary);
+}
+.only-milestones input[type='checkbox'] {
+  accent-color: var(--mc-accent-primary);
+  cursor: pointer;
 }
 
 .facet-chips {
   display: inline-flex;
-  gap: 4px;
-  margin-left: 8px;
+  gap: 6px;
+  padding: 3px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mc-fg-primary) 6%, transparent);
 }
 
 .facet-chip {
-  font-size: 11px;
-  padding: 2px 8px;
+  font-size: 11.5px;
+  padding: 3px 12px;
   border-radius: 999px;
-  border: 1px solid var(--mc-border-default);
+  border: 1px solid transparent;
   background: transparent;
-  color: var(--mc-fg-muted);
+  color: var(--mc-fg-primary);
   cursor: pointer;
   user-select: none;
+  font-weight: 600;
+  position: relative;
+  padding-left: 22px;
+  transition: background 120ms ease;
+}
+.facet-chip::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  background: transparent;
+  transform: translateY(-50%);
+  opacity: 0.55;
+}
+.facet-chip[data-facet='main']::before {
+  color: var(--facet-color-main);
+}
+.facet-chip[data-facet='comments']::before {
+  color: var(--facet-color-comments);
+}
+.facet-chip[data-facet='draft']::before {
+  color: var(--facet-color-draft);
+}
+.facet-chip:hover {
+  background: color-mix(in srgb, var(--mc-fg-primary) 10%, transparent);
+}
+.facet-chip[aria-pressed='true']::before {
+  background: currentColor;
+  opacity: 1;
 }
 
 .facet-chip[aria-pressed='true'] {
@@ -465,24 +758,557 @@
         Coloreamos chips del filtro + barra lateral de cada commit con la
         misma paleta para que el usuario asocie un color con una rama. */
 .facet-chip[data-facet='main'][aria-pressed='true'] {
-  background: color-mix(in srgb, var(--facet-color-main) 22%, transparent);
-  border-color: var(--facet-color-main);
+  background: color-mix(in srgb, var(--facet-color-main) 28%, transparent);
 }
-
 .facet-chip[data-facet='comments'][aria-pressed='true'] {
-  background: color-mix(in srgb, var(--facet-color-comments) 22%, transparent);
-  border-color: var(--facet-color-comments);
+  background: color-mix(in srgb, var(--facet-color-comments) 28%, transparent);
 }
-
 .facet-chip[data-facet='draft'][aria-pressed='true'] {
-  background: color-mix(in srgb, var(--facet-color-draft) 22%, transparent);
-  border-color: var(--facet-color-draft);
+  background: color-mix(in srgb, var(--facet-color-draft) 28%, transparent);
 }
 
 aside.timeline {
   --facet-color-main: var(--mc-accent-primary);
   --facet-color-comments: #6b8ce0;
   --facet-color-draft: #d4a72c;
+}
+
+/* why: hay una sola forma de moverse hacia atrás en el flujo (cordillera
+ * ← estratos ← cordel). Adelantar es siempre por acción — elegir cumbre
+ * o veta. Por eso no hay más zoom pills paralelos; sólo este botón. */
+.zoom-back,
+.zoom-anchor {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px 4px 8px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mc-fg-primary);
+  border: 1px solid var(--mc-border-default);
+  background: var(--mc-bg-elevated, transparent);
+}
+.zoom-back {
+  cursor: pointer;
+}
+.zoom-back:hover {
+  background: color-mix(in srgb, var(--mc-accent-primary) 16%, var(--mc-bg-elevated));
+  border-color: var(--mc-accent-primary);
+}
+.zoom-back:focus-visible {
+  outline: 2px solid var(--mc-accent-primary);
+  outline-offset: 2px;
+}
+.zoom-anchor {
+  color: var(--mc-fg-primary);
+  cursor: default;
+  border-style: dashed;
+  opacity: 0.9;
+}
+
+/* Panorámica (Fase 3): silueta continua de cordillera, cielo arriba,
+ * horizonte al pie, banderines clavados sobre los picos. Cada faceta es un
+ * `path` cerrado con curvas Bezier (Catmull-Rom), no rects. Un año entero
+ * queda en tres paths.  */
+.panorama-scroll {
+  overflow: hidden;
+  padding: 0;
+  height: 100%;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Fondo neutro para las montañas — sin gradient sunset decorativo.
+ * El contraste lo da el color de las bandas; el fondo sólo evita que
+ * las gridlines Y se pierdan en el tema base.  */
+.panorama-sky {
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.05) 0%,
+    transparent 100%
+  );
+  padding: 24px 0 40px;
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  position: relative;
+}
+
+.panorama-svg {
+  display: block;
+  overflow: visible;
+  width: 100%;
+  height: 100%;
+  max-height: 60vh;
+}
+
+.panorama-band {
+  stroke: color-mix(in srgb, var(--mc-fg-primary) 25%, transparent);
+  stroke-width: 1;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  transition: opacity 0.2s ease;
+}
+.panorama-band-main {
+  fill: var(--facet-color-main);
+}
+.panorama-band-comments {
+  fill: var(--facet-color-comments);
+}
+.panorama-band-draft {
+  fill: var(--facet-color-draft);
+}
+
+.panorama-horizon {
+  stroke: var(--mc-fg-primary);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+  opacity: 0.7;
+}
+
+/* Reference lines Y = "N commits/día" — permiten leer la altura de una
+ * cumbre sin hover. La línea es discreta; el label vive alineado a la
+ * izquierda para no chocar con las cumbres. */
+.panorama-y-tick {
+  stroke: color-mix(in srgb, var(--mc-fg-secondary) 45%, transparent);
+  stroke-width: 1;
+  stroke-dasharray: 3 5;
+  pointer-events: none;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Overlay HTML sobre el SVG. Necesario porque el SVG usa
+ * preserveAspectRatio="none" para estirarse a lo ancho — el texto ahí
+ * dentro se deforma. Los labels van fuera del SVG con posición en % del
+ * viewBox y así se ven a tamaño de pantalla natural. */
+.panorama-overlay {
+  position: absolute;
+  inset: 24px 0 40px 0;
+  pointer-events: none;
+}
+.panorama-y-label {
+  position: absolute;
+  left: 6px;
+  transform: translateY(-100%);
+  padding: 0 4px;
+  font-size: 10px;
+  font-family: ui-monospace, monospace;
+  font-weight: 600;
+  color: var(--mc-fg-primary);
+  background: color-mix(in srgb, var(--mc-bg-base) 82%, transparent);
+  border-radius: 3px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.panorama-band.dimmed {
+  opacity: 0.55;
+}
+
+.panorama-month-tick {
+  stroke: var(--mc-fg-secondary);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.panorama-month-label {
+  position: absolute;
+  bottom: -22px;
+  transform: translateX(-50%);
+  font-size: 10.5px;
+  font-family: 'Georgia', serif;
+  font-variant: small-caps;
+  letter-spacing: 0.14em;
+  font-weight: 600;
+  color: var(--mc-fg-primary);
+  white-space: nowrap;
+}
+
+.panorama-selected-band {
+  fill: color-mix(in srgb, var(--mc-accent-primary) 14%, transparent);
+  stroke: color-mix(in srgb, var(--mc-accent-primary) 55%, transparent);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+/* HEAD marker: pin discreto en la cumbre del commit actual. El label
+ * fuerte "Estás acá" migró al excursionista, que sí se mueve — este
+ * marker sólo señala que HEAD sigue vivo aunque el explorador esté
+ * mirando otra cumbre. */
+.panorama-head-marker {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.panorama-head-dot {
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--mc-accent-primary);
+  border: 2px solid var(--mc-bg-base);
+  box-shadow: 0 0 0 1.5px var(--mc-accent-primary);
+}
+
+/* Excursionista: el "vos, naturalista" que camina por las cumbres.
+ * transition en left/top hace que el movimiento entre columnas se lea
+ * como una caminata suave sobre la silueta. El bob idle (breathing) le
+ * da vida cuando está quieto. */
+.panorama-explorer {
+  position: absolute;
+  width: 26px;
+  height: 32px;
+  /* +10px baja al muñeco para que los pies apoyen sobre el pico y la
+   * sombra caiga justo en la línea del terreno en vez de flotar. */
+  transform: translate(-50%, calc(-100% + 10px));
+  pointer-events: none;
+  z-index: 2;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.35));
+}
+.panorama-explorer svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  animation: explorerBob 1.6s ease-in-out infinite;
+}
+.panorama-explorer.walking svg {
+  animation-duration: 620ms;
+}
+@keyframes explorerBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1.5px); }
+}
+.explorer-shadow {
+  fill: rgba(0, 0, 0, 0.35);
+}
+.explorer-head {
+  fill: #e8c9a0;
+  stroke: #3b2611;
+  stroke-width: 0.6;
+}
+.explorer-cap {
+  fill: var(--mc-accent-primary);
+  stroke: #3b2611;
+  stroke-width: 0.5;
+  stroke-linejoin: round;
+}
+.explorer-body {
+  fill: color-mix(in srgb, var(--mc-accent-primary) 55%, #3b2611);
+  stroke: #3b2611;
+  stroke-width: 0.6;
+  stroke-linejoin: round;
+}
+.explorer-pack {
+  fill: #6b4423;
+  stroke: #3b2611;
+  stroke-width: 0.5;
+}
+.explorer-leg {
+  stroke: #3b2611;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  fill: none;
+}
+.explorer-pole {
+  stroke: #6b4423;
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  fill: none;
+}
+.explorer-arm {
+  stroke: color-mix(in srgb, var(--mc-accent-primary) 40%, #3b2611);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  fill: none;
+}
+/* Piernas alternan en el "paso" cuando camina */
+.panorama-explorer.walking .leg-front {
+  animation: legStep 620ms ease-in-out infinite;
+}
+.panorama-explorer.walking .leg-back {
+  animation: legStep 620ms ease-in-out infinite reverse;
+}
+@keyframes legStep {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1px) rotate(6deg); }
+}
+.leg-front,
+.leg-back {
+  transform-origin: top center;
+  transform-box: fill-box;
+}
+
+
+.panorama-hit {
+  fill: transparent;
+  cursor: pointer;
+}
+.panorama-hit:hover {
+  fill: color-mix(in srgb, var(--mc-accent-primary) 14%, transparent);
+}
+
+.panorama-fossil {
+  pointer-events: none;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+}
+/* Concha externa: caparazón de amonita con tono ámbar-piedra. */
+.panorama-fossil-shell {
+  fill: #d9b06a;
+  stroke: #4a2f14;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+/* Cámaras internas: rayos radiales que sugieren los tabiques de la
+ * amonita. `vector-effect` evita que se estiren con el SVG. */
+.panorama-fossil-chambers {
+  stroke: #4a2f14;
+  stroke-width: 0.6;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  fill: none;
+  opacity: 0.7;
+}
+/* Núcleo: el centro más oscuro de la espiral. */
+.panorama-fossil-core {
+  fill: #4a2f14;
+}
+
+.panorama-hint {
+  margin: 0;
+  padding: 8px 16px 14px;
+  font-size: 11.5px;
+  color: var(--mc-fg-primary);
+  opacity: 0.75;
+  text-align: center;
+  font-style: italic;
+}
+
+/* Detail zoom (Fase 4): cordel colgado con polaroids. El cordel es un
+ * <path> SVG con leve pandeo (curva Bezier con punto de control por debajo).
+ * Cada polaroid cuelga con un broche y una leve rotación alterna. Cuando
+ * `loadForCommit` resuelve, la polaroid hace flip 3D (reverso → frente). */
+.cordel {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.cordel-hint {
+  margin: 0;
+  padding: 10px 16px;
+  font-size: 12px;
+  color: var(--mc-fg-primary);
+  border-bottom: 1px solid var(--mc-border-subtle);
+  text-align: center;
+  font-style: italic;
+}
+.cordel-revealing {
+  color: var(--mc-accent-primary);
+  font-weight: 600;
+  margin-left: 4px;
+  font-style: normal;
+}
+
+.cordel-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0;
+}
+
+.cordel-stage {
+  position: relative;
+  padding: 28px 24px 40px;
+  min-width: 100%;
+  display: inline-block;
+}
+
+/* El cordel real. Se estira sobre todo el ancho del stage, atrás de las
+ * polaroids. `preserveAspectRatio="none"` deja que se pande según el ancho. */
+.cordel-line {
+  position: absolute;
+  top: 20px;
+  left: 24px;
+  right: 24px;
+  width: calc(100% - 48px);
+  height: 40px;
+  pointer-events: none;
+}
+.cordel-rope {
+  fill: none;
+  stroke: color-mix(in srgb, var(--mc-fg-secondary, #666) 55%, transparent);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.polaroid-strip {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  position: relative;
+}
+
+/* Cada polaroid es una unidad colgada: broche arriba, ficha inclinada.
+ * `transform-style: preserve-3d` habilita el flip del card interno. */
+.polaroid {
+  flex: 0 0 auto;
+  scroll-snap-align: center;
+  padding-top: 8px;
+  position: relative;
+  transition: transform 220ms ease;
+  transform-origin: top center;
+}
+.polaroid.tilt-left {
+  transform: rotate(-1.2deg);
+}
+.polaroid.tilt-right {
+  transform: rotate(1.1deg);
+}
+/* why: al seleccionar una polaroid en el cordel, la desprendemos del
+ * broche: cae unos px con leve rotación y se atenúan las demás.
+ * La versión ampliada 2-3x vive en la mesa de revelado (detail pane). */
+.polaroid.selected {
+  transform: translateY(20px) rotate(-2deg) scale(1.08);
+  z-index: 3;
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.28));
+}
+.polaroid.selected .polaroid-pin {
+  opacity: 0.35;
+}
+.polaroid-strip:has(.polaroid.selected) .polaroid:not(.selected) {
+  opacity: 0.75;
+}
+
+/* El broche/pinza que sujeta la polaroid al cordel. Se ve por encima del
+ * hilo, centrado horizontalmente sobre la ficha. */
+.polaroid-pin {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  width: 10px;
+  height: 14px;
+  transform: translateX(-50%);
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--mc-fg-secondary, #666) 60%, transparent),
+    color-mix(in srgb, var(--mc-fg-secondary, #666) 40%, transparent)
+  );
+  border-radius: 2px 2px 3px 3px;
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.15), 0 1px 1px rgba(0, 0, 0, 0.2);
+  z-index: 2;
+}
+
+.polaroid-btn {
+  display: block;
+  width: 160px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+/* Sin imagen falsa ni flip: la polaroid es una ficha compacta con papel
+ * marfil y anotación manuscrita. Fecha arriba en mono (sello), mensaje
+ * abajo en Caveat (nota a mano). Borde izquierdo teñido por rama. */
+.polaroid-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  padding: 10px 12px 14px;
+  background: linear-gradient(
+    180deg,
+    #fbf6ea 0%,
+    #f4ecd8 100%
+  );
+  border: 1px solid rgba(107, 90, 58, 0.35);
+  border-left: 3px solid transparent;
+  border-radius: 3px;
+  box-shadow:
+    0 3px 6px rgba(0, 0, 0, 0.14),
+    0 1px 2px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  min-height: 84px;
+  color: #3d2818;
+}
+
+.polaroid-caption {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+}
+.polaroid-time {
+  color: #3d2818;
+  font-family: ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-bottom: 1px dashed rgba(107, 90, 58, 0.5);
+  padding-bottom: 3px;
+}
+.polaroid-message {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  line-height: 1.15;
+  font-family: 'Caveat', 'Bradley Hand', cursive, sans-serif;
+  font-size: 15px;
+  color: #2b1a0a;
+}
+.polaroid-fossil-tag {
+  display: inline-block;
+  margin-top: 2px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  color: var(--mc-accent-primary);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--mc-accent-primary) 12%, transparent);
+  align-self: flex-start;
+}
+
+/* Fósil = polaroid enmarcada con doble borde dorado. */
+.polaroid.fossil .polaroid-card {
+  border-color: var(--mc-accent-primary);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--mc-accent-primary) 18%, transparent),
+    0 3px 6px rgba(0, 0, 0, 0.14);
+}
+.polaroid.fossil .polaroid-pin {
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--mc-accent-primary) 90%, black),
+    color-mix(in srgb, var(--mc-accent-primary) 60%, black)
+  );
+}
+
+.polaroid.selected .polaroid-card {
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--mc-accent-primary) 45%, transparent),
+    0 8px 18px rgba(0, 0, 0, 0.18);
+}
+
+.polaroid.revealing .polaroid-card {
+  animation: cordelPulse 900ms ease-in-out infinite;
+}
+@keyframes cordelPulse {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 1; }
 }
 
 .facet-chip:hover {
@@ -872,21 +1698,6 @@ aside.timeline {
   color: var(--mc-fg-primary);
 }
 
-.system-toggle {
-  background: transparent;
-  border: none;
-  padding: 4px 0;
-  font: inherit;
-  font-size: 11px;
-  color: var(--mc-fg-secondary, #666);
-  cursor: pointer;
-  text-align: left;
-}
-
-.system-toggle:hover {
-  color: var(--mc-fg-primary, #111);
-}
-
 .fields-system {
   margin-top: 4px;
   opacity: 0.85;
@@ -997,21 +1808,6 @@ aside.timeline {
   gap: 4px;
 }
 
-.merge-group-toggle {
-  flex-shrink: 0;
-  width: 22px;
-  border: none;
-  background: transparent;
-  color: var(--mc-text-secondary);
-  cursor: pointer;
-  font-size: 0.9rem;
-  padding: 0;
-}
-
-.merge-group-toggle:hover {
-  color: var(--mc-text-primary);
-}
-
 .commit.merge-leader {
   flex: 1;
 }
@@ -1028,7 +1824,7 @@ aside.timeline {
 
 .merge-group-members {
   list-style: none;
-  margin: 4px 0 4px 22px;
+  margin: 4px 0 4px 12px;
   padding: 0;
   display: flex;
   flex-direction: column;
@@ -1045,23 +1841,8 @@ aside.timeline {
   opacity: 1;
 }
 
-.commit-trailers {
-  margin-top: 8px;
-  font-size: 0.82rem;
-}
-
-.commit-trailers summary {
-  cursor: pointer;
-  color: var(--mc-text-secondary);
-  user-select: none;
-}
-
-.commit-trailers summary:hover {
-  color: var(--mc-text-primary);
-}
-
-.commit-trailers pre {
-  margin: 6px 0 0;
+.commit-trailers-body {
+  margin: 8px 0 0;
   padding: 8px 10px;
   background: var(--mc-surface-2);
   border: 1px solid var(--mc-border);
@@ -1073,52 +1854,1200 @@ aside.timeline {
   color: var(--mc-text-secondary);
 }
 
-.compaction-banner {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin: 0.5rem 1rem 0.75rem;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  border: 1px solid var(--mc-border);
-  background: var(--mc-surface-2);
-  color: var(--mc-text);
+/* ========================================================================
+ * Metáforas por zoom — cada modo tiene identidad visual propia:
+ * estratos = corte geológico + ficha de yacimiento;
+ * cordillera = paisaje + libreta de campo;
+ * cordel = mesa de revelado con luz cálida.
+ * No compartimos el chrome genérico entre modos.
+ * ==================================================================== */
+
+/* ── Estratos: corte geológico ─────────────────────────────────────── */
+.split.zoom-strata .timeline {
+  background:
+    radial-gradient(
+      ellipse 60% 40% at 30% 0%,
+      color-mix(in srgb, #e8dcc0 22%, transparent) 0%,
+      transparent 60%
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, #8b6f47 6%, transparent) 0%,
+      transparent 100%
+    );
+}
+/* Cabecera del rail: "cuaderno del geólogo" con papel manila arriba y
+ * borde tierra abajo. Filtros como pins de campo en la solapa. */
+.split.zoom-strata .timeline-head {
+  background: linear-gradient(to bottom, #f0e2c4 0%, #e6d4ae 100%);
+  border-bottom: 2px solid rgba(90, 60, 30, 0.4);
+  color: #2b1a0a;
+}
+.split.zoom-strata .timeline-search-input {
+  border-color: rgba(90, 60, 30, 0.5);
+  background: rgba(255, 250, 235, 0.7);
+  color: #2b1a0a;
+  font-family: 'Georgia', serif;
+}
+.split.zoom-strata .timeline-search-input::placeholder {
+  color: #4a3325;
+  font-family: 'Georgia', serif;
+}
+.split.zoom-strata .timeline-search-input:focus {
+  border-color: #7a5a28;
+  box-shadow: 0 0 0 3px rgba(122, 90, 40, 0.28);
+}
+.split.zoom-strata .timeline-search-icon {
+  color: #4a3325;
+}
+.split.zoom-strata .facet-chips {
+  background: rgba(90, 60, 30, 0.14);
+}
+.split.zoom-strata .facet-chip {
+  color: #2b1a0a;
+  font-family: 'Georgia', serif;
+  font-style: italic;
+}
+.split.zoom-strata .only-milestones {
+  border-color: rgba(90, 60, 30, 0.5);
+  color: #2b1a0a;
+  font-family: 'Georgia', serif;
+  font-style: italic;
+}
+.split.zoom-strata .zoom-back {
+  border-color: rgba(90, 60, 30, 0.5);
+  color: #2b1a0a;
+  background: rgba(255, 250, 235, 0.5);
+  font-family: 'Georgia', serif;
+  font-variant: small-caps;
+}
+.split.zoom-strata .zoom-back:hover {
+  background: rgba(255, 240, 210, 0.85);
+  border-color: #7a5a28;
 }
 
-.compaction-banner-icon {
-  flex: 0 0 auto;
-  width: 1.25rem;
-  height: 1.25rem;
-  color: var(--mc-warning, var(--mc-text-secondary));
+/* Cabecera del estrato = capa de tierra real. Espesor 40-140px, con
+ * gradiente y textura de bandas horizontales sedimentarias.  */
+.split.zoom-strata .stratum-head {
+  padding: 8px 16px 10px;
+  border-bottom: 2px solid rgba(90, 60, 30, 0.35);
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      color-mix(in srgb, #6b4a2a 10%, transparent) 0 2px,
+      transparent 2px 6px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, #d4b483 32%, transparent) 0%,
+      color-mix(in srgb, #a67c52 22%, transparent) 100%
+    ),
+    var(--mc-bg-base, #fff);
 }
 
-.compaction-banner-body {
-  flex: 1 1 auto;
-  min-width: 0;
+.split.zoom-strata .stratum-head-top {
+  padding: 0 0 4px;
+}
+
+
+.split.zoom-strata .stratum .bucket-label {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-variant: small-caps;
+  letter-spacing: 0.06em;
+  color: color-mix(in srgb, #3d2818 90%, transparent);
+  font-size: 15px;
+}
+
+.split.zoom-strata .stratum-count {
+  background: rgba(61, 40, 24, 0.18);
+  color: #3d2818;
+  border: 1px solid rgba(61, 40, 24, 0.35);
+  font-weight: 700;
+}
+
+/* Espesor: mantiene la escala log pero ahora se pinta como una veta
+ * geológica maciza — sin border-radius, con sombra profunda arriba y
+ * franjas por faceta más contrastadas.  */
+.split.zoom-strata .stratum-thickness {
+  margin: 0 0 8px;
+  border-radius: 0;
+  opacity: 1;
+  min-height: 32px;
+  box-shadow:
+    inset 0 3px 6px rgba(0, 0, 0, 0.25),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.15);
+  border-top: 1px solid rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Fósiles embebidos en el estrato: no más pills flotantes, sino chips
+ * con textura de piedra y aspecto de fragmento incrustado.  */
+.split.zoom-strata .stratum-fossils {
+  margin-top: 4px;
+  padding: 0;
+}
+.split.zoom-strata .stratum-fossil-button {
+  background: linear-gradient(145deg, #f5e6d0, #d9b892);
+  border: 1px solid rgba(120, 80, 40, 0.55);
+  color: #3d2818;
+  font-family: 'Georgia', serif;
+  font-style: italic;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 1px 2px rgba(0, 0, 0, 0.2);
+}
+.split.zoom-strata .stratum-fossil-button:hover {
+  background: linear-gradient(145deg, #fff2dc, #e8c7a0);
+}
+.split.zoom-strata .stratum-fossil-flag {
+  color: #8b4513;
+}
+
+/* Commits como "entradas de bitácora" en la lista bajo el estrato — más
+ * espaciados, tipografía con corazón geológico, borde izquierdo como veta
+ * vertical de color por faceta.  */
+.split.zoom-strata .commits {
+  padding: 4px 16px 16px;
+}
+.split.zoom-strata .commit {
+  border-left-width: 4px;
+  border-left-style: solid;
+  padding: 8px 10px 8px 12px;
+  background: color-mix(in srgb, #f5e6d0 8%, var(--mc-bg-base, #fff));
+  border-top: 1px solid rgba(120, 80, 40, 0.08);
+}
+.split.zoom-strata .commit:hover {
+  background: color-mix(in srgb, #f5e6d0 20%, var(--mc-bg-base, #fff));
+}
+.split.zoom-strata .commit.selected {
+  background: color-mix(in srgb, #d4b483 25%, var(--mc-bg-base, #fff));
+  box-shadow: inset 0 0 0 2px rgba(139, 69, 19, 0.4);
+}
+
+/* Veta lateral derecha del estrato activo — es la "muestra" que se
+ * extrae del yacimiento y viaja hacia la ficha. Usa la misma trama
+ * sedimentaria que la cabecera del estrato, para que la ficha (que
+ * repite esa trama en su borde) lea como continuación. */
+.split.zoom-strata .stratum.active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: -8px;
+  width: 10px;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      #6b4a2a 0 2px,
+      #a67c52 2px 5px,
+      #d4b483 5px 9px,
+      #a67c52 9px 12px
+    );
+  border-left: 1px solid rgba(43, 26, 10, 0.55);
+  border-right: 1px solid rgba(43, 26, 10, 0.55);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.35),
+    2px 0 6px rgba(43, 26, 10, 0.25);
+  z-index: 5;
+  pointer-events: none;
+}
+/* En estratos, el ribbon lateral izquierdo pierde protagonismo — la
+ * conexión con la ficha ahora vive en el flanco derecho. */
+.split.zoom-strata .stratum.active::before {
+  opacity: 0.35;
+}
+
+/* Ficha de yacimiento (pane derecho en estratos): color manila envelope,
+ * tipografía serif para etiquetas, campos como formulario de excavación.  */
+.split.zoom-strata .detail {
+  background: linear-gradient(
+    to bottom,
+    #f4e8d0 0%,
+    #ead9b8 100%
+  );
+  color: #2b1a0a;
+  border-left: 3px solid rgba(90, 60, 30, 0.4);
+  box-shadow: inset 6px 0 12px -6px rgba(90, 60, 30, 0.25);
+}
+/* El label "FICHA · YACIMIENTO" cede su lugar al `.ficha-sample-tie` —
+ * el tie ya cumple ese rol de "cabecera del yacimiento" y además
+ * conecta visualmente con el estrato activo a la izquierda. */
+.split.zoom-strata .detail-head h3 {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  color: #2b1a0a;
+}
+.split.zoom-strata .detail-meta code {
+  background: rgba(90, 60, 30, 0.12);
+  color: #2b1a0a;
+  border: 1px solid rgba(90, 60, 30, 0.25);
+}
+.split.zoom-strata .entity {
+  border-color: rgba(90, 60, 30, 0.2) !important;
+}
+.split.zoom-strata .diff-summary-chip {
+  border-color: rgba(90, 60, 30, 0.3);
+}
+
+/* Libreta de campo (Fase 3 real): resumen del rango, NO diff. Sale
+ * cuando el usuario clickea en un pico. */
+.panorama-notebook {
+  padding: 16px 20px 20px 26px;
+  font-family: 'Georgia', serif;
+  color: #2a1f0a;
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 14px;
 }
-
-.compaction-banner-body strong {
-  font-size: 0.9rem;
+.panorama-notebook .notebook-head h3 {
+  font-family: 'Caveat', 'Bradley Hand', cursive, serif;
+  font-size: 22px;
+  margin: 0 0 2px;
+  text-transform: capitalize;
 }
-
-.compaction-banner-body p {
+.panorama-notebook .notebook-total {
+  font-size: 12.5px;
+  color: #2b1a0a;
+  font-variant: small-caps;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+.panorama-notebook .notebook-facets {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.panorama-notebook .notebook-facet {
+  display: grid;
+  grid-template-columns: 90px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.panorama-notebook .notebook-facet-name {
+  color: #2b1a0a;
+  font-style: italic;
+  font-weight: 600;
+}
+.panorama-notebook .notebook-facet-bar {
+  height: 8px;
+  background: linear-gradient(
+    to right,
+    var(--facet-color-main) 0 var(--facet-pct, 0%),
+    rgba(107, 68, 35, 0.15) var(--facet-pct, 0%) 100%
+  );
+  border-radius: 2px;
+  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.1);
+}
+.panorama-notebook .notebook-facet[data-facet='comments'] .notebook-facet-bar {
+  background: linear-gradient(
+    to right,
+    var(--facet-color-comments) 0 var(--facet-pct, 0%),
+    rgba(107, 68, 35, 0.15) var(--facet-pct, 0%) 100%
+  );
+}
+.panorama-notebook .notebook-facet[data-facet='draft'] .notebook-facet-bar {
+  background: linear-gradient(
+    to right,
+    var(--facet-color-draft) 0 var(--facet-pct, 0%),
+    rgba(107, 68, 35, 0.15) var(--facet-pct, 0%) 100%
+  );
+}
+.panorama-notebook .notebook-facet-count {
+  font-variant: tabular-nums;
+  font-size: 12px;
+  color: #2b1a0a;
+  font-weight: 600;
+}
+.panorama-notebook .notebook-fossils h4 {
+  margin: 0 0 6px;
+  font-family: 'Caveat', 'Bradley Hand', cursive, serif;
+  font-size: 16px;
+  color: #6b4423;
+}
+.panorama-notebook .notebook-fossils ul {
+  list-style: none;
   margin: 0;
-  font-size: 0.82rem;
-  color: var(--mc-text-secondary);
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.panorama-notebook .notebook-fossil {
+  background: rgba(255, 240, 210, 0.5);
+  border: 1px solid rgba(107, 68, 35, 0.4);
+  padding: 3px 10px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 12px;
+  color: #2a1f0a;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.panorama-notebook .notebook-fossil-flag {
+  color: #8b4513;
+}
+.panorama-notebook .notebook-actions {
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(107, 68, 35, 0.4);
+}
+.panorama-notebook .notebook-cta {
+  background: rgba(107, 68, 35, 0.15);
+  border: 1px solid rgba(107, 68, 35, 0.5);
+  color: #2a1f0a;
+  padding: 6px 14px;
+  font: inherit;
+  font-family: 'Georgia', serif;
+  font-style: italic;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 3px;
+}
+.panorama-notebook .notebook-cta:hover {
+  background: rgba(107, 68, 35, 0.25);
+}
+.panorama-notebook-empty {
+  padding: 24px 26px;
+  font-family: 'Caveat', 'Bradley Hand', cursive, serif;
+  font-size: 16px;
+  color: #6b4423;
+  font-style: italic;
+  text-align: center;
 }
 
-.compaction-banner-cta {
-  flex: 0 0 auto;
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--mc-accent, var(--mc-text));
-  text-decoration: none;
+/* Ficha de yacimiento (zoom estratos, detail pane): resumen del ESTRATO.
+ * Vocabulario geológico — yacimiento, veta, fósil. Tipografía sobria
+ * serif sobre manila, distinto del cuaderno naturalista del panorama. */
+.ficha-yacimiento {
+  padding: 0 18px 20px;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  color: #2b1a0a;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+  min-height: 0;
 }
 
-.compaction-banner-cta:hover,
-.compaction-banner-cta:focus-visible {
-  text-decoration: underline;
+/* Tie visual entre el estrato activo (columna izquierda) y la ficha
+ * (columna derecha): el flanco izquierdo de la ficha repite la misma
+ * trama sedimentaria que la "veta" del `.stratum.active::after`, con
+ * una flecha que apunta al rail. Clickeable — lleva el scroll del rail
+ * al estrato activo, por si el usuario se perdió. */
+.ficha-sample-tie {
+  display: grid;
+  grid-template-columns: 14px auto 1fr;
+  align-items: center;
+  gap: 8px;
+  margin: 0 -18px 4px;
+  padding: 6px 18px 6px 0;
+  border: none;
+  border-bottom: 1px dashed rgba(90, 60, 30, 0.4);
+  background: rgba(255, 240, 210, 0.55);
+  color: #2b1a0a;
+  font: inherit;
+  font-family: 'Georgia', serif;
+  font-variant: small-caps;
+  letter-spacing: 0.1em;
+  font-size: 11px;
+  cursor: pointer;
+  text-align: left;
 }
+.ficha-sample-tie:hover {
+  background: rgba(255, 220, 170, 0.75);
+}
+.ficha-sample-tie:focus-visible {
+  outline: 2px solid #7a5a28;
+  outline-offset: -2px;
+}
+.ficha-sample-tie-vein {
+  align-self: stretch;
+  width: 14px;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      #6b4a2a 0 2px,
+      #a67c52 2px 5px,
+      #d4b483 5px 9px,
+      #a67c52 9px 12px
+    );
+  border-right: 1px solid rgba(43, 26, 10, 0.55);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.35);
+}
+.ficha-sample-tie-arrow {
+  color: #6b4423;
+  font-size: 15px;
+  line-height: 1;
+  font-weight: 700;
+}
+.ficha-sample-tie-label {
+  color: #2b1a0a;
+  font-weight: 700;
+}
+.ficha-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed rgba(90, 60, 30, 0.35);
+}
+.ficha-head h3 {
+  margin: 0;
+  font-size: 18px;
+  letter-spacing: 0.02em;
+  text-transform: capitalize;
+}
+.ficha-total {
+  font-size: 12px;
+  color: #2b1a0a;
+  font-variant: small-caps;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+}
+.ficha-facets {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.ficha-facet {
+  display: grid;
+  grid-template-columns: 90px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.ficha-facet-name {
+  color: #2b1a0a;
+  font-style: italic;
+  font-weight: 600;
+}
+.ficha-facet-bar {
+  height: 8px;
+  border-radius: 2px;
+  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.1);
+  background: linear-gradient(
+    to right,
+    var(--facet-color-main) 0 var(--facet-pct, 0%),
+    rgba(107, 68, 35, 0.15) var(--facet-pct, 0%) 100%
+  );
+}
+.ficha-facet[data-facet='comments'] .ficha-facet-bar {
+  background: linear-gradient(
+    to right,
+    var(--facet-color-comments) 0 var(--facet-pct, 0%),
+    rgba(107, 68, 35, 0.15) var(--facet-pct, 0%) 100%
+  );
+}
+.ficha-facet[data-facet='draft'] .ficha-facet-bar {
+  background: linear-gradient(
+    to right,
+    var(--facet-color-draft) 0 var(--facet-pct, 0%),
+    rgba(107, 68, 35, 0.15) var(--facet-pct, 0%) 100%
+  );
+}
+.ficha-facet-count {
+  font-variant: tabular-nums;
+  font-size: 12px;
+  color: #2b1a0a;
+  font-weight: 600;
+}
+.ficha-fossils h4,
+.ficha-commits h4 {
+  margin: 0 0 4px;
+  font-family: 'Georgia', serif;
+  font-variant: small-caps;
+  letter-spacing: 0.1em;
+  font-size: 11px;
+  color: #6b4423;
+}
+.ficha-fossils ul,
+.ficha-commits ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ficha-fossils ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.ficha-fossil {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  background: rgba(255, 240, 210, 0.55);
+  border: 1px solid rgba(107, 68, 35, 0.4);
+  border-radius: 999px;
+  font: inherit;
+  font-size: 12px;
+  color: #2b1a0a;
+  cursor: pointer;
+}
+.ficha-fossil:hover {
+  background: rgba(255, 235, 180, 0.75);
+}
+.ficha-fossil-flag {
+  color: #8b4513;
+}
+.ficha-commits {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.ficha-commits ul {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-right: 4px;
+}
+.ficha-commit {
+  display: grid;
+  grid-template-columns: 60px 1fr auto;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  border-left: 3px solid transparent;
+  background: transparent;
+  font: inherit;
+  font-family: 'Georgia', serif;
+  font-size: 12px;
+  color: #2b1a0a;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 2px;
+}
+.ficha-commit:hover {
+  background: rgba(107, 68, 35, 0.08);
+}
+.ficha-commit.selected {
+  background: rgba(107, 68, 35, 0.16);
+  border-color: rgba(107, 68, 35, 0.35);
+}
+.ficha-commit[data-facet='main'] {
+  border-left-color: var(--facet-color-main);
+}
+.ficha-commit[data-facet='comments'] {
+  border-left-color: var(--facet-color-comments);
+}
+.ficha-commit[data-facet='draft'] {
+  border-left-color: var(--facet-color-draft);
+}
+.ficha-commit-time {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: #2b1a0a;
+  font-weight: 600;
+}
+.ficha-commit-msg {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #2b1a0a;
+}
+.ficha-commit-oid {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: #4a2f14;
+  font-weight: 600;
+}
+.ficha-actions {
+  padding-top: 8px;
+  border-top: 1px dashed rgba(107, 68, 35, 0.4);
+}
+.ficha-cta {
+  background: rgba(107, 68, 35, 0.15);
+  border: 1px solid rgba(107, 68, 35, 0.5);
+  color: #2a1f0a;
+  padding: 6px 14px;
+  font: inherit;
+  font-family: 'Georgia', serif;
+  font-style: italic;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 3px;
+}
+.ficha-cta:hover {
+  background: rgba(107, 68, 35, 0.25);
+}
+
+/* ── Cordillera: paisaje + libreta de campo del naturalista ────────── */
+/* Cabecera del rail: "corteza de cuaderno de campo del naturalista" —
+ * más liviana que estratos, con tinte azulado del cielo. */
+.split.zoom-panorama .timeline-head {
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, #4a5f8f 8%, var(--mc-bg-base)) 0%,
+    var(--mc-bg-base) 100%
+  );
+  border-bottom: 1px solid color-mix(in srgb, #4a5f8f 30%, var(--mc-border-default));
+}
+.split.zoom-panorama .timeline-search-input {
+  background: var(--mc-bg-base);
+  border-color: color-mix(in srgb, #4a5f8f 45%, transparent);
+}
+.split.zoom-panorama .timeline-search-input:focus {
+  border-color: #4a5f8f;
+  box-shadow: 0 0 0 3px rgba(74, 95, 143, 0.28);
+}
+.split.zoom-panorama .facet-chips {
+  background: color-mix(in srgb, #4a5f8f 10%, transparent);
+}
+.split.zoom-panorama .zoom-anchor {
+  border-color: color-mix(in srgb, #4a5f8f 55%, transparent);
+  color: var(--mc-fg-primary);
+  background: color-mix(in srgb, #4a5f8f 10%, transparent);
+}
+
+.split.zoom-panorama .detail {
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0 22px,
+      rgba(90, 60, 90, 0.08) 22px 23px
+    ),
+    linear-gradient(
+      to bottom right,
+      #f4ead8 0%,
+      #e6d5b0 100%
+    );
+  color: #2a1f0a;
+  border-left: 3px solid #6b4423;
+  box-shadow:
+    inset 6px 0 12px -6px rgba(90, 60, 30, 0.25),
+    inset 20px 0 0 -18px rgba(139, 0, 0, 0.35);
+  font-family: 'Georgia', serif;
+}
+.split.zoom-panorama .detail::before {
+  content: 'DIARIO · DE EXCAVACIÓN';
+  display: block;
+  padding: 8px 12px 4px 26px;
+  font-family: 'Caveat', 'Bradley Hand', cursive, serif;
+  font-size: 16px;
+  letter-spacing: 0.05em;
+  color: #6b4423;
+  border-bottom: 1px solid rgba(107, 68, 35, 0.35);
+}
+.split.zoom-panorama .detail-head h3 {
+  font-family: 'Caveat', 'Bradley Hand', cursive, serif;
+  font-size: 22px;
+  color: #2a1f0a;
+}
+.split.zoom-panorama .entity {
+  border-bottom: 1px dotted rgba(107, 68, 35, 0.3) !important;
+  border-radius: 0 !important;
+}
+
+/* ── Cordel: mesa de revelado (luz cálida, madera) ─────────────────── */
+.split.zoom-detail-stack .detail {
+  background:
+    radial-gradient(
+      ellipse 60% 50% at 50% 20%,
+      rgba(255, 220, 170, 0.35) 0%,
+      transparent 70%
+    ),
+    linear-gradient(
+      145deg,
+      #4a3325 0%,
+      #3a2618 100%
+    );
+  color: #f4e8d0;
+  border-top: 3px solid rgba(255, 220, 170, 0.3);
+  border-left: none;
+  box-shadow: inset 0 20px 40px -10px rgba(255, 220, 170, 0.15);
+}
+.split.zoom-detail-stack .detail::before {
+  content: 'MESA · DE TRABAJO';
+  display: block;
+  padding: 8px 16px 6px;
+  font-family: 'Georgia', serif;
+  font-variant: small-caps;
+  letter-spacing: 0.2em;
+  font-size: 11px;
+  color: rgba(255, 220, 170, 0.85);
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 220, 170, 0.2);
+}
+.split.zoom-detail-stack .detail-head h3 {
+  color: #f4e8d0;
+}
+.split.zoom-detail-stack .detail-meta code {
+  background: rgba(255, 220, 170, 0.12);
+  color: #f4e8d0;
+  border: 1px solid rgba(255, 220, 170, 0.25);
+}
+.split.zoom-detail-stack .diff-summary {
+  color: #f4e8d0;
+}
+.split.zoom-detail-stack .entity {
+  border-color: rgba(255, 220, 170, 0.15) !important;
+  color: #f4e8d0;
+}
+.split.zoom-detail-stack .entity-path {
+  color: #f4e8d0;
+}
+.split.zoom-detail-stack .entity-meta {
+  color: rgba(255, 220, 170, 0.6);
+}
+
+/* Polaroid ampliada apoyada sobre la mesa bajo luz cálida. Sin imagen
+ * falsa — el mensaje del commit es la "foto revelada" en tipografía
+ * manuscrita grande. El diff se pinta como anotación al pie. */
+.mesa-revelado {
+  padding: 0 20px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  isolation: isolate;
+}
+
+/* Barra de herramientas de la mesa de trabajo: búsqueda ámbar +
+ * pinzas de faceta + toggle "solo fósiles". Vive dentro del cuarto
+ * oscuro (fondo cálido, texto crudo) para que los controles del
+ * cordel se sientan parte de la escena, no un header ajeno. */
+.mesa-toolbar {
+  width: min(700px, 100%);
+  margin-bottom: 20px;
+  padding: 10px 14px;
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) auto auto;
+  align-items: center;
+  gap: 10px 12px;
+  background:
+    linear-gradient(to bottom, rgba(74, 51, 37, 0.55), rgba(58, 38, 24, 0.7));
+  border: 1px solid rgba(255, 210, 150, 0.35);
+  border-radius: 6px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 210, 150, 0.18),
+    0 4px 12px rgba(0, 0, 0, 0.35);
+}
+.mesa-toolbar-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.mesa-toolbar-search-icon {
+  position: absolute;
+  left: 10px;
+  color: #4a3325;
+  pointer-events: none;
+}
+.mesa-toolbar-search-input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 30px 6px 30px;
+  border: 1px solid rgba(255, 210, 150, 0.6);
+  border-radius: 4px;
+  background: rgba(255, 240, 210, 0.92);
+  color: #2b1a0a;
+  font-family: 'Caveat', 'Bradley Hand', cursive, sans-serif;
+  font-size: 15px;
+}
+.mesa-toolbar-search-input::placeholder {
+  color: #4a3325;
+  opacity: 0.75;
+  font-family: 'Caveat', 'Bradley Hand', cursive, sans-serif;
+}
+.mesa-toolbar-search-input:focus {
+  outline: none;
+  border-color: #ffcc88;
+  box-shadow: 0 0 0 3px rgba(255, 200, 130, 0.35);
+}
+.mesa-toolbar-search-clear {
+  position: absolute;
+  right: 4px;
+  padding: 2px;
+  border: none;
+  background: rgba(74, 51, 37, 0.2);
+  color: #2b1a0a;
+  border-radius: 3px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.mesa-toolbar-facets {
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  background: rgba(255, 210, 150, 0.12);
+  border-radius: 999px;
+}
+.mesa-toolbar-facet {
+  padding: 4px 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #f4e8d0;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: 'Georgia', serif;
+  font-style: italic;
+}
+.mesa-toolbar-facet:hover {
+  background: rgba(255, 210, 150, 0.18);
+}
+.mesa-toolbar-facet[aria-pressed='true'] {
+  background: rgba(255, 210, 150, 0.35);
+  border-color: rgba(255, 220, 170, 0.85);
+  color: #2b1a0a;
+  font-weight: 700;
+  font-style: normal;
+}
+.mesa-toolbar-facet[data-facet='main'][aria-pressed='true'] {
+  background: color-mix(in srgb, var(--facet-color-main) 60%, #f4e8d0);
+}
+.mesa-toolbar-facet[data-facet='comments'][aria-pressed='true'] {
+  background: color-mix(in srgb, var(--facet-color-comments) 60%, #f4e8d0);
+}
+.mesa-toolbar-facet[data-facet='draft'][aria-pressed='true'] {
+  background: color-mix(in srgb, var(--facet-color-draft) 60%, #f4e8d0);
+}
+.mesa-toolbar-only-milestones {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid rgba(255, 210, 150, 0.5);
+  border-radius: 999px;
+  background: rgba(255, 210, 150, 0.08);
+  color: #f4e8d0;
+  font-family: 'Georgia', serif;
+  font-style: italic;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.mesa-toolbar-only-milestones:hover {
+  background: rgba(255, 210, 150, 0.22);
+  border-color: rgba(255, 220, 170, 0.85);
+}
+@media (max-width: 720px) {
+  .mesa-toolbar {
+    grid-template-columns: 1fr;
+  }
+  .mesa-toolbar-facets,
+  .mesa-toolbar-only-milestones {
+    justify-self: start;
+  }
+}
+
+/* Foco cálido de la lámpara del cuarto oscuro cayendo sobre la polaroid.
+ * Va detrás porque la polaroid rotada tapa parte del disco. */
+.mesa-spotlight {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(
+    ellipse 50% 55% at 50% 45%,
+    rgba(255, 220, 160, 0.28) 0%,
+    rgba(255, 200, 130, 0.12) 40%,
+    transparent 75%
+  );
+  pointer-events: none;
+}
+
+.mesa-polaroid {
+  position: relative;
+  width: min(560px, 94%);
+  background: linear-gradient(180deg, #fbf6e6 0%, #efe6cf 100%);
+  color: #2a1e12;
+  padding: 18px 22px 22px;
+  border: 1px solid rgba(107, 68, 35, 0.35);
+  border-left: 4px solid transparent;
+  border-radius: 3px;
+  box-shadow:
+    0 24px 48px -12px rgba(0, 0, 0, 0.55),
+    0 8px 16px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  transform: rotate(-1.2deg);
+  animation: mesa-drop 340ms cubic-bezier(0.34, 1.28, 0.64, 1) both;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.mesa-polaroid[data-facet='main'] {
+  border-left-color: var(--facet-color-main);
+}
+.mesa-polaroid[data-facet='comments'] {
+  border-left-color: var(--facet-color-comments);
+}
+.mesa-polaroid[data-facet='draft'] {
+  border-left-color: var(--facet-color-draft);
+}
+
+@keyframes mesa-drop {
+  from {
+    transform: translateY(-40px) rotate(-6deg) scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: rotate(-1.2deg);
+    opacity: 1;
+  }
+}
+
+.mesa-polaroid-pin {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  width: 16px;
+  height: 20px;
+  transform: translateX(-50%) rotate(6deg);
+  background: linear-gradient(
+    to bottom,
+    #8a6a3a 0%,
+    #5b4426 100%
+  );
+  border-radius: 2px 2px 3px 3px;
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.35), 0 3px 4px rgba(0, 0, 0, 0.45);
+}
+
+/* Sello arriba: fecha completa a la izquierda, oid corto a la derecha,
+ * separados por línea punteada — como cabecera de una nota fotográfica. */
+.mesa-polaroid-stamp {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed rgba(107, 68, 35, 0.55);
+  font-family: ui-monospace, monospace;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #2a1e12;
+}
+.mesa-polaroid-date {
+  letter-spacing: 0.02em;
+}
+.mesa-polaroid-oid {
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: rgba(42, 30, 18, 0.18);
+  color: #2a1e12;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.mesa-polaroid-fossil {
+  display: inline-block;
+  align-self: flex-start;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(255, 235, 180, 0.85);
+  border: 1px solid rgba(122, 90, 31, 0.55);
+  font-size: 12px;
+  font-weight: 600;
+  color: #4a3620;
+}
+
+.mesa-polaroid-message {
+  margin: 0;
+  font-family: 'Caveat', 'Bradley Hand', cursive, 'Georgia', serif;
+  font-size: 28px;
+  line-height: 1.15;
+  color: #2a1e12;
+  word-break: break-word;
+}
+
+.mesa-polaroid-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mesa-polaroid-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mesa-polaroid-actions button {
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(107, 68, 35, 0.45);
+  background: rgba(255, 245, 220, 0.8);
+  color: #2a1e12;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.mesa-polaroid-actions button:hover {
+  background: rgba(255, 235, 180, 0.9);
+}
+.mesa-polaroid-actions button[disabled] {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.mesa-polaroid-annotations {
+  padding: 10px 0 0;
+  border-top: 1px dashed rgba(107, 68, 35, 0.35);
+}
+
+.mesa-polaroid-note {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: rgba(42, 30, 18, 0.8);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.mesa-chip {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 600;
+}
+.mesa-chip-added {
+  background: rgba(60, 160, 90, 0.28);
+  color: #1f4a2a;
+}
+.mesa-chip-modified {
+  background: rgba(170, 130, 40, 0.28);
+  color: #4a3520;
+}
+.mesa-chip-deleted {
+  background: rgba(180, 70, 60, 0.28);
+  color: #4a1f1a;
+}
+
+/* Lista de entities dentro del papel crema de la polaroid ampliada. Cada
+ * fila (heredada de .entity/.entity-head del layout fallback) se pinta
+ * con paleta cálida para no chocar con el papel. Cuando la fila se abre
+ * muestra el diff real (title / body / fields / chunks). */
+.mesa-polaroid-entities {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  max-height: 360px;
+  overflow-y: auto;
+}
+.mesa-polaroid-entities .entity {
+  border: 1px solid rgba(107, 68, 35, 0.28);
+  background: rgba(255, 250, 235, 0.55);
+  margin-bottom: 6px;
+}
+.mesa-polaroid-entities .entity-head-row {
+  background: transparent;
+}
+.mesa-polaroid-entities .entity-head {
+  color: #2a1e12;
+  font-size: 11.5px;
+}
+.mesa-polaroid-entities .entity-head:hover {
+  background: rgba(107, 68, 35, 0.08);
+}
+.mesa-polaroid-entities .entity-status {
+  color: #f4e8d0;
+  font-family: ui-monospace, monospace;
+}
+.mesa-polaroid-entities .entity.entity-added .entity-status {
+  background: rgba(60, 160, 90, 0.75);
+}
+.mesa-polaroid-entities .entity.entity-modified .entity-status {
+  background: rgba(170, 130, 40, 0.75);
+}
+.mesa-polaroid-entities .entity.entity-deleted .entity-status {
+  background: rgba(180, 70, 60, 0.75);
+}
+.mesa-polaroid-entities .entity-path {
+  color: #2a1e12;
+}
+.mesa-polaroid-entities .entity-restore {
+  color: #4a3620;
+  border-color: rgba(107, 68, 35, 0.4);
+}
+.mesa-polaroid-entities .diff-section {
+  padding: 8px 10px;
+  border-top: 1px dashed rgba(107, 68, 35, 0.25);
+  background: rgba(255, 246, 220, 0.55);
+}
+.mesa-polaroid-entities .diff-section h4 {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-family: 'Georgia', serif;
+  color: #4a3620;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.mesa-polaroid-entities .diff {
+  background: rgba(46, 32, 20, 0.06);
+  color: #2a1e12;
+  padding: 8px;
+  border-radius: 3px;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  line-height: 1.4;
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+.mesa-polaroid-entities .chunk-added {
+  background: rgba(60, 160, 90, 0.28);
+  color: #1f4a2a;
+}
+.mesa-polaroid-entities .chunk-removed {
+  background: rgba(180, 70, 60, 0.28);
+  color: #4a1f1a;
+  text-decoration: line-through;
+}
+.mesa-polaroid-entities .fields {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+.mesa-polaroid-entities .fields th,
+.mesa-polaroid-entities .fields td {
+  padding: 3px 6px;
+  border-bottom: 1px solid rgba(107, 68, 35, 0.15);
+  color: #2a1e12;
+  vertical-align: top;
+}
+.mesa-polaroid-entities .field-key {
+  font-family: ui-monospace, monospace;
+  color: #4a3620;
+}
+.mesa-polaroid-entities .field-added .field-after {
+  background: rgba(60, 160, 90, 0.18);
+}
+.mesa-polaroid-entities .field-removed .field-before,
+.mesa-polaroid-entities .field-deleted .field-before {
+  background: rgba(180, 70, 60, 0.18);
+}
+.mesa-polaroid-entities .field-modified .field-before {
+  background: rgba(180, 70, 60, 0.15);
+}
+.mesa-polaroid-entities .field-modified .field-after {
+  background: rgba(60, 160, 90, 0.15);
+}
+.mesa-polaroid-entities .title-diff .title-line {
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-size: 12px;
+}
+.mesa-polaroid-entities .title-before {
+  background: rgba(180, 70, 60, 0.18);
+  text-decoration: line-through;
+}
+.mesa-polaroid-entities .title-after {
+  background: rgba(60, 160, 90, 0.18);
+}
+
