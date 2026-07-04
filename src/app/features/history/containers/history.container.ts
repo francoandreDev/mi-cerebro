@@ -11,7 +11,7 @@ import {
   untracked,
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { ErrorService } from '@core/errors/error.service';
 import { I18nService } from '@core/i18n/i18n.service';
@@ -59,6 +59,84 @@ type GroupKey = 'notes' | 'tasks' | 'books' | 'drafts' | 'comments' | 'meta' | '
 
 export type HistoryZoom = 'panorama' | 'strata' | 'detail';
 const ZOOM_ORDER: readonly HistoryZoom[] = ['panorama', 'strata', 'detail'];
+
+// why: nombres en español para deep-link `?zoom=` porque el resto de las
+//      rutas del proyecto se comparten así ("deep-link cerebro" es lectura
+//      humana). El tipo interno queda en inglés.
+const ZOOM_URL_TO_INTERNAL: Record<string, HistoryZoom> = {
+  panoramica: 'panorama',
+  media: 'strata',
+  detalle: 'detail',
+};
+const ZOOM_INTERNAL_TO_URL: Record<HistoryZoom, string> = {
+  panorama: 'panoramica',
+  strata: 'media',
+  detail: 'detalle',
+};
+
+// why: keys de sessionStorage para el "rango visible". Nivel de zoom NO
+//      persiste (Fase 5) — default siempre estratos.
+const SS_KEY = {
+  query: 'mc:history:query',
+  facets: 'mc:history:facets',
+  onlyMile: 'mc:history:onlyMilestones',
+  selOid: 'mc:history:selOid',
+  panDay: 'mc:history:panoramaDay',
+} as const;
+
+const FOSSIL_FOCUS_HALF_MS = 12 * 60 * 60 * 1000;
+
+interface PersistedState {
+  query: string;
+  facets: readonly Facet[] | null;
+  onlyMilestones: boolean;
+  selectedOid: string | null;
+  panoramaDay: number | null;
+}
+
+function readPersistedState(): PersistedState {
+  const safe = <T>(fn: () => T, fallback: T): T => {
+    try {
+      return fn();
+    } catch {
+      return fallback;
+    }
+  };
+  const rawFacets = safe(() => sessionStorage.getItem(SS_KEY.facets), null);
+  let facets: readonly Facet[] | null = null;
+  if (rawFacets) {
+    try {
+      const parsed = JSON.parse(rawFacets) as unknown;
+      if (Array.isArray(parsed)) {
+        const clean = parsed.filter((x): x is Facet => ALL_FACETS.includes(x as Facet));
+        if (clean.length > 0) facets = clean;
+      }
+    } catch {
+      // ignore malformed json
+    }
+  }
+  return {
+    query: safe(() => sessionStorage.getItem(SS_KEY.query) ?? '', ''),
+    facets,
+    onlyMilestones: safe(() => sessionStorage.getItem(SS_KEY.onlyMile) === '1', false),
+    selectedOid: safe(() => sessionStorage.getItem(SS_KEY.selOid), null),
+    panoramaDay: safe(() => {
+      const raw = sessionStorage.getItem(SS_KEY.panDay);
+      if (!raw) return null;
+      const n = Number(raw);
+      return Number.isFinite(n) ? n : null;
+    }, null),
+  };
+}
+
+function writeSS(key: string, value: string | null): void {
+  try {
+    if (value === null) sessionStorage.removeItem(key);
+    else sessionStorage.setItem(key, value);
+  } catch {
+    // why: private mode can throw; rango is a nice-to-have.
+  }
+}
 
 export interface Stratum {
   readonly id: BucketId;
@@ -165,6 +243,17 @@ export class HistoryContainer implements OnInit, OnDestroy {
   private readonly errors = inject(ErrorService);
   protected readonly i18n = inject(I18nService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+
+  private readonly persisted = readPersistedState();
+  // why: deep-link `?zoom=` se lee en el ctor para poder sembrar el zoom
+  //      inicial ANTES de que el effect de sync URL-zoom dispare — si no,
+  //      el effect pisa la URL con el default 'media' y perdemos el
+  //      deep-link. Undefined = respetar default estratos.
+  private readonly initialZoomFromUrl: HistoryZoom | null = (() => {
+    const raw = this.route.snapshot.queryParamMap.get('zoom');
+    return raw && raw in ZOOM_URL_TO_INTERNAL ? ZOOM_URL_TO_INTERNAL[raw]! : null;
+  })();
 
   protected readonly loading = this.history.loading;
   protected readonly error = this.history.error;
@@ -188,7 +277,7 @@ export class HistoryContainer implements OnInit, OnDestroy {
     return this.variantsById().get(id)?.name ?? id;
   }
 
-  private readonly onlyMilestonesSignal = signal(false);
+  private readonly onlyMilestonesSignal = signal(this.persisted.onlyMilestones);
   protected readonly onlyMilestones = this.onlyMilestonesSignal.asReadonly();
   protected toggleOnlyMilestones(): void {
     this.onlyMilestonesSignal.update((v) => !v);
@@ -199,7 +288,7 @@ export class HistoryContainer implements OnInit, OnDestroy {
   //  - since:Nd                    → solo commits con date ≥ ahora − N días
   //  - sha o sha:abc1234           → match por shortOid
   //  - cualquier otro token        → substring case-insensitive en el mensaje
-  protected readonly query = signal('');
+  protected readonly query = signal(this.persisted.query);
   protected onQueryInput(ev: Event): void {
     this.query.set((ev.target as HTMLInputElement).value);
   }
@@ -223,7 +312,9 @@ export class HistoryContainer implements OnInit, OnDestroy {
   // The set is constrained never to be empty so the user can't accidentally
   // hide everything by toggling the last chip off.
   protected readonly allFacets = ALL_FACETS;
-  private readonly enabledFacetsSignal = signal<ReadonlySet<Facet>>(new Set(ALL_FACETS));
+  private readonly enabledFacetsSignal = signal<ReadonlySet<Facet>>(
+    new Set(this.persisted.facets ?? ALL_FACETS),
+  );
   protected readonly enabledFacets = this.enabledFacetsSignal.asReadonly();
   protected isFacetEnabled(f: Facet): boolean {
     return this.enabledFacetsSignal().has(f);
@@ -306,7 +397,11 @@ export class HistoryContainer implements OnInit, OnDestroy {
   // Zoom control (§13 Fase 3): panorama (cordillera), strata (corte), detail
   // (cordel). LOD viewers over the mismo objeto — cambia rango/densidad, no
   // representación entre niveles.
-  private readonly zoomSignal = signal<HistoryZoom>('panorama');
+  // why: Fase 5 — el zoom NO persiste; default siempre estratos ("medio") para
+  //      que el usuario nunca aterrice en una vista rara al volver. Deep-link
+  //      `?zoom=` se lee en el ctor y siembra el valor inicial para no
+  //      chocar con el effect que refleja el zoom en la URL.
+  private readonly zoomSignal = signal<HistoryZoom>(this.initialZoomFromUrl ?? 'strata');
   protected readonly zoom = this.zoomSignal.asReadonly();
   protected readonly zoomOrder = ZOOM_ORDER;
   // why: los niveles son secuenciales — la única forma de bajar al siguiente
@@ -314,7 +409,11 @@ export class HistoryContainer implements OnInit, OnDestroy {
   // desbloquear estratos; seleccionar veta en estratos para desbloquear
   // cordel). Ir hacia atrás siempre está permitido. Esto convierte los
   // niveles en un flujo real y no en tres vistas paralelas independientes.
-  private readonly unlockedLevelSignal = signal<HistoryZoom>('panorama');
+  // why: default estratos → unlock ya llega a "strata" para permitir el
+  //      zoomBack a panorámica; bajar a cordel sigue requiriendo elegir un
+  //      commit (double-click / zoomIntoCommit / jumpToFossil). Si el
+  //      deep-link pidió detalle, arrancamos con detail unlocked.
+  private readonly unlockedLevelSignal = signal<HistoryZoom>(this.initialZoomFromUrl ?? 'strata');
   protected readonly unlockedLevel = this.unlockedLevelSignal.asReadonly();
   protected canEnterZoom(z: HistoryZoom): boolean {
     return ZOOM_ORDER.indexOf(z) <= ZOOM_ORDER.indexOf(this.unlockedLevelSignal());
@@ -371,8 +470,15 @@ export class HistoryContainer implements OnInit, OnDestroy {
     const H = Math.max(160, this.panoramaViewportH());
     return computePanoramaGeometry(this.panoramaAggregatesSignal(), { height: H });
   });
-  protected readonly panoramaFossils = computed<readonly PanoramaFossil[]>(() => {
-    const geo = this.panoramaGeometry();
+  protected readonly panoramaFossils = computed<readonly PanoramaFossil[]>(() =>
+    panoramaFossils(this.panoramaGeometry(), this.flatFossils()),
+  );
+
+  // why: mismo insumo (fossils planos por-oid) que alimenta a la panorámica
+  //      y al mini-mapa de estratos — así no divergen colecciones.
+  private readonly flatFossils = computed<
+    readonly { oid: string; name: string; dayStart: number }[]
+  >(() => {
     const entries = this.entries();
     const byOid = this.milestonesByOid();
     const dayByOid = new Map<string, number>();
@@ -383,8 +489,88 @@ export class HistoryContainer implements OnInit, OnDestroy {
       if (day === undefined) continue;
       for (const m of ms) flat.push({ oid, name: m.name, dayStart: day });
     }
-    return panoramaFossils(geo, flat);
+    return flat;
   });
+
+  // why: mini-mapa al pie del yacimiento — panorama compacto (altura fija
+  //      chica) que sirve de "corte transversal" del rango cargado. Reutiliza
+  //      exactamente la misma geometría; sólo baja la escala.
+  private readonly MINIMAP_HEIGHT = 56;
+  protected readonly minimapGeometry = computed<PanoramaGeometry>(() =>
+    computePanoramaGeometry(this.panoramaAggregatesSignal(), { height: this.MINIMAP_HEIGHT }),
+  );
+  protected readonly minimapFossils = computed<readonly PanoramaFossil[]>(() =>
+    panoramaFossils(this.minimapGeometry(), this.flatFossils()),
+  );
+
+  // why: ventana visible del scroll de estratos — se calcula on-scroll y
+  //      mapea al mini-mapa como el rectángulo iluminado. Rango [x, x+w]
+  //      en coords SVG del mini-mapa.
+  protected readonly minimapWindow = signal<{ x: number; width: number } | null>(null);
+  protected onTimelineScroll(ev: Event): void {
+    const el = ev.currentTarget as HTMLElement;
+    const geo = this.minimapGeometry();
+    if (geo.columns.length === 0 || geo.width === 0) {
+      this.minimapWindow.set(null);
+      return;
+    }
+    const total = Math.max(1, el.scrollHeight - el.clientHeight);
+    const from = el.scrollTop / total;
+    const to = (el.scrollTop + el.clientHeight) / total;
+    const x = from * geo.width;
+    const width = Math.max(4, (to - from) * geo.width);
+    this.minimapWindow.set({ x, width });
+  }
+  protected onMinimapColumnClick(dayStart: number): void {
+    // why: mini-mapa navega DENTRO del yacimiento — busca el bucket cuyo
+    //      rango contiene el commit del día tocado y scrollea a él. Si el
+    //      día tiene fósil, saltamos al detalle honrando la metáfora
+    //      cross-zoom (llegás con la lupa puesta).
+    const entry = this.entries().find((e) => startOfDayMs(e.date.getTime()) === dayStart);
+    if (!entry) return;
+    const fossil = this.milestonesByOid().get(entry.oid);
+    if (fossil && fossil.length > 0) {
+      this.jumpToFossil(entry.oid, fossil[0]!.name);
+      return;
+    }
+    this.selectedOidSignal.set(entry.oid);
+    queueMicrotask(() => {
+      document
+        .getElementById(`commit-${entry.oid}`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  }
+
+  // ---- Fossil focus (cross-zoom jump) --------------------------------
+  // why: click en cualquier fósil (panorámica SVG, notebook, legend del
+  //      estrato, ficha de yacimiento, mini-mapa) → aterriza en cordel
+  //      con la polaroid enfocada Y con las vecinas filtradas a ±12h
+  //      para no ahogar el cordel al saltar entre eras muy pobladas.
+  private readonly fossilFocusOidSignal = signal<string | null>(null);
+  private readonly fossilFocusNameSignal = signal<string | null>(null);
+  private readonly fossilFocusCenterMsSignal = signal<number | null>(null);
+  protected readonly fossilFocusOid = this.fossilFocusOidSignal.asReadonly();
+  protected readonly fossilFocusName = this.fossilFocusNameSignal.asReadonly();
+  protected clearFossilFocus(): void {
+    this.fossilFocusOidSignal.set(null);
+    this.fossilFocusNameSignal.set(null);
+    this.fossilFocusCenterMsSignal.set(null);
+  }
+  protected jumpToFossil(oid: string, name?: string): void {
+    const entry = this.entries().find((e) => e.oid === oid);
+    const center = entry ? entry.date.getTime() : null;
+    this.fossilFocusOidSignal.set(oid);
+    this.fossilFocusNameSignal.set(name ?? null);
+    this.fossilFocusCenterMsSignal.set(center);
+    this.selectedOidSignal.set(oid);
+    this.unlockUpTo('detail');
+    this.zoomSignal.set('detail');
+    queueMicrotask(() => {
+      document
+        .getElementById(`polaroid-${oid}`)
+        ?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    });
+  }
 
   // Detail (cordel): polaroids en tira horizontal. Un signal separado sigue
   // qué polaroids ya "revelaron" su diff (via HistoryDiffService.loadForCommit).
@@ -403,7 +589,17 @@ export class HistoryContainer implements OnInit, OnDestroy {
   protected readonly polaroids = computed<readonly CommitEntry[]>(() => {
     const noise = this.noiseOidsSignal();
     const byOid = this.milestonesByOid();
-    return this.entries().filter((e) => byOid.has(e.oid) || !noise.has(e.oid));
+    const center = this.fossilFocusCenterMsSignal();
+    const list = this.entries().filter((e) => byOid.has(e.oid) || !noise.has(e.oid));
+    if (center === null) return list;
+    // why: ±12h alrededor del fósil — la polaroid focal siempre se garantiza
+    //      dentro del rango; ese anchor lo asegura el mismo entry.
+    const lo = center - FOSSIL_FOCUS_HALF_MS;
+    const hi = center + FOSSIL_FOCUS_HALF_MS;
+    return list.filter((e) => {
+      const t = e.date.getTime();
+      return t >= lo && t <= hi;
+    });
   });
   protected revealPolaroid(entry: CommitEntry): void {
     const oid = entry.oid;
@@ -522,7 +718,9 @@ export class HistoryContainer implements OnInit, OnDestroy {
 
   // why: click en la cordillera "elige" un día — pone la guía visual y
   // alimenta la libreta del rango (task 20). No cambia el zoom.
-  private readonly panoramaSelectedDayStartSignal = signal<number | null>(null);
+  private readonly panoramaSelectedDayStartSignal = signal<number | null>(
+    this.persisted.panoramaDay,
+  );
   protected readonly panoramaSelectedDayStart = this.panoramaSelectedDayStartSignal.asReadonly();
   protected readonly panoramaSelectedColumn = computed(() => {
     const sel = this.panoramaSelectedDayStartSignal();
@@ -790,7 +988,9 @@ export class HistoryContainer implements OnInit, OnDestroy {
     //      buscamos el aggregate por día. Se cachea hasta el próximo reload.
     effect(() => {
       const z = this.zoomSignal();
-      if (z !== 'panorama' || this.panoramaFetchedForLoad) return;
+      // why: mini-mapa vive al pie de estratos y necesita el mismo aggregate,
+      //      así que precargamos también al aterrizar en 'strata' (default).
+      if ((z !== 'panorama' && z !== 'strata') || this.panoramaFetchedForLoad) return;
       this.panoramaFetchedForLoad = true;
       this.panoramaLoadingSignal.set(true);
       void this.loader
@@ -856,6 +1056,32 @@ export class HistoryContainer implements OnInit, OnDestroy {
         .finally(() => {
           if (this.selectedOidSignal() === oid) this.diffLoadingSignal.set(false);
         });
+    });
+
+    // ---- Persistence del "rango visible" (Fase 5) -------------------
+    // why: cada signal se persiste independientemente para que revisar
+    //      el rango al volver sea inmediato y no bloquee el load. El
+    //      zoom NUNCA se persiste — el default estratos es una
+    //      decisión ergonómica del rediseño.
+    effect(() => writeSS(SS_KEY.query, this.query() || null));
+    effect(() => writeSS(SS_KEY.facets, JSON.stringify(Array.from(this.enabledFacetsSignal()))));
+    effect(() => writeSS(SS_KEY.onlyMile, this.onlyMilestonesSignal() ? '1' : '0'));
+    effect(() => writeSS(SS_KEY.selOid, this.selectedOidSignal()));
+    effect(() => {
+      const d = this.panoramaSelectedDayStartSignal();
+      writeSS(SS_KEY.panDay, d === null ? null : String(d));
+    });
+
+    // why: reflejar el zoom en la URL para poder compartir la vista
+    //      (deep-link). Sin merge, otros query params se perderían.
+    effect(() => {
+      const z = this.zoomSignal();
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { zoom: ZOOM_INTERNAL_TO_URL[z] },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
     });
   }
 
@@ -955,8 +1181,10 @@ export class HistoryContainer implements OnInit, OnDestroy {
     // why: deep-links from /variants (`?oid=<sha>`) and external tools
     //      hand us a specific commit to focus. If we resolve it, skip
     //      the "first visible" heuristic so the page lands where the
-    //      caller pointed; otherwise fall through to default behavior.
-    const requested = this.route.snapshot.queryParamMap.get('oid');
+    //      caller pointed; otherwise fall through to persisted rango
+    //      (Fase 5) o al primer commit visible.
+    const params = this.route.snapshot.queryParamMap;
+    const requested = params.get('oid');
     const matched = requested ? all.find((e) => e.oid === requested) : null;
     if (matched) {
       this.selectedOidSignal.set(matched.oid);
@@ -965,10 +1193,15 @@ export class HistoryContainer implements OnInit, OnDestroy {
           .getElementById(`commit-${matched.oid}`)
           ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       });
+    } else if (this.persisted.selectedOid) {
+      const prior = all.find((e) => e.oid === this.persisted.selectedOid);
+      if (prior) this.selectedOidSignal.set(prior.oid);
+      else if (selectFirst && all[0]) this.selectedOidSignal.set(all[0].oid);
     } else if (selectFirst) {
       const first = all[0];
       if (first) this.selectedOidSignal.set(first.oid);
     }
+    // why: deep-link `?zoom=` ya se aplicó en el ctor (initialZoomFromUrl).
     this.scanNoiseInBackground(all, selectFirst && !matched);
   }
 
@@ -1002,19 +1235,6 @@ export class HistoryContainer implements OnInit, OnDestroy {
 
   protected toggleExpanded(path: string): void {
     this.expandedPathSignal.update((p) => (p === path ? null : path));
-  }
-
-  private readonly systemExpandedSignal = signal<Set<string>>(new Set());
-  protected isSystemExpanded(path: string): boolean {
-    return this.systemExpandedSignal().has(path);
-  }
-  protected toggleSystemExpanded(path: string): void {
-    this.systemExpandedSignal.update((s) => {
-      const next = new Set(s);
-      if (next.has(path)) next.delete(path);
-      else next.add(path);
-      return next;
-    });
   }
 
   protected facetOfMessage(message: string): Facet {
@@ -1173,7 +1393,7 @@ export class HistoryContainer implements OnInit, OnDestroy {
   protected markMilestone(): void {
     const entry = this.selectedEntry();
     if (!entry) return;
-    void this.milestones.mark(entry.oid);
+    void this.milestones.mark(entry.oid, entry.message);
   }
 
   protected async restoreWholeCommit(): Promise<void> {

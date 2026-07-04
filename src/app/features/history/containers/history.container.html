@@ -3,10 +3,35 @@
     <mc-icon name="clock-counter-clockwise" class="title-icon" />
     {{ i18n.t('versioning.history.title') }}
   </h2>
+  <div
+    class="zoom-control"
+    role="group"
+    [attr.aria-label]="i18n.t('versioning.history.zoom.label')"
+  >
+    @for (z of zoomOrder; track z; let i = $index) {
+      <button
+        type="button"
+        class="zoom-level"
+        [class.active]="zoom() === z"
+        [disabled]="!canEnterZoom(z)"
+        [attr.aria-pressed]="zoom() === z"
+        [title]="i18n.t(zoomLabelKey(z))"
+        [attr.aria-label]="i18n.t(zoomLabelKey(z))"
+        (click)="setZoom(z)"
+      >
+        <span class="zoom-bars" aria-hidden="true">
+          <span class="zoom-bar" [class.filled]="i === 0"></span>
+          <span class="zoom-bar" [class.filled]="i === 1"></span>
+          <span class="zoom-bar" [class.filled]="i === 2"></span>
+        </span>
+      </button>
+    }
+    <span class="zoom-current-label">{{ i18n.t(zoomLabelKey(zoom())) }}</span>
+  </div>
 </header>
 
 <div class="split zoom-{{ zoom() }}" [class.zoom-detail-stack]="zoom() === 'detail'">
-  <aside class="timeline" aria-label="Timeline de commits">
+  <aside class="timeline" aria-label="Timeline de commits" (scroll)="onTimelineScroll($event)">
     <div class="timeline-head">
       @if (zoomBackLabelKey(); as backKey) {
         <button
@@ -47,27 +72,29 @@
             </button>
           }
         </div>
-        <div
-          class="facet-chips"
-          role="group"
-          [attr.aria-label]="i18n.t('versioning.history.facet.label')"
-        >
-          @for (f of allFacets; track f) {
-            <button
-              type="button"
-              class="facet-chip"
-              [attr.data-facet]="f"
-              [attr.aria-pressed]="isFacetEnabled(f)"
-              (click)="toggleFacet(f)"
-            >
-              {{ i18n.t(facetLabelKey(f)) }}
-            </button>
-          }
+        <div class="timeline-head-filters">
+          <div
+            class="facet-chips"
+            role="group"
+            [attr.aria-label]="i18n.t('versioning.history.facet.label')"
+          >
+            @for (f of allFacets; track f) {
+              <button
+                type="button"
+                class="facet-chip"
+                [attr.data-facet]="f"
+                [attr.aria-pressed]="isFacetEnabled(f)"
+                (click)="toggleFacet(f)"
+              >
+                {{ i18n.t(facetLabelKey(f)) }}
+              </button>
+            }
+          </div>
+          <label class="only-milestones">
+            <input type="checkbox" [checked]="onlyMilestones()" (change)="toggleOnlyMilestones()" />
+            {{ i18n.t('versioning.history.milestone.onlyMilestones') }}
+          </label>
         </div>
-        <label class="only-milestones">
-          <input type="checkbox" [checked]="onlyMilestones()" (change)="toggleOnlyMilestones()" />
-          {{ i18n.t('versioning.history.milestone.onlyMilestones') }}
-        </label>
       }
     </div>
     @if (loading()) {
@@ -165,9 +192,19 @@
                 </rect>
               }
               @for (f of panoramaFossils(); track f.oid + ':' + f.name) {
-                <g class="panorama-fossil" [attr.transform]="'translate(' + f.x + ',' + f.y + ')'">
+                <g
+                  class="panorama-fossil"
+                  role="button"
+                  tabindex="0"
+                  [attr.aria-label]="
+                    i18n.t('versioning.history.fossilFocus.jump', { name: f.name })
+                  "
+                  [attr.transform]="'translate(' + f.x + ',' + f.y + ')'"
+                  (click)="jumpToFossil(f.oid, f.name)"
+                  (keydown.enter)="jumpToFossil(f.oid, f.name)"
+                >
                   <title>
-                    {{ i18n.t('versioning.history.panorama.fossilLabel', { name: f.name }) }}
+                    {{ i18n.t('versioning.history.fossilFocus.jump', { name: f.name }) }}
                   </title>
                   <!-- Amonita estilizada: concha exterior + cámaras internas
                        + puntito central. Silueta de fósil, no bandera. -->
@@ -243,6 +280,22 @@
         <p class="placeholder">{{ i18n.t('versioning.history.detail.empty') }}</p>
       } @else {
         <div class="cordel">
+          @if (fossilFocusOid()) {
+            <p class="cordel-focus" role="status">
+              <span class="cordel-focus-label">{{
+                i18n.t('versioning.history.fossilFocus.chip', {
+                  name: fossilFocusName() ?? '',
+                })
+              }}</span>
+              <button
+                type="button"
+                class="cordel-focus-clear mc-hover-wiggle"
+                (click)="clearFossilFocus()"
+              >
+                {{ i18n.t('versioning.history.fossilFocus.clear') }}
+              </button>
+            </p>
+          }
           <p class="cordel-hint">
             {{ i18n.t('versioning.history.detail.zoomHint') }}
             @if (revealingCount() > 0) {
@@ -340,10 +393,8 @@
                     <button
                       type="button"
                       class="stratum-fossil-legend-name"
-                      [attr.title]="
-                        i18n.t('versioning.history.stratum.fossilJump', { name: f.name })
-                      "
-                      (click)="select(f.oid)"
+                      [attr.title]="i18n.t('versioning.history.fossilFocus.jump', { name: f.name })"
+                      (click)="jumpToFossil(f.oid, f.name)"
                     >
                       {{ f.name }}
                     </button>
@@ -549,6 +600,87 @@
           </div>
         </aside>
       }
+      @if (minimapGeometry().columns.length > 0) {
+        <aside
+          class="stratum-minimap"
+          [attr.aria-label]="i18n.t('versioning.history.stratum.minimapLabel')"
+        >
+          <p class="stratum-minimap-hint">
+            {{ i18n.t('versioning.history.stratum.minimapHint') }}
+          </p>
+          <svg
+            class="stratum-minimap-svg"
+            [attr.viewBox]="
+              '0 0 ' + (minimapGeometry().width || 1) + ' ' + minimapGeometry().height
+            "
+            preserveAspectRatio="none"
+            role="img"
+          >
+            <path
+              class="stratum-minimap-band panorama-band-main"
+              [attr.d]="minimapGeometry().paths.main"
+            ></path>
+            <path
+              class="stratum-minimap-band panorama-band-comments"
+              [attr.d]="minimapGeometry().paths.comments"
+            ></path>
+            <path
+              class="stratum-minimap-band panorama-band-draft"
+              [attr.d]="minimapGeometry().paths.draft"
+            ></path>
+            @if (minimapWindow(); as win) {
+              <rect
+                class="stratum-minimap-window"
+                [attr.x]="win.x"
+                y="0"
+                [attr.width]="win.width"
+                [attr.height]="minimapGeometry().height"
+              ></rect>
+            }
+            @for (c of minimapGeometry().columns; track c.dayStart) {
+              <rect
+                class="stratum-minimap-hit"
+                [attr.x]="c.hitX"
+                y="0"
+                [attr.width]="c.hitWidth"
+                [attr.height]="minimapGeometry().height"
+                [attr.aria-label]="
+                  i18n.t('versioning.history.stratum.minimapColumnTitle', {
+                    date: c.dayStart | mcDate,
+                    n: c.count,
+                  })
+                "
+                (click)="onMinimapColumnClick(c.dayStart)"
+              >
+                <title>
+                  {{
+                    i18n.t('versioning.history.stratum.minimapColumnTitle', {
+                      date: c.dayStart | mcDate,
+                      n: c.count,
+                    })
+                  }}
+                </title>
+              </rect>
+            }
+            @for (f of minimapFossils(); track f.oid + ':' + f.name) {
+              <g
+                class="stratum-minimap-fossil"
+                role="button"
+                tabindex="0"
+                [attr.aria-label]="i18n.t('versioning.history.fossilFocus.jump', { name: f.name })"
+                [attr.transform]="'translate(' + f.x + ',' + f.y + ')'"
+                (click)="jumpToFossil(f.oid, f.name)"
+                (keydown.enter)="jumpToFossil(f.oid, f.name)"
+              >
+                <title>
+                  {{ i18n.t('versioning.history.fossilFocus.jump', { name: f.name }) }}
+                </title>
+                <circle r="3.2"></circle>
+              </g>
+            }
+          </svg>
+        </aside>
+      }
     }
   </aside>
 
@@ -623,7 +755,7 @@
                   </div>
                 </section>
               }
-              @if (d.view.fields.user.length > 0) {
+              @if (d.view.fields.length > 0) {
                 <section class="diff-section">
                   <h4>{{ i18n.t('versioning.history.field.userFields') }}</h4>
                   <table class="fields">
@@ -635,7 +767,7 @@
                       </tr>
                     </thead>
                     <tbody>
-                      @for (f of d.view.fields.user; track f.key) {
+                      @for (f of d.view.fields; track f.key) {
                         <tr class="field-row field-{{ f.status }}">
                           <td class="field-key">{{ f.key }}</td>
                           <td class="field-cell field-before">{{ f.before ?? '—' }}</td>
@@ -646,12 +778,6 @@
                   </table>
                 </section>
               }
-              <!-- why: `d.view.fields.system` (timestamps, ids, revisiones)
-                   son campos que la app mantiene, no que el usuario edita.
-                   El objetivo es no trackearlos siquiera — ver
-                   docs/deferred.md. Mientras tanto no los mostramos: el
-                   usuario está en su historial personal, no en un log
-                   técnico. -->
             }
             @case ('anchored') {
               @if (d.view.items.length === 0) {
@@ -766,7 +892,8 @@
                     <button
                       type="button"
                       class="notebook-fossil"
-                      (click)="select(f.oid); onPanoramaColumnActivate(r.day)"
+                      [title]="i18n.t('versioning.history.fossilFocus.jump', { name: f.name })"
+                      (click)="jumpToFossil(f.oid, f.name)"
                     >
                       <span class="notebook-fossil-flag">⚑</span>
                       {{ f.name }}
@@ -846,7 +973,8 @@
                       type="button"
                       class="ficha-fossil"
                       [attr.data-facet]="f.facet"
-                      (click)="zoomIntoCommit(f.oid)"
+                      [title]="i18n.t('versioning.history.fossilFocus.jump', { name: f.name })"
+                      (click)="jumpToFossil(f.oid, f.name)"
                     >
                       <span class="ficha-fossil-flag">⚑</span>
                       {{ f.name }}

@@ -123,6 +123,12 @@ Formato por entrada:
 - **Por qué se difirió**: nice-to-have. Con contexto reducido (~3 líneas alrededor de cada cambio) la legibilidad puede mejorar sin esconder nada — esa es una alternativa más conservadora que también queda en este ítem.
 - **Target**: §19.16f.
 
+### Tooltip por-día en la panorámica (hover sobre la ladera)
+
+- **Qué**: al pasar el mouse sobre la silueta de la cordillera (`.panorama-svg`), mostrar un tooltip flotante con `{fecha} · N hallazgos · mix de facetas`. Actualmente el hit-rect ya tiene `<title>` accesible (nativo del navegador), pero el hover no revela el pico exacto en el eje horizontal — el título aparece con retardo del OS y no muestra el mix de facetas.
+- **Por qué se difirió**: Fase 3 lo dejó marcado como "no crítico, pulido posterior". Cerramos Fase 5 sin abordarlo porque la navegación real (doble-click en columna, click en fósil, mini-mapa desde estratos) ya cubre el flujo principal y agregar un tooltip HTML propio implica un componente flotante posicionado sobre SVG con manejo de escape/scroll.
+- **Target**: §19.16f (pulido del historial) — junto con el resto del polish visual del rediseño.
+
 ### Pulido visual general de `/history`
 
 - **Qué**: cuando cerramos 13a el usuario confirmó que la información está completa y legible pero "mucha info, poco visual". Queda como ítem único agrupador para futuras iteraciones de tipografía, densidad, jerarquía y micro-interacciones del historial (anchos de columna, separadores entre buckets, hover states, animación del cambio de selección, etc.).
@@ -538,9 +544,7 @@ Formato por entrada:
 
 ## Historial — Dejar de trackear campos "de la app" (origen: /history rediseño, 2026-07-02)
 
-### No versionar `fields.system` de las entidades del usuario
+### ~~No versionar `fields.system` de las entidades del usuario~~ (resuelto 2026-07-03)
 
-- **Qué**: hoy el diff service reporta dos grupos de campos por entidad: `fields.user` (lo que el usuario edita — título, cuerpo, tags, fecha, prioridad, etc.) y `fields.system` (timestamps, revisiones, ids, flags internos que mueve la app). El usuario está mirando SU historial personal (mesa de trabajo), no un log técnico — los cambios de sistema son ruido. La UI ya no los muestra (ver `entityRow` en `history.container.html`), pero la infra sigue serializándolos, computando su diff y agregándolos al `EntityDiff.view.fields.system`.
-- **Por qué se difirió**: sacarlos del track cambia el snapshot de cada entidad y por lo tanto el diff base. Requiere: (a) definir por tipo cuáles claves son "system", (b) verificar que ninguna vista aguas abajo dependa del valor (ej. render de una nota necesita el `id` del sistema, pero el diff no debería reportarlo), (c) migración de los commits pasados que sí tienen esos campos serializados (no romper la historia). Cambio de datos con blast radius no acotado — merece sesión dedicada.
-- **Cómo empezar**: revisar `HistoryDiffService`/`entity-diff.utils.ts` en `src/app/features/history/services/`; identificar el punto donde `fields.user` y `fields.system` se separan (probablemente por lista de allow/deny de claves) y decidir si el mejor lugar de filtro es en el snapshot (upstream — no incluir la clave) o en el diff (downstream — computar pero descartar). El primer camino es correcto pero implica auditar todos los tipos de entidad.
-- **Target**: sin asignar.
+- **Qué**: los campos que la app mantiene mecánicamente (ids, timestamps, `schemaVersion`, `position` fractional-index, y extras por familia — `enteredHoyAt` en tasks, `progress`/`wallCenter` en goals, `bookId`/`pageCount` en chapters, `nextPingAt` en reminders) ya no aparecen en el diff de historial.
+- **Cómo**: filtro downstream en `diff.utils.ts` (`computeUserFields` + `systemKeysFor` con set universal + overrides por familia). El JSON en disco los conserva porque runtime los usa; el pipeline de diff los ignora al leerlos, así que la historia vieja se ve limpia retroactivamente sin migrar datos. El shape del diff colapsó de `{ user, system }` a un array plano; el `systemExpandedSignal` del container quedó eliminado.

@@ -56,8 +56,67 @@ export function isEntityPath(filepath: string): boolean {
   return ENTITY_PREFIXES.some((p) => filepath.startsWith(p));
 }
 
-const SYSTEM_KEYS = new Set(['id', 'createdAt', 'updatedAt', 'schemaVersion']);
 const HANDLED_SEPARATELY = new Set(['title', 'body', 'tags']);
+
+// why: campos que la app mantiene mecánicamente (ids, timestamps, índices
+//      de reorden, valores derivados, punteros del scheduler). El usuario
+//      está mirando SU historial personal, no un log técnico; verlos
+//      cambiar en cada commit es ruido puro. Se filtran del diff pipeline
+//      sin tocar la persistencia — el JSON en disco los conserva porque
+//      la app los necesita en runtime.
+const UNIVERSAL_SYSTEM_KEYS: readonly string[] = [
+  'id',
+  'createdAt',
+  'updatedAt',
+  'schemaVersion',
+  'position',
+];
+
+type EntityFamily =
+  | 'notes'
+  | 'tasks'
+  | 'goals'
+  | 'lists'
+  | 'writings'
+  | 'books'
+  | 'chapters'
+  | 'images'
+  | 'files'
+  | 'reminders';
+
+const SYSTEM_KEYS_BY_FAMILY: Record<EntityFamily, readonly string[]> = {
+  notes: [],
+  tasks: ['enteredHoyAt'],
+  goals: ['progress', 'wallCenter'],
+  lists: [],
+  writings: [],
+  books: [],
+  chapters: ['bookId', 'pageCount'],
+  images: [],
+  files: [],
+  reminders: ['nextPingAt'],
+};
+
+function familyOfEntityPath(filepath: string): EntityFamily | null {
+  if (filepath.startsWith('books/')) {
+    return /\/chapters\/[^/]+\.json$/.test(filepath) ? 'chapters' : 'books';
+  }
+  if (filepath.startsWith('notes/')) return 'notes';
+  if (filepath.startsWith('tasks/')) return 'tasks';
+  if (filepath.startsWith('goals/')) return 'goals';
+  if (filepath.startsWith('lists/')) return 'lists';
+  if (filepath.startsWith('writings/')) return 'writings';
+  if (filepath.startsWith('images/')) return 'images';
+  if (filepath.startsWith('files/')) return 'files';
+  if (filepath.startsWith('reminders/')) return 'reminders';
+  return null;
+}
+
+function systemKeysFor(filepath: string): ReadonlySet<string> {
+  const family = familyOfEntityPath(filepath);
+  const extras = family ? SYSTEM_KEYS_BY_FAMILY[family] : [];
+  return new Set([...UNIVERSAL_SYSTEM_KEYS, ...extras]);
+}
 
 export type FieldChangeStatus = 'added' | 'removed' | 'modified' | 'unchanged';
 
@@ -68,25 +127,21 @@ export interface FieldDiff {
   readonly after: string | null;
 }
 
-export interface FieldCategories {
-  readonly user: readonly FieldDiff[];
-  readonly system: readonly FieldDiff[];
-}
-
-export function categorizeFields(
+export function computeUserFields(
+  filepath: string,
   before: Record<string, unknown> | null,
   after: Record<string, unknown> | null,
-): FieldCategories {
+): readonly FieldDiff[] {
+  const systemKeys = systemKeysFor(filepath);
   const keys = collectChangedKeys(before, after);
-  const user: FieldDiff[] = [];
-  const system: FieldDiff[] = [];
+  const out: FieldDiff[] = [];
   for (const key of keys) {
+    if (systemKeys.has(key)) continue;
     const diff = fieldDiffFor(key, before?.[key], after?.[key]);
     if (diff.status === 'unchanged') continue;
-    if (SYSTEM_KEYS.has(key)) system.push(diff);
-    else user.push(diff);
+    out.push(diff);
   }
-  return { user, system };
+  return out;
 }
 
 function collectChangedKeys(

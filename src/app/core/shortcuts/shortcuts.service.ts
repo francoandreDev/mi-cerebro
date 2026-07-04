@@ -11,11 +11,27 @@ function isEditable(target: EventTarget | null): boolean {
 const MOD_ALIASES = new Set(['ctrl', 'control', 'cmd', 'command', 'meta']);
 
 function matches(combo: string, event: KeyboardEvent): boolean {
-  const parts = combo.split('+').map((p) => p.trim().toLowerCase());
-  const key = parts[parts.length - 1] ?? '';
-  const wantMod = parts.slice(0, -1).some((p) => MOD_ALIASES.has(p));
-  const wantShift = parts.slice(0, -1).includes('shift');
-  const wantAlt = parts.slice(0, -1).includes('alt');
+  // why: combo '+' as a literal key (not a separator) breaks the naive
+  //      split('+') — "+".split('+') is ['', ''], swallowing the key itself.
+  //      Treat a trailing '+' as the key and split only the modifiers before it.
+  const isLiteralPlus = combo === '+' || combo.endsWith('++');
+  let key: string;
+  let modifierParts: string[];
+  if (isLiteralPlus) {
+    key = '+';
+    modifierParts = combo
+      .slice(0, -1)
+      .split('+')
+      .map((p) => p.trim().toLowerCase())
+      .filter(Boolean);
+  } else {
+    const parts = combo.split('+').map((p) => p.trim().toLowerCase());
+    key = parts[parts.length - 1] ?? '';
+    modifierParts = parts.slice(0, -1);
+  }
+  const wantMod = modifierParts.some((p) => MOD_ALIASES.has(p));
+  const wantShift = modifierParts.includes('shift');
+  const wantAlt = modifierParts.includes('alt');
   if (wantMod !== (event.ctrlKey || event.metaKey)) return false;
   if (wantAlt !== event.altKey) return false;
   if (wantShift && !event.shiftKey) return false;

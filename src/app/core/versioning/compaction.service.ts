@@ -30,6 +30,11 @@ const SNAPSHOT_ROOT = '/.mi-cerebro/pre-compaction';
 export interface ApplyPlanResult {
   readonly newTipOid: string;
   readonly rewrote: boolean;
+  // why: cuando un caller (ej. milestone-triggered compaction) necesita
+  //      seguir un commit específico a través del rewrite, este mapping
+  //      dice a qué oid nuevo apunta cada oid terminal de fuseGroup. Los
+  //      commits preservados no aparecen porque su oid no cambia.
+  readonly newOidByTerminalOid: ReadonlyMap<string, string>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -57,10 +62,11 @@ export class CompactionService {
       const bare = stripHeadsPrefix(ref);
       const originalTipOid = await git.resolveRef({ fs, dir: REPO_DIR, ref: bare });
       if (plan.fuseGroups.length === 0) {
-        return { newTipOid: originalTipOid, rewrote: false };
+        return { newTipOid: originalTipOid, rewrote: false, newOidByTerminalOid: new Map() };
       }
       await this.writeSnapshot(fs, bare, originalTipOid, plan);
-      const newTipOid = await this.rewrite(fs, bare, plan, originalTipOid);
+      const newOidByTerminalOid = new Map<string, string>();
+      const newTipOid = await this.rewrite(fs, bare, plan, originalTipOid, newOidByTerminalOid);
       await git.writeRef({
         fs,
         dir: REPO_DIR,
@@ -68,7 +74,7 @@ export class CompactionService {
         value: newTipOid,
         force: true,
       });
-      return { newTipOid, rewrote: true };
+      return { newTipOid, rewrote: true, newOidByTerminalOid };
     });
   }
 
@@ -77,6 +83,7 @@ export class CompactionService {
     ref: string,
     plan: CompactionPlan,
     originalTipOid: string,
+    newOidByTerminalOid: Map<string, string>,
   ): Promise<string> {
     const fuseByLastOid = new Map<string, FuseGroup>();
     const skipOids = new Set<string>();
@@ -121,6 +128,7 @@ export class CompactionService {
             committer: { ...DEFAULT_GIT_AUTHOR, timestamp: now, timezoneOffset: 0 },
           },
         });
+        if (group) newOidByTerminalOid.set(commit.oid, newOid);
         previousOid = newOid;
       }
     } catch (cause) {
@@ -193,7 +201,9 @@ function facetaLabel(ref: string): 'main' | 'borrador' | 'comentarios' {
 }
 
 function buildFuseMessage(faceta: string, group: FuseGroup): string {
-  const subject = `auto-batch [${faceta}]: ${group.oids.length} commits (${group.bucketKey})`;
+  const subject = group.label
+    ? group.label
+    : `auto-batch [${faceta}]: ${group.oids.length} commits (${group.bucketKey})`;
   const range =
     group.oids.length > 1
       ? `${group.oids[0]!.slice(0, 7)}..${group.oids[group.oids.length - 1]!.slice(0, 7)}`

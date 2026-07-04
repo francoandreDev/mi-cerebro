@@ -16,7 +16,6 @@ import { GitFsAdapter } from '@core/versioning/git-fs.adapter';
 import type {
   AnchorChange,
   AnchorMode,
-  FieldCategories,
   FieldChangeStatus,
   FieldDiff,
   TagsDelta,
@@ -25,7 +24,7 @@ import {
   asTagArray,
   blobToText,
   bodyDiffOf,
-  categorizeFields,
+  computeUserFields,
   diffAnchoredItems,
   diffFlatJson,
   diffTagArrays,
@@ -35,6 +34,11 @@ import {
   parseEntityJson,
   titleDiffOf,
 } from './diff.utils';
+
+// why: cede el hilo cada N sondas en findNoiseCommits. 32 es el sweet
+//      spot entre "actualizar el timeline suficientemente seguido" y
+//      "no saturar el event loop con setTimeout(0)".
+const NOISE_SCAN_YIELD_EVERY = 32;
 
 export type DiffStatus = 'added' | 'modified' | 'deleted';
 
@@ -63,7 +67,7 @@ export type EntityDiffView =
       readonly title: TitleDiff;
       readonly body: readonly DiffChunk[] | null;
       readonly tags: TagsDelta;
-      readonly fields: FieldCategories;
+      readonly fields: readonly FieldDiff[];
     };
 
 export interface EntityDiff {
@@ -94,20 +98,43 @@ export class HistoryDiffService {
   //      ahí. Esta sonda los marca para que el timeline los oculte.
   async findNoiseCommits(
     entries: readonly { readonly oid: string; readonly message: string }[],
+    opts?: {
+      readonly onBatch?: (found: ReadonlySet<string>) => void;
+      readonly signal?: AbortSignal;
+    },
   ): Promise<ReadonlySet<string>> {
     const adapter = this.adapter();
     if (!adapter) return new Set();
     const noise = new Set<string>();
+    let sinceYield = 0;
+    let sinceReport = 0;
     for (const e of entries) {
+      if (opts?.signal?.aborted) break;
       if (!isVariantsAutoCommit(e.message)) continue;
       try {
         const parent = await this.parentOidOf(adapter, e.oid);
-        if (!parent) continue;
-        if (await this.isNoiseDelta(adapter, parent, e.oid)) noise.add(e.oid);
+        if (parent && (await this.isNoiseDelta(adapter, parent, e.oid))) {
+          noise.add(e.oid);
+          sinceReport += 1;
+        }
       } catch {
         // sondas que fallan no se ocultan
       }
+      // why: la scan puede tocar cientos de commits al abrir /history con
+      //      un repo maduro; cediendo cada N entradas mantenemos la UI
+      //      responsiva y damos oportunidad al onBatch de repintar el
+      //      timeline con el ruido detectado hasta el momento.
+      sinceYield += 1;
+      if (sinceYield >= NOISE_SCAN_YIELD_EVERY) {
+        sinceYield = 0;
+        if (sinceReport > 0 && opts?.onBatch) {
+          opts.onBatch(new Set(noise));
+          sinceReport = 0;
+        }
+        await new Promise<void>((r) => setTimeout(r, 0));
+      }
     }
+    if (sinceReport > 0 && opts?.onBatch) opts.onBatch(new Set(noise));
     return noise;
   }
 
@@ -186,7 +213,7 @@ export class HistoryDiffService {
       return { ...common, view: { kind: 'binary', beforeSize: baseSize, afterSize: newSize } };
     }
     if (isEntityPath(change.filepath)) {
-      const view = buildEntityView(before, after);
+      const view = buildEntityView(change.filepath, before, after);
       if (view) return { ...common, view };
     }
     if (change.filepath.endsWith('.json')) {
@@ -242,6 +269,7 @@ function toChunks(before: string, after: string): readonly DiffChunk[] {
 }
 
 function buildEntityView(
+  filepath: string,
   beforeBlob: Uint8Array | null,
   afterBlob: Uint8Array | null,
 ): EntityDiffView | null {
@@ -253,6 +281,6 @@ function buildEntityView(
     title: titleDiffOf(before?.['title'], after?.['title']),
     body: bodyDiffOf(before?.['body'], after?.['body'], toChunks),
     tags: diffTagArrays(asTagArray(before?.['tags']), asTagArray(after?.['tags'])),
-    fields: categorizeFields(before, after),
+    fields: computeUserFields(filepath, before, after),
   };
 }

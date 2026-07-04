@@ -758,6 +758,7 @@ const PANE_HIDDEN_PREFIXES: readonly string[] = [
   '/goals',
   '/lists',
   '/writings',
+  '/sync',
 ];
 
 const ROUTE_TO_KIND = {

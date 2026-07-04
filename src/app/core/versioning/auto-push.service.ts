@@ -3,7 +3,7 @@
 // the safety gates (divergence / in-flight / not-configured) are pure
 // (see `auto-push-scheduler.ts`).
 
-import { Injectable, effect, inject } from '@angular/core';
+import { Injectable, effect, inject, signal } from '@angular/core';
 
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
@@ -21,6 +21,10 @@ export class AutoPushService {
   private readonly settings = inject(SettingsService);
   private readonly errors = inject(ErrorService);
   private lastSeen: number | null = null;
+  private readonly lastSkipAtSignal = signal<number | null>(null);
+  // why: /sync consola renders a fleeting "chispita" spark on the crank
+  //      each time the throttle skipped a push mid-flight (MCB-NET-008).
+  readonly lastSkipAt = this.lastSkipAtSignal.asReadonly();
 
   constructor() {
     effect(() => {
@@ -67,6 +71,7 @@ export class AutoPushService {
   //      and reporting them would spam the toast on every keystroke.
   private reportSkip(decision: SchedulerDecision, enabled: boolean): void {
     if (decision !== 'skip-in-flight' || !enabled) return;
+    this.lastSkipAtSignal.set(Date.now());
     this.errors.report(
       new AppError(ERROR_CODES.NET_008, {
         severity: 'info',

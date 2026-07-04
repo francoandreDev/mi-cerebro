@@ -18,6 +18,11 @@ export interface FuseGroup {
   readonly bucketKey: string; // YYYY-MM-DD | YYYY-Www | YYYY-MM (UTC)
   readonly oids: readonly string[]; // oldest → newest
   readonly newestTimestamp: number; // ms epoch
+  // why: presente sólo cuando el grupo termina exactamente en un milestone
+  //      recién marcado (planner milestone-compaction). Cuando está, el
+  //      commit fusionado usa este slug como subject en vez del formato
+  //      `auto-batch [...]`. Ver §12 "Disparo por milestone".
+  readonly label?: string;
 }
 
 export interface CompactionPlan {

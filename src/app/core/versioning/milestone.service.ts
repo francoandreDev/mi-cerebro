@@ -12,7 +12,13 @@ import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
 import { WorkspaceService } from '@core/fs/workspace.service';
 
+import { SettingsService } from '@core/settings/settings.service';
+
+import { CompactionService } from './compaction.service';
 import { GitFsAdapter } from './git-fs.adapter';
+import { buildMilestoneCompactionPlan } from './milestone-compaction-plan';
+import { RemoteService } from './remote.service';
+import { VersioningService } from './versioning.service';
 import { DEFAULT_GIT_AUTHOR } from './versioning.constants';
 
 const REPO_DIR = '/';
@@ -27,6 +33,15 @@ export type CreateMilestoneResult =
   | { readonly status: 'created'; readonly milestone: Milestone }
   | { readonly status: 'name-taken'; readonly existing: Milestone };
 
+// why: variante de create() disparada desde /history que además reescribe
+//      el rango [milestone previo (o root) .. oid] en la rama pasada.
+//      `rewrote` distingue el caso "compactación efectiva" del "no había
+//      nada que compactar" (rango de 0 commits fusionables) y del "gated
+//      por remote-toggle off".
+export type CreateAndCompactResult =
+  | { readonly status: 'created'; readonly milestone: Milestone; readonly rewrote: boolean }
+  | { readonly status: 'name-taken'; readonly existing: Milestone };
+
 export type RenameMilestoneResult =
   | { readonly status: 'renamed'; readonly milestone: Milestone }
   | { readonly status: 'name-taken'; readonly existing: Milestone };
@@ -34,6 +49,10 @@ export type RenameMilestoneResult =
 @Injectable({ providedIn: 'root' })
 export class MilestoneService {
   private readonly workspace = inject(WorkspaceService);
+  private readonly versioning = inject(VersioningService);
+  private readonly compaction = inject(CompactionService);
+  private readonly remote = inject(RemoteService);
+  private readonly settings = inject(SettingsService);
   private adapter: GitFsAdapter | null = null;
 
   private requireAdapter(): GitFsAdapter {
@@ -75,16 +94,96 @@ export class MilestoneService {
         recoverable: true,
       });
     }
-    const fs = this.requireAdapter();
     const existing = await this.read(slug);
     if (existing) return { status: 'name-taken', existing };
+    const milestone = await this.writeTag(oid, slug, name, description);
+    return { status: 'created', milestone };
+  }
+
+  // §12 "Disparo por milestone": crear tag + compactar el rango
+  // [milestone previo (o root) .. oid] en `ref`. El tag se planta al
+  // final sobre el oid post-rewrite; si el gate remoto está apagado o
+  // no hay nada que fusionar, se cae al comportamiento de create() y
+  // el tag queda sobre el oid original.
+  async createAndCompact(
+    oid: string,
+    name: string,
+    description: string | undefined,
+    ref: string,
+  ): Promise<CreateAndCompactResult> {
+    const slug = toSlug(name);
+    if (!slug) {
+      throw new AppError(ERROR_CODES.VER_017, {
+        severity: 'warning',
+        context: { reason: 'invalid-name', name },
+        recoverable: true,
+      });
+    }
+    const existing = await this.read(slug);
+    if (existing) return { status: 'name-taken', existing };
+
+    const remoteConfigured = this.remote.isConfigured();
+    const compactWithRemote = this.settings.state().versioning.compactWithRemote;
+    const gatedOff = remoteConfigured && !compactWithRemote;
+    if (gatedOff) {
+      const milestone = await this.writeTag(oid, slug, name, description);
+      return { status: 'created', milestone, rewrote: false };
+    }
+
+    const commits = await this.versioning.logFull(ref);
+    const tagOids = await this.versioning.listTagOids();
+    const plan = buildMilestoneCompactionPlan({
+      commits,
+      tagOids,
+      milestoneOid: oid,
+      milestoneLabel: slug,
+    });
+    if (plan.fuseGroups.length === 0) {
+      const milestone = await this.writeTag(oid, slug, name, description);
+      return { status: 'created', milestone, rewrote: false };
+    }
+
+    // why: capturamos la lease ANTES de reescribir para que el push
+    //      posterior compare contra el estado del remoto que vimos, no
+    //      contra el post-rewrite. Mismo patrón que CompactionScheduler.
+    const lease = remoteConfigured ? await this.remote.snapshotRemoteOid(ref) : null;
+    const result = await this.compaction.applyPlan(ref, plan);
+    const newOidForMilestone = result.newOidByTerminalOid.get(oid);
+    if (!newOidForMilestone) {
+      throw new AppError(ERROR_CODES.VER_025, {
+        severity: 'error',
+        context: { ref, reason: 'milestone-oid-not-remapped', oid },
+        recoverable: true,
+      });
+    }
+    const milestone = await this.writeTag(newOidForMilestone, slug, name, description);
+
+    if (remoteConfigured) {
+      const leases = new Map<string, string | null>([[ref, lease]]);
+      // why: mismos códigos y semántica que la pasada background; si el
+      //      remoto avanzó por otro lado, el push aborta sin pisar y el
+      //      caller ve el AppError.
+      await this.remote.pushAllWithLease(leases);
+    }
+
+    return { status: 'created', milestone, rewrote: true };
+  }
+
+  private async writeTag(
+    oid: string,
+    slug: string,
+    name: string,
+    description: string | undefined,
+  ): Promise<Milestone> {
+    const fs = this.requireAdapter();
+    const message = buildMessage(name, description);
     try {
       await git.annotatedTag({
         fs,
         dir: REPO_DIR,
         ref: slug,
         object: oid,
-        message: buildMessage(name, description),
+        message,
         tagger: { ...DEFAULT_GIT_AUTHOR, timestamp: Math.floor(Date.now() / 1000) },
       });
     } catch (e) {
@@ -95,10 +194,7 @@ export class MilestoneService {
         recoverable: true,
       });
     }
-    return {
-      status: 'created',
-      milestone: { name: slug, oid, message: buildMessage(name, description) },
-    };
+    return { name: slug, oid, message };
   }
 
   // Rename = delete + recreate over the same oid. Option 2 in the

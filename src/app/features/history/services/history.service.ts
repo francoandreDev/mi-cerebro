@@ -1,20 +1,15 @@
-// Reads commits from VersioningService, derives quick kind chips
-// from the autocommit message convention, and groups them into the
-// temporal buckets the design (§12 "Historial") asks for.
+// Presentation layer over HistoryLoader: turns the fetched summary window
+// into the bucketed / collapsed timeline the UI renders. Fetch, milestones
+// and origin-map hydration live in HistoryLoader (§13 redesign v2 fase 1);
+// this file only re-projects what the loader exposes.
 
 import { Injectable, computed, inject, signal } from '@angular/core';
 
-import { MilestoneService } from '@core/versioning/milestone.service';
-import { VariantsService } from '@core/versioning/variants.service';
-import { stripHeadsPrefix } from '@core/versioning/variants.io';
-import { PRINCIPAL_VARIANT_ID, type Variant } from '@core/versioning/variants.types';
-import { VersioningService } from '@core/versioning/versioning.service';
-
+import { HistoryLoader } from './history-loader.service';
 import type {
   BucketId,
   CommitBucket,
   CommitEntry,
-  MergeGroupInfo,
   MilestoneEntry,
   TimelineItem,
 } from './history.types';
@@ -33,15 +28,11 @@ const BUCKET_ORDER: readonly BucketId[] = [
 
 @Injectable()
 export class HistoryService {
-  private readonly versioning = inject(VersioningService);
-  private readonly milestoneService = inject(MilestoneService);
-  private readonly variants = inject(VariantsService);
+  private readonly loader = inject(HistoryLoader);
   private readonly entriesSignal = signal<readonly CommitEntry[]>([]);
   private readonly milestonesSignal = signal<readonly MilestoneEntry[]>([]);
   private readonly loadingSignal = signal(false);
   private readonly errorSignal = signal<string | null>(null);
-  private readonly originByOidSignal = signal<ReadonlyMap<string, string>>(new Map());
-  private readonly variantsByIdSignal = signal<ReadonlyMap<string, Variant>>(new Map());
 
   readonly entries = this.entriesSignal.asReadonly();
   readonly milestones = this.milestonesSignal.asReadonly();
@@ -49,10 +40,11 @@ export class HistoryService {
   readonly error = this.errorSignal.asReadonly();
   // why: oid → variantId map built BFS-from-principal over family refs. First
   //      writer wins so original authors (parents) keep credit for OIDs that
-  //      siblings inherit via merge. Used by /history to color each commit
-  //      row by its variant of origin.
-  readonly originByOid = this.originByOidSignal.asReadonly();
-  readonly variantsById = this.variantsByIdSignal.asReadonly();
+  //      siblings inherit via merge. Fase 1: BFS runs off the critical path
+  //      (see HistoryLoader.ensureOriginMap); the signal fills asynchronously
+  //      and the timeline repaints with commit color as it lands.
+  readonly originByOid = this.loader.originByOid;
+  readonly variantsById = this.loader.variantsById;
   readonly milestonesByOid = computed<ReadonlyMap<string, readonly MilestoneEntry[]>>(() => {
     const map = new Map<string, MilestoneEntry[]>();
     for (const m of this.milestonesSignal()) {
@@ -85,30 +77,19 @@ export class HistoryService {
     this.loadingSignal.set(true);
     this.errorSignal.set(null);
     try {
-      // why: walk main + comments + draft of the active variant so faceta
-      //      commits (`auto [borrador]:`, `merge [comentarios]:`, etc.)
-      //      surface in /history. Without this, git.log defaults to HEAD
-      //      and only main commits show up.
-      const active = this.variants.getActive();
-      const refs = active
-        ? [active.refs.main, active.refs.comments, active.refs.draft].map(stripHeadsPrefix)
-        : undefined;
-      const summaries = await this.versioning.log(depth, refs);
-      const entries = summaries.map((s): CommitEntry => {
-        const message = s.message.trim();
-        return {
-          oid: s.oid,
-          shortOid: s.oid.slice(0, 7),
-          message,
-          date: new Date(s.authorTimestamp),
-          kinds: parseKindsFromMessage(message),
-          mergeGroup: parseMergeGroup(message),
-        };
-      });
-      this.entriesSignal.set(entries);
-      const milestones = await this.milestoneService.list();
+      // why: milestones + summary window paint the timeline. Origin BFS is
+      //      O(refs × depth × variantes) and used to gate first paint; we
+      //      fire it off the critical path so TTI drops from "walk all
+      //      variants" to "walk active refs once". Refs invalidation on
+      //      restore is handled by the caller via load()'s completion.
+      this.loader.invalidateOriginMap();
+      const [window, milestones] = await Promise.all([
+        this.loader.loadWindow({ resolution: 'summary', depth }),
+        this.loader.loadMilestones(),
+      ]);
+      this.entriesSignal.set(window.commits);
       this.milestonesSignal.set(milestones);
-      await this.rebuildOriginMap(depth);
+      void this.loader.ensureOriginMap(depth).catch(() => undefined);
     } catch (e) {
       this.errorSignal.set(e instanceof Error ? e.message : String(e));
     } finally {
@@ -116,63 +97,10 @@ export class HistoryService {
     }
   }
 
-  // why: walk every variant's family refs in BFS-from-principal order so the
-  //      original author of each OID claims it before any descendant that
-  //      inherits the OID via merge. The active variant is walked last among
-  //      its tier so siblings that authored the commit keep credit.
-  private async rebuildOriginMap(depth: number): Promise<void> {
-    const variants = await this.variants.list();
-    const byId = new Map<string, Variant>();
-    for (const v of variants) byId.set(v.id, v);
-    this.variantsByIdSignal.set(byId);
-    const order = orderByLineage(variants);
-    const origin = new Map<string, string>();
-    for (const v of order) {
-      const refs = [v.refs.main, v.refs.comments, v.refs.draft].map(stripHeadsPrefix);
-      let oids: readonly string[] = [];
-      try {
-        const summaries = await this.versioning.log(depth, refs);
-        oids = summaries.map((s) => s.oid);
-      } catch {
-        // ref may not exist yet; skip
-      }
-      for (const oid of oids) {
-        if (!origin.has(oid)) origin.set(oid, v.id);
-      }
-    }
-    this.originByOidSignal.set(origin);
-  }
-
   async refreshMilestones(): Promise<void> {
-    const milestones = await this.milestoneService.list();
+    const milestones = await this.loader.loadMilestones();
     this.milestonesSignal.set(milestones);
   }
-}
-
-// Variants ordered principal-first then by lineage depth (parents before
-// children). Equal-depth tied by id for determinism. Used to walk refs so
-// the original author of an OID claims it before any descendant inherits it
-// via merge.
-function orderByLineage(variants: readonly Variant[]): readonly Variant[] {
-  const depth = new Map<string, number>();
-  const compute = (v: Variant): number => {
-    const cached = depth.get(v.id);
-    if (cached !== undefined) return cached;
-    if (v.id === PRINCIPAL_VARIANT_ID || !v.parentId) {
-      depth.set(v.id, 0);
-      return 0;
-    }
-    const parent = variants.find((p) => p.id === v.parentId);
-    const d = parent ? compute(parent) + 1 : 1;
-    depth.set(v.id, d);
-    return d;
-  };
-  return [...variants].sort((a, b) => {
-    const da = compute(a);
-    const db = compute(b);
-    if (da !== db) return da - db;
-    return a.id.localeCompare(b.id);
-  });
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -193,44 +121,6 @@ function bucketFor(ts: number, nowMs: number): BucketId {
   if (days < 21) return 'two-weeks';
   if (days < 45) return 'one-month';
   return 'older';
-}
-
-// Autocommit messages look like: "auto: 3 notes, 1 task (date) [reason]".
-// Extract the kind words ("notes", "task", …) for chip rendering.
-// Manual / restore / merge commits don't match and get no chips.
-function parseKindsFromMessage(msg: string): readonly string[] {
-  const m = /^auto(?:\s+\[[^\]]+\])?:\s*([^()[\]]+)/.exec(msg);
-  if (!m) return [];
-  const body = m[1]!;
-  const kinds = new Set<string>();
-  for (const part of body.split(',')) {
-    const word = /\d+\s+([a-zA-Z]+)/.exec(part.trim());
-    if (word) kinds.add(singularize(word[1]!));
-  }
-  return [...kinds];
-}
-
-function singularize(word: string): string {
-  if (word.endsWith('s') && word.length > 1) return word.slice(0, -1);
-  return word;
-}
-
-// Trailer format written by MergeService.formatMessage:
-//   merge: <path> (from "<fromName>" into "<intoName>")
-//
-//   Merge-Group: <uuid>
-//   Merge-From: <id>
-//   Merge-Into: <id>
-//   Merge-Choice: <choice>
-function parseMergeGroup(message: string): MergeGroupInfo | null {
-  const idMatch = /^Merge-Group:\s*(\S+)/m.exec(message);
-  if (!idMatch) return null;
-  const subjectMatch = /from "([^"]+)" into "([^"]+)"/.exec(message);
-  return {
-    id: idMatch[1]!,
-    fromName: subjectMatch?.[1] ?? null,
-    intoName: subjectMatch?.[2] ?? null,
-  };
 }
 
 // why: ráfagas de autocommits (mismo sujeto, separados por menos de una
@@ -257,6 +147,11 @@ export function autoFingerprint(message: string): string | null {
     return `main::${kinds.join(',')}`;
   }
   return `${facet}::${body}`;
+}
+
+function singularize(word: string): string {
+  if (word.endsWith('s') && word.length > 1) return word.slice(0, -1);
+  return word;
 }
 
 // why: agrupamos por fingerprint con ventana acotada al ancla (commit más

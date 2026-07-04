@@ -6,138 +6,201 @@
 
   @if (!isConfigured()) {
     <section class="not-configured" role="alert">
-      <mc-icon name="warning" class="mc-anim-pulse" />
-      <p>{{ t('sync.notConfigured') }}</p>
+      <div class="nc-header">
+        <mc-icon name="warning" class="mc-anim-pulse" />
+        <h3>{{ t('sync.notConfigured.title') }}</h3>
+      </div>
+      <p class="nc-body">{{ t('sync.notConfigured') }}</p>
       <a class="primary mc-hover-grow" routerLink="/settings">
         <mc-icon name="gear" />
         <span>{{ t('sync.openSettings') }}</span>
       </a>
     </section>
   } @else {
-    <section class="actions">
-      <button
-        type="button"
-        class="primary mc-hover-grow"
-        [disabled]="isPushing() || isFetching() || hasDivergence()"
-        [title]="hasDivergence() ? t('sync.divergent.disabled') : ''"
-        (click)="pushAll()"
-      >
-        <mc-icon
-          [name]="isPushing() ? 'spinner-gap' : 'upload-simple'"
-          [class.mc-anim-spin]="isPushing()"
-        />
-        @if (isPushing()) {
-          <span>{{ t('sync.actions.pushing') }}</span>
-        } @else {
-          <span>{{ t('sync.actions.pushAll') }}</span>
-        }
-      </button>
-      <button
-        type="button"
-        class="mc-hover-grow"
-        [disabled]="isPushing() || isFetching()"
-        (click)="fetchAll()"
-      >
-        <mc-icon
-          [name]="isFetching() ? 'spinner-gap' : 'download-simple'"
-          [class.mc-anim-spin]="isFetching()"
-        />
-        @if (isFetching()) {
-          <span>{{ t('sync.actions.fetching') }}</span>
-        } @else {
-          <span>{{ t('sync.actions.fetchAll') }}</span>
-        }
-      </button>
-      @if (lastBulkAt(); as when) {
-        <span class="last">{{ t('sync.lastBulkAt', { when: (when | mcDate) }) }}</span>
-      } @else {
-        <span class="last muted">{{ t('sync.lastBulk.never') }}</span>
-      }
-    </section>
-
-    <section class="summary" [attr.data-kind]="summary().kind">
-      @switch (summary().kind) {
-        @case ('allOk') {
-          <p>{{ t('sync.summary.allOk', { count: summary().count ?? 0 }) }}</p>
-        }
-        @case ('partial') {
-          <p>
-            {{
-              t('sync.summary.partial', {
-                errors: summary().errors ?? 0,
-                total: summary().total ?? 0,
-              })
-            }}
-          </p>
-        }
-        @default {
-          <p class="muted">{{ t('sync.summary.never') }}</p>
-        }
-      }
-    </section>
-
-    <section class="auto-push">
-      <h3>{{ t('sync.autoPush.title') }}</h3>
-      <label class="row">
-        <input
-          type="checkbox"
-          [checked]="versioningSettings().pushAfterAutocommit"
-          (change)="onTogglePushAfter($event)"
-        />
-        <span>{{ t('sync.autoPush.toggle') }}</span>
-      </label>
-      <label class="row">
-        <span>{{ t('sync.autoPush.throttle.label') }}</span>
-        <input
-          type="number"
-          min="0"
-          max="180"
-          step="1"
-          [value]="versioningSettings().pushThrottleMinutes"
-          (input)="onThrottleInput($event)"
-        />
-      </label>
-      <p class="hint">{{ t('sync.autoPush.throttle.hint') }}</p>
-    </section>
-
-    <section class="table-wrap" role="region" aria-label="refs">
-      <table class="refs">
-        <thead>
-          <tr>
-            <th>{{ t('sync.table.variant') }}</th>
-            <th>{{ t('sync.table.facet') }}</th>
-            <th>{{ t('sync.table.ref') }}</th>
-            <th>{{ t('sync.table.status') }}</th>
-            <th>{{ t('sync.table.lastSync') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of rows(); track row.ref) {
-            <tr [attr.data-status]="row.status">
-              <td>{{ row.variantName }}</td>
-              <td>{{ row.facet }}</td>
-              <td>
-                <code>{{ row.ref }}</code>
-              </td>
-              <td>
-                <span class="pill" [attr.data-status]="row.status">{{
-                  statusLabel(row.status)
-                }}</span>
-                @if (row.error) {
-                  <span class="err" [title]="row.error"><mc-icon name="warning" /></span>
-                }
-              </td>
-              <td>
-                @if (row.lastSyncAt) {
-                  {{ row.lastSyncAt | mcDate }}
-                } @else {
-                  <span class="muted">—</span>
-                }
-              </td>
-            </tr>
+    <div class="layout">
+      <section class="console" role="region" aria-label="refs">
+        <header class="console-head" aria-hidden="true">
+          <span class="col-variant">{{ t('sync.console.variantHeader') }}</span>
+          @for (f of facets; track f) {
+            <span class="col-facet">{{ facetLabel(f) }}</span>
           }
-        </tbody>
-      </table>
-    </section>
+        </header>
+        @for (row of consoleRows(); track row.variantId) {
+          <article class="console-row">
+            <span class="variant-name" [title]="row.variantName">{{ row.variantName }}</span>
+            @for (tube of row.tubes; track tube.facet) {
+              <div
+                class="tube"
+                [attr.data-status]="tube.status"
+                [attr.data-flight]="tubeFlight(tube)"
+                [title]="tube.error || tube.ref"
+              >
+                <span class="tube-cap tube-cap--top" aria-hidden="true"></span>
+                <div class="tube-glass">
+                  @if (tube.status === 'divergent') {
+                    <div class="capsule capsule--local">
+                      <code class="capsule-ref">{{ tube.ref }}</code>
+                    </div>
+                    <div class="capsule capsule--remote" aria-hidden="true">
+                      <code class="capsule-ref">↓</code>
+                    </div>
+                  } @else {
+                    <div class="capsule">
+                      <code class="capsule-ref">{{ tube.ref }}</code>
+                    </div>
+                  }
+                </div>
+                <span class="tube-cap tube-cap--bottom" aria-hidden="true"></span>
+                <footer class="tube-seal">
+                  <span class="pill" [attr.data-status]="tube.status">{{
+                    tubeStatusLabel(tube.status)
+                  }}</span>
+                  @if (tube.lastSyncAt) {
+                    <time class="stamp">{{ tube.lastSyncAt | mcDate }}</time>
+                  } @else {
+                    <span class="stamp muted">—</span>
+                  }
+                  @if (tube.error) {
+                    <span class="err" [title]="tube.error"><mc-icon name="warning" /></span>
+                  }
+                  @if (tube.status === 'divergent') {
+                    <a
+                      class="merge-link"
+                      [routerLink]="['/variants/merge']"
+                      [queryParams]="{
+                        incoming: 'remote',
+                        ref: tube.ref,
+                        into: tube.variantId,
+                      }"
+                    >
+                      <mc-icon name="git-branch" />
+                      <span>{{ t('sync.console.divergent.action') }}</span>
+                    </a>
+                  }
+                </footer>
+              </div>
+            }
+          </article>
+        }
+      </section>
+
+      <aside class="control-panel" aria-label="control panel">
+        <section class="panel-block levers" [attr.data-summary]="summary().kind">
+          <h3 class="panel-title">{{ t('sync.panel.leversTitle') }}</h3>
+          <div class="lever-row">
+            <button
+              type="button"
+              class="lever lever--push mc-hover-grow"
+              [disabled]="isPushing() || isFetching() || hasDivergence()"
+              [title]="hasDivergence() ? t('sync.divergent.disabled') : ''"
+              (click)="pushAll()"
+            >
+              <mc-icon
+                [name]="isPushing() ? 'spinner-gap' : 'upload-simple'"
+                [class.mc-anim-spin]="isPushing()"
+              />
+              @if (isPushing()) {
+                <span>{{ t('sync.actions.pushing') }}</span>
+              } @else {
+                <span>{{ t('sync.actions.pushAll') }}</span>
+              }
+            </button>
+            <button
+              type="button"
+              class="lever lever--fetch mc-hover-grow"
+              [disabled]="isPushing() || isFetching()"
+              (click)="fetchAll()"
+            >
+              <mc-icon
+                [name]="isFetching() ? 'spinner-gap' : 'download-simple'"
+                [class.mc-anim-spin]="isFetching()"
+              />
+              @if (isFetching()) {
+                <span>{{ t('sync.actions.fetching') }}</span>
+              } @else {
+                <span>{{ t('sync.actions.fetchAll') }}</span>
+              }
+            </button>
+          </div>
+          <p class="panel-status">
+            @switch (summary().kind) {
+              @case ('allOk') {
+                {{ t('sync.summary.allOk', { count: summary().count ?? 0 }) }}
+              }
+              @case ('partial') {
+                {{
+                  t('sync.summary.partial', {
+                    errors: summary().errors ?? 0,
+                    total: summary().total ?? 0,
+                  })
+                }}
+              }
+              @default {
+                <span class="muted">{{ t('sync.summary.never') }}</span>
+              }
+            }
+          </p>
+        </section>
+
+        <section class="panel-block crank" [class.crank--spark]="skipSpark()">
+          <h3 class="panel-title">{{ t('sync.autoPush.title') }}</h3>
+          @if (skipSpark()) {
+            <span class="skip-spark" role="status" aria-live="polite">
+              <mc-icon name="warning" />
+              <span>{{ t('sync.autoPush.skip.spark') }}</span>
+            </span>
+          }
+          <label class="switch">
+            <input
+              type="checkbox"
+              [checked]="versioningSettings().pushAfterAutocommit"
+              (change)="onTogglePushAfter($event)"
+            />
+            <span class="switch-track" aria-hidden="true">
+              <span class="switch-thumb"></span>
+            </span>
+            <span class="switch-label">{{ t('sync.autoPush.toggle') }}</span>
+          </label>
+          <label class="throttle" [class.disabled]="!versioningSettings().pushAfterAutocommit">
+            <span class="throttle-label">{{ t('sync.autoPush.throttle.label') }}</span>
+            <span class="throttle-dial">
+              <input
+                type="number"
+                min="0"
+                max="180"
+                step="1"
+                [value]="versioningSettings().pushThrottleMinutes"
+                [disabled]="!versioningSettings().pushAfterAutocommit"
+                (input)="onThrottleInput($event)"
+              />
+              <span class="throttle-unit" aria-hidden="true">{{
+                t('sync.autoPush.throttle.unit')
+              }}</span>
+            </span>
+          </label>
+          @if (throttleRemainingMs() !== null) {
+            <p class="panel-hourglass" role="status">
+              <mc-icon name="hourglass-medium" class="mc-anim-pulse" />
+              <span>{{
+                t('sync.autoPush.hourglass.remaining', { time: throttleRemainingLabel() })
+              }}</span>
+            </p>
+          }
+          <p class="panel-hint">{{ t('sync.autoPush.throttle.hint') }}</p>
+        </section>
+
+        <section class="panel-block seal">
+          <h3 class="panel-title">{{ t('sync.panel.sealTitle') }}</h3>
+          <div class="stamp-block" [attr.data-empty]="lastBulkAt() ? null : ''">
+            <span class="stamp-caption">{{ t('sync.panel.sealLabel') }}</span>
+            @if (lastBulkAt(); as when) {
+              <time class="stamp-value">{{ when | mcDate }}</time>
+            } @else {
+              <span class="stamp-value muted">{{ t('sync.panel.sealNever') }}</span>
+            }
+          </div>
+        </section>
+      </aside>
+    </div>
   }
 </section>

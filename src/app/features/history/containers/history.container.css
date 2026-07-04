@@ -8,6 +8,11 @@
 .head {
   padding: 16px;
   border-bottom: 1px solid var(--mc-border, rgba(0, 0, 0, 0.08));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .head h2 {
@@ -20,6 +25,74 @@
 }
 .title-icon {
   color: var(--mc-accent-primary);
+}
+
+/* Control de zoom semántico — 3 niveles secuenciales (cordillera → estratos
+ * → cordel). Cada botón dibuja su propia "barra" llena en la posición que
+ * le corresponde, a la ⟨█▁▁⟩/⟨▁█▁⟩/⟨▁▁█⟩ que pide la spec. Deshabilitado
+ * cuando el nivel todavía no fue desbloqueado (flujo secuencial, no salto
+ * libre). El label a la derecha siempre nombra el nivel activo. */
+.zoom-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mc-fg-primary) 4%, transparent);
+}
+.zoom-level {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+}
+.zoom-level:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--mc-fg-primary) 8%, transparent);
+}
+.zoom-level.active {
+  background: var(--mc-accent-primary);
+  border-color: var(--mc-accent-primary);
+}
+.zoom-level:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+.zoom-bars {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 12px;
+}
+.zoom-bar {
+  width: 3px;
+  height: 4px;
+  border-radius: 1px;
+  background: var(--mc-fg-primary);
+  opacity: 0.35;
+}
+.zoom-bar.filled {
+  height: 12px;
+  opacity: 1;
+  background: var(--mc-fg-primary);
+}
+.zoom-level.active .zoom-bar {
+  background: var(--mc-bg-base);
+  opacity: 0.5;
+}
+.zoom-level.active .zoom-bar.filled {
+  opacity: 1;
+}
+.zoom-current-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mc-fg-primary);
+  opacity: 0.75;
+  padding-right: 4px;
+  white-space: nowrap;
 }
 
 /* El grid del historial ya no es fijo 360|1fr — cada zoom impone su propio
@@ -332,6 +405,105 @@
   text-decoration: underline;
 }
 
+/* Mini-mapa al pie del yacimiento — compressed panorama silhouette
+   con banderines de fósiles y ventana visible como marco iluminado.
+   Sticky abajo del scroll para que siempre esté a la vista. */
+.stratum-minimap {
+  position: sticky;
+  bottom: 0;
+  margin: 8px 12px 16px;
+  padding: 6px 8px 8px;
+  background: color-mix(in srgb, var(--mc-bg-base, #fff) 92%, transparent);
+  backdrop-filter: blur(2px);
+  border: 1px solid var(--mc-border-subtle, rgba(0, 0, 0, 0.08));
+  border-radius: 6px;
+  z-index: 2;
+}
+
+.stratum-minimap-hint {
+  margin: 0 0 4px;
+  font-size: 0.72rem;
+  color: var(--mc-fg-secondary, var(--mc-text-secondary));
+}
+
+.stratum-minimap-svg {
+  display: block;
+  width: 100%;
+  height: 56px;
+}
+
+.stratum-minimap-band {
+  opacity: 0.75;
+}
+
+.stratum-minimap-window {
+  fill: color-mix(in srgb, var(--mc-accent-primary, #d4a54a) 20%, transparent);
+  stroke: color-mix(in srgb, var(--mc-accent-primary, #d4a54a) 65%, transparent);
+  stroke-width: 1.2;
+  pointer-events: none;
+}
+
+.stratum-minimap-hit {
+  fill: transparent;
+  cursor: pointer;
+}
+
+.stratum-minimap-hit:hover {
+  fill: color-mix(in srgb, var(--mc-fg-primary) 8%, transparent);
+}
+
+.stratum-minimap-fossil {
+  cursor: pointer;
+}
+
+.stratum-minimap-fossil circle {
+  fill: color-mix(in srgb, #d4a54a 75%, transparent);
+  stroke: color-mix(in srgb, #6d4a20 60%, transparent);
+  stroke-width: 1;
+}
+
+.stratum-minimap-fossil:hover circle {
+  fill: #d4a54a;
+}
+
+/* Cordel focus chip: se muestra cuando saltaste a un fósil desde otro zoom.
+   Indica el filtro ±12h y ofrece cortarlo. */
+.cordel-focus {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, #d4a54a 15%, transparent);
+  border: 1px dashed color-mix(in srgb, #6d4a20 60%, transparent);
+  font-size: 0.8rem;
+  color: var(--mc-fg-primary);
+}
+
+.cordel-focus-label {
+  font-style: italic;
+}
+
+.cordel-focus-clear {
+  padding: 2px 8px;
+  border: 1px solid var(--mc-border-default, rgba(0, 0, 0, 0.15));
+  border-radius: 999px;
+  background: transparent;
+  color: var(--mc-fg-primary);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.panorama-fossil {
+  cursor: pointer;
+}
+
+.panorama-fossil:focus-visible {
+  outline: 2px solid var(--mc-focus-ring, var(--mc-accent, currentColor));
+  outline-offset: 2px;
+}
+
 .bucket-label {
   position: sticky;
   top: 0;
@@ -603,15 +775,14 @@
 .timeline-head > .timeline-search {
   grid-area: search;
 }
-.timeline-head > .facet-chips,
-.timeline-head > .only-milestones {
+.timeline-head > .timeline-head-filters {
   grid-area: filters;
-}
-.timeline-head > .facet-chips {
-  justify-self: start;
-}
-.timeline-head > .only-milestones {
-  justify-self: end;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  min-width: 0;
 }
 
 .timeline-search {
