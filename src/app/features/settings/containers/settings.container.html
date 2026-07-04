@@ -63,6 +63,28 @@
               <span class="error">{{ t('settings.timezone.invalid') }}</span>
             }
           </label>
+
+          <div class="field">
+            <span class="label">{{ t('settings.reindex.label') }}</span>
+            <span class="hint">{{ t('settings.reindex.hint') }}</span>
+            <button
+              type="button"
+              class="mc-hover-grow"
+              [disabled]="reindexRunning()"
+              (click)="runReindex()"
+            >
+              @if (reindexRunning()) {
+                <mc-icon name="spinner-gap" class="mc-anim-spin" />
+                <span>{{ t('settings.reindex.button.busy') }}</span>
+              } @else {
+                <mc-icon name="arrows-clockwise" />
+                <span>{{ t('settings.reindex.button') }}</span>
+              }
+            </button>
+            @if (reindexDone() && !reindexRunning()) {
+              <span class="hint">{{ t('settings.reindex.done') }}</span>
+            }
+          </div>
         </section>
       }
 

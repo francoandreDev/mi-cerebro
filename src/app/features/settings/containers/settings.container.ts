@@ -14,6 +14,7 @@ import type { IconName } from '@shared/icon/icons.data';
 
 import { ErrorService } from '@core/errors/error.service';
 import { ExportZipService } from '@core/export/export-zip.service';
+import { WorkspaceRefreshService } from '@core/fs/workspace-refresh.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { LEAD_PRESETS } from '@core/reminders/goal-cadence.utils';
@@ -46,6 +47,10 @@ export class SettingsContainer {
   private readonly errors = inject(ErrorService);
   private readonly theme = inject(ThemeService);
   private readonly exportZip = inject(ExportZipService);
+  private readonly workspaceRefresh = inject(WorkspaceRefreshService);
+
+  protected readonly reindexRunning = signal(false);
+  protected readonly reindexDone = signal(false);
 
   protected readonly exportIncludeAllVariants = signal(false);
   protected readonly exportIncludeAssets = signal(true);
@@ -288,6 +293,19 @@ export class SettingsContainer {
       });
     } catch (e) {
       this.errors.report(e);
+    }
+  }
+
+  protected async runReindex(): Promise<void> {
+    this.reindexRunning.set(true);
+    this.reindexDone.set(false);
+    try {
+      await this.workspaceRefresh.refreshAll();
+      this.reindexDone.set(true);
+    } catch (e) {
+      this.errors.report(e);
+    } finally {
+      this.reindexRunning.set(false);
     }
   }
 }

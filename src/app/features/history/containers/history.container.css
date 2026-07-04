@@ -1993,6 +1993,12 @@ aside.timeline {
   color: var(--mc-fg-muted);
 }
 
+.chip-more {
+  background: transparent;
+  color: var(--mc-fg-muted);
+  font-style: italic;
+}
+
 .merge-group-members {
   list-style: none;
   margin: 4px 0 4px 12px;

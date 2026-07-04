@@ -437,8 +437,15 @@
                     </span>
                     @if (item.entry.kinds.length > 0) {
                       <span class="commit-chips">
-                        @for (k of item.entry.kinds; track k) {
+                        @for (k of visibleKinds(item.entry.kinds); track k) {
                           <span class="chip">{{ k }}</span>
+                        }
+                        @if (hiddenKindsCount(item.entry.kinds) > 0) {
+                          <span class="chip chip-more">{{
+                            i18n.t('versioning.history.kinds.more', {
+                              n: hiddenKindsCount(item.entry.kinds),
+                            })
+                          }}</span>
                         }
                       </span>
                     }

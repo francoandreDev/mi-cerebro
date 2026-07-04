@@ -55,11 +55,10 @@ Formato por entrada:
 
 ## Búsqueda (origen: paso 7b)
 
-### Botón / atajo de "reindexar" manual
+### ~~Botón / atajo de "reindexar" manual~~ (resuelto 2026-07-04)
 
 - **Qué**: §10 menciona "botón reindexar para rebuild manual si se corrompe". Hoy el rebuild ocurre solo en cada `refresh()` (apertura del workspace o paneo); no hay UI explícita.
-- **Por qué**: con sólo notas el rebuild automático cubre el caso. La pieza UI tiene sentido cuando haya más entidades y el índice sea grande, o cuando exista una pantalla de "ajustes".
-- **Target**: §19.16d (pulido de búsqueda).
+- **Estado**: cerrado. Botón "Reindexar" en `/settings` → sección General, junto a zona horaria. Llama a `WorkspaceRefreshService.refreshAll()` (mismo método que usa el boot y el switch de variante), con estado busy/spinner y mensaje de confirmación.
 
 ### Snippet centrado en la coincidencia (con highlight)
 
@@ -111,11 +110,10 @@ Formato por entrada:
 - **Por qué**: implementar variantes sin git significaría reinventar branching + merge desde cero. No vale la pena hasta confirmar que isomorphic-git no funciona.
 - **Target**: sin asignar (sólo se aborda si el fallback se activa en 13a).
 
-### Colapsar chips de kind en la timeline cuando hay más de N
+### ~~Colapsar chips de kind en la timeline cuando hay más de N~~ (resuelto 2026-07-04)
 
 - **Qué**: hoy cada commit de la timeline muestra todos los chips de kind tocado (`note`, `task`, `goal`, `image`, `book`, `file`, `list`, `track`, `tag`, `writing`). Cuando el commit toca 8-10 kinds los chips envuelven a dos líneas y desbalancean visualmente la fila.
-- **Por qué se difirió**: estético, no bloquea funcionalidad. La heurística "N chips + (+M más)" es trivial pero entra junto con un pulido más profundo del item de timeline.
-- **Target**: §19.16f (pulido del historial — sección a crear cuando arranque el pulido).
+- **Estado**: cerrado. `HistoryContainer.visibleKinds()`/`hiddenKindsCount()` cortan en `MAX_VISIBLE_KIND_CHIPS = 4`; el resto colapsa en un chip `+N más` (`.chip-more`).
 
 ### Toggle "ver sólo cambios" en diffs largos
 

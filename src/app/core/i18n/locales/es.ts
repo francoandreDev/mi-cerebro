@@ -241,6 +241,7 @@ export const es = {
   'versioning.history.anchored.empty': '(vacío)',
   'versioning.history.anchored.arrow': '→',
   'versioning.history.autoGroup.chip': '{n} autocommits',
+  'versioning.history.kinds.more': '+{n} más',
   'versioning.history.autoGroup.expand': 'Ver autocommits agrupados',
   'versioning.history.autoGroup.collapse': 'Plegar grupo',
   'versioning.history.bucket.today': 'Hoy',
@@ -1325,6 +1326,12 @@ export const es = {
   'settings.timezone.apply': 'Aplicar',
   'settings.timezone.invalid':
     'Zona horaria inválida. Usá formato Continent/City (ej. America/Lima).',
+  'settings.reindex.label': 'Índice de búsqueda',
+  'settings.reindex.hint':
+    'Reconstruye el índice de búsqueda leyendo todas las entidades desde disco. Útil si la paleta (Ctrl+K) no encuentra algo que debería existir.',
+  'settings.reindex.button': 'Reindexar',
+  'settings.reindex.button.busy': 'Reindexando…',
+  'settings.reindex.done': 'Índice reconstruido.',
   'settings.versioning.autocommit': 'Autocommit cada (minutos)',
   'settings.versioning.autocommit.apply': 'Aplicar',
   'settings.versioning.autocommit.hint':

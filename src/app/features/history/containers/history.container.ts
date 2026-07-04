@@ -85,6 +85,7 @@ const SS_KEY = {
 } as const;
 
 const FOSSIL_FOCUS_HALF_MS = 12 * 60 * 60 * 1000;
+const MAX_VISIBLE_KIND_CHIPS = 4;
 
 interface PersistedState {
   query: string;
@@ -887,6 +888,14 @@ export class HistoryContainer implements OnInit, OnDestroy {
 
   protected milestonesFor(oid: string): readonly MilestoneEntry[] {
     return this.milestonesByOid().get(oid) ?? [];
+  }
+
+  protected visibleKinds(kinds: readonly string[]): readonly string[] {
+    return kinds.slice(0, MAX_VISIBLE_KIND_CHIPS);
+  }
+
+  protected hiddenKindsCount(kinds: readonly string[]): number {
+    return Math.max(0, kinds.length - MAX_VISIBLE_KIND_CHIPS);
   }
 
   private readonly selectedOidSignal = signal<string | null>(null);
