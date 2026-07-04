@@ -1,0 +1,110 @@
+<div class="page">
+  <header class="header">
+    <h1>
+      <mc-icon name="tag" />
+      {{ t('tags.page.title') }}
+    </h1>
+    <input
+      type="text"
+      class="filter"
+      [value]="query()"
+      [placeholder]="t('tags.page.filterPlaceholder')"
+      [attr.aria-label]="t('tags.page.filterPlaceholder')"
+      (input)="onQueryInput($event)"
+    />
+  </header>
+
+  @if (isEmpty()) {
+    <p class="empty">{{ t('tags.empty') }}</p>
+  } @else if (noMatch()) {
+    <p class="empty">{{ t('tags.page.noMatch') }}</p>
+  } @else {
+    <ul class="rows">
+      @for (row of rows(); track row.tag.id) {
+        <li class="row" [class.busy]="busyId() === row.tag.id">
+          <button
+            type="button"
+            class="dot"
+            [mcBgColor]="tagColor(row.tag)"
+            [attr.aria-label]="t('tags.color.label')"
+            (click)="toggleRecolor(row.tag.id)"
+          ></button>
+
+          @if (renamingId() === row.tag.id) {
+            <input
+              #renameInput
+              type="text"
+              class="rename-input"
+              [value]="renameDraft()"
+              (input)="onRenameInput($event)"
+              (keydown.enter)="commitRename(row.tag.id)"
+              (keydown.escape)="cancelRename()"
+              (blur)="commitRename(row.tag.id)"
+            />
+          } @else {
+            <button type="button" class="label" (click)="startRename(row.tag)">
+              {{ row.tag.label }}
+            </button>
+          }
+
+          <span class="usage">{{ t('tags.page.usageCount', { count: row.usageCount }) }}</span>
+
+          <div class="actions">
+            <button type="button" class="action" (click)="toggleMerge(row.tag.id)">
+              {{ t('tags.page.merge') }}
+            </button>
+            <button
+              type="button"
+              class="action danger"
+              (click)="deleteTag(row.tag, row.usageCount)"
+            >
+              {{ t('tags.page.delete') }}
+            </button>
+          </div>
+
+          @if (recoloringId() === row.tag.id) {
+            <div class="palette" role="group" [attr.aria-label]="t('tags.color.label')">
+              <button
+                type="button"
+                class="swatch default"
+                [attr.aria-label]="t('tags.color.default')"
+                (click)="pickSwatch(row.tag.id, null)"
+              >
+                ✕
+              </button>
+              @for (sw of swatches; track sw.id) {
+                <button
+                  type="button"
+                  class="swatch"
+                  [mcBgColor]="swatchHex(sw.id)"
+                  [attr.aria-label]="sw.id"
+                  (click)="pickSwatch(row.tag.id, sw.id)"
+                ></button>
+              }
+            </div>
+          }
+
+          @if (mergingId() === row.tag.id) {
+            <div class="merge-menu" role="listbox" [attr.aria-label]="t('tags.page.mergeInto')">
+              @if (mergeTargets(row.tag.id).length === 0) {
+                <p class="merge-empty">{{ t('tags.page.mergeNoTargets') }}</p>
+              }
+              @for (target of mergeTargets(row.tag.id); track target.id) {
+                <button
+                  type="button"
+                  class="merge-target"
+                  role="option"
+                  aria-selected="false"
+                  (click)="mergeInto(row.tag.id, target.id)"
+                >
+                  <span class="dot" [mcBgColor]="tagColor(target)"></span>
+                  {{ target.label }}
+                </button>
+              }
+            </div>
+          }
+        </li>
+      }
+    </ul>
+  }
+</div>

@@ -68,6 +68,10 @@ export const routes: Routes = [
     loadChildren: () => import('./features/settings/settings.routes').then((m) => m.settingsRoutes),
   },
   {
+    path: 'tags',
+    loadChildren: () => import('./features/tags/tags.routes').then((m) => m.tagsRoutes),
+  },
+  {
     path: 'sync',
     loadChildren: () => import('./features/sync/sync.routes').then((m) => m.syncRoutes),
   },

@@ -39,17 +39,15 @@ Formato por entrada:
 
 ## Tags (origen: paso 7a)
 
-### UI dedicada de gestión de tags
+### ~~UI dedicada de gestión de tags~~ (resuelto 2026-07-04)
 
 - **Qué**: pantalla para listar todos los tags, renombrar masivo, hacer merge entre dos, ver cuántas entidades usa cada uno, eliminar limpiando referencias.
-- **Por qué**: hoy se crean en línea desde el picker y se quedan ahí. No hay vista global; renombrar requiere editar `tags.json` a mano.
-- **Target**: §19.16c (gestión avanzada de tags).
+- **Estado**: cerrado. Ruta `/tags` (`TagsContainer`) lista todas las etiquetas con conteo de uso, filtro por label, rename inline, recolor (reusa la paleta de swatches), merge ("Combinar con...") y delete con confirmación (muestra cuántas entidades la usan). La orquestación cross-kind vive en `core/tags/tags-admin.service.ts` (`TagsAdminService`), siguiendo el mismo patrón que `TrashService`/`FoldersService`/`calendar-events.service`: un agregador en `core/` inyecta los 8 servicios de entidad taggeable (notes/tasks/goals/lists/writings/books/images/files) para que ninguna feature tenga que importar a otra. `usageCounts` es un `computed` que recorre los `summaries()` ya cargados de cada kind (sin índice inverso persistido). `merge(fromId, toId)` reescribe el array `tags` de cada entidad afectada y remueve `fromId` del registro; `deleteCascade(id)` remueve el tag del registro primero y re-guarda las entidades afectadas — cada `*Service.save()` ya filtra tags ausentes del registro (`dropStaleTags`), así que no hizo falta un método nuevo por kind para el borrado. Rail icon 🏷 cerca de 🗑/⚙. 9/9 tests nuevos (`tags-admin.service.spec.ts`).
 
-### Color picker custom para tag
+### ~~Color picker custom para tag~~ (resuelto en §19.15, entrada obsoleta)
 
 - **Qué**: dejar al usuario elegir el color de un tag desde la UI.
-- **Por qué**: hoy el color se deriva determinísticamente del id (hash → paleta). Funciona, pero no es customizable.
-- **Target**: §19.15 (temas custom + WCAG).
+- **Estado**: esta entrada quedó desactualizada — el mini-picker inline en `mc-tag-picker` (click en el dot del chip abre la grilla de `TAG_SWATCHES`, "✕" vuelve al hash determinístico, persistido en `Tag.colorSwatchId` vía `TagsService.setSwatch`) ya se construyó al cerrar §19.15 (paso 15 del roadmap). La pantalla `/tags` (arriba) reutiliza el mismo patrón de swatches en cada fila. Se borra por regla §4.11.24 (doc desactualizada miente) en vez de dejarla como "pendiente".
 
 ---
 

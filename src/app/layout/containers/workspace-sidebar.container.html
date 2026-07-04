@@ -79,6 +79,16 @@
     </button>
     <button
       type="button"
+      class="rail-btn tags"
+      [class.active]="activeKey() === 'tags'"
+      [title]="t('tags.page.title')"
+      [attr.aria-label]="t('tags.page.title')"
+      (click)="goTo('tags')"
+    >
+      <mc-icon name="tag" />
+    </button>
+    <button
+      type="button"
       class="rail-btn trash"
       [class.active]="activeKey() === 'trash'"
       [title]="t('trash.title')"

@@ -532,6 +532,18 @@ export const es = {
   'tags.createPrefix': 'Crear',
   'tags.empty': 'Sin etiquetas.',
 
+  'tags.page.title': 'Etiquetas',
+  'tags.page.filterPlaceholder': 'Filtrar etiquetas...',
+  'tags.page.noMatch': 'Ninguna etiqueta coincide con el filtro.',
+  'tags.page.usageCount': '{count} usos',
+  'tags.page.merge': 'Combinar',
+  'tags.page.delete': 'Eliminar',
+  'tags.page.mergeInto': 'Combinar con...',
+  'tags.page.mergeNoTargets': 'No hay otra etiqueta para combinar.',
+  'tags.page.deleteConfirm': '¿Eliminar la etiqueta "{label}"? No se usa en ninguna entidad.',
+  'tags.page.deleteConfirmUsed':
+    '¿Eliminar la etiqueta "{label}"? Se quitará de {count} entidad(es) que la usan.',
+
   'palette.label': 'Búsqueda global',
   'palette.openButton': 'Abrir búsqueda global',
   'palette.placeholder': 'Buscar... (probá tag:trabajo)',

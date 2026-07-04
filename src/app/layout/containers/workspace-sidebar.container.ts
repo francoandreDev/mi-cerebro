@@ -71,7 +71,8 @@ type RailKey =
   | 'music'
   | 'history'
   | 'variants'
-  | 'settings';
+  | 'settings'
+  | 'tags';
 
 interface RailItem {
   readonly key: EntityKind;
@@ -250,6 +251,7 @@ export class WorkspaceSidebarContainer {
     if (url.startsWith('/history')) return 'history';
     if (url.startsWith('/variants')) return 'variants';
     if (url.startsWith('/settings')) return 'settings';
+    if (url.startsWith('/tags')) return 'tags';
     const match = /^\/(notes|tasks|goals|lists|writings|books|images|files)/.exec(url);
     if (!match) return null;
     return ROUTE_TO_KIND[match[1] as keyof typeof ROUTE_TO_KIND];
@@ -266,7 +268,8 @@ export class WorkspaceSidebarContainer {
       k === 'music' ||
       k === 'history' ||
       k === 'variants' ||
-      k === 'settings'
+      k === 'settings' ||
+      k === 'tags'
     ) {
       return null;
     }
@@ -284,6 +287,7 @@ export class WorkspaceSidebarContainer {
     if (k === 'history') return this.t('versioning.history.title');
     if (k === 'variants') return this.t('variants.page.title');
     if (k === 'settings') return this.t('settings.title');
+    if (k === 'tags') return this.t('tags.page.title');
     return this.t(`tree.type.${KIND_TO_TYPE[k]}` as TranslationKey);
   });
 
@@ -580,6 +584,10 @@ export class WorkspaceSidebarContainer {
       void this.router.navigate(['/settings']);
       return;
     }
+    if (key === 'tags') {
+      void this.router.navigate(['/tags']);
+      return;
+    }
     void this.router.navigate([KIND_TO_ROUTE[key]]);
     this.treeState.expandAll([`root:${key}`]);
   }
@@ -763,6 +771,7 @@ const PANE_HIDDEN_PREFIXES: readonly string[] = [
   '/lists',
   '/writings',
   '/sync',
+  '/tags',
 ];
 
 const ROUTE_TO_KIND = {
