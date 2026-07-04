@@ -60,11 +60,10 @@ Formato por entrada:
 - **Qué**: §10 menciona "botón reindexar para rebuild manual si se corrompe". Hoy el rebuild ocurre solo en cada `refresh()` (apertura del workspace o paneo); no hay UI explícita.
 - **Estado**: cerrado. Botón "Reindexar" en `/settings` → sección General, junto a zona horaria. Llama a `WorkspaceRefreshService.refreshAll()` (mismo método que usa el boot y el switch de variante), con estado busy/spinner y mensaje de confirmación.
 
-### Snippet centrado en la coincidencia (con highlight)
+### ~~Snippet centrado en la coincidencia (con highlight)~~ (resuelto 2026-07-04)
 
 - **Qué**: en lugar de mostrar los primeros 160 caracteres del body, mostrar un fragmento alrededor del término encontrado y resaltarlo.
-- **Por qué**: requiere índice posicional o un re-scan por hit. La paleta ya muestra preview, pero no contextualizado.
-- **Target**: §19.16d (pulido de búsqueda).
+- **Estado**: cerrado. `SearchIndexService` guarda el body aplanado completo por doc (`DocMeta.body`) en vez de un snippet pre-truncado; en `query()`, `buildSnippet()` re-escanea el texto normalizado buscando el término matcheado más temprano (de `r.terms`, ya que MiniSearch no expone offsets) y mapea el índice de vuelta al texto original (largo 1:1 preservado por `norm()`) para recortar una ventana de ±70 caracteres. `SearchHit.snippet` pasa de `string` a `{ pre, match, post }`; la paleta renderiza `pre` + `<mark>{{ match }}</mark>` + `post` sin `innerHTML`/sanitizer. Sin match (browse por tag, o recientes) cae al fallback de los primeros 160 caracteres, igual que antes. `SEARCH_INDEX_VERSION` bump a 2 (el índice persistido en IndexedDB se reconstruye solo si cambia el schema; el usuario puede forzarlo con el botón "Reindexar" ya cerrado arriba).
 
 ### ~~Historial de últimas búsquedas / accesos recientes~~ (resuelto en §19.16a-ii + §19.16a-iii)
 
@@ -84,19 +83,19 @@ Formato por entrada:
 
 - **Qué**: 13g-i introdujo `Comment.range?: { from, to }` (offsets relativos al contenido del bloque). El renderer los clampa a fin de bloque, pero no aplica `tr.mapping` cuando el texto del bloque se edita — los offsets persistidos quedan congelados al valor de creación. En la práctica funciona porque el usuario edita poco después de comentar y/o el clamp impide que la nube se renderice fuera del bloque; pero un comment sobre "las primeras 3 palabras" puede terminar subrayando algo distinto si se reescribe el inicio del bloque.
 - **Por qué**: el re-mapping requiere un plugin TipTap que aplique cada `tr.mapping` a los anchors persistidos en memoria y los flushee a disk vía `CommentsService` cuando el doc autosaveea. Suma complejidad de orphan-flag (range que se colapsa a `to <= from` debería invalidarse) y un spec dedicado de mapping. Diferido hasta tener uso real que lo justifique.
-- **Target**: §19.16e (pulido del editor).
+- **Target**: §19.16e-ii (pulido del editor).
 
 ### Anchor `range` multi-bloque (selección que cruza párrafos)
 
 - **Qué**: hoy `range` queda confinado al bloque donde está `$from`. Selecciones que cruzan dos o más bloques caen al anchor `block` del primero (sin range). Comentar a través de párrafos no se soporta.
 - **Por qué**: requiere un modelo de anchor distinto (lista de `{ blockId, from, to }` o un par `{ startBlockId, startOffset, endBlockId, endOffset }`), nuevo orphan handling (¿qué pasa si se borra el bloque del medio?), y renderer que dibuje la nube en el último bloque del span. El caso es minoritario.
-- **Target**: §19.16e (pulido del editor) o sin asignar.
+- **Target**: §19.16e-iii (pulido del editor).
 
 ### Widget render para diff-marks de tipo "insertion-only"
 
 - **Qué**: los diff-marks que insertan bloques enteros sin anchor en `main` (caso raro: marks heredados pre-rediseño, o resultantes de un merge entre variantes) no tienen punto de inserción inline natural. El renderizado base con decoraciones ProseMirror cubre todos los marks anclados a un punto/rango en `main`; los insertion-only sin anchor quedan listados en el popover de pendientes hasta que se acepten/rechacen.
 - **Por qué**: pintarlos requeriría un mini-renderer JSON→DOM consistente con el theme del editor para un widget fantasma dentro del ProseMirror. Caso minoritario; el popover ya los expone.
-- **Target**: §19.16e (pulido del editor) o sin asignar.
+- **Target**: §19.16e-iv (pulido del editor).
 
 ### Granularidad por faceta dentro del bundle de merge
 
