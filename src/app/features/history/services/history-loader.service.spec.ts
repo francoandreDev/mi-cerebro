@@ -11,7 +11,7 @@ import { PRINCIPAL_VARIANT_ID, type Variant } from '@core/versioning/variants.ty
 import { VariantsService } from '@core/versioning/variants.service';
 import { VersioningService } from '@core/versioning/versioning.service';
 
-import { HistoryLoader } from './history-loader.service';
+import { HistoryLoader, type WindowResolution } from './history-loader.service';
 
 interface Summary {
   readonly oid: string;
@@ -136,7 +136,11 @@ describe('HistoryLoader', () => {
     });
 
     it('detail resolution throws — per-oid diff is HistoryDiffService', async () => {
-      await expect(loader.loadWindow({ resolution: 'detail' })).rejects.toThrow(/detail/);
+      // why: 'detail' is excluded from WindowResolution at compile time; this simulates
+      // an untyped caller (e.g. a template binding) passing it through at runtime.
+      await expect(
+        loader.loadWindow({ resolution: 'detail' as unknown as WindowResolution }),
+      ).rejects.toThrow(/MCB-VER-028/);
     });
   });
 

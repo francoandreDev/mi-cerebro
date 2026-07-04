@@ -362,6 +362,14 @@ Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `P
 - **Cómo resolver:** sincronizar primero (pull/fetch desde settings), reintentar la compactación al día siguiente. Si el conflicto es persistente, considerar desactivar el toggle hasta resolverlo manualmente con un cliente git externo.
 - **Recuperable:** sí — la historia local quedó compactada (es válida y consistente); sólo no se sincronizó. El próximo intento de push reintenta tras pull.
 
+### MCB-VER-028 — Resolución no soportada
+
+- **Severidad:** error
+- **Cuándo:** un caller de `HistoryLoader.loadWindow` pidió resolución `'detail'`, que sólo existe como caso de tipo (`Resolution`) para que `HistoryDiffService` lo excluya de `WindowResolution` — nunca debería llegar en runtime a `loadWindow`.
+- **Causa típica:** bug interno (un caller sin tipar, o un cast forzado) que se saltea el tipo `WindowResolution`. No es un error que el usuario pueda provocar desde la UI.
+- **Cómo resolver:** revisar el caller y usar `HistoryDiffService` para el detalle por commit en vez de `loadWindow`.
+- **Recuperable:** no aplica — es un invariante interno, no una operación reintentable por el usuario.
+
 ### MCB-NET-001 — Remoto no configurado o configuración inválida
 
 - **Severidad:** error

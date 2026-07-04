@@ -181,6 +181,10 @@ export const es = {
   'errors.ver.027.message':
     'El remoto avanzó por otro lado desde la última sincronización. Sincronizá primero (pull/fetch) y reintentá; mientras tanto la compactación queda en pausa para no pisar trabajo ajeno.',
 
+  'errors.ver.028.title': 'Resolución no soportada',
+  'errors.ver.028.message':
+    'Se pidió la vista completa de un commit ("detail") a través del cargador de ventana, que sólo sirve para panorámica y estratos. El detalle por commit se resuelve con HistoryDiffService — esto es un error interno, no algo que el usuario deba resolver.',
+
   'errors.ver.003.title': 'No se pudo restaurar',
   'errors.ver.003.message':
     'No pude reescribir esta entidad con la versión seleccionada. Tu disco quedó como estaba; podés reintentar.',

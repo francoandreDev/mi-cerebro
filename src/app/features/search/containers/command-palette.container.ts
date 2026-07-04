@@ -71,7 +71,7 @@ export class CommandPaletteContainer {
       id: r.id,
       kind: r.kind,
       title: r.title || this.searchIndex.getTitle(r.id) || '',
-      snippet: '',
+      snippet: { pre: '', match: '', post: '' },
     }));
   });
 

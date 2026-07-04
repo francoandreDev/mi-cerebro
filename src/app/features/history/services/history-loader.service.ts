@@ -9,6 +9,8 @@
 
 import { Injectable, inject, signal } from '@angular/core';
 
+import { AppError } from '@core/errors/app-error';
+import { ERROR_CODES } from '@core/errors/error.codes';
 import { MilestoneService } from '@core/versioning/milestone.service';
 import { stripHeadsPrefix } from '@core/versioning/variants.io';
 import { PRINCIPAL_VARIANT_ID, type Variant } from '@core/versioning/variants.types';
@@ -72,6 +74,7 @@ export class HistoryLoader {
   }
 
   async loadWindow(opts: LoadWindowOptions): Promise<LoadWindowResult> {
+    this.assertWindowResolution(opts.resolution);
     const refs = opts.refs ?? this.activeRefs();
     const depth =
       opts.depth ??
@@ -95,6 +98,15 @@ export class HistoryLoader {
     }
     const aggregate = opts.resolution === 'aggregate' ? aggregateByDay(commits) : [];
     return { resolution: opts.resolution, commits, aggregate };
+  }
+
+  // why: 'detail' is excluded from WindowResolution at the type level (detail is
+  //      per-oid, handled by HistoryDiffService); this guards the boundary against
+  //      an untyped/cast caller reaching loadWindow with it anyway.
+  private assertWindowResolution(resolution: Resolution): asserts resolution is WindowResolution {
+    if (resolution === 'detail') {
+      throw new AppError(ERROR_CODES.VER_028, { severity: 'error', recoverable: false });
+    }
   }
 
   async loadMilestones(): Promise<readonly MilestoneEntry[]> {

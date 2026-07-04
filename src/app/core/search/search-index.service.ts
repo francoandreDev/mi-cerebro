@@ -10,12 +10,13 @@ import {
   type SearchDoc,
   type SearchHit,
   type SearchQuery,
+  type SearchSnippet,
 } from './search.types';
 
 interface DocMeta {
   readonly kind: string;
   readonly title: string;
-  readonly snippet: string;
+  readonly body: string;
   readonly tagIds: readonly string[];
 }
 
@@ -38,12 +39,43 @@ const OPTIONS: MiniSearchOptions = {
 };
 
 const SNIPPET_LIMIT = 160;
+const SNIPPET_WINDOW_RADIUS = 70;
 
 const norm = (s: string): string => s.normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase();
 
-const toSnippet = (body: string): string => {
-  const flat = body.replace(/\s+/g, ' ').trim();
-  return flat.length > SNIPPET_LIMIT ? `${flat.slice(0, SNIPPET_LIMIT - 1)}…` : flat;
+const flatten = (body: string): string => body.replace(/\s+/g, ' ').trim();
+
+const fallbackSnippet = (flat: string): SearchSnippet => ({
+  pre: '',
+  match: '',
+  post: flat.length > SNIPPET_LIMIT ? `${flat.slice(0, SNIPPET_LIMIT - 1)}…` : flat,
+});
+
+// why: MiniSearch has no positional index (pure inverted index), so the match offset
+// is found by re-scanning the normalized flat body for the earliest matched term and
+// mapping that offset back onto the original (non-normalized) text for display.
+const buildSnippet = (flat: string, matchedTerms: readonly string[]): SearchSnippet => {
+  if (matchedTerms.length === 0) return fallbackSnippet(flat);
+  const normFlat = norm(flat);
+  let bestIndex = -1;
+  let bestLength = 0;
+  for (const term of matchedTerms) {
+    const index = normFlat.indexOf(term);
+    if (index === -1) continue;
+    if (bestIndex === -1 || index < bestIndex) {
+      bestIndex = index;
+      bestLength = term.length;
+    }
+  }
+  if (bestIndex === -1) return fallbackSnippet(flat);
+
+  const start = Math.max(0, bestIndex - SNIPPET_WINDOW_RADIUS);
+  const end = Math.min(flat.length, bestIndex + bestLength + SNIPPET_WINDOW_RADIUS);
+  return {
+    pre: (start > 0 ? '…' : '') + flat.slice(start, bestIndex),
+    match: flat.slice(bestIndex, bestIndex + bestLength),
+    post: flat.slice(bestIndex + bestLength, end) + (end < flat.length ? '…' : ''),
+  };
 };
 
 @Injectable({ providedIn: 'root' })
@@ -126,7 +158,7 @@ export class SearchIndexService {
         id,
         kind: meta.kind,
         title: meta.title,
-        snippet: meta.snippet,
+        snippet: buildSnippet(meta.body, r.terms),
         score: typeof r['score'] === 'number' ? r['score'] : 0,
         tagIds: meta.tagIds,
       });
@@ -144,7 +176,7 @@ export class SearchIndexService {
         id,
         kind: meta.kind,
         title: meta.title,
-        snippet: meta.snippet,
+        snippet: fallbackSnippet(meta.body),
         score: 0,
         tagIds: meta.tagIds,
       });
@@ -158,7 +190,7 @@ export class SearchIndexService {
     this.metaById.set(doc.id, {
       kind: doc.kind,
       title: doc.title,
-      snippet: toSnippet(doc.body),
+      body: flatten(doc.body),
       tagIds: doc.tagIds,
     });
   }

@@ -11,11 +11,17 @@ export interface SearchDoc {
   readonly tagIds: readonly string[];
 }
 
+export interface SearchSnippet {
+  readonly pre: string;
+  readonly match: string;
+  readonly post: string;
+}
+
 export interface SearchHit {
   readonly id: string;
   readonly kind: EntityKind;
   readonly title: string;
-  readonly snippet: string;
+  readonly snippet: SearchSnippet;
   readonly score: number;
   readonly tagIds: readonly string[];
 }
@@ -27,5 +33,5 @@ export interface SearchQuery {
   readonly limit?: number;
 }
 
-export const SEARCH_INDEX_VERSION = 1;
+export const SEARCH_INDEX_VERSION = 2;
 export const SEARCH_INDEX_KEY = 'mc-index';

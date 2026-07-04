@@ -99,8 +99,14 @@
             >
               <div class="kind">{{ t(kindKey(h.kind)) }}</div>
               <div class="title">{{ h.title || t('notes.untitledTitle') }}</div>
-              @if (h.snippet) {
-                <div class="snippet">{{ h.snippet }}</div>
+              @if (h.snippet.pre || h.snippet.match || h.snippet.post) {
+                <div class="snippet">
+                  {{ h.snippet.pre }}
+                  @if (h.snippet.match) {
+                    <mark>{{ h.snippet.match }}</mark>
+                  }
+                  {{ h.snippet.post }}
+                </div>
               }
             </li>
           }

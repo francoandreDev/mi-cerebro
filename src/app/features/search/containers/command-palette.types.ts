@@ -1,5 +1,5 @@
 import type { TranslationKey } from '@core/i18n/i18n.types';
-import type { EntityKind } from '@core/search/search.types';
+import type { EntityKind, SearchSnippet } from '@core/search/search.types';
 
 export const KIND_TITLE_KEY: Readonly<Record<string, TranslationKey>> = {
   note: 'notes.title',
@@ -18,7 +18,7 @@ export interface EntityItem {
   readonly id: string;
   readonly kind: EntityKind;
   readonly title: string;
-  readonly snippet: string;
+  readonly snippet: SearchSnippet;
 }
 
 export interface QueryItem {

@@ -91,7 +91,27 @@ describe('SearchIndexService', () => {
     await svc.rebuild([doc('a', 'Receta', 'Mezclar harina y agua hasta formar masa')]);
     const hit = svc.query({ text: 'masa' })[0];
     expect(hit?.title).toBe('Receta');
-    expect(hit?.snippet).toContain('Mezclar');
+    const snippet = hit?.snippet;
+    expect((snippet?.pre ?? '') + (snippet?.match ?? '') + (snippet?.post ?? '')).toContain(
+      'Mezclar',
+    );
+  });
+
+  it('centers the snippet on the match and highlights it', async () => {
+    const filler = 'palabra '.repeat(40).trim();
+    await svc.rebuild([doc('a', 'Doc', `${filler} objetivo ${filler}`)]);
+    const hit = svc.query({ text: 'objetivo' })[0];
+    expect(hit?.snippet.match).toBe('objetivo');
+    expect(hit?.snippet.pre.startsWith('…')).toBe(true);
+    expect(hit?.snippet.post.endsWith('…')).toBe(true);
+    expect(hit?.snippet.pre.length).toBeLessThan(filler.length);
+  });
+
+  it('falls back to a plain leading snippet when there is no query text', async () => {
+    await svc.rebuild([doc('a', 'Doc', 'contenido sin busqueda activa')]);
+    const hit = svc.query({ text: '' })[0];
+    expect(hit?.snippet.match).toBe('');
+    expect(hit?.snippet.post).toContain('contenido sin busqueda activa');
   });
 
   it('produces accent-insensitive matches', async () => {
