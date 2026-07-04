@@ -71,4 +71,9 @@ export const routes: Routes = [
     path: 'sync',
     loadChildren: () => import('./features/sync/sync.routes').then((m) => m.syncRoutes),
   },
+  {
+    // why: internal QA-only page, not linked from the rail/nav.
+    path: 'dev',
+    loadChildren: () => import('./features/dev/dev.routes').then((m) => m.devRoutes),
+  },
 ];

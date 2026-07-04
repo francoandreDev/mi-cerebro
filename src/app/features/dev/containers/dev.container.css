@@ -1,0 +1,62 @@
+:host {
+  display: block;
+  padding: var(--mc-space-4);
+}
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-5);
+  max-width: 700px;
+}
+.head h2 {
+  margin: 0;
+  font-size: var(--mc-font-size-xl);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+}
+.title-icon {
+  color: var(--mc-accent-primary);
+}
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-3);
+  padding: var(--mc-space-3) var(--mc-space-4);
+  background: var(--mc-bg-elevated);
+  border: 1px solid var(--mc-border-default);
+  border-radius: var(--mc-radius-md);
+}
+.group h3 {
+  margin: 0;
+  font-size: var(--mc-font-size-md);
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-1);
+  align-items: flex-start;
+}
+.field .label {
+  font-size: var(--mc-font-size-sm);
+  color: var(--mc-fg-muted);
+}
+.field .hint {
+  font-size: var(--mc-font-size-xs, 0.75rem);
+  color: var(--mc-fg-muted);
+}
+.primary[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.primary {
+  background: var(--mc-accent-primary);
+  color: var(--mc-bg-base);
+  border: none;
+  padding: var(--mc-space-1) var(--mc-space-3);
+  border-radius: var(--mc-radius-md);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}

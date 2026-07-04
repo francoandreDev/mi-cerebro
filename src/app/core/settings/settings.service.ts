@@ -125,6 +125,15 @@ export class SettingsService {
     }));
   }
 
+  setCompactionThresholdCommits(commits: number): void {
+    if (!Number.isFinite(commits)) return;
+    const clamped = Math.max(50, Math.min(10_000, Math.round(commits)));
+    this.update((s) => ({
+      ...s,
+      versioning: { ...s.versioning, compactionThresholdCommits: clamped },
+    }));
+  }
+
   private update(fn: (current: Settings) => Settings): void {
     this.stateSignal.update(fn);
     this.persistToLocalStorage();

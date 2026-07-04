@@ -449,3 +449,11 @@ Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `P
 - **Causa típica:** botón disparado durante el bootstrap o tras un reset de workspace.
 - **Cómo resolver:** ir a `/onboarding`, seleccionar la carpeta y autorizar; luego volver a `/settings` y reintentar.
 - **Recuperable:** sí.
+
+### MCB-MUS-001 — Visualización de audio no disponible
+
+- **Severidad:** warning
+- **Cuándo:** `AudioGraph.ensure()` (`core/music/audio-graph.ts`) no puede crear el `AudioContext` (navegador sin soporte) o su construcción/conexión tira una excepción.
+- **Causa típica:** navegador sin WebAudio (raro) o restricción del entorno (ej. permisos de audio, contexto sin gesto del usuario en algún flujo atípico).
+- **Cómo resolver:** no bloquea la reproducción — el `<audio>` sigue sonando por su path por defecto. Sólo se pierde el analyser que alimentará la superficie resonante (Fase 8 del redesign de música). Si el navegador lo soporta, recargar la página suele bastar.
+- **Recuperable:** sí — es un toast informativo, no bloquea nada.

@@ -119,6 +119,7 @@ export class SettingsContainer {
   protected readonly error = signal(false);
   protected readonly dormantDraft = signal(0);
   protected readonly autocommitDraft = signal(0);
+  protected readonly compactionThresholdDraft = signal(0);
   protected readonly leadPresets = LEAD_PRESETS;
   protected readonly currentLead = computed(() => this.state().reminders.leadMinutes);
 
@@ -136,6 +137,9 @@ export class SettingsContainer {
     effect(() => this.draft.set(this.state().timezone));
     effect(() => this.dormantDraft.set(this.state().variants.dormantThresholdDays));
     effect(() => this.autocommitDraft.set(this.state().versioning.autocommitMinutes));
+    effect(() =>
+      this.compactionThresholdDraft.set(this.state().versioning.compactionThresholdCommits),
+    );
   }
 
   protected selectLeadPreset(minutes: number): void {
@@ -156,6 +160,19 @@ export class SettingsContainer {
     event?.preventDefault();
     if (this.autocommitDraft() === this.state().versioning.autocommitMinutes) return;
     this.settings.setAutocommitMinutes(this.autocommitDraft());
+  }
+
+  protected onCompactionThresholdInput(event: Event): void {
+    const v = parseInt((event.target as HTMLInputElement).value, 10);
+    if (!isNaN(v)) this.compactionThresholdDraft.set(v);
+  }
+
+  protected applyCompactionThreshold(event?: Event): void {
+    event?.preventDefault();
+    if (this.compactionThresholdDraft() === this.state().versioning.compactionThresholdCommits) {
+      return;
+    }
+    this.settings.setCompactionThresholdCommits(this.compactionThresholdDraft());
   }
 
   protected onDormantInput(event: Event): void {

@@ -157,17 +157,15 @@ Formato por entrada:
 - **Por qué se difirió**: los tres índices (main, comments, draft) convergen sobre la misma pieza de infraestructura (walk per-faceta + cache por familia en IndexedDB). Diseñarlos juntos evita reinventar el priming tres veces y permite decidir si los tres comparten un `idx-<family>-bundle` o quedan separados. Sin métricas reales de tamaño/latencia, mejor uno solo bien hecho.
 - **Target**: §19.16d (pulido de búsqueda) — junto con los índices de `main` y `comments`.
 
-### Umbral de compactación configurable en settings
+### ~~Umbral de compactación configurable en settings~~ (resuelto 2026-07-04)
 
-- **Qué**: §12 "Compactación del historial" fija el umbral de disparo en 500 commits por rama. Una versión avanzada lo expone en settings junto al toggle "Compactar aunque haya remoto" y al toggle de habilitar/deshabilitar la compactación.
-- **Por qué se difirió**: sin uso real no sabemos qué umbral tiene sentido por defecto, ni si el usuario quiere tocarlo. Exponerlo demasiado temprano contamina la UI de settings con knobs que nadie va a usar. 500 es un número conservador (≈3 meses de uso intenso) que se puede cambiar en código si la realidad lo pide.
-- **Target**: §19.16f (pulido del historial) o sin asignar.
+- **Qué**: §12 "Compactación del historial" fijaba el umbral de disparo en 500 commits por rama sin exponerlo en settings.
+- **Estado**: cerrado. `Settings.versioning.compactionThresholdCommits` (default 500, clamp 50–10000) en `settings.types.ts`/`settings.service.ts`; `CompactionSchedulerService.threshold` pasó a computed leyendo ese valor. Campo numérico con draft/apply en `/settings` → Versionado, junto al de autocommit.
 
-### Dev panel para la compactación
+### ~~Dev panel para la compactación~~ (resuelto 2026-07-04)
 
-- **Qué**: una pantalla `/dev` (o similar) que exponga `CompactionSchedulerService.runOnce({ ignoreThreshold })` como botón para QA, junto a los otros toggles de dev-perf (`DevPerfService`, `dev-variants-switch-tests`). Hoy esos servicios existen sólo como herramientas internas sin UI consumidora.
-- **Por qué se difirió**: la API `runOnce()` ya está cableada (sesión 4 de §12) y desde la consola del navegador alcanza para QA. Construir el `/dev` feature entero —con todas las herramientas dev-perf, no sólo compactación— es un trabajo aparte que no aporta a una persona usuaria final.
-- **Target**: sin asignar.
+- **Qué**: una pantalla `/dev` que exponga `CompactionSchedulerService.runOnce({ ignoreThreshold })` como botón para QA, en vez de depender de la consola del navegador.
+- **Estado**: cerrado. Ruta `/dev` (no linkeada desde el rail) con `DevContainer` — muestra rama más pesada vista + umbral actual y un botón "Compactar ahora" con estado busy/done. Los demás toggles de dev-perf (`DevPerfService`, `dev-variants-switch-tests`) siguen sin UI propia; se suman a este panel si aparece necesidad real.
 
 ### Compactación manual sobre rango específico
 
@@ -269,11 +267,10 @@ Formato por entrada:
 
 ## Música — WebAudio (origen: redesign-music-v2 Fase 5)
 
-### Error code `MCB-MUS-001` para AudioContext no disponible
+### ~~Error code `MCB-MUS-001` para AudioContext no disponible~~ (resuelto 2026-07-04)
 
-- **Qué**: el `AudioGraph` (`core/music/audio-graph.ts`) cae a `failed = true` y deja el analyser en `null` si `AudioContext` no está definido o si su construcción tira. Hoy sólo se loguea a consola; no hay código de error catalogado ni feedback al usuario.
-- **Por qué se difirió**: Fase 5 todavía no monta UI que use el analyser. La música igual reproduce por el path por defecto del `<audio>`; el único "síntoma" sería que la futura superficie resonante (Fase 8) renderice su estado vacío. Surfacing como `MCB-MUS-001` con banner contextual sólo tiene sentido cuando esa UI exista y pueda mostrar feedback útil.
-- **Target**: Fase 8 (`resonant-surface.component`) del redesign-music-v2.
+- **Qué**: el `AudioGraph` (`core/music/audio-graph.ts`) caía a `failed = true` y dejaba el analyser en `null` si `AudioContext` no estaba definido o si su construcción tiraba, sin código de error catalogado ni feedback al usuario.
+- **Estado**: cerrado. `AudioGraph` acepta un callback `onFailed` invocado en ambos paths de fallo; `PlayerService` lo conecta a `ErrorService.report(new AppError(ERROR_CODES.MUS_001, ...))`. Código `MCB-MUS-001` catalogado en `error.codes.ts` + `docs/errors.md`. El toast genérico de `ErrorService` cubre el feedback — no hizo falta un banner dedicado; la superficie resonante (Fase 8) sigue pendiente y puede sumar su propio estado visual más adelante.
 - **Origen**: redesign-music-v2 Fase 5.
 
 ---
@@ -379,10 +376,11 @@ Formato por entrada:
 
 ## Recordatorios — Mejoras UI (origen: rediseño 2026-06-19)
 
-### Snooze 1d / Duplicar / menú de acciones extendido
+### Snooze próximo lunes / fin de semana / menú overflow `⋯`
 
-- **Qué**: además de "Posponer 1 h" agregar 1 día, próximo lunes, fin de semana; acción "Duplicar"; menú overflow `⋯` que agrupe todo en lugar de chips sueltos al hover.
-- **Por qué se difirió**: el rediseño priorizó layout 2-cols + buckets + quick-add + undo. Snooze 1h y borrar cubren ~80% del flujo diario. Sumar más acciones implica decidir si menú overflow o chips persistentes — punto de UX que conviene observar primero en uso.
+- **Qué**: presets adicionales de posponer (próximo lunes, fin de semana) y un menú overflow `⋯` que agrupe las acciones del footer de detalle en lugar de chips sueltos.
+- **Estado parcial (resuelto 2026-07-04)**: "Posponer 1 día" y "Duplicar" ya están — botones planos en el footer de `/reminders`, junto a "Posponer 1 h". Quedan pendientes los presets de lunes/fin-de-semana y el agrupamiento en menú overflow.
+- **Por qué se difirió lo pendiente**: los presets de día-de-semana necesitan resolver ambigüedad de UX (¿"próximo lunes" cuenta hoy si es lunes?) y el menú overflow es un patrón nuevo (no existe overflow menu en ningún otro footer de detalle de la app todavía) — con 4 botones planos la fila no se satura aún.
 - **Target**: sin asignar.
 
 ### Atajos de navegación de fila (J/K, Space, E, Del)
@@ -391,11 +389,10 @@ Formato por entrada:
 - **Por qué se difirió**: hoy la lista no tiene concepto de "fila enfocada" (no hay roving tabindex ni signal de cursor). Implementarlo bien implica patrón reutilizable (`listbox` ARIA + cursor signal) que conviene resolver una sola vez para reminders/tasks/goals juntos. Por ahora solo `N` (nuevo) y `/` (buscar) están registrados.
 - **Target**: cuando se aborde patrón compartido de listas navegables.
 
-### Badge de vencidas en el rail global
+### ~~Badge de vencidas en el rail global~~ (resuelto 2026-07-04)
 
 - **Qué**: pintar un badge numérico junto al ícono de Reminders en el sidebar con la cantidad de vencidas.
-- **Por qué se difirió**: requiere exponer un signal global de "overdue count" desde `RemindersService` y agregar slot de badge en el rail (que hoy no tiene). Cambio cruza capa de layout — fuera de scope del rediseño de la página en sí.
-- **Target**: sin asignar.
+- **Estado**: cerrado. `RemindersService.overdueCount` (computed sobre `summaries()` + `bucketOf`) inyectado en `WorkspaceSidebarContainer`; badge rojo `.rail-badge` sobre `.rail-btn.reminders`, sólo visible cuando el conteo es > 0.
 
 ## Archivos (origen: rediseño /files — tablero de evidencia)
 

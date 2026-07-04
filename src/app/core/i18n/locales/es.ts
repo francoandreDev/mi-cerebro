@@ -1270,6 +1270,8 @@ export const es = {
   'reminders.deletedToast': 'Borrado: "{title}"',
   'reminders.undo': 'Deshacer',
   'reminders.snooze1h': 'Posponer 1 h',
+  'reminders.snooze1d': 'Posponer 1 día',
+  'reminders.duplicate': 'Duplicar',
   'reminders.filter.section': 'Filtros',
   'reminders.filter.all': 'Todas',
   'reminders.bucket.overdue': 'Vencidas',
@@ -1338,6 +1340,10 @@ export const es = {
     'Cada N minutos, si hubo cambios, se hace un commit automático. Mínimo 1, máximo 180.',
   'settings.versioning.push': 'Push tras autocommit',
   'settings.versioning.push.configure': 'Configurar en /sync',
+  'settings.versioning.compactionThreshold': 'Compactar historial a partir de (commits)',
+  'settings.versioning.compactionThreshold.apply': 'Aplicar',
+  'settings.versioning.compactionThreshold.hint':
+    'Cuando una rama supera este número de commits, la compactación en segundo plano la agrupa en snapshots. Mínimo 50, máximo 10000. Por defecto 500.',
   'settings.variants.dormant': 'Variantes a reposo tras (días)',
   'settings.goals.dormant': 'Objetivos a reposo tras (días)',
   'settings.reminders.lead.label': 'Empezar a avisarme',
@@ -1548,6 +1554,9 @@ export const es = {
   'errors.exp.003.title': 'Workspace no disponible',
   'errors.exp.003.message':
     'No hay un workspace abierto. Volvé a autorizar la carpeta y reintentá.',
+  'errors.mus.001.title': 'Visualización de audio no disponible',
+  'errors.mus.001.message':
+    'Este navegador no soporta o no pudo inicializar WebAudio. La música sigue reproduciéndose normalmente; sólo la visualización (forma de onda) queda desactivada.',
 
   'settings.export.section.title': 'Exportar workspace',
   'settings.export.hint':
@@ -1905,6 +1914,17 @@ export const es = {
   'home.entity.shortcuts.step.1': 'Apretás "?" en cualquier pantalla — abre el diálogo de ayuda.',
   'home.entity.shortcuts.step.2': 'Ves todos los combos registrados con su descripción.',
   'home.entity.shortcuts.step.3': 'Cerrás con Escape y volvés a lo tuyo.',
+
+  'dev.title': 'Panel de desarrollo',
+  'dev.compaction.title': 'Compactación del historial',
+  'dev.compaction.label': 'Forzar una pasada ahora',
+  'dev.compaction.hint':
+    'Corre CompactionSchedulerService.runOnce({ ignoreThreshold: true }) sobre todas las ramas del workspace, ignorando el umbral configurado. Las demás barreras (in-flight, divergencia remota, remote-gated) siguen aplicando.',
+  'dev.compaction.status':
+    'Rama más pesada vista hasta ahora: {count} commits · umbral actual: {threshold}',
+  'dev.compaction.button': 'Compactar ahora',
+  'dev.compaction.button.busy': 'Compactando…',
+  'dev.compaction.done': 'Pasada terminada.',
 } as const;
 
 export type EsDictionary = typeof es;

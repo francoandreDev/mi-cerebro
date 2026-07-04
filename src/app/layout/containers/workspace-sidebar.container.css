@@ -47,6 +47,7 @@
   outline-offset: 1px;
 }
 .rail-btn {
+  position: relative;
   width: 42px;
   height: 42px;
   display: grid;
@@ -57,6 +58,22 @@
   color: var(--mc-fg-muted);
   cursor: pointer;
   font-size: 1.15rem;
+}
+.rail-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  display: grid;
+  place-items: center;
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1;
+  border-radius: var(--mc-radius-pill);
+  background: var(--mc-danger, #c8553d);
+  color: #fff;
 }
 .rail-btn:hover {
   background: var(--mc-bg-surface);

@@ -35,6 +35,7 @@ import { ListsService } from '@features/lists/services/lists.service';
 import { NotesService } from '@features/notes/services/notes.service';
 import { MusicLibraryService } from '@features/music/services/music-library.service';
 import { PlaylistsService } from '@features/music/services/playlists.service';
+import { RemindersService } from '@features/reminders/services/reminders.service';
 import { TasksService } from '@features/tasks/services/tasks.service';
 import { WritingsService } from '@features/writings/services/writings.service';
 import { AutocommitStatusComponent } from '@layout/components/autocommit-status.component';
@@ -105,6 +106,7 @@ export class WorkspaceSidebarContainer {
   private readonly filesService = inject(FilesService);
   private readonly musicLibrary = inject(MusicLibraryService);
   private readonly playlistsService = inject(PlaylistsService);
+  private readonly remindersService = inject(RemindersService);
   private readonly foldersService = inject(FoldersService);
   private readonly tagsService = inject(TagsService);
   private readonly variantsService = inject(VariantsService);
@@ -235,6 +237,8 @@ export class WorkspaceSidebarContainer {
     { key: 'image', label: this.t('tree.type.images'), icon: 'image' },
     { key: 'file', label: this.t('tree.type.files'), icon: 'paperclip' },
   ]);
+
+  protected readonly remindersOverdueCount = this.remindersService.overdueCount;
 
   protected readonly activeKey = computed<RailKey | null>(() => {
     const url = this.currentUrl();

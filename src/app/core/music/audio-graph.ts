@@ -12,7 +12,12 @@ export class AudioGraph {
   private readonly analyserSignal = signal<AnalyserNode | null>(null);
   readonly analyser: Signal<AnalyserNode | null> = this.analyserSignal.asReadonly();
 
-  constructor(private readonly audio: HTMLAudioElement) {}
+  constructor(
+    private readonly audio: HTMLAudioElement,
+    // why: reported once via ErrorService (MCB-MUS-001) so the failure
+    // is catalogued instead of only living in the console.
+    private readonly onFailed?: (cause: unknown) => void,
+  ) {}
 
   async ensure(): Promise<void> {
     if (this.failed) return;
@@ -23,6 +28,7 @@ export class AudioGraph {
           // why: the analyser stays null; resonant-surface (Fase 8) will
           // render its "no audio data" state honestly. No UI lie.
           console.warn('[audio-graph] AudioContext not available in this browser');
+          this.onFailed?.(new Error('AudioContext not available in this browser'));
           return;
         }
         const ctx = new AudioContext();
@@ -41,6 +47,7 @@ export class AudioGraph {
     } catch (cause) {
       this.failed = true;
       console.warn('[audio-graph] failed to initialize WebAudio graph', cause);
+      this.onFailed?.(cause);
     }
   }
 }

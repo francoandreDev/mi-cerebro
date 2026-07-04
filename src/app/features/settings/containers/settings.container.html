@@ -214,6 +214,31 @@
             }}</strong>
             · <a routerLink="/sync">{{ t('settings.versioning.push.configure') }} →</a>
           </p>
+
+          <label class="field">
+            <span class="label">{{ t('settings.versioning.compactionThreshold') }}</span>
+            <span class="row">
+              <input
+                type="number"
+                min="50"
+                max="10000"
+                [value]="compactionThresholdDraft()"
+                (input)="onCompactionThresholdInput($event)"
+                (keydown.enter)="applyCompactionThreshold($event)"
+              />
+              <button
+                type="button"
+                class="primary"
+                [disabled]="
+                  compactionThresholdDraft() === state().versioning.compactionThresholdCommits
+                "
+                (click)="applyCompactionThreshold()"
+              >
+                {{ t('settings.versioning.compactionThreshold.apply') }}
+              </button>
+            </span>
+            <span class="hint">{{ t('settings.versioning.compactionThreshold.hint') }}</span>
+          </label>
         </section>
       }
 

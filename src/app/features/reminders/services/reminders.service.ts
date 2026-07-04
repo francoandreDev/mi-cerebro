@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
@@ -17,6 +17,7 @@ import {
   type ReminderSourceKind,
   type ReminderSummary,
 } from '../models/reminder.types';
+import { bucketOf } from '../utils/buckets';
 import { reminderCadenceMigrationStep } from './reminder-cadence.migration';
 import { reminderRecurrenceMigrationStep } from './reminder-recurrence.migration';
 import { reminderSourceMigrationStep } from './reminder-source.migration';
@@ -33,6 +34,12 @@ export class RemindersService {
   private readonly idToFile = new Map<string, string>();
   private readonly summariesSignal = signal<readonly ReminderSummary[]>([]);
   readonly summaries = this.summariesSignal.asReadonly();
+
+  // why: drives the overdue badge on the rail — a plain count so the
+  //      sidebar doesn't need to know about buckets or dates.
+  readonly overdueCount = computed(
+    () => this.summaries().filter((r) => bucketOf(r) === 'overdue').length,
+  );
 
   // why: the FileSystemFileHandle API locks while a writable is open, so
   //      concurrent saves to the same file from cadence-sync, goal-sync,

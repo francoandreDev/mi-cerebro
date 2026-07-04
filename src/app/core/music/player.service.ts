@@ -1,5 +1,8 @@
 import { Injectable, type Signal, computed, effect, inject, signal } from '@angular/core';
 
+import { AppError } from '@core/errors/app-error';
+import { ERROR_CODES } from '@core/errors/error.codes';
+import { ErrorService } from '@core/errors/error.service';
 import { MusicLibraryService } from '@features/music/services/music-library.service';
 
 import { AudioGraph } from './audio-graph';
@@ -28,6 +31,7 @@ const SEEK_SAVE_THROTTLE_MS = 1500;
 @Injectable({ providedIn: 'root' })
 export class PlayerService {
   private readonly library = inject(MusicLibraryService);
+  private readonly errors = inject(ErrorService);
 
   private readonly audio: HTMLAudioElement;
   private readonly audioGraph: AudioGraph;
@@ -68,7 +72,11 @@ export class PlayerService {
   constructor() {
     this.audio = new Audio();
     this.audio.preload = 'auto';
-    this.audioGraph = new AudioGraph(this.audio);
+    this.audioGraph = new AudioGraph(this.audio, (cause) =>
+      this.errors.report(
+        new AppError(ERROR_CODES.MUS_001, { severity: 'warning', cause, recoverable: true }),
+      ),
+    );
     this.analyser = this.audioGraph.analyser;
     this.audio.addEventListener('ended', () => void this.handleEnded());
     this.audio.addEventListener('play', () => this.playingSignal.set(true));

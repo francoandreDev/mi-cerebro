@@ -282,6 +282,19 @@ export class RemindersContainer {
     }
   }
 
+  protected async onDuplicate(summary: ReminderSummary): Promise<void> {
+    try {
+      await this.workspace.ensureWritable();
+      const current = await this.reminders.read(summary.id);
+      await this.reminders.create(current.title, current.dueAt, undefined, {
+        recurrence: current.recurrence,
+        paused: current.paused,
+      });
+    } catch (e) {
+      this.errors.report(this.withReauth(e));
+    }
+  }
+
   protected async onDelete(summary: ReminderSummary): Promise<void> {
     if (summary.sourceKind === 'goal' && summary.sourceId !== null) {
       const ok = confirm(

@@ -13,8 +13,9 @@
 //
 // The pass-level throttle (1×/day per workspace) lives in
 // `.mi-cerebro/compaction-state.json` so a reload doesn't reset it.
-// The threshold (500 commits) is per-branch so a quiet variant doesn't
-// drag the busy one into a rewrite it doesn't need.
+// The threshold (default 500 commits, configurable in settings) is
+// per-branch so a quiet variant doesn't drag the busy one into a
+// rewrite it doesn't need.
 
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
 
@@ -37,6 +38,8 @@ import { VariantsService } from './variants.service';
 import { stripHeadsPrefix } from './variants.io';
 import { VersioningService } from './versioning.service';
 
+// why: fallback used before settings are loaded; the live threshold is
+//      `SettingsService.state().versioning.compactionThresholdCommits`.
 export const COMPACTION_THRESHOLD_COMMITS = 500;
 const COMPACTION_THROTTLE_MS = 24 * 60 * 60 * 1000;
 const COMPACTION_TICK_MS = 60 * 60 * 1000;
@@ -67,7 +70,7 @@ export class CompactionSchedulerService {
   // doesn't blink when one ref crosses the threshold and others don't.
   private readonly maxBranchCommitCountSignal = signal(0);
   readonly maxBranchCommitCount = this.maxBranchCommitCountSignal.asReadonly();
-  readonly threshold = COMPACTION_THRESHOLD_COMMITS;
+  readonly threshold = computed(() => this.settings.state().versioning.compactionThresholdCommits);
 
   // Banner-driver. True when remote-gated would skip compaction *and*
   // some ref already deserves it. Off the rest of the time — quiet UI.
@@ -75,7 +78,7 @@ export class CompactionSchedulerService {
     () =>
       this.remote.isConfigured() &&
       !this.settings.state().versioning.compactWithRemote &&
-      this.maxBranchCommitCountSignal() > COMPACTION_THRESHOLD_COMMITS,
+      this.maxBranchCommitCountSignal() > this.threshold(),
   );
 
   constructor() {
@@ -175,7 +178,7 @@ export class CompactionSchedulerService {
     }
     const decision = decideCompaction({
       commitCount: opts.ignoreThreshold ? Number.MAX_SAFE_INTEGER : commitCount,
-      thresholdCommits: COMPACTION_THRESHOLD_COMMITS,
+      thresholdCommits: this.threshold(),
       now: Date.now(),
       lastRunAt: opts.ignoreThreshold ? null : this.lastRunAt,
       throttleMs: COMPACTION_THROTTLE_MS,

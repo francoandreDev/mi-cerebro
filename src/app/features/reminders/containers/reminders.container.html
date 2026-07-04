@@ -229,10 +229,20 @@
             <mc-icon name="clock-counter-clockwise" />
             {{ t('reminders.snooze1h') }}
           </button>
+          <button type="button" class="ghost" (click)="onSnooze(s, 24)">
+            <mc-icon name="clock-counter-clockwise" />
+            {{ t('reminders.snooze1d') }}
+          </button>
           <button type="button" class="ghost" (click)="onTakeNote(s)">
             <mc-icon name="check" />
             {{ s.done ? t('reminders.markPending') : t('reminders.markDone') }}
           </button>
+          @if (!e.readOnlyTitle) {
+            <button type="button" class="ghost" (click)="onDuplicate(s)">
+              <mc-icon name="copy" />
+              {{ t('reminders.duplicate') }}
+            </button>
+          }
           <button type="button" class="ghost danger" (click)="onDelete(s)">
             <mc-icon name="trash" />
             {{ t('common.delete') }}

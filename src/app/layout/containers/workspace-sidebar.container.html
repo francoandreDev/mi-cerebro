@@ -43,6 +43,9 @@
       (click)="goTo('reminders')"
     >
       <mc-icon name="bell" />
+      @if (remindersOverdueCount() > 0) {
+        <span class="rail-badge">{{ remindersOverdueCount() }}</span>
+      }
     </button>
     <button
       type="button"

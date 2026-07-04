@@ -1,0 +1,28 @@
+<section class="page">
+  <header class="head">
+    <h2><mc-icon name="test-tube" class="title-icon" /> {{ t('dev.title') }}</h2>
+  </header>
+
+  <section class="group">
+    <h3>{{ t('dev.compaction.title') }}</h3>
+    <div class="field">
+      <span class="label">{{ t('dev.compaction.label') }}</span>
+      <span class="hint">{{ t('dev.compaction.hint') }}</span>
+      <span class="hint">
+        {{ t('dev.compaction.status', { count: maxBranchCommitCount(), threshold: threshold() }) }}
+      </span>
+      <button type="button" class="primary" [disabled]="running()" (click)="runCompactionNow()">
+        @if (running()) {
+          <mc-icon name="spinner-gap" class="mc-anim-spin" />
+          <span>{{ t('dev.compaction.button.busy') }}</span>
+        } @else {
+          <mc-icon name="arrows-clockwise" />
+          <span>{{ t('dev.compaction.button') }}</span>
+        }
+      </button>
+      @if (done() && !running()) {
+        <span class="hint">{{ t('dev.compaction.done') }}</span>
+      }
+    </div>
+  </section>
+</section>
