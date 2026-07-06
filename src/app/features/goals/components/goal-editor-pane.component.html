@@ -1,40 +1,42 @@
-<mc-goal-constellation-editor
-  [goal]="goal()"
-  [editable]="editable()"
-  [status]="status()"
-  (stepsChange)="stepsChange.emit($event)"
-  (priorityChange)="priorityChange.emit($event)"
-  (deadlineChange)="deadlineChange.emit($event)"
-  (titleChange)="titleChange.emit($event)"
-  (completedChange)="completedChange.emit($event)"
-  (removeGoal)="removeGoal.emit()"
-/>
+@if (!focusMode.active()) {
+  <mc-goal-constellation-editor
+    [goal]="goal()"
+    [editable]="editable()"
+    [status]="status()"
+    (stepsChange)="stepsChange.emit($event)"
+    (priorityChange)="priorityChange.emit($event)"
+    (deadlineChange)="deadlineChange.emit($event)"
+    (titleChange)="titleChange.emit($event)"
+    (completedChange)="completedChange.emit($event)"
+    (removeGoal)="removeGoal.emit()"
+  />
 
-<section class="meta reminder">
-  <mc-icon name="bell" class="meta-icon" />
-  <label class="reminder-toggle">
-    <input
-      type="checkbox"
-      [checked]="goal().reminder.enabled"
-      [disabled]="!editable() || goal().completed || goal().deadline === null"
-      (change)="onReminderToggle($event)"
-    />
-    <span>{{ t('goals.reminder.toggleLabel') }}</span>
-  </label>
-  @if (goal().deadline === null) {
-    <span class="reminder-hint">{{ t('goals.reminder.requiresDeadline') }}</span>
-  } @else if (goal().reminder.enabled) {
-    <span class="reminder-hint">{{ t('goals.reminder.toggleHint') }}</span>
-  }
-</section>
+  <section class="meta reminder">
+    <mc-icon name="bell" class="meta-icon" />
+    <label class="reminder-toggle">
+      <input
+        type="checkbox"
+        [checked]="goal().reminder.enabled"
+        [disabled]="!editable() || goal().completed || goal().deadline === null"
+        (change)="onReminderToggle($event)"
+      />
+      <span>{{ t('goals.reminder.toggleLabel') }}</span>
+    </label>
+    @if (goal().deadline === null) {
+      <span class="reminder-hint">{{ t('goals.reminder.requiresDeadline') }}</span>
+    } @else if (goal().reminder.enabled) {
+      <span class="reminder-hint">{{ t('goals.reminder.toggleHint') }}</span>
+    }
+  </section>
 
-<mc-tag-picker
-  [availableTags]="availableTags()"
-  [selectedIds]="goal().tags"
-  [editable]="editable()"
-  (addTag)="addTag.emit($event)"
-  (removeTag)="removeTag.emit($event)"
-/>
+  <mc-tag-picker
+    [availableTags]="availableTags()"
+    [selectedIds]="goal().tags"
+    [editable]="editable()"
+    (addTag)="addTag.emit($event)"
+    (removeTag)="removeTag.emit($event)"
+  />
+}
 <mc-editor
   class="editor"
   [value]="goal().body"

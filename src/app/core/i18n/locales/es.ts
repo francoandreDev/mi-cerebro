@@ -564,6 +564,7 @@ export const es = {
   'shortcuts.palette': 'Abrir búsqueda global',
   'shortcuts.treeFilter': 'Foco al filtro del árbol',
   'shortcuts.create': 'Crear nueva entidad (según ruta)',
+  'shortcuts.focusMode': 'Modo pantalla completa de edición',
 
   'errors.aut.005.title': 'Esta entidad está abierta en otra pestaña',
   'errors.aut.005.message':

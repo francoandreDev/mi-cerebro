@@ -3,6 +3,7 @@ import { RouterOutlet } from '@angular/router';
 
 import { ContinuityService } from '@core/continuity/continuity.service';
 import { ErrorService } from '@core/errors/error.service';
+import { FocusModeService } from '@core/focus-mode/focus-mode.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { GoalRemindersSyncService } from '@core/reminders/goal-reminders-sync.service';
 import { SettingsService } from '@core/settings/settings.service';
@@ -41,17 +42,23 @@ import { WorkspaceSidebarContainer } from './workspace-sidebar.container';
   ],
   template: `
     @if (workspace.isReady()) {
-      <mc-remote-divergence-banner />
+      @if (!focusMode.active()) {
+        <mc-remote-divergence-banner />
+      }
       <div class="shell">
-        <mc-workspace-sidebar />
+        @if (!focusMode.active()) {
+          <mc-workspace-sidebar />
+        }
         <main class="content">
           <router-outlet />
         </main>
       </div>
       <mc-command-palette />
       <mc-keyboard-help-dialog />
-      <mc-reminder-toast />
-      <mc-mini-player />
+      @if (!focusMode.active()) {
+        <mc-reminder-toast />
+        <mc-mini-player />
+      }
       <mc-variant-switch-overlay />
     } @else {
       <mc-onboarding />
@@ -80,6 +87,7 @@ export class AppShellContainer {
   // why: instantiate so theme is applied before first paint.
   protected readonly theme = inject(ThemeService);
   protected readonly workspace = inject(WorkspaceService);
+  protected readonly focusMode = inject(FocusModeService);
   private readonly errors = inject(ErrorService);
   private readonly autocommit = inject(AutocommitService);
   // why: instantiate AutoPushService eagerly so its effect on

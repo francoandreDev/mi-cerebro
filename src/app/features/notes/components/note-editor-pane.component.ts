@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 import type { JSONContent } from '@tiptap/core';
 
+import { FocusModeService } from '@core/focus-mode/focus-mode.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import type { Tag } from '@core/tags/tag.types';
@@ -18,39 +19,41 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [EditorComponent, TagPickerComponent, IconComponent],
   template: `
-    <header class="bar">
-      <mc-icon name="note" class="title-icon" />
-      <input
-        type="text"
-        class="title-input"
-        [value]="note().title"
-        [placeholder]="t('notes.placeholderTitle')"
-        [attr.aria-label]="t('notes.placeholderTitle')"
-        [readOnly]="!editable()"
-        (input)="onTitleInput($event)"
-      />
-      <span class="status" [attr.data-status]="status()">
-        <mc-icon
-          [name]="statusIcon()"
-          [class.mc-anim-spin]="status() === 'saving'"
-          [class.mc-anim-pulse]="status() === 'unsaved'"
+    @if (!focusMode.active()) {
+      <header class="bar">
+        <mc-icon name="note" class="title-icon" />
+        <input
+          type="text"
+          class="title-input"
+          [value]="note().title"
+          [placeholder]="t('notes.placeholderTitle')"
+          [attr.aria-label]="t('notes.placeholderTitle')"
+          [readOnly]="!editable()"
+          (input)="onTitleInput($event)"
         />
-        {{ statusLabel() }}
-      </span>
-      @if (editable()) {
-        <button type="button" class="danger mc-hover-wiggle" (click)="removeNote.emit()">
-          <mc-icon name="trash" />
-          <span>{{ t('notes.delete') }}</span>
-        </button>
-      }
-    </header>
-    <mc-tag-picker
-      [availableTags]="availableTags()"
-      [selectedIds]="note().tags"
-      [editable]="editable()"
-      (addTag)="addTag.emit($event)"
-      (removeTag)="removeTag.emit($event)"
-    />
+        <span class="status" [attr.data-status]="status()">
+          <mc-icon
+            [name]="statusIcon()"
+            [class.mc-anim-spin]="status() === 'saving'"
+            [class.mc-anim-pulse]="status() === 'unsaved'"
+          />
+          {{ statusLabel() }}
+        </span>
+        @if (editable()) {
+          <button type="button" class="danger mc-hover-wiggle" (click)="removeNote.emit()">
+            <mc-icon name="trash" />
+            <span>{{ t('notes.delete') }}</span>
+          </button>
+        }
+      </header>
+      <mc-tag-picker
+        [availableTags]="availableTags()"
+        [selectedIds]="note().tags"
+        [editable]="editable()"
+        (addTag)="addTag.emit($event)"
+        (removeTag)="removeTag.emit($event)"
+      />
+    }
     <mc-editor
       class="editor"
       [value]="note().body"
@@ -139,6 +142,7 @@ export class NoteEditorPaneComponent {
   readonly removeTag = output<string>();
 
   private readonly i18n = inject(I18nService);
+  protected readonly focusMode = inject(FocusModeService);
   protected t(key: TranslationKey): string {
     return this.i18n.t(key);
   }

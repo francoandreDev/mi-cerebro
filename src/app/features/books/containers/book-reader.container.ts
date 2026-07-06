@@ -13,6 +13,7 @@ import type { JSONContent } from '@tiptap/core';
 
 import { AutosaveService } from '@core/autosave/autosave.service';
 import { ErrorService } from '@core/errors/error.service';
+import { FocusModeService } from '@core/focus-mode/focus-mode.service';
 import { withReauthIfNeeded } from '@core/errors/with-reauth';
 import { WorkspaceService } from '@core/fs/workspace.service';
 // why: addChapter desde el editor pane usa el mismo flujo que en el desk.
@@ -51,13 +52,19 @@ export class BookReaderContainer {
   private readonly router = inject(Router);
   private readonly errors = inject(ErrorService);
   private readonly i18n = inject(I18nService);
+  private readonly globalFocusMode = inject(FocusModeService);
 
   protected readonly book = signal<Book | null>(null);
   protected readonly chapters = signal<readonly ChapterSummary[]>([]);
   protected readonly chapter = signal<Chapter | null>(null);
   protected readonly chapterStatus = signal<BookSaveStatus>('saved');
   protected readonly chapterLoading = signal<boolean>(false);
-  protected readonly focusMode = signal<boolean>(false);
+  private readonly localFocusMode = signal<boolean>(false);
+  // why: F11 app-wide focus mode (§19.17) and this reader's own Ctrl+.
+  //      focus toggle both hide the same chrome, so either one activates it.
+  protected readonly focusMode = computed(
+    () => this.localFocusMode() || this.globalFocusMode.active(),
+  );
   protected readonly indexOpen = signal<boolean>(false);
   protected readonly lock = new EntityLockController(BOOK_KIND, this.book);
   private readonly paneRef = viewChild(ChapterEditorPaneComponent);
@@ -83,7 +90,7 @@ export class BookReaderContainer {
       nextChapter: () => this.gotoSibling('next'),
       prevPage: () => this.paneRef()?.prevSpread(),
       nextPage: () => this.paneRef()?.nextSpread(),
-      toggleFocus: () => this.focusMode.update((v) => !v),
+      toggleFocus: () => this.localFocusMode.update((v) => !v),
       toggleIndex: () => this.indexOpen.update((v) => !v),
     });
     effect(() => {
@@ -132,7 +139,7 @@ export class BookReaderContainer {
     void this.router.navigate(['/books', b.id, chId]);
   }
   protected onToggleFocus(): void {
-    this.focusMode.update((v) => !v);
+    this.localFocusMode.update((v) => !v);
   }
   protected onToggleIndex(): void {
     this.indexOpen.update((v) => !v);

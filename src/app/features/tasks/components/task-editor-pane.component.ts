@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 import type { JSONContent } from '@tiptap/core';
 
+import { FocusModeService } from '@core/focus-mode/focus-mode.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import type { Tag } from '@core/tags/tag.types';
@@ -36,6 +37,7 @@ export class TaskEditorPaneComponent {
   readonly removeTag = output<string>();
 
   private readonly i18n = inject(I18nService);
+  protected readonly focusMode = inject(FocusModeService);
   protected t(key: TranslationKey): string {
     return this.i18n.t(key);
   }
