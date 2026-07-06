@@ -30,6 +30,42 @@
   background: var(--mc-bg-selected);
 }
 
+.highlight-wrap {
+  position: relative;
+}
+
+.highlight-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 10;
+  margin-top: 4px;
+  display: flex;
+  gap: var(--mc-space-1);
+  padding: var(--mc-space-1);
+  background: var(--mc-bg-elevated);
+  border: 1px solid var(--mc-border-default);
+  border-radius: var(--mc-radius-md);
+  box-shadow: var(--mc-shadow-md);
+}
+
+.swatch {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--mc-border-default);
+  border-radius: var(--mc-radius-sm);
+  cursor: pointer;
+}
+
+.swatch.clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--mc-fg-muted);
+}
+
 .view-toggle {
   display: inline-flex;
   border: 1px solid var(--mc-border-default);

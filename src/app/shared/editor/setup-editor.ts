@@ -10,6 +10,7 @@ import type { ImageReaderService } from '@core/images/image-reader.service';
 import { createBlockIdExtension } from '@core/tiptap/block-id/block-id.ext';
 import { createCommentCloudsExtension } from '@core/tiptap/comment-clouds/comment-clouds.ext';
 import { createDraftDecorationsExtension } from '@core/tiptap/draft-decorations/draft-decorations.ext';
+import { createHighlightExtension } from '@core/tiptap/highlight/highlight.ext';
 import { createImageRefNode } from '@core/tiptap/image-ref/image-ref.node';
 
 export interface SetupEditorContext {
@@ -28,6 +29,7 @@ export const createEditorInstance = (ctx: SetupEditorContext): Editor =>
     element: ctx.element,
     extensions: [
       StarterKit,
+      createHighlightExtension(),
       createBlockIdExtension(),
       createImageRefNode(ctx.reader),
       createDraftDecorationsExtension(),

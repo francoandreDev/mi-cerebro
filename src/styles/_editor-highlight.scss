@@ -1,0 +1,28 @@
+// §19.16e-i — highlight-mark color rules for mc-editor's TipTap content.
+// why: ProseMirror renders the editor body as raw DOM outside Angular's
+//      template compiler, so Angular's component-scoped `:global()` escape
+//      hatch never reaches it reliably (same reason _book-editor.scss keeps
+//      its ProseMirror typography rules global instead of scoped). Colors
+//      resolve from the _tokens.scss custom properties, not a literal hex
+//      baked into the mark at save time, so a highlight stays WCAG-safe
+//      across light/dark without re-saving the doc.
+
+mc-editor .editor-host mark[data-color] {
+  border-radius: 2px;
+  color: inherit;
+}
+mc-editor .editor-host mark[data-color='yellow'] {
+  background-color: var(--mc-highlight-yellow);
+}
+mc-editor .editor-host mark[data-color='green'] {
+  background-color: var(--mc-highlight-green);
+}
+mc-editor .editor-host mark[data-color='blue'] {
+  background-color: var(--mc-highlight-blue);
+}
+mc-editor .editor-host mark[data-color='rose'] {
+  background-color: var(--mc-highlight-rose);
+}
+mc-editor .editor-host mark[data-color='violet'] {
+  background-color: var(--mc-highlight-violet);
+}

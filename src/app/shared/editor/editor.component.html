@@ -12,6 +12,7 @@
     (setView)="setView($event)"
     (toggleCommentsIndex)="commentsIndexOpen.set(!commentsIndexOpen())"
     (toggleDraftsIndex)="draftsIndexOpen.set(!draftsIndexOpen())"
+    (pickHighlight)="applyHighlight($event)"
   />
 }
 <div class="shell" [class.has-popover]="commentsIndexOpen() || draftsIndexOpen()">

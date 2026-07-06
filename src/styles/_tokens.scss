@@ -84,6 +84,14 @@
   --mc-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.06);
   --mc-shadow-md: 0 4px 12px rgb(0 0 0 / 0.1);
   --mc-shadow-lg: 0 12px 32px rgb(0 0 0 / 0.14);
+
+  // editor highlight-mark palette (§19.16e-i). Source of truth:
+  // @core/theme/highlight-palette.ts — keep both in sync.
+  --mc-highlight-yellow: #d6c985;
+  --mc-highlight-green: #85d692;
+  --mc-highlight-blue: #85add6;
+  --mc-highlight-rose: #d685a0;
+  --mc-highlight-violet: #b485d6;
 }
 
 // DARK via OS preference when nothing is forced.
@@ -117,6 +125,12 @@
     --mc-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.2);
     --mc-shadow-md: 0 4px 12px rgb(0 0 0 / 0.3);
     --mc-shadow-lg: 0 12px 32px rgb(0 0 0 / 0.4);
+
+    --mc-highlight-yellow: #6a6239;
+    --mc-highlight-green: #396a41;
+    --mc-highlight-blue: #39526a;
+    --mc-highlight-rose: #6a3949;
+    --mc-highlight-violet: #56396a;
   }
 }
 
@@ -166,4 +180,10 @@
   --mc-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.2);
   --mc-shadow-md: 0 4px 12px rgb(0 0 0 / 0.3);
   --mc-shadow-lg: 0 12px 32px rgb(0 0 0 / 0.4);
+
+  --mc-highlight-yellow: #6a6239;
+  --mc-highlight-green: #396a41;
+  --mc-highlight-blue: #39526a;
+  --mc-highlight-rose: #6a3949;
+  --mc-highlight-violet: #56396a;
 }

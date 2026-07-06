@@ -100,9 +100,7 @@ export class EditorComponent {
   private readonly draftMarks = signal<readonly DiffMark[]>([]);
   protected readonly commentsAvailable = computed(() => this.entityId().length > 0);
   protected readonly hasGalleries = computed(() => this.reader.summaries().length > 0);
-  protected readonly showToolbar = computed(
-    () => (this.editable() && this.hasGalleries()) || this.commentsAvailable(),
-  );
+  protected readonly showToolbar = computed(() => this.editable() || this.commentsAvailable());
   private editor: Editor | null = null;
   private suppressEmit = false;
   private selectingWithMouse = false;
@@ -225,6 +223,13 @@ export class EditorComponent {
   protected onPicked(payload: { galleryId: string; imageId: string; alt: string }): void {
     this.pickerOpen.set(false);
     this.editor?.chain().focus().insertContent({ type: IMAGE_REF_NAME, attrs: payload }).run();
+  }
+
+  protected applyHighlight(color: string | null): void {
+    const ed = this.editor;
+    if (!ed) return;
+    if (color === null) ed.chain().focus().unsetHighlight().run();
+    else ed.chain().focus().toggleHighlight({ color }).run();
   }
 
   private ensureCombined(): void {

@@ -1239,6 +1239,13 @@ export const es = {
   'editor.cloud.aria': 'Ver comentario',
   'editor.index.drafts.aria': 'Ver borradores pendientes',
   'editor.index.comments.aria': 'Ver comentarios',
+  'editor.highlight.button': 'Resaltar',
+  'editor.highlight.clear': 'Quitar resaltado',
+  'editor.highlight.color.yellow': 'Amarillo',
+  'editor.highlight.color.green': 'Verde',
+  'editor.highlight.color.blue': 'Azul',
+  'editor.highlight.color.rose': 'Rosa',
+  'editor.highlight.color.violet': 'Violeta',
 
   'calendar.title': 'Calendario',
   'calendar.view.month': 'Mes',

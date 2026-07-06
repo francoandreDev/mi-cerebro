@@ -534,6 +534,15 @@ Formato por entrada:
 - **Cómo empezar**: reproducir con un remoto configurado, mirar `lastPushOutcomes` en el store y el mensaje real que llega al `AppError` (código `MCB-NET-004` esperado si el push falla); si el error viene de auth, revisar `RemoteConfig` (PAT vs deviceflow) en `secrets.json`; si viene de transporte, revisar el CORS proxy configurado en `versioning/http.ts`.
 - **Target**: sin asignar — próxima sesión dedicada de sync/versionado.
 
+## Editor — `:global()` no llega al contenido de ProseMirror (origen: cierre §19.16e-i, 2026-07-06)
+
+### Auditar y arreglar las reglas `:global(...)` de `editor.component.css`
+
+- **Qué**: al cerrar 16e-i (highlighting) se descubrió que **todas** las reglas `.editor-host :global(...)` de `editor.component.css` compilan mal: Angular adjunta el atributo de scoping `[_ngcontent-x]` directo al mismo compuesto que `:global(...)` (ej. `.editor-host[ngcontent] [ngcontent]:global(.mc-image-ref)`), en vez de dejar ese compuesto realmente global. Como los nodos que ProseMirror renderiza (`<mark>`, `<img>` de image-ref, las nubes de comentario, el propio `.ProseMirror`) son DOM crudo fuera del compilador de templates de Angular, **nunca tienen ese atributo** y la regla no matchea nunca. Confirmado en runtime (`getComputedStyle`): `.ProseMirror` no recibe `min-height: 180px` (da `0px`), y el CSS compilado de `.mc-image-ref`/`.mc-comment-range` muestra el mismo patrón roto. Afecta (al menos): `.mc-comment-range`, `.mc-comment-cloud` (+ hover/focus), `.mc-image-ref`, `.mc-image-ref img`, `.mc-image-ref--missing`, `.ProseMirror` (outline, min-height), `.mc-draft-mutate`, `.mc-draft-strike`, y el placeholder `.ProseMirror p.is-editor-empty:first-child::before`.
+- **Por qué se difirió**: es un bug transversal a varios pasos ya cerrados (9i imagen-referencia, 13c-iii nubes de comentario, 13d-iii decoraciones de borrador), no algo introducido por 16e-i — se topó con él de rebote al necesitar colorear el `<mark>` del highlight nuevo, y para ese caso puntual ya se aplicó el fix real (ver abajo). Arreglar los ~9 selectores existentes es una sesión de auditoría propia: hay que revisar cada uno, decidir si el fallback visual actual (sin la regla) igual se ve aceptable o si hay una regresión visible real, y migrarlos.
+- **Cómo empezar / el fix ya validado**: mover la regla a una hoja **global** (no scoped) del árbol `src/styles/` en vez de `styleUrl` del componente — exactamente el patrón que 16e-i usó en `src/styles/_editor-highlight.scss` (`mc-editor .editor-host mark[data-color] {...}`, sin `:global()`, agregada a `styles.scss`), y el que `_book-editor.scss` ya documentaba para el mismo motivo ("selectores con Angular CSS scoping no llegan al ProseMirror").
+- **Target**: sin asignar — auditoría dedicada de `editor.component.css`.
+
 ## Historial — Dejar de trackear campos "de la app" (origen: /history rediseño, 2026-07-02)
 
 ### ~~No versionar `fields.system` de las entidades del usuario~~ (resuelto 2026-07-03)
