@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff8f60"/>
+      <stop offset="100%" stop-color="#f06a35"/>
+    </linearGradient>
+  </defs>
+
+  <!-- background, safe zone respected for maskable icons -->
+  <rect width="512" height="512" fill="#0d1117"/>
+
+  <!-- brain glyph, built from rounded lobes; scaled down + centered for maskable safe zone -->
+  <g transform="translate(256 256) scale(0.78) translate(-256 -256)">
+    <g fill="url(#accent)">
+      <!-- left hemisphere -->
+      <path d="
+        M 190 130
+        C 140 130 104 168 104 212
+        C 84 222 72 246 74 270
+        C 58 282 50 306 58 330
+        C 52 354 66 380 92 390
+        C 96 410 114 426 138 428
+        C 150 444 172 452 194 446
+        C 208 452 224 450 236 440
+        L 236 158
+        C 224 140 208 130 190 130
+        Z"/>
+      <!-- right hemisphere (mirrored) -->
+      <path d="
+        M 322 130
+        C 372 130 408 168 408 212
+        C 428 222 440 246 438 270
+        C 454 282 462 306 454 330
+        C 460 354 446 380 420 390
+        C 416 410 398 426 374 428
+        C 362 444 340 452 318 446
+        C 304 452 288 450 276 440
+        L 276 158
+        C 288 140 304 130 322 130
+        Z"/>
+    </g>
+
+    <!-- central sulcus -->
+    <path d="M 256 150 L 256 438" stroke="#0d1117" stroke-width="10" stroke-linecap="round"/>
+
+    <!-- gyri texture, subtle -->
+    <g fill="none" stroke="#0d1117" stroke-width="7" stroke-linecap="round" opacity="0.55">
+      <path d="M 130 220 C 150 210 172 214 186 228"/>
+      <path d="M 108 280 C 132 272 158 276 174 292"/>
+      <path d="M 104 336 C 128 330 152 334 168 348"/>
+      <path d="M 140 392 C 160 386 180 390 194 402"/>
+      <path d="M 382 220 C 362 210 340 214 326 228"/>
+      <path d="M 404 280 C 380 272 354 276 338 292"/>
+      <path d="M 408 336 C 384 330 360 334 344 348"/>
+      <path d="M 372 392 C 352 386 332 390 318 402"/>
+    </g>
+  </g>
+</svg>
