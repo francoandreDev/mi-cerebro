@@ -77,12 +77,6 @@ Formato por entrada:
 
 ## Versionado y variantes (origen: paso 13)
 
-### Re-mapping de offsets de `range` ante ediciones del bloque
-
-- **Qué**: 13g-i introdujo `Comment.range?: { from, to }` (offsets relativos al contenido del bloque). El renderer los clampa a fin de bloque, pero no aplica `tr.mapping` cuando el texto del bloque se edita — los offsets persistidos quedan congelados al valor de creación. En la práctica funciona porque el usuario edita poco después de comentar y/o el clamp impide que la nube se renderice fuera del bloque; pero un comment sobre "las primeras 3 palabras" puede terminar subrayando algo distinto si se reescribe el inicio del bloque.
-- **Por qué**: el re-mapping requiere un plugin TipTap que aplique cada `tr.mapping` a los anchors persistidos en memoria y los flushee a disk vía `CommentsService` cuando el doc autosaveea. Suma complejidad de orphan-flag (range que se colapsa a `to <= from` debería invalidarse) y un spec dedicado de mapping. Diferido hasta tener uso real que lo justifique.
-- **Target**: §19.16e-ii (pulido del editor).
-
 ### Anchor `range` multi-bloque (selección que cruza párrafos)
 
 - **Qué**: hoy `range` queda confinado al bloque donde está `$from`. Selecciones que cruzan dos o más bloques caen al anchor `block` del primero (sin range). Comentar a través de párrafos no se soporta.

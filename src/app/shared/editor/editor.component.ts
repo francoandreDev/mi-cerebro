@@ -18,6 +18,7 @@ import type { Editor, JSONContent } from '@tiptap/core';
 
 import { ImageReaderService } from '@core/images/image-reader.service';
 import { COMMENT_CLOUDS_META_KEY } from '@core/tiptap/comment-clouds/comment-clouds.ext';
+import { COMMENT_RANGE_MAPPING_META_KEY } from '@core/tiptap/comment-range-mapping/comment-range-mapping.ext';
 import { DRAFT_DECORATIONS_META_KEY } from '@core/tiptap/draft-decorations/draft-decorations.ext';
 import { IMAGE_REF_NAME } from '@core/tiptap/image-ref/image-ref.node';
 import { CommentsService } from '@core/versioning/comments.service';
@@ -241,6 +242,14 @@ export class EditorComponent {
     view?.dispatch(view.state.tr.setMeta(COMMENT_CLOUDS_META_KEY, list));
   }
 
+  // why: unlike the cloud decorations (only rendered in `combined`), range
+  //      mapping must track edits regardless of the active view — the user
+  //      can keep typing in `clean` while a comment stays anchored.
+  private pushCommentRangeMapping(list: readonly Comment[]): void {
+    const view = this.editor?.view;
+    view?.dispatch(view.state.tr.setMeta(COMMENT_RANGE_MAPPING_META_KEY, list));
+  }
+
   private async loadDraftMarks(id: string): Promise<void> {
     if (!id) return this.draftMarks.set([]);
     const file = await this.drafts.read(id);
@@ -287,6 +296,8 @@ export class EditorComponent {
       cloudAriaLabel: () => this.i18n.t('editor.cloud.aria'),
       onUpdate: (ed) => this.onEditorUpdate(ed),
       onSelectionUpdate: (ed) => this.onEditorSelectionUpdate(ed),
+      getComments: () => this.commentsCoord.list(),
+      onRangesMapped: (updates) => this.commentsCoord.applyRangeUpdates(updates),
     });
 
     const opts = { injector: this.injector };
@@ -303,6 +314,7 @@ export class EditorComponent {
     }, opts);
     const combined = (): boolean => this.view() === 'combined';
     effect(() => this.pushCommentClouds(combined() ? this.commentsCoord.list() : []), opts);
+    effect(() => this.pushCommentRangeMapping(this.commentsCoord.list()), opts);
     effect(() => this.pushDraftDecorations(combined() ? this.draftMarks() : []), opts);
 
     this.destroyRef.onDestroy(() => {

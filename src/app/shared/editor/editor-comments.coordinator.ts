@@ -7,10 +7,18 @@
 import { signal } from '@angular/core';
 import type { JSONContent } from '@tiptap/core';
 
+import type { CommentRangeUpdate } from '@core/tiptap/comment-range-mapping/comment-range-mapping.ext';
 import type { CommentsService } from '@core/versioning/comments.service';
 import type { Comment, CommentRange } from '@core/versioning/comments.types';
 
 import type { PopoverPosition } from './comment-popover.component';
+
+// why: mapped offsets arrive on every relevant transaction (potentially
+//      every keystroke); batching them behind a short debounce keeps the
+//      git-backed CommentsService.save from thrashing on every character
+//      while still landing well within the "próximo autosave" the roadmap
+//      calls for.
+const RANGE_FLUSH_DEBOUNCE_MS = 1000;
 
 export interface EditorCommentsContext {
   readonly comments: CommentsService;
@@ -35,6 +43,7 @@ export class EditorCommentsCoordinator {
   readonly list = signal<readonly Comment[]>([]);
   readonly popover = signal<PopoverState | null>(null);
   private lastLoadedFor = '';
+  private rangeFlushTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(private readonly ctx: EditorCommentsContext) {}
 
@@ -144,6 +153,38 @@ export class EditorCommentsCoordinator {
       this.popover.set({ ...current, busy: false, error: 'No se pudo borrar.' });
       throw err;
     }
+  }
+
+  // 19.16e-ii — applies mapped `range` offsets (or the collapsed-range
+  //      orphan flag) reported by mcCommentRangeMapping as the user edits
+  //      the block a comment is anchored to. Updates the in-memory list
+  //      immediately (so decorations rebuilt from a fresh push stay
+  //      accurate) and debounces the disk flush.
+  applyRangeUpdates(updates: readonly CommentRangeUpdate[]): void {
+    if (updates.length === 0) return;
+    const byId = new Map(updates.map((u) => [u.id, u]));
+    const next = this.list().map((c) => {
+      const u = byId.get(c.id);
+      if (!u) return c;
+      return 'orphaned' in u ? { ...c, orphaned: true } : { ...c, range: u.range, orphaned: false };
+    });
+    this.list.set(next);
+    this.ctx.pushClouds(next);
+    this.scheduleRangeFlush(next);
+  }
+
+  private scheduleRangeFlush(list: readonly Comment[]): void {
+    if (this.rangeFlushTimer) clearTimeout(this.rangeFlushTimer);
+    this.rangeFlushTimer = setTimeout(() => {
+      this.rangeFlushTimer = null;
+      const id = this.ctx.entityId();
+      if (!id) return;
+      // why: best-effort — a failed background flush of re-mapped offsets
+      //      isn't worth surfacing to the user; the next edit re-maps from
+      //      the doc's current state anyway, and an explicit comment
+      //      save/remove flushes the full list regardless.
+      void this.ctx.comments.save(id, this.ctx.entityTitle(), list).catch(() => undefined);
+    }, RANGE_FLUSH_DEBOUNCE_MS);
   }
 
   private appendNew(state: PopoverState, body: string, entityId: string): readonly Comment[] {
