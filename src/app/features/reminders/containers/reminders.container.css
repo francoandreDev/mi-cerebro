@@ -592,6 +592,40 @@
 .ghost.icon:hover { color: var(--mc-fg-primary); }
 .ghost.danger { color: var(--mc-danger, #d04a4a); border-color: var(--mc-danger, #d04a4a); }
 
+.overflow-wrap {
+  position: relative;
+}
+.overflow-menu {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  z-index: 10;
+  margin-bottom: 4px;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--mc-bg-elevated);
+  border: 1px solid var(--mc-border-default);
+  border-radius: var(--mc-radius-md);
+  box-shadow: var(--mc-shadow-md);
+  padding: var(--mc-space-2);
+}
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+  background: transparent;
+  border: 0;
+  border-radius: var(--mc-radius-sm);
+  padding: var(--mc-space-2);
+  color: var(--mc-fg-primary);
+  text-align: left;
+  cursor: pointer;
+}
+.menu-item:hover { background: var(--mc-bg-hover); }
+.menu-item.danger { color: var(--mc-danger, #d04a4a); }
+
 .toast {
   position: absolute;
   left: 50%;

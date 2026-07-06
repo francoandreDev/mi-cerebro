@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  HostListener,
   ViewChild,
   computed,
   effect,
@@ -31,6 +32,7 @@ import { RemindersService } from '../services/reminders.service';
 import { bucketOf, type BucketKey } from '../utils/buckets';
 import { recallPaloma } from '../utils/paloma-flight';
 import { parseQuickAdd } from '../utils/parse-due';
+import { MONDAY, SATURDAY, nextWeekdayAfter } from '../utils/snooze-presets';
 
 type RecurrencePreset = 'none' | RecurrenceUnit;
 
@@ -97,6 +99,7 @@ export class RemindersContainer {
   protected readonly quickAdd = signal('');
   protected readonly selectedId = signal<string | null>(null);
   protected readonly showRegistry = signal(false);
+  protected readonly overflowOpenId = signal<string | null>(null);
   protected readonly editing = signal<EditingState | null>(null);
   protected readonly undo = signal<PendingUndo | null>(null);
 
@@ -209,6 +212,7 @@ export class RemindersContainer {
   protected onCloseDetail(): void {
     this.selectedId.set(null);
     this.editing.set(null);
+    this.overflowOpenId.set(null);
   }
 
   protected onEditField<K extends keyof EditingState>(key: K, value: EditingState[K]): void {
@@ -270,6 +274,7 @@ export class RemindersContainer {
   }
 
   protected async onSnooze(summary: ReminderSummary, hours: number): Promise<void> {
+    this.overflowOpenId.set(null);
     try {
       await this.workspace.ensureWritable();
       const current = await this.reminders.read(summary.id);
@@ -282,7 +287,53 @@ export class RemindersContainer {
     }
   }
 
+  protected async onSnoozeToWeekday(summary: ReminderSummary, targetDow: number): Promise<void> {
+    this.overflowOpenId.set(null);
+    try {
+      await this.workspace.ensureWritable();
+      const current = await this.reminders.read(summary.id);
+      const base = new Date(current.dueAt);
+      const from = Number.isNaN(base.getTime()) ? new Date() : base;
+      const next = nextWeekdayAfter(from, targetDow);
+      await this.reminders.save({ ...current, dueAt: toLocalIso(next) });
+    } catch (e) {
+      this.errors.report(this.withReauth(e));
+    }
+  }
+
+  protected onSnoozeNextMonday(summary: ReminderSummary): Promise<void> {
+    return this.onSnoozeToWeekday(summary, MONDAY);
+  }
+
+  protected onSnoozeWeekend(summary: ReminderSummary): Promise<void> {
+    return this.onSnoozeToWeekday(summary, SATURDAY);
+  }
+
+  protected toggleOverflow(id: string): void {
+    this.overflowOpenId.set(this.overflowOpenId() === id ? null : id);
+  }
+
+  @HostListener('document:click', ['$event'])
+  protected onDocClick(event: MouseEvent): void {
+    const openId = this.overflowOpenId();
+    if (openId === null) return;
+    const target = event.target as Element;
+    const wrap = target.closest?.('.overflow-wrap');
+    if (wrap?.getAttribute('data-overflow-for') !== openId) {
+      this.overflowOpenId.set(null);
+    }
+  }
+
+  @HostListener('document:keydown.escape', ['$event'])
+  protected onOverflowEscape(event: Event): void {
+    if (this.overflowOpenId() !== null) {
+      event.preventDefault();
+      this.overflowOpenId.set(null);
+    }
+  }
+
   protected async onDuplicate(summary: ReminderSummary): Promise<void> {
+    this.overflowOpenId.set(null);
     try {
       await this.workspace.ensureWritable();
       const current = await this.reminders.read(summary.id);
@@ -296,6 +347,7 @@ export class RemindersContainer {
   }
 
   protected async onDelete(summary: ReminderSummary): Promise<void> {
+    this.overflowOpenId.set(null);
     if (summary.sourceKind === 'goal' && summary.sourceId !== null) {
       const ok = confirm(
         this.t('reminders.deleteGoalConfirm').replace(

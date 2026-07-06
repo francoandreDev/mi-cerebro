@@ -225,28 +225,67 @@
           </label>
         </div>
         <footer class="detail-actions">
-          <button type="button" class="ghost" (click)="onSnooze(s, 1)">
-            <mc-icon name="clock-counter-clockwise" />
-            {{ t('reminders.snooze1h') }}
-          </button>
-          <button type="button" class="ghost" (click)="onSnooze(s, 24)">
-            <mc-icon name="clock-counter-clockwise" />
-            {{ t('reminders.snooze1d') }}
-          </button>
           <button type="button" class="ghost" (click)="onTakeNote(s)">
             <mc-icon name="check" />
             {{ s.done ? t('reminders.markPending') : t('reminders.markDone') }}
           </button>
-          @if (!e.readOnlyTitle) {
-            <button type="button" class="ghost" (click)="onDuplicate(s)">
-              <mc-icon name="copy" />
-              {{ t('reminders.duplicate') }}
+          <div class="overflow-wrap" [attr.data-overflow-for]="s.id">
+            <button
+              type="button"
+              class="ghost icon"
+              [attr.aria-label]="t('reminders.moreActions')"
+              [attr.aria-expanded]="overflowOpenId() === s.id"
+              aria-haspopup="menu"
+              (click)="toggleOverflow(s.id)"
+            >
+              <mc-icon name="dots-three-vertical" />
             </button>
-          }
-          <button type="button" class="ghost danger" (click)="onDelete(s)">
-            <mc-icon name="trash" />
-            {{ t('common.delete') }}
-          </button>
+            @if (overflowOpenId() === s.id) {
+              <div class="overflow-menu" role="menu">
+                <button type="button" class="menu-item" role="menuitem" (click)="onSnooze(s, 1)">
+                  <mc-icon name="clock-counter-clockwise" />
+                  {{ t('reminders.snooze1h') }}
+                </button>
+                <button type="button" class="menu-item" role="menuitem" (click)="onSnooze(s, 24)">
+                  <mc-icon name="clock-counter-clockwise" />
+                  {{ t('reminders.snooze1d') }}
+                </button>
+                <button
+                  type="button"
+                  class="menu-item"
+                  role="menuitem"
+                  (click)="onSnoozeNextMonday(s)"
+                >
+                  <mc-icon name="clock-counter-clockwise" />
+                  {{ t('reminders.snoozeNextMonday') }}
+                </button>
+                <button
+                  type="button"
+                  class="menu-item"
+                  role="menuitem"
+                  (click)="onSnoozeWeekend(s)"
+                >
+                  <mc-icon name="clock-counter-clockwise" />
+                  {{ t('reminders.snoozeWeekend') }}
+                </button>
+                @if (!e.readOnlyTitle) {
+                  <button type="button" class="menu-item" role="menuitem" (click)="onDuplicate(s)">
+                    <mc-icon name="copy" />
+                    {{ t('reminders.duplicate') }}
+                  </button>
+                }
+                <button
+                  type="button"
+                  class="menu-item danger"
+                  role="menuitem"
+                  (click)="onDelete(s)"
+                >
+                  <mc-icon name="trash" />
+                  {{ t('common.delete') }}
+                </button>
+              </div>
+            }
+          </div>
           <button type="button" class="primary" (click)="onSaveEdit()">
             <mc-icon name="check" />
             {{ t('common.save') }}
