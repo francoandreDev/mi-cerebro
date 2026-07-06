@@ -47,4 +47,41 @@ describe('applyOrphanFlags', () => {
     const out = applyOrphanFlags(list, new Set(['p-1']));
     expect(out).toBe(list);
   });
+
+  // 19.16e-iii
+  it('marks a range anchor orphaned when its start block is gone', () => {
+    const list = [
+      c({
+        anchorType: 'range',
+        anchor: 'p-2',
+        span: { startBlockId: 'gone', startOffset: 0, endBlockId: 'p-2', endOffset: 3 },
+      }),
+    ];
+    const out = applyOrphanFlags(list, new Set(['p-2']));
+    expect(out[0]!.orphaned).toBe(true);
+  });
+
+  it('marks a range anchor orphaned when its end block is gone', () => {
+    const list = [
+      c({
+        anchorType: 'range',
+        anchor: 'gone',
+        span: { startBlockId: 'p-1', startOffset: 0, endBlockId: 'gone', endOffset: 3 },
+      }),
+    ];
+    const out = applyOrphanFlags(list, new Set(['p-1']));
+    expect(out[0]!.orphaned).toBe(true);
+  });
+
+  it('does not orphan a range anchor when a block between start and end is deleted', () => {
+    const list = [
+      c({
+        anchorType: 'range',
+        anchor: 'p-3',
+        span: { startBlockId: 'p-1', startOffset: 0, endBlockId: 'p-3', endOffset: 3 },
+      }),
+    ];
+    const out = applyOrphanFlags(list, new Set(['p-1', 'p-3']));
+    expect(out[0]!.orphaned).toBe(false);
+  });
 });

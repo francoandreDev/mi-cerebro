@@ -25,6 +25,8 @@ export interface SetupEditorContext {
   readonly editable: boolean;
   readonly onCloudClick: (commentId: string) => void;
   readonly cloudAriaLabel: () => string;
+  readonly onDraftInsertClick: (markId: string) => void;
+  readonly draftInsertAriaLabel: () => string;
   readonly onUpdate: (editor: Editor) => void;
   readonly onSelectionUpdate: (editor: Editor) => void;
   readonly getComments: () => readonly Comment[];
@@ -39,7 +41,10 @@ export const createEditorInstance = (ctx: SetupEditorContext): Editor =>
       createHighlightExtension(),
       createBlockIdExtension(),
       createImageRefNode(ctx.reader),
-      createDraftDecorationsExtension(),
+      createDraftDecorationsExtension({
+        onClick: ctx.onDraftInsertClick,
+        ariaLabel: ctx.draftInsertAriaLabel,
+      }),
       createCommentCloudsExtension({
         onClick: ctx.onCloudClick,
         ariaLabel: ctx.cloudAriaLabel,

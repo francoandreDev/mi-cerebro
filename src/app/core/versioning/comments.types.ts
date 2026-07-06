@@ -15,8 +15,11 @@ export const commentsFilepath = (entityId: string): string => `${COMMENTS_DIR}/$
 // 'block'  → anchor === blockId from the BLOCK_ID_ATTR extension. The
 //            anchor sticks to the block across edits; if the block is
 //            deleted, the comment is marked `orphaned: true`.
-// 'range'  is intentionally absent — diferido a pulido posterior (§19).
-export type CommentAnchorType = 'entity' | 'block';
+// 'range'  → 19.16e-iii, a selection crossing two or more blocks. `anchor`
+//            mirrors `span.endBlockId` (so `block`-only consumers that just
+//            read `anchor` still get a sensible single id); the full shape
+//            lives in `span`.
+export type CommentAnchorType = 'entity' | 'block' | 'range';
 
 // 13g-i — Optional offsets *within* the anchor block's content (ProseMirror
 // positions relative to `blockStart + 1`). When present, the cloud is
@@ -28,11 +31,26 @@ export interface CommentRange {
   readonly to: number;
 }
 
+// 19.16e-iii — Anchor shape for a comment whose selection crosses block
+// boundaries. Offsets are relative to each endpoint block's own content
+// start, mirroring `CommentRange`. A middle block being deleted does not
+// orphan the comment (the span just spans less content); the comment only
+// orphans when `startBlockId` or `endBlockId` itself is gone, or when the
+// mapped span collapses (`endOffset <= startOffset` once both resolve into
+// the same block).
+export interface CommentSpan {
+  readonly startBlockId: string;
+  readonly startOffset: number;
+  readonly endBlockId: string;
+  readonly endOffset: number;
+}
+
 export interface Comment {
   readonly id: string;
   readonly anchorType: CommentAnchorType;
   readonly anchor: string;
   readonly range?: CommentRange;
+  readonly span?: CommentSpan;
   readonly body: JSONContent;
   readonly createdAt: string;
   readonly updatedAt: string;

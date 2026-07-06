@@ -85,6 +85,7 @@ export class DraftsPanelContainer {
   readonly entityId = input.required<string>();
   readonly entityTitle = input<string>('');
   readonly value = input<JSONContent | null>(null);
+  readonly focusId = input<string | null>(null);
   readonly closed = output<void>();
   readonly applyToDoc = output<JSONContent>();
   readonly marksChange = output<readonly DiffMark[]>();
@@ -118,6 +119,15 @@ export class DraftsPanelContainer {
           return;
         }
         void this.loadFor(id);
+      },
+      { injector: this.injector },
+    );
+    // 19.16e-iv — the inline insertion-only widget opens this panel with a
+    //      target mark id; jump the selection to it once the list arrives.
+    effect(
+      () => {
+        const id = this.focusId();
+        if (id) this.selectedId.set(id);
       },
       { injector: this.injector },
     );

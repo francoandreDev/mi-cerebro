@@ -37,6 +37,7 @@ import { I18nService } from '@core/i18n/i18n.service';
 import { ImagePickerDialogComponent } from './image-picker-dialog.component';
 import {
   blockIdAtSelection,
+  blockSpanAtSelection,
   cloudRect,
   rangeWithinBlockAtSelection,
   selectionRect,
@@ -78,6 +79,7 @@ export class EditorComponent {
   protected readonly view = signal<'clean' | 'combined'>('clean');
   protected readonly commentsIndexOpen = signal(false);
   protected readonly draftsIndexOpen = signal(false);
+  protected readonly draftFocusId = signal<string | null>(null);
   protected readonly bubble = signal<{ top: number; left: number } | null>(null);
   protected readonly draftSession = new DraftSessionController({
     drafts: this.drafts,
@@ -141,10 +143,14 @@ export class EditorComponent {
     const ed = this.editor;
     if (!ed || !this.commentsAvailable() || !this.hasNonEmptySelection(ed)) return;
     this.ensureCombined();
+    // 19.16e-iii — a selection crossing blocks reports a span instead of a
+    //      single blockId/range pair.
+    const span = blockSpanAtSelection(ed);
     this.commentsCoord.openNew(
-      blockIdAtSelection(ed),
+      span ? null : blockIdAtSelection(ed),
       selectionRect(ed, this.host().nativeElement),
-      rangeWithinBlockAtSelection(ed),
+      span ? null : rangeWithinBlockAtSelection(ed),
+      span,
     );
   }
 
@@ -176,6 +182,13 @@ export class EditorComponent {
 
   protected onOpenCommentFromIndex(commentId: string): void {
     this.commentsCoord.openExisting(commentId, cloudRect(this.host().nativeElement, commentId));
+  }
+
+  // 19.16e-iv — clicking the inline ghost widget for an insertion-only
+  //      diff-mark opens the drafts popover pre-selected on that mark.
+  protected onDraftInsertClick(markId: string): void {
+    this.draftFocusId.set(markId);
+    this.draftsIndexOpen.set(true);
   }
 
   @HostListener('document:keydown.escape', ['$event'])
@@ -294,6 +307,8 @@ export class EditorComponent {
       onCloudClick: (id) =>
         this.commentsCoord.openExisting(id, cloudRect(this.host().nativeElement, id)),
       cloudAriaLabel: () => this.i18n.t('editor.cloud.aria'),
+      onDraftInsertClick: (markId) => this.onDraftInsertClick(markId),
+      draftInsertAriaLabel: () => this.i18n.t('editor.draftInsert.aria'),
       onUpdate: (ed) => this.onEditorUpdate(ed),
       onSelectionUpdate: (ed) => this.onEditorSelectionUpdate(ed),
       getComments: () => this.commentsCoord.list(),

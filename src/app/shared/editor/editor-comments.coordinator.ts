@@ -9,7 +9,7 @@ import type { JSONContent } from '@tiptap/core';
 
 import type { CommentRangeUpdate } from '@core/tiptap/comment-range-mapping/comment-range-mapping.ext';
 import type { CommentsService } from '@core/versioning/comments.service';
-import type { Comment, CommentRange } from '@core/versioning/comments.types';
+import type { Comment, CommentRange, CommentSpan } from '@core/versioning/comments.types';
 
 import type { PopoverPosition } from './comment-popover.component';
 
@@ -32,6 +32,7 @@ export interface PopoverState {
   readonly commentId: string | null;
   readonly blockId: string | null;
   readonly range: CommentRange | null;
+  readonly span: CommentSpan | null;
   readonly body: string;
   readonly position: PopoverPosition;
   readonly error: string;
@@ -62,16 +63,21 @@ export class EditorCommentsCoordinator {
     }
   }
 
+  // 19.16e-iii — `span` takes priority over `blockId`/`range`: a selection
+  //      that crosses blocks is reported by the caller as a span and never
+  //      also carries a single-block range.
   openNew(
     blockId: string | null,
     position: PopoverPosition,
     range: CommentRange | null = null,
+    span: CommentSpan | null = null,
   ): void {
     this.popover.set({
       mode: 'new',
       commentId: null,
-      blockId,
-      range: blockId ? range : null,
+      blockId: span ? null : blockId,
+      range: span ? null : blockId ? range : null,
+      span,
       body: '',
       position,
       error: '',
@@ -88,6 +94,7 @@ export class EditorCommentsCoordinator {
       commentId,
       blockId: comment.anchorType === 'block' ? comment.anchor : null,
       range: comment.range ?? null,
+      span: comment.anchorType === 'range' ? (comment.span ?? null) : null,
       body: extractText(comment.body),
       position,
       error: '',
@@ -162,11 +169,13 @@ export class EditorCommentsCoordinator {
   //      accurate) and debounces the disk flush.
   applyRangeUpdates(updates: readonly CommentRangeUpdate[]): void {
     if (updates.length === 0) return;
-    const byId = new Map(updates.map((u) => [u.id, u]));
+    const byId = new Map(updates.map((u): [string, CommentRangeUpdate] => [u.id, u]));
     const next = this.list().map((c) => {
       const u = byId.get(c.id);
       if (!u) return c;
-      return 'orphaned' in u ? { ...c, orphaned: true } : { ...c, range: u.range, orphaned: false };
+      if ('orphaned' in u) return { ...c, orphaned: true };
+      if ('span' in u) return { ...c, span: u.span, orphaned: false };
+      return { ...c, range: u.range, orphaned: false };
     });
     this.list.set(next);
     this.ctx.pushClouds(next);
@@ -191,14 +200,18 @@ export class EditorCommentsCoordinator {
     const now = new Date().toISOString();
     const base: Comment = {
       id: crypto.randomUUID(),
-      anchorType: state.blockId ? 'block' : 'entity',
-      anchor: state.blockId ?? entityId,
+      anchorType: state.span ? 'range' : state.blockId ? 'block' : 'entity',
+      anchor: state.span ? state.span.endBlockId : (state.blockId ?? entityId),
       body: textToDoc(body),
       createdAt: now,
       updatedAt: now,
       orphaned: false,
     };
-    const next: Comment = state.range ? { ...base, range: state.range } : base;
+    const next: Comment = state.span
+      ? { ...base, span: state.span }
+      : state.range
+        ? { ...base, range: state.range }
+        : base;
     return [...this.list(), next];
   }
 

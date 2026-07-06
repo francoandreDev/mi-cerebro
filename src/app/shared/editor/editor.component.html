@@ -54,6 +54,7 @@
       [entityId]="entityId()"
       [entityTitle]="entityTitle()"
       [value]="value()"
+      [focusId]="draftFocusId()"
       (closed)="draftsIndexOpen.set(false)"
       (applyToDoc)="onAcceptApply($event)"
       (marksChange)="onDraftMarksChange($event)"

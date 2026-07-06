@@ -281,4 +281,43 @@ describe('CommentsService', () => {
       svc.validateAnchor({ anchorType: 'block', anchor: 'present' }, new Set<string>(['present'])),
     ).not.toThrow();
   });
+
+  // 19.16e-iii
+  it('validateAnchor throws VER-021 when a `range` anchor is missing a span', () => {
+    try {
+      svc.validateAnchor({ anchorType: 'range', anchor: 'end' }, new Set<string>(['start', 'end']));
+      throw new Error('should have thrown');
+    } catch (err) {
+      expect((err as AppError).code).toBe('MCB-VER-021');
+    }
+  });
+
+  it('validateAnchor throws VER-021 when a `range` anchor endpoint is not in the doc', () => {
+    try {
+      svc.validateAnchor(
+        {
+          anchorType: 'range',
+          anchor: 'end',
+          span: { startBlockId: 'start', startOffset: 0, endBlockId: 'gone', endOffset: 1 },
+        },
+        new Set<string>(['start']),
+      );
+      throw new Error('should have thrown');
+    } catch (err) {
+      expect((err as AppError).code).toBe('MCB-VER-021');
+    }
+  });
+
+  it('validateAnchor accepts a `range` anchor whose endpoints are both in the doc', () => {
+    expect(() =>
+      svc.validateAnchor(
+        {
+          anchorType: 'range',
+          anchor: 'end',
+          span: { startBlockId: 'start', startOffset: 0, endBlockId: 'end', endOffset: 1 },
+        },
+        new Set<string>(['start', 'end']),
+      ),
+    ).not.toThrow();
+  });
 });

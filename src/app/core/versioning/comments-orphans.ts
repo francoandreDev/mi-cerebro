@@ -8,6 +8,12 @@
 // keep the UI honest — but we re-apply before save so the rama comments
 // reflects truth at write time and downstream consumers (search index,
 // merge) see consistent state.
+//
+// 19.16e-iii — `range`-anchored comments (multi-block spans) extend the
+// same membership check to both endpoints: `startBlockId` and
+// `endBlockId` must both still be in the doc. A block *between* the two
+// endpoints being deleted does not orphan the comment — the span just
+// covers less content, same as trimming a single-block range.
 
 import type { Comment } from './comments.types';
 
@@ -19,7 +25,7 @@ export function applyOrphanFlags(
 ): readonly Comment[] {
   let changed = false;
   const next = comments.map((c) => {
-    if (c.anchorType !== 'block') {
+    if (c.anchorType === 'entity') {
       if (c.orphaned) {
         // why: entity-anchored comments can never go orphan. If a stale
         //      `orphaned: true` ever sneaks in, normalize it.
@@ -28,7 +34,12 @@ export function applyOrphanFlags(
       }
       return c;
     }
-    const shouldBeOrphan = !blockIdsInDoc.has(c.anchor);
+    const shouldBeOrphan =
+      c.anchorType === 'block'
+        ? !blockIdsInDoc.has(c.anchor)
+        : !c.span ||
+          !blockIdsInDoc.has(c.span.startBlockId) ||
+          !blockIdsInDoc.has(c.span.endBlockId);
     if (c.orphaned === shouldBeOrphan) return c;
     changed = true;
     return { ...c, orphaned: shouldBeOrphan };

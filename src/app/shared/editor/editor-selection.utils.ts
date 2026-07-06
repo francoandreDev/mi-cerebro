@@ -4,8 +4,10 @@
 // doesn't carry geometry math in its body.
 
 import type { Editor } from '@tiptap/core';
+import type { ResolvedPos } from '@tiptap/pm/model';
 
 import { BLOCK_ID_ATTR } from '@core/tiptap/block-id/block-id.types';
+import type { CommentSpan } from '@core/versioning/comments.types';
 
 export interface LocalPosition {
   readonly top: number;
@@ -55,6 +57,43 @@ export const rangeWithinBlockAtSelection = (
     );
     if (to <= from) return null;
     return { from, to };
+  }
+  return null;
+};
+
+// 19.16e-iii — Span of the current selection when it crosses two or more
+// blocks. Returns null when the selection is empty or confined to a single
+// block (the existing `rangeWithinBlockAtSelection` path handles that
+// case). Each endpoint's offset is relative to its own block's content
+// start, clamped to that block's bounds.
+export const blockSpanAtSelection = (editor: Editor): CommentSpan | null => {
+  const sel = editor.state.selection;
+  if (sel.from === sel.to) return null;
+  const start = blockBoundsAt(sel.$from);
+  if (!start) return null;
+  const end = blockBoundsAt(editor.state.doc.resolve(sel.to));
+  if (!end || start.id === end.id) return null;
+  return {
+    startBlockId: start.id,
+    startOffset: Math.max(0, sel.from - start.contentStart),
+    endBlockId: end.id,
+    endOffset: Math.max(0, Math.min(end.contentEnd - end.contentStart, sel.to - end.contentStart)),
+  };
+};
+
+interface BlockBounds {
+  readonly id: string;
+  readonly contentStart: number;
+  readonly contentEnd: number;
+}
+
+const blockBoundsAt = ($pos: ResolvedPos): BlockBounds | null => {
+  for (let depth = $pos.depth; depth >= 0; depth--) {
+    const node = $pos.node(depth);
+    const id = node.attrs?.[BLOCK_ID_ATTR] as string | undefined;
+    if (!id) continue;
+    const contentStart = $pos.start(depth);
+    return { id, contentStart, contentEnd: contentStart + node.content.size };
   }
   return null;
 };

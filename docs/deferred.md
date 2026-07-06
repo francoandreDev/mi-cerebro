@@ -77,17 +77,15 @@ Formato por entrada:
 
 ## Versionado y variantes (origen: paso 13)
 
-### Anchor `range` multi-bloque (selección que cruza párrafos)
+### ~~Anchor `range` multi-bloque (selección que cruza párrafos)~~ (resuelto en §19.16e-iii)
 
 - **Qué**: hoy `range` queda confinado al bloque donde está `$from`. Selecciones que cruzan dos o más bloques caen al anchor `block` del primero (sin range). Comentar a través de párrafos no se soporta.
-- **Por qué**: requiere un modelo de anchor distinto (lista de `{ blockId, from, to }` o un par `{ startBlockId, startOffset, endBlockId, endOffset }`), nuevo orphan handling (¿qué pasa si se borra el bloque del medio?), y renderer que dibuje la nube en el último bloque del span. El caso es minoritario.
-- **Target**: §19.16e-iii (pulido del editor).
+- **Estado**: cerrado. Nuevo `CommentAnchorType` `'range'` + `Comment.span: { startBlockId, startOffset, endBlockId, endOffset }` (par de endpoints, no lista — más simple de mapear/orphanar). Orphan handling en `comments-orphans.ts`: sólo se marca huérfano si `startBlockId` o `endBlockId` desaparecen; un bloque borrado _entre_ medio no orphana (el span simplemente cubre menos contenido). `comment-range-mapping.ext.ts` trackea ambos endpoints como posiciones absolutas (igual que el `range` de un solo bloque — `tr.mapping` no distingue bloques) y los re-resuelve a bloque/offset en cada `view.update` vía lookup inverso posición→bloque. `comment-clouds.ext.ts` dibuja la nube al final del último bloque del span y una única decoración inline que cruza los nodos intermedios sin clamping (ProseMirror lo permite nativamente). Creación: `blockSpanAtSelection` en `editor-selection.utils.ts` detecta selección cross-block comparando el blockId en `$from` vs `$to`.
 
-### Widget render para diff-marks de tipo "insertion-only"
+### ~~Widget render para diff-marks de tipo "insertion-only"~~ (resuelto en §19.16e-iv)
 
-- **Qué**: los diff-marks que insertan bloques enteros sin anchor en `main` (caso raro: marks heredados pre-rediseño, o resultantes de un merge entre variantes) no tienen punto de inserción inline natural. El renderizado base con decoraciones ProseMirror cubre todos los marks anclados a un punto/rango en `main`; los insertion-only sin anchor quedan listados en el popover de pendientes hasta que se acepten/rechacen.
-- **Por qué**: pintarlos requeriría un mini-renderer JSON→DOM consistente con el theme del editor para un widget fantasma dentro del ProseMirror. Caso minoritario; el popover ya los expone.
-- **Target**: §19.16e-iv (pulido del editor).
+- **Qué**: los diff-marks que insertan bloques enteros sin anchor en `main` no tenían punto de inserción inline natural y quedaban listados sólo en el popover de pendientes.
+- **Estado**: cerrado. Nuevo mini-renderer JSON→DOM puro (`core/tiptap/draft-decorations/diff-mark-preview.ts`) cubre el subset de nodos/marcas que produce el editor (paragraph/heading/blockquote/lists/codeBlock/horizontalRule + bold/italic/strike/code/highlight), con fallback a `div` para cualquier tipo de nodo inesperado. `draft-decorations.ext.ts` lo usa para pintar cada mark `insert` (anchorType `block`) como un widget decoration (`Decoration.widget`) al final del doc — mismo punto donde `applyMarkToDoc` los aplica al aceptar — en vez de dejarlos sin renderizar como antes. El widget (`.mc-draft-insert`) es no editable (`contenteditable="false"`), clickeable, y delega el click a `EditorComponent.onDraftInsertClick`, que abre el popover de borradores con ese mark pre-seleccionado (nuevo input `focusId` en `DraftsPanelContainer`). Los marks `insert` con `anchorType: 'doc'` siguen sin renderizado inline (son el fallback raro de todo-el-documento); el popover sigue siendo la única vía para esos y para accept/reject de cualquier mark.
 
 ### Granularidad por faceta dentro del bundle de merge
 

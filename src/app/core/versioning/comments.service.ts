@@ -79,14 +79,20 @@ export class CommentsService {
   }
 
   // Pure validation used by the panel (13c-iii) before persisting a new
-  // `block` anchor. Throws VER-021 if the anchor does not exist in the
-  // doc the user is currently looking at. No I/O.
+  // `block` or `range` (19.16e-iii) anchor. Throws VER-021 if the anchor
+  // does not exist in the doc the user is currently looking at. No I/O.
   validateAnchor(
-    comment: Pick<Comment, 'anchorType' | 'anchor'>,
+    comment: Pick<Comment, 'anchorType' | 'anchor' | 'span'>,
     blockIdsInDoc: ReadonlySet<string>,
   ): void {
-    if (comment.anchorType !== 'block') return;
-    if (!blockIdsInDoc.has(comment.anchor)) {
+    if (comment.anchorType === 'entity') return;
+    const valid =
+      comment.anchorType === 'block'
+        ? blockIdsInDoc.has(comment.anchor)
+        : comment.span !== undefined &&
+          blockIdsInDoc.has(comment.span.startBlockId) &&
+          blockIdsInDoc.has(comment.span.endBlockId);
+    if (!valid) {
       throw new AppError(ERROR_CODES.VER_021, {
         severity: 'warning',
         context: { anchor: comment.anchor },

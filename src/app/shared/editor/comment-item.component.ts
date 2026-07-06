@@ -41,9 +41,14 @@ export class CommentItemComponent {
   }
 
   protected chipLabel(): string {
-    return this.comment().anchorType === 'entity'
-      ? this.t('comments.anchor.entity')
-      : this.t('comments.anchor.block');
+    switch (this.comment().anchorType) {
+      case 'entity':
+        return this.t('comments.anchor.entity');
+      case 'range':
+        return this.t('comments.anchor.range');
+      default:
+        return this.t('comments.anchor.block');
+    }
   }
 
   protected formatTime(iso: string): string {
