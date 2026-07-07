@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "fetch:yt-dlp": "node scripts/fetch-yt-dlp.mjs",
     "fetch:ffmpeg": "node scripts/fetch-ffmpeg.mjs",
+    "tauri": "tauri",
     "prepare": "husky"
   },
   "lint-staged": {
