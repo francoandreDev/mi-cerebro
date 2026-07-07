@@ -4,7 +4,7 @@
 // the threshold check is per-branch but the pass-level throttle is global.
 
 import type { FsService } from '@core/fs/fs.service';
-import type { FsDirectoryHandle } from '@core/fs/fs.types';
+import type { NativeDirRef } from '@core/fs/native-fs.types';
 
 export const COMPACTION_STATE_SCHEMA_VERSION = 1 as const;
 const META_DIR = '.mi-cerebro';
@@ -22,7 +22,7 @@ export const EMPTY_COMPACTION_STATE: CompactionState = {
 
 export async function readCompactionState(
   fs: FsService,
-  root: FsDirectoryHandle,
+  root: NativeDirRef,
 ): Promise<CompactionState> {
   try {
     const dir = await fs.getOrCreateDir(root, META_DIR);
@@ -39,7 +39,7 @@ export async function readCompactionState(
 
 export async function writeCompactionState(
   fs: FsService,
-  root: FsDirectoryHandle,
+  root: NativeDirRef,
   state: CompactionState,
 ): Promise<void> {
   const dir = await fs.getOrCreateDir(root, META_DIR);

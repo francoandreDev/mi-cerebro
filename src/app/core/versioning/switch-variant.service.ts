@@ -22,6 +22,7 @@ import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
 import { ErrorService } from '@core/errors/error.service';
 import { FsLockService } from '@core/fs/fs-lock.service';
+import { FsService } from '@core/fs/fs.service';
 import { WorkspaceRefreshService } from '@core/fs/workspace-refresh.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
 
@@ -47,6 +48,7 @@ export class SwitchVariantService {
   private readonly workspace = inject(WorkspaceService);
   private readonly fsLock = inject(FsLockService);
   private readonly errors = inject(ErrorService);
+  private readonly fs = inject(FsService);
 
   private readonly switchingSignal = signal<SwitchingState | null>(null);
   readonly switching = this.switchingSignal.asReadonly();
@@ -81,7 +83,7 @@ export class SwitchVariantService {
     if (!active) return;
     const root = this.workspace.root();
     if (!root) return;
-    const fs = new GitFsAdapter(root);
+    const fs = new GitFsAdapter(root, this.fs);
     let current: string | undefined;
     try {
       const ret = await git.currentBranch({ fs, dir: REPO_DIR });
@@ -142,7 +144,7 @@ export class SwitchVariantService {
         recoverable: true,
       });
     }
-    const fs = new GitFsAdapter(root);
+    const fs = new GitFsAdapter(root, this.fs);
 
     try {
       await this.autosave.flushAll();

@@ -15,6 +15,7 @@ import { AutosaveService } from '@core/autosave/autosave.service';
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
 import { FsLockService } from '@core/fs/fs-lock.service';
+import { FsService } from '@core/fs/fs.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
 
 import type { CompactionPlan, FuseGroup } from './compaction-plan';
@@ -43,6 +44,7 @@ export class CompactionService {
   private readonly versioning = inject(VersioningService);
   private readonly autosave = inject(AutosaveService);
   private readonly fsLock = inject(FsLockService);
+  private readonly fs = inject(FsService);
 
   // Pure-planner-shaped: full log of `ref` + peeled tag oids → plan.
   async planForBranch(ref: string): Promise<CompactionPlan> {
@@ -190,7 +192,7 @@ export class CompactionService {
         recoverable: true,
       });
     }
-    return new GitFsAdapter(root);
+    return new GitFsAdapter(root, this.fs);
   }
 }
 

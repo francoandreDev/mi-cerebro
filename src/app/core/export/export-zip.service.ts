@@ -4,7 +4,7 @@ import { zip, type Zippable } from 'fflate';
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
 import { FsService } from '@core/fs/fs.service';
-import type { FsDirectoryHandle } from '@core/fs/fs.types';
+import type { NativeDirRef } from '@core/fs/native-fs.types';
 import { WorkspaceService } from '@core/fs/workspace.service';
 
 import { buildZipFilename, shouldIncludeEntry } from './export-zip';
@@ -51,7 +51,7 @@ export class ExportZipService {
     this.progressSignal.set({ phase: 'idle', count: 0, total: 0 });
   }
 
-  private async collect(root: FsDirectoryHandle, opts: ExportOptions): Promise<Zippable> {
+  private async collect(root: NativeDirRef, opts: ExportOptions): Promise<Zippable> {
     const out: Zippable = {};
     await walkAndCollect(this.fs, root, '', opts, out, (count) => {
       this.progressSignal.set({ phase: 'walking', count, total: count });
@@ -62,23 +62,26 @@ export class ExportZipService {
 
 async function walkAndCollect(
   fs: FsService,
-  dir: FsDirectoryHandle,
+  dir: NativeDirRef,
   prefix: string,
   opts: ExportOptions,
   out: Zippable,
   onCount: (count: number) => void,
 ): Promise<void> {
-  for await (const [name, entry] of dir.entries()) {
+  for await (const name of fs.listFiles(dir)) {
     const rel = prefix === '' ? name : `${prefix}/${name}`;
     if (!shouldIncludeEntry(rel, opts)) continue;
-    if (entry.kind === 'file') {
-      const file = await (entry as FileSystemFileHandle).getFile();
-      const buf = new Uint8Array(await file.arrayBuffer());
-      out[rel] = buf;
-      onCount(Object.keys(out).length);
-    } else if (entry.kind === 'directory') {
-      await walkAndCollect(fs, entry as FsDirectoryHandle, rel, opts, out, onCount);
-    }
+    const file = await fs.readFile(dir, name);
+    const buf = new Uint8Array(await file.arrayBuffer());
+    out[rel] = buf;
+    onCount(Object.keys(out).length);
+  }
+  for await (const name of fs.listSubdirs(dir)) {
+    const rel = prefix === '' ? name : `${prefix}/${name}`;
+    if (!shouldIncludeEntry(rel, opts)) continue;
+    const sub = await fs.getDir(dir, name);
+    if (!sub) continue;
+    await walkAndCollect(fs, sub, rel, opts, out, onCount);
   }
 }
 

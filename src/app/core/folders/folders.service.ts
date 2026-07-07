@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
 import { FsService } from '@core/fs/fs.service';
-import type { FsDirectoryHandle } from '@core/fs/fs.types';
+import type { NativeDirRef } from '@core/fs/native-fs.types';
 import {
   getDirByPath,
   getOrCreateDirByPath,
@@ -199,7 +199,7 @@ export class FoldersService {
     else await this.files.refresh();
   }
 
-  private async kindRoot(kind: FolderKind): Promise<FsDirectoryHandle> {
+  private async kindRoot(kind: FolderKind): Promise<NativeDirRef> {
     const root = this.workspace.root();
     if (!root) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
     return this.fs.getOrCreateDir(root, KIND_DIRS[kind]);
@@ -211,8 +211,8 @@ const isInsideFolder = (entityFolder: string, folder: string): boolean =>
 
 const moveDirRecursive = async (
   fs: FsService,
-  src: FsDirectoryHandle,
-  dest: FsDirectoryHandle,
+  src: NativeDirRef,
+  dest: NativeDirRef,
 ): Promise<void> => {
   for await (const entry of walkEntities(fs, src, FILE_SUFFIX)) {
     const targetDir = await getOrCreateDirByPath(fs, dest, entry.folder);

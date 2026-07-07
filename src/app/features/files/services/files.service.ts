@@ -3,7 +3,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
 import { FsService } from '@core/fs/fs.service';
-import type { FsDirectoryHandle } from '@core/fs/fs.types';
+import type { NativeDirRef } from '@core/fs/native-fs.types';
 import { getDirByPath, getOrCreateDirByPath, joinPath } from '@core/fs/walk';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { MigrationsService } from '@core/migrations/migrations.service';
@@ -261,7 +261,7 @@ export class FilesService {
     await this.search.remove(id);
   }
 
-  async restoreFromDir(trashDayDir: FsDirectoryHandle, entryName: string): Promise<void> {
+  async restoreFromDir(trashDayDir: NativeDirRef, entryName: string): Promise<void> {
     const srcDir = await this.fs.getDir(trashDayDir, entryName);
     if (!srcDir) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
     const collection = await this.fs.readJson<FileCollection>(srcDir, COLLECTION_META_FILE);
@@ -304,7 +304,7 @@ export class FilesService {
   }
 
   private async walkCollections(
-    dir: FsDirectoryHandle,
+    dir: NativeDirRef,
     folder: string,
     summaries: FileCollectionSummary[],
     folders: string[],
@@ -333,7 +333,7 @@ export class FilesService {
     }
   }
 
-  private requireRoot(): FsDirectoryHandle {
+  private requireRoot(): NativeDirRef {
     const root = this.workspace.root();
     if (!root) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
     return root;
@@ -345,16 +345,16 @@ export class FilesService {
     return loc;
   }
 
-  private async filesDir(): Promise<FsDirectoryHandle> {
+  private async filesDir(): Promise<NativeDirRef> {
     return this.fs.getOrCreateDir(this.requireRoot(), FILES_DIR);
   }
 
-  private async getFolderDir(folder: string): Promise<FsDirectoryHandle | null> {
+  private async getFolderDir(folder: string): Promise<NativeDirRef | null> {
     const root = await this.filesDir();
     return getDirByPath(this.fs, root, folder);
   }
 
-  private async collectionDir(id: string): Promise<FsDirectoryHandle> {
+  private async collectionDir(id: string): Promise<NativeDirRef> {
     const loc = this.requireLoc(id);
     const parent = await this.getFolderDir(loc.folder);
     if (!parent) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
@@ -363,7 +363,7 @@ export class FilesService {
     return dir;
   }
 
-  private async trashDir(root: FsDirectoryHandle): Promise<FsDirectoryHandle> {
+  private async trashDir(root: NativeDirRef): Promise<NativeDirRef> {
     const meta = await this.fs.getOrCreateDir(root, TRASH_DIR);
     const trash = await this.fs.getOrCreateDir(meta, TRASH_SUBDIR);
     const today = new Date().toISOString().slice(0, 10).replace(/-/g, '/');
@@ -374,7 +374,7 @@ export class FilesService {
     return cursor;
   }
 
-  private async allocSlug(dir: FsDirectoryHandle, title: string): Promise<string> {
+  private async allocSlug(dir: NativeDirRef, title: string): Promise<string> {
     const base = toSlug(title, 'coleccion');
     for (let n = 1; n < 1000; n++) {
       const candidate = withSuffix(base, n);
@@ -383,7 +383,7 @@ export class FilesService {
     throw new AppError(ERROR_CODES.FS_001, { severity: 'error', context: { base } });
   }
 
-  private async allocAvailableDir(dir: FsDirectoryHandle, name: string): Promise<string> {
+  private async allocAvailableDir(dir: NativeDirRef, name: string): Promise<string> {
     if (!(await this.fs.hasEntry(dir, name))) return name;
     for (let n = 1; n < 1000; n++) {
       const candidate = `${name}-${n}`;
@@ -451,8 +451,8 @@ const lastPosition = (list: readonly FileCollectionSummary[]): string | null => 
 
 const moveCollectionDir = async (
   fs: FsService,
-  src: FsDirectoryHandle,
-  dest: FsDirectoryHandle,
+  src: NativeDirRef,
+  dest: NativeDirRef,
 ): Promise<void> => {
   for await (const filename of fs.listFiles(src)) {
     await fs.moveFile(src, filename, dest, filename);

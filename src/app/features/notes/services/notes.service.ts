@@ -3,7 +3,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
 import { FsService } from '@core/fs/fs.service';
-import type { FsDirectoryHandle } from '@core/fs/fs.types';
+import type { NativeDirRef } from '@core/fs/native-fs.types';
 import {
   getDirByPath,
   getOrCreateDirByPath,
@@ -212,7 +212,7 @@ export class NotesService {
   //      so the user sees a clean list. Anything else (truly corrupt JSON,
   //      permission failure) we leave in place and just log.
   private async dropIfEmpty(
-    dir: FsDirectoryHandle,
+    dir: NativeDirRef,
     filename: string,
     relativePath: string,
     cause: unknown,
@@ -234,17 +234,17 @@ export class NotesService {
     this.idToPath.set(id, relativePath);
   }
 
-  private requireRoot(): FsDirectoryHandle {
+  private requireRoot(): NativeDirRef {
     const root = this.workspace.root();
     if (!root) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
     return root;
   }
 
-  private async notesDir(): Promise<FsDirectoryHandle> {
+  private async notesDir(): Promise<NativeDirRef> {
     return this.fs.getOrCreateDir(this.requireRoot(), NOTES_DIR);
   }
 
-  private async trashDir(root: FsDirectoryHandle): Promise<FsDirectoryHandle> {
+  private async trashDir(root: NativeDirRef): Promise<NativeDirRef> {
     const meta = await this.fs.getOrCreateDir(root, TRASH_DIR);
     const trash = await this.fs.getOrCreateDir(meta, TRASH_SUBDIR);
     const today = new Date().toISOString().slice(0, 10).replace(/-/g, '/');
@@ -255,7 +255,7 @@ export class NotesService {
     return cursor;
   }
 
-  private async findPath(dir: FsDirectoryHandle, id: string): Promise<string> {
+  private async findPath(dir: NativeDirRef, id: string): Promise<string> {
     const cached = this.idToPath.get(id);
     if (cached) return cached;
     for await (const entry of walkEntities(this.fs, dir, NOTE_FILE_SUFFIX)) {
@@ -272,7 +272,7 @@ export class NotesService {
     throw new AppError(ERROR_CODES.FS_003, { severity: 'error', context: { id } });
   }
 
-  private async allocFilename(dir: FsDirectoryHandle, title: string): Promise<string> {
+  private async allocFilename(dir: NativeDirRef, title: string): Promise<string> {
     const base = toSlug(title);
     for (let n = 1; n < 1000; n++) {
       const candidate = `${withSuffix(base, n)}${NOTE_FILE_SUFFIX}`;
@@ -285,7 +285,7 @@ export class NotesService {
     });
   }
 
-  private async allocAvailable(dir: FsDirectoryHandle, name: string): Promise<string> {
+  private async allocAvailable(dir: NativeDirRef, name: string): Promise<string> {
     if (!(await this.fs.hasEntry(dir, name))) return name;
     const dot = name.lastIndexOf('.');
     const stem = dot >= 0 ? name.slice(0, dot) : name;

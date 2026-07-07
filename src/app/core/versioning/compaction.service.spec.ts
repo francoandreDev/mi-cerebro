@@ -9,12 +9,16 @@ import * as git from 'isomorphic-git';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { AutosaveService } from '../autosave/autosave.service';
+import { BrowserNativeFs } from '../fs/adapters/browser-native-fs';
 import { FsLockService } from '../fs/fs-lock.service';
 import type { FsDirectoryHandle } from '../fs/fs.types';
+import { NATIVE_FS } from '../fs/native-fs';
 import { WorkspaceService } from '../fs/workspace.service';
 
 import { CompactionService } from './compaction.service';
 import { GitFsAdapter } from './git-fs.adapter';
+
+const nativeFs = new BrowserNativeFs();
 
 class NotFound extends DOMException {
   constructor() {
@@ -57,7 +61,10 @@ class MockFileHandle {
   kind = 'file' as const;
   contents = new Uint8Array();
   lastModified = mockClock;
-  constructor(public readonly name: string) {}
+  constructor(
+    public name: string,
+    private parent?: MockDirHandle,
+  ) {}
   async getFile(): Promise<MockFile> {
     const f = new MockFile(this.contents);
     f.size = this.contents.byteLength;
@@ -67,39 +74,50 @@ class MockFileHandle {
   async createWritable(): Promise<MockWritable> {
     return new MockWritable(this);
   }
+  async move(dest: MockDirHandle, newName?: string): Promise<void> {
+    const targetName = newName ?? this.name;
+    if (this.parent) this.parent.children.delete(this.name);
+    this.name = targetName;
+    this.parent = dest;
+    dest.children.set(targetName, this);
+  }
 }
 class MockDirHandle {
-  kind = 'dir' as const;
-  readonly entries = new Map<string, MockDirHandle | MockFileHandle>();
+  kind = 'directory' as const;
+  readonly children = new Map<string, MockDirHandle | MockFileHandle>();
   constructor(public readonly name = '/') {}
   async getDirectoryHandle(name: string, opts?: { create?: boolean }): Promise<MockDirHandle> {
-    const e = this.entries.get(name);
-    if (e && e.kind === 'dir') return e;
+    const e = this.children.get(name);
+    if (e && e.kind === 'directory') return e;
     if (e && e.kind === 'file') throw new TypeMismatch();
     if (opts?.create) {
       const created = new MockDirHandle(name);
-      this.entries.set(name, created);
+      this.children.set(name, created);
       return created;
     }
     throw new NotFound();
   }
   async getFileHandle(name: string, opts?: { create?: boolean }): Promise<MockFileHandle> {
-    const e = this.entries.get(name);
+    const e = this.children.get(name);
     if (e && e.kind === 'file') return e;
-    if (e && e.kind === 'dir') throw new TypeMismatch();
+    if (e && e.kind === 'directory') throw new TypeMismatch();
     if (opts?.create) {
-      const created = new MockFileHandle(name);
-      this.entries.set(name, created);
+      const created = new MockFileHandle(name, this);
+      this.children.set(name, created);
       return created;
     }
     throw new NotFound();
   }
   async removeEntry(name: string): Promise<void> {
-    if (!this.entries.has(name)) throw new NotFound();
-    this.entries.delete(name);
+    if (!this.children.has(name)) throw new NotFound();
+    this.children.delete(name);
   }
   async *keys(): AsyncIterable<string> {
-    for (const k of this.entries.keys()) yield k;
+    for (const k of this.children.keys()) yield k;
+  }
+
+  async *entries(): AsyncIterable<[string, MockDirHandle | MockFileHandle]> {
+    for (const [k, v] of this.children) yield [k, v];
   }
 }
 
@@ -109,7 +127,7 @@ const DAY = 86_400_000;
 async function seed(): Promise<{ root: FsDirectoryHandle; fs: GitFsAdapter }> {
   const mock = new MockDirHandle();
   const root = mock as unknown as FsDirectoryHandle;
-  const fs = new GitFsAdapter(root);
+  const fs = new GitFsAdapter(root, nativeFs);
   await git.init({ fs, dir: '/', defaultBranch: 'main' });
   return { root, fs };
 }
@@ -137,8 +155,8 @@ function getDirByPath(mock: MockDirHandle, path: string): MockDirHandle | null {
   const parts = path.split('/').filter(Boolean);
   let cur: MockDirHandle = mock;
   for (const p of parts) {
-    const e = cur.entries.get(p);
-    if (!e || e.kind !== 'dir') return null;
+    const e = cur.children.get(p);
+    if (!e || e.kind !== 'directory') return null;
     cur = e;
   }
   return cur;
@@ -158,6 +176,7 @@ describe('CompactionService', () => {
       providers: [
         { provide: WorkspaceService, useValue: { root: () => root } },
         { provide: AutosaveService, useValue: { flushAll: async () => undefined } },
+        { provide: NATIVE_FS, useValue: nativeFs },
         FsLockService,
       ],
     });
@@ -213,11 +232,11 @@ describe('CompactionService', () => {
     const mock = root as unknown as MockDirHandle;
     const snapshotRoot = getDirByPath(mock, '.mi-cerebro/pre-compaction');
     expect(snapshotRoot).not.toBeNull();
-    const stamps = Array.from(snapshotRoot!.entries.keys());
+    const stamps = Array.from(snapshotRoot!.children.keys());
     expect(stamps.length).toBe(1);
     const branchDir = getDirByPath(mock, `.mi-cerebro/pre-compaction/${stamps[0]}/main`);
     expect(branchDir).not.toBeNull();
-    const planFile = branchDir!.entries.get('plan.json');
+    const planFile = branchDir!.children.get('plan.json');
     expect(planFile?.kind).toBe('file');
     const payload = JSON.parse(new TextDecoder().decode((planFile as MockFileHandle).contents)) as {
       ref: string;

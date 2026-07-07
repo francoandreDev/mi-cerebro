@@ -8,6 +8,7 @@ import * as git from 'isomorphic-git';
 
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
+import { FsService } from '@core/fs/fs.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
 
 import { GitFsAdapter } from './git-fs.adapter';
@@ -25,6 +26,7 @@ export interface CommitSummary {
 @Injectable({ providedIn: 'root' })
 export class VersioningService {
   private readonly workspace = inject(WorkspaceService);
+  private readonly fs = inject(FsService);
   private adapter: GitFsAdapter | null = null;
 
   private requireAdapter(): GitFsAdapter {
@@ -37,7 +39,7 @@ export class VersioningService {
         recoverable: true,
       });
     }
-    this.adapter = new GitFsAdapter(root);
+    this.adapter = new GitFsAdapter(root, this.fs);
     return this.adapter;
   }
 

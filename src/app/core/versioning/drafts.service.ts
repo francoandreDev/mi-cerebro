@@ -9,6 +9,7 @@ import { Injectable, inject } from '@angular/core';
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
 import { FsLockService } from '@core/fs/fs-lock.service';
+import { FsService } from '@core/fs/fs.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
 
 import { readBranchBlob, writeBranchBlob } from './branch-blob-ops';
@@ -31,6 +32,7 @@ export class DraftsService {
   private readonly workspace = inject(WorkspaceService);
   private readonly variants = inject(VariantsService);
   private readonly fsLock = inject(FsLockService);
+  private readonly fs = inject(FsService);
 
   async read(entityId: string): Promise<DraftsFile> {
     const ref = this.requireActive().refs.draft;
@@ -116,7 +118,7 @@ export class DraftsService {
         recoverable: true,
       });
     }
-    return new GitFsAdapter(root);
+    return new GitFsAdapter(root, this.fs);
   }
 
   private io(cause: unknown, entityId: string, op: 'read' | 'save'): AppError {

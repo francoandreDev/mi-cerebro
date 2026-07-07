@@ -1,5 +1,5 @@
 import type { FsService } from '@core/fs/fs.service';
-import type { FsDirectoryHandle } from '@core/fs/fs.types';
+import type { NativeDirRef } from '@core/fs/native-fs.types';
 import { nextPositionAfter, seedMissingPositions } from '@core/ordering/seed-positions';
 
 export const FOLDER_POSITIONS_FILE = '_folders.json';
@@ -17,7 +17,7 @@ const empty = (): FolderPositionsFile => ({
 
 export const readFolderPositions = async (
   fs: FsService,
-  kindRoot: FsDirectoryHandle,
+  kindRoot: NativeDirRef,
 ): Promise<FolderPositionsFile> => {
   if (!(await fs.hasEntry(kindRoot, FOLDER_POSITIONS_FILE))) return empty();
   try {
@@ -34,7 +34,7 @@ export const readFolderPositions = async (
 
 export const writeFolderPositions = async (
   fs: FsService,
-  kindRoot: FsDirectoryHandle,
+  kindRoot: NativeDirRef,
   positions: Readonly<Record<string, string>>,
 ): Promise<void> => {
   const payload: FolderPositionsFile = {

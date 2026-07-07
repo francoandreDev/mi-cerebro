@@ -6,10 +6,13 @@
 import * as git from 'isomorphic-git';
 import { describe, expect, it } from 'vitest';
 
+import { BrowserNativeFs } from '@core/fs/adapters/browser-native-fs';
 import type { FsDirectoryHandle } from '@core/fs/fs.types';
 
 import { GitFsAdapter } from './git-fs.adapter';
 import { DEFAULT_GITIGNORE } from './versioning.constants';
+
+const nativeFs = new BrowserNativeFs();
 
 class NotFound extends DOMException {
   constructor() {
@@ -67,7 +70,10 @@ class MockFileHandle {
   kind = 'file' as const;
   contents = new Uint8Array();
   lastModified = mockClock;
-  constructor(public readonly name: string) {}
+  constructor(
+    public name: string,
+    private parent?: MockDirHandle,
+  ) {}
   async getFile(): Promise<MockFile> {
     const f = new MockFile(this.contents);
     f.size = this.contents.byteLength;
@@ -77,48 +83,59 @@ class MockFileHandle {
   async createWritable(_o?: unknown): Promise<MockWritable> {
     return new MockWritable(this);
   }
+  async move(dest: MockDirHandle, newName?: string): Promise<void> {
+    const targetName = newName ?? this.name;
+    if (this.parent) this.parent.children.delete(this.name);
+    this.name = targetName;
+    this.parent = dest;
+    dest.children.set(targetName, this);
+  }
 }
 
 class MockDirHandle {
-  kind = 'dir' as const;
-  readonly entries = new Map<string, MockDirHandle | MockFileHandle>();
+  kind = 'directory' as const;
+  readonly children = new Map<string, MockDirHandle | MockFileHandle>();
   constructor(public readonly name = '/') {}
 
   async getDirectoryHandle(name: string, opts?: { create?: boolean }): Promise<MockDirHandle> {
-    const e = this.entries.get(name);
-    if (e && e.kind === 'dir') return e;
+    const e = this.children.get(name);
+    if (e && e.kind === 'directory') return e;
     if (e && e.kind === 'file') throw new TypeMismatch();
     if (opts?.create) {
       const created = new MockDirHandle(name);
-      this.entries.set(name, created);
+      this.children.set(name, created);
       return created;
     }
     throw new NotFound();
   }
 
   async getFileHandle(name: string, opts?: { create?: boolean }): Promise<MockFileHandle> {
-    const e = this.entries.get(name);
+    const e = this.children.get(name);
     if (e && e.kind === 'file') return e;
-    if (e && e.kind === 'dir') throw new TypeMismatch();
+    if (e && e.kind === 'directory') throw new TypeMismatch();
     if (opts?.create) {
-      const created = new MockFileHandle(name);
-      this.entries.set(name, created);
+      const created = new MockFileHandle(name, this);
+      this.children.set(name, created);
       return created;
     }
     throw new NotFound();
   }
 
   async removeEntry(name: string, opts?: { recursive?: boolean }): Promise<void> {
-    const e = this.entries.get(name);
+    const e = this.children.get(name);
     if (!e) throw new NotFound();
-    if (e.kind === 'dir' && !opts?.recursive && e.entries.size > 0) {
+    if (e.kind === 'directory' && !opts?.recursive && e.children.size > 0) {
       throw new InvalidMod();
     }
-    this.entries.delete(name);
+    this.children.delete(name);
   }
 
   async *keys(): AsyncIterable<string> {
-    for (const k of this.entries.keys()) yield k;
+    for (const k of this.children.keys()) yield k;
+  }
+
+  async *entries(): AsyncIterable<[string, MockDirHandle | MockFileHandle]> {
+    for (const [k, v] of this.children) yield [k, v];
   }
 }
 
@@ -159,21 +176,21 @@ async function commitAll(fs: GitFsAdapter, message: string): Promise<string | nu
 describe('GitFsAdapter ↔ isomorphic-git integration', () => {
   it('caso 1: init en repo fresco crea .git/ y .gitignore', async () => {
     const { root, mock } = makeRoot();
-    const fs = new GitFsAdapter(root);
+    const fs = new GitFsAdapter(root, nativeFs);
     await init(fs);
-    expect(mock.entries.has('.git')).toBe(true);
-    const dotGit = mock.entries.get('.git') as MockDirHandle;
-    expect(dotGit.entries.has('HEAD')).toBe(true);
-    expect(dotGit.entries.has('objects')).toBe(true);
-    expect(dotGit.entries.has('refs')).toBe(true);
-    expect(mock.entries.has('.gitignore')).toBe(true);
+    expect(mock.children.has('.git')).toBe(true);
+    const dotGit = mock.children.get('.git') as MockDirHandle;
+    expect(dotGit.children.has('HEAD')).toBe(true);
+    expect(dotGit.children.has('objects')).toBe(true);
+    expect(dotGit.children.has('refs')).toBe(true);
+    expect(mock.children.has('.gitignore')).toBe(true);
     const log = await git.log({ fs, dir: DIR }).catch(() => []);
     expect(log).toEqual([]);
   });
 
   it('caso 2: init es idempotente — segunda corrida no rompe', async () => {
     const { root, mock } = makeRoot();
-    const fs = new GitFsAdapter(root);
+    const fs = new GitFsAdapter(root, nativeFs);
     await init(fs);
     const customIgnore = '# user-edited\nfoo\n';
     await fs.promises.writeFile('/.gitignore', customIgnore);
@@ -193,7 +210,7 @@ describe('GitFsAdapter ↔ isomorphic-git integration', () => {
 
   it('caso 3: primer commit devuelve oid de 40 chars y log() lo encuentra', async () => {
     const { root } = makeRoot();
-    const fs = new GitFsAdapter(root);
+    const fs = new GitFsAdapter(root, nativeFs);
     await init(fs);
     await writeFile(fs, '/notes/n1.json', '{"id":"n1","title":"hola"}');
     const oid = await commitAll(fs, 'smoke 1');
@@ -207,7 +224,7 @@ describe('GitFsAdapter ↔ isomorphic-git integration', () => {
 
   it('caso 4: commitAll sin cambios devuelve null y no genera commit fantasma', async () => {
     const { root } = makeRoot();
-    const fs = new GitFsAdapter(root);
+    const fs = new GitFsAdapter(root, nativeFs);
     await init(fs);
     await writeFile(fs, '/notes/n1.json', '{"id":"n1"}');
     await commitAll(fs, 'inicial');
@@ -220,7 +237,7 @@ describe('GitFsAdapter ↔ isomorphic-git integration', () => {
 
   it('caso 5: add + modify + delete en un commit', async () => {
     const { root } = makeRoot();
-    const fs = new GitFsAdapter(root);
+    const fs = new GitFsAdapter(root, nativeFs);
     await init(fs);
     await writeFile(fs, '/a.txt', 'A1');
     await writeFile(fs, '/b.txt', 'B1');
@@ -260,7 +277,7 @@ describe('GitFsAdapter ↔ isomorphic-git integration', () => {
 
   it('caso 6: .gitignore filtra binarios y safety nets', async () => {
     const { root } = makeRoot();
-    const fs = new GitFsAdapter(root);
+    const fs = new GitFsAdapter(root, nativeFs);
     await init(fs);
     // baseline: commit .gitignore so it's no longer dirty
     await commitAll(fs, 'baseline');
@@ -282,7 +299,7 @@ describe('GitFsAdapter ↔ isomorphic-git integration', () => {
 
   it('caso 8: readBlob de un commit pasado devuelve el contenido viejo', async () => {
     const { root } = makeRoot();
-    const fs = new GitFsAdapter(root);
+    const fs = new GitFsAdapter(root, nativeFs);
     await init(fs);
     await writeFile(fs, '/note.json', 'v1');
     const oid1 = await commitAll(fs, 'v1');
@@ -307,13 +324,13 @@ describe('GitFsAdapter ↔ isomorphic-git integration', () => {
 
   it('caso 9 (light): re-instanciar el adapter sobre el mismo dir lee el historial', async () => {
     const { root } = makeRoot();
-    const fs1 = new GitFsAdapter(root);
+    const fs1 = new GitFsAdapter(root, nativeFs);
     await init(fs1);
     await writeFile(fs1, '/note.json', 'persisted');
     const oid = await commitAll(fs1, 'persisted');
     expect(oid).not.toBeNull();
     // simula recarga: nueva instancia del adapter contra el mismo handle
-    const fs2 = new GitFsAdapter(root);
+    const fs2 = new GitFsAdapter(root, nativeFs);
     const log = await git.log({ fs: fs2, dir: DIR });
     expect(log).toHaveLength(1);
     expect(log[0]!.oid).toBe(oid);
@@ -321,7 +338,7 @@ describe('GitFsAdapter ↔ isomorphic-git integration', () => {
 
   it('caso 10: ensureRepo detecta .git/ preexistente y no reinicializa', async () => {
     const { root } = makeRoot();
-    const fs = new GitFsAdapter(root);
+    const fs = new GitFsAdapter(root, nativeFs);
     await init(fs);
     await writeFile(fs, '/note.json', 'a');
     const firstOid = await commitAll(fs, 'first');

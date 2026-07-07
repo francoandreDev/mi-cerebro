@@ -73,6 +73,18 @@ export const es = {
   'errors.fs.004.message':
     'El navegador olvidó los permisos a tu carpeta. Otorgalos de nuevo desde el banner.',
 
+  'errors.fs.005.title': 'Error del sistema de archivos nativo',
+  'errors.fs.005.message':
+    'La app de escritorio no pudo completar una operación de disco. Puede ser un permiso del sistema operativo o espacio insuficiente.',
+
+  'errors.fs.006.title': 'Error del sistema de archivos nativo',
+  'errors.fs.006.message':
+    'La app no pudo completar una operación de disco en tu dispositivo. Puede ser un permiso del sistema operativo o espacio insuficiente.',
+
+  'errors.fs.007.title': 'Error interno de plataforma',
+  'errors.fs.007.message':
+    'La app detectó una plataforma nativa pero el módulo de archivos correspondiente no está listo. Reiniciá la app; si persiste, reportá el problema.',
+
   'errors.aut.001.title': 'No se pudo guardar el borrador',
   'errors.aut.001.message':
     'No pude escribir el borrador local de tu trabajo. Tus cambios siguen en memoria, pero podrían perderse si cerrás la pestaña.',

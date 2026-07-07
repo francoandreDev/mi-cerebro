@@ -3,7 +3,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
 import { FsService } from '@core/fs/fs.service';
-import type { FsDirectoryHandle } from '@core/fs/fs.types';
+import type { NativeDirRef } from '@core/fs/native-fs.types';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { MigrationsService } from '@core/migrations/migrations.service';
 
@@ -67,7 +67,7 @@ export class MusicLibraryService {
   //      the loop keeps moving; the track stays unprobed and we retry next
   //      refresh.
   private async backfillMetadata(
-    root: FsDirectoryHandle,
+    root: NativeDirRef,
     tracks: readonly Track[],
   ): Promise<Track[] | null> {
     const pending = tracks.filter((t) => !t.metadataProbedAt);
@@ -86,7 +86,7 @@ export class MusicLibraryService {
   }
 
   private async probeTrackFromDisk(
-    tracksDir: FsDirectoryHandle,
+    tracksDir: NativeDirRef,
     track: Track,
     now: string,
   ): Promise<Track | null> {
@@ -230,13 +230,13 @@ export class MusicLibraryService {
     await this.writeLibrary(root, { schemaVersion: MUSIC_LIBRARY_SCHEMA_VERSION, tracks: next });
   }
 
-  private async musicDir(): Promise<FsDirectoryHandle> {
+  private async musicDir(): Promise<NativeDirRef> {
     const root = this.workspace.root();
     if (!root) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
     return this.fs.getOrCreateDir(root, MUSIC_DIR);
   }
 
-  private async writeLibrary(dir: FsDirectoryHandle, lib: MusicLibrary): Promise<void> {
+  private async writeLibrary(dir: NativeDirRef, lib: MusicLibrary): Promise<void> {
     await this.fs.writeFileAtomic(dir, LIBRARY_FILE, JSON.stringify(lib, null, 2));
   }
 }

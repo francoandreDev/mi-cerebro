@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">mi-cerebro</string>
+    <string name="title_activity_main">mi-cerebro</string>
+    <string name="package_name">dev.frnco.micerebro</string>
+    <string name="custom_url_scheme">dev.frnco.micerebro</string>
+</resources>

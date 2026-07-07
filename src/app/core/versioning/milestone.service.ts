@@ -10,6 +10,7 @@ import * as git from 'isomorphic-git';
 
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
+import { FsService } from '@core/fs/fs.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
 
 import { SettingsService } from '@core/settings/settings.service';
@@ -53,6 +54,7 @@ export class MilestoneService {
   private readonly compaction = inject(CompactionService);
   private readonly remote = inject(RemoteService);
   private readonly settings = inject(SettingsService);
+  private readonly fs = inject(FsService);
   private adapter: GitFsAdapter | null = null;
 
   private requireAdapter(): GitFsAdapter {
@@ -65,7 +67,7 @@ export class MilestoneService {
         recoverable: true,
       });
     }
-    this.adapter = new GitFsAdapter(root);
+    this.adapter = new GitFsAdapter(root, this.fs);
     return this.adapter;
   }
 

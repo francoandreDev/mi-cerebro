@@ -5,7 +5,7 @@ import { ERROR_CODES } from '@core/errors/error.codes';
 import { FsService } from '@core/fs/fs.service';
 import { ImageReaderService } from '@core/images/image-reader.service';
 import type { ImageRef, ImageRefGallery } from '@core/images/image-reader.types';
-import type { FsDirectoryHandle } from '@core/fs/fs.types';
+import type { NativeDirRef } from '@core/fs/native-fs.types';
 import { getDirByPath, getOrCreateDirByPath, joinPath } from '@core/fs/walk';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { MigrationsService } from '@core/migrations/migrations.service';
@@ -272,7 +272,7 @@ export class GalleriesService {
     await this.search.remove(id);
   }
 
-  async restoreFromDir(trashDayDir: FsDirectoryHandle, entryName: string): Promise<void> {
+  async restoreFromDir(trashDayDir: NativeDirRef, entryName: string): Promise<void> {
     const srcDir = await this.fs.getDir(trashDayDir, entryName);
     if (!srcDir) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
     const gallery = await this.fs.readJson<Gallery>(srcDir, GALLERY_META_FILE);
@@ -319,7 +319,7 @@ export class GalleriesService {
   }
 
   private async walkGalleries(
-    dir: FsDirectoryHandle,
+    dir: NativeDirRef,
     folder: string,
     summaries: GallerySummary[],
     folders: string[],
@@ -354,7 +354,7 @@ export class GalleriesService {
     }
   }
 
-  private requireRoot(): FsDirectoryHandle {
+  private requireRoot(): NativeDirRef {
     const root = this.workspace.root();
     if (!root) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
     return root;
@@ -366,16 +366,16 @@ export class GalleriesService {
     return loc;
   }
 
-  private async imagesDir(): Promise<FsDirectoryHandle> {
+  private async imagesDir(): Promise<NativeDirRef> {
     return this.fs.getOrCreateDir(this.requireRoot(), IMAGES_DIR);
   }
 
-  private async getFolderDir(folder: string): Promise<FsDirectoryHandle | null> {
+  private async getFolderDir(folder: string): Promise<NativeDirRef | null> {
     const root = await this.imagesDir();
     return getDirByPath(this.fs, root, folder);
   }
 
-  private async galleryDir(id: string): Promise<FsDirectoryHandle> {
+  private async galleryDir(id: string): Promise<NativeDirRef> {
     const loc = this.requireLoc(id);
     const parent = await this.getFolderDir(loc.folder);
     if (!parent) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
@@ -384,7 +384,7 @@ export class GalleriesService {
     return dir;
   }
 
-  private async trashDir(root: FsDirectoryHandle): Promise<FsDirectoryHandle> {
+  private async trashDir(root: NativeDirRef): Promise<NativeDirRef> {
     const meta = await this.fs.getOrCreateDir(root, TRASH_DIR);
     const trash = await this.fs.getOrCreateDir(meta, TRASH_SUBDIR);
     const today = new Date().toISOString().slice(0, 10).replace(/-/g, '/');
@@ -395,7 +395,7 @@ export class GalleriesService {
     return cursor;
   }
 
-  private async allocSlug(dir: FsDirectoryHandle, title: string): Promise<string> {
+  private async allocSlug(dir: NativeDirRef, title: string): Promise<string> {
     const base = toSlug(title, 'galeria');
     for (let n = 1; n < 1000; n++) {
       const candidate = withSuffix(base, n);
@@ -404,7 +404,7 @@ export class GalleriesService {
     throw new AppError(ERROR_CODES.FS_001, { severity: 'error', context: { base } });
   }
 
-  private async allocAvailableDir(dir: FsDirectoryHandle, name: string): Promise<string> {
+  private async allocAvailableDir(dir: NativeDirRef, name: string): Promise<string> {
     if (!(await this.fs.hasEntry(dir, name))) return name;
     for (let n = 1; n < 1000; n++) {
       const candidate = `${name}-${n}`;
@@ -494,8 +494,8 @@ const lastPosition = (list: readonly GallerySummary[]): string | null => {
 
 const moveGalleryDir = async (
   fs: FsService,
-  src: FsDirectoryHandle,
-  dest: FsDirectoryHandle,
+  src: NativeDirRef,
+  dest: NativeDirRef,
 ): Promise<void> => {
   for await (const filename of fs.listFiles(src)) {
     await fs.moveFile(src, filename, dest, filename);

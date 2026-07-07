@@ -1,11 +1,11 @@
-import type { FsDirectoryHandle } from './fs.types';
+import type { NativeDirRef } from './native-fs.types';
 import type { FsService } from './fs.service';
 
 export interface FsEntityFile {
   readonly folder: string;
   readonly filename: string;
   readonly relativePath: string;
-  readonly dirHandle: FsDirectoryHandle;
+  readonly dirHandle: NativeDirRef;
 }
 
 export interface FsFolder {
@@ -18,7 +18,7 @@ const join = (folder: string, name: string): string => (folder === '' ? name : `
 
 export async function* walkEntities(
   fs: FsService,
-  root: FsDirectoryHandle,
+  root: NativeDirRef,
   suffix: string,
 ): AsyncIterable<FsEntityFile> {
   yield* walkInner(fs, root, suffix, '');
@@ -37,7 +37,7 @@ const META_FILES: ReadonlySet<string> = new Set([
 
 async function* walkInner(
   fs: FsService,
-  dir: FsDirectoryHandle,
+  dir: NativeDirRef,
   suffix: string,
   folder: string,
 ): AsyncIterable<FsEntityFile> {
@@ -52,10 +52,7 @@ async function* walkInner(
   }
 }
 
-export async function listFolders(
-  fs: FsService,
-  root: FsDirectoryHandle,
-): Promise<readonly FsFolder[]> {
+export async function listFolders(fs: FsService, root: NativeDirRef): Promise<readonly FsFolder[]> {
   const out: FsFolder[] = [];
   await collectFolders(fs, root, '', out);
   return out;
@@ -63,7 +60,7 @@ export async function listFolders(
 
 async function collectFolders(
   fs: FsService,
-  dir: FsDirectoryHandle,
+  dir: NativeDirRef,
   parent: string,
   out: FsFolder[],
 ): Promise<void> {
@@ -77,9 +74,9 @@ async function collectFolders(
 
 export async function getOrCreateDirByPath(
   fs: FsService,
-  root: FsDirectoryHandle,
+  root: NativeDirRef,
   path: string,
-): Promise<FsDirectoryHandle> {
+): Promise<NativeDirRef> {
   if (path === '') return root;
   let cursor = root;
   for (const part of path.split('/')) {
@@ -90,11 +87,11 @@ export async function getOrCreateDirByPath(
 
 export async function getDirByPath(
   fs: FsService,
-  root: FsDirectoryHandle,
+  root: NativeDirRef,
   path: string,
-): Promise<FsDirectoryHandle | null> {
+): Promise<NativeDirRef | null> {
   if (path === '') return root;
-  let cursor: FsDirectoryHandle | null = root;
+  let cursor: NativeDirRef | null = root;
   for (const part of path.split('/')) {
     cursor = await fs.getDir(cursor, part);
     if (!cursor) return null;

@@ -3,7 +3,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
 import { FsService } from '@core/fs/fs.service';
-import type { FsDirectoryHandle } from '@core/fs/fs.types';
+import type { NativeDirRef } from '@core/fs/native-fs.types';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { MigrationsService } from '@core/migrations/migrations.service';
 
@@ -75,8 +75,7 @@ export class RemindersService {
     const dir = await this.remindersDir();
     this.idToFile.clear();
     const summaries: ReminderSummary[] = [];
-    for await (const [name, handle] of dir.entries()) {
-      if (handle.kind !== 'file' || !name.endsWith(REMINDER_FILE_SUFFIX)) continue;
+    for await (const name of this.fs.listFiles(dir, REMINDER_FILE_SUFFIX)) {
       try {
         const raw = await this.fs.readJson<Reminder>(dir, name);
         const reminder = await this.migrations.migrate<Reminder>(REMINDER_KIND, raw);
@@ -186,11 +185,7 @@ export class RemindersService {
 
   // why: zero-byte JSONs come from aborted writes and can't be parsed —
   //      drop them on refresh so the dir stays clean.
-  private async dropIfEmpty(
-    dir: FsDirectoryHandle,
-    filename: string,
-    cause: unknown,
-  ): Promise<void> {
+  private async dropIfEmpty(dir: NativeDirRef, filename: string, cause: unknown): Promise<void> {
     const size = await this.fs.fileSize(dir, filename);
     if (size === 0) {
       try {
@@ -214,17 +209,17 @@ export class RemindersService {
     return f;
   }
 
-  private requireRoot(): FsDirectoryHandle {
+  private requireRoot(): NativeDirRef {
     const root = this.workspace.root();
     if (!root) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
     return root;
   }
 
-  private async remindersDir(): Promise<FsDirectoryHandle> {
+  private async remindersDir(): Promise<NativeDirRef> {
     return this.fs.getOrCreateDir(this.requireRoot(), REMINDERS_DIR);
   }
 
-  private async trashDir(root: FsDirectoryHandle): Promise<FsDirectoryHandle> {
+  private async trashDir(root: NativeDirRef): Promise<NativeDirRef> {
     const meta = await this.fs.getOrCreateDir(root, TRASH_DIR);
     const trash = await this.fs.getOrCreateDir(meta, TRASH_SUBDIR);
     const today = new Date().toISOString().slice(0, 10).replace(/-/g, '/');

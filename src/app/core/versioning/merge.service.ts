@@ -9,6 +9,7 @@ import * as git from 'isomorphic-git';
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
 import { FsLockService } from '@core/fs/fs-lock.service';
+import { FsService } from '@core/fs/fs.service';
 import { SettingsService } from '@core/settings/settings.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { blobToText, isLikelyBinary } from '@features/history/services/diff.utils';
@@ -44,6 +45,7 @@ export class MergeService {
   private readonly autocommit = inject(AutocommitService);
   private readonly variants = inject(VariantsService);
   private readonly settings = inject(SettingsService);
+  private readonly fs = inject(FsService);
 
   // Compares main refs of two families and returns the list of paths
   // that differ, with a short preview of each side.
@@ -269,7 +271,7 @@ export class MergeService {
         recoverable: true,
       });
     }
-    return new GitFsAdapter(root);
+    return new GitFsAdapter(root, this.fs);
   }
 }
 

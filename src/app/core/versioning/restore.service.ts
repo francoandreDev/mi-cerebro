@@ -11,6 +11,7 @@ import { AutosaveService } from '@core/autosave/autosave.service';
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
 import { FsLockService } from '@core/fs/fs-lock.service';
+import { FsService } from '@core/fs/fs.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
 
 import { AutocommitService } from './autocommit.service';
@@ -28,6 +29,7 @@ export class RestoreService {
   private readonly autosave = inject(AutosaveService);
   private readonly autocommit = inject(AutocommitService);
   private readonly fsLock = inject(FsLockService);
+  private readonly fs = inject(FsService);
 
   async restoreEntity(commitOid: string, filepath: string, mode: RestoreMode): Promise<void> {
     try {
@@ -117,6 +119,6 @@ export class RestoreService {
         recoverable: true,
       });
     }
-    return new GitFsAdapter(root);
+    return new GitFsAdapter(root, this.fs);
   }
 }

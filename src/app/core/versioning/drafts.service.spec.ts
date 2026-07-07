@@ -8,7 +8,9 @@ import * as git from 'isomorphic-git';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import type { AppError } from '@core/errors/app-error';
+import { BrowserNativeFs } from '@core/fs/adapters/browser-native-fs';
 import type { FsDirectoryHandle } from '@core/fs/fs.types';
+import { NATIVE_FS } from '@core/fs/native-fs';
 import { WorkspaceService } from '@core/fs/workspace.service';
 
 import { DraftsService } from './drafts.service';
@@ -16,6 +18,8 @@ import { DRAFTS_FILE_SCHEMA_VERSION, type DiffMark } from './drafts.types';
 import { GitFsAdapter } from './git-fs.adapter';
 import { VariantsService } from './variants.service';
 import { PRINCIPAL_REFS, PRINCIPAL_VARIANT_ID, type Variant } from './variants.types';
+
+const nativeFs = new BrowserNativeFs();
 
 class NotFound extends DOMException {
   constructor() {
@@ -56,7 +60,10 @@ class MockFileHandle {
   kind = 'file' as const;
   contents = new Uint8Array();
   lastModified = mockClock;
-  constructor(public readonly name: string) {}
+  constructor(
+    public name: string,
+    private parent?: MockDirHandle,
+  ) {}
   async getFile(): Promise<MockFile> {
     const f = new MockFile(this.contents);
     f.size = this.contents.byteLength;
@@ -66,39 +73,50 @@ class MockFileHandle {
   async createWritable(): Promise<MockWritable> {
     return new MockWritable(this);
   }
+  async move(dest: MockDirHandle, newName?: string): Promise<void> {
+    const targetName = newName ?? this.name;
+    if (this.parent) this.parent.children.delete(this.name);
+    this.name = targetName;
+    this.parent = dest;
+    dest.children.set(targetName, this);
+  }
 }
 class MockDirHandle {
-  kind = 'dir' as const;
-  readonly entries = new Map<string, MockDirHandle | MockFileHandle>();
+  kind = 'directory' as const;
+  readonly children = new Map<string, MockDirHandle | MockFileHandle>();
   constructor(public readonly name = '/') {}
   async getDirectoryHandle(name: string, opts?: { create?: boolean }): Promise<MockDirHandle> {
-    const e = this.entries.get(name);
-    if (e && e.kind === 'dir') return e;
+    const e = this.children.get(name);
+    if (e && e.kind === 'directory') return e;
     if (e && e.kind === 'file') throw new TypeMismatch();
     if (opts?.create) {
       const created = new MockDirHandle(name);
-      this.entries.set(name, created);
+      this.children.set(name, created);
       return created;
     }
     throw new NotFound();
   }
   async getFileHandle(name: string, opts?: { create?: boolean }): Promise<MockFileHandle> {
-    const e = this.entries.get(name);
+    const e = this.children.get(name);
     if (e && e.kind === 'file') return e;
-    if (e && e.kind === 'dir') throw new TypeMismatch();
+    if (e && e.kind === 'directory') throw new TypeMismatch();
     if (opts?.create) {
-      const created = new MockFileHandle(name);
-      this.entries.set(name, created);
+      const created = new MockFileHandle(name, this);
+      this.children.set(name, created);
       return created;
     }
     throw new NotFound();
   }
   async removeEntry(name: string): Promise<void> {
-    if (!this.entries.has(name)) throw new NotFound();
-    this.entries.delete(name);
+    if (!this.children.has(name)) throw new NotFound();
+    this.children.delete(name);
   }
   async *keys(): AsyncIterable<string> {
-    for (const k of this.entries.keys()) yield k;
+    for (const k of this.children.keys()) yield k;
+  }
+
+  async *entries(): AsyncIterable<[string, MockDirHandle | MockFileHandle]> {
+    for (const [k, v] of this.children) yield [k, v];
   }
 }
 
@@ -110,7 +128,7 @@ async function bootstrapWithPrincipal(): Promise<{
 }> {
   const mock = new MockDirHandle();
   const root = mock as unknown as FsDirectoryHandle;
-  const fs = new GitFsAdapter(root);
+  const fs = new GitFsAdapter(root, nativeFs);
   await git.init({ fs, dir: '/', defaultBranch: 'main' });
   await fs.promises.writeFile('/seed.txt', 'seed');
   await git.add({ fs, dir: '/', filepath: 'seed.txt' });
@@ -143,6 +161,7 @@ describe('DraftsService', () => {
       providers: [
         { provide: WorkspaceService, useValue: { root: () => bootstrapped.root } },
         { provide: VariantsService, useValue: { getActive: () => activeVariant } },
+        { provide: NATIVE_FS, useValue: nativeFs },
       ],
     });
     svc = TestBed.inject(DraftsService);
@@ -173,12 +192,12 @@ describe('DraftsService', () => {
   it('does not touch the working tree when saving (drafts/ stays off-disk)', async () => {
     const mock = TestBed.inject(WorkspaceService).root() as unknown as MockDirHandle;
     await svc.save('entity-1', 'Mi nota', []);
-    expect(mock.entries.has('drafts')).toBe(false);
+    expect(mock.children.has('drafts')).toBe(false);
   });
 
   it('save commits to the variant draft ref, not to main', async () => {
     const root = TestBed.inject(WorkspaceService).root() as FsDirectoryHandle;
-    const fs = new GitFsAdapter(root);
+    const fs = new GitFsAdapter(root, nativeFs);
     const mainBefore = await git.resolveRef({ fs, dir: '/', ref: 'main' });
     await svc.save('entity-1', 'Mi nota', []);
     const mainAfter = await git.resolveRef({ fs, dir: '/', ref: 'main' });
@@ -193,7 +212,7 @@ describe('DraftsService', () => {
 
   it('commit message follows `auto [borrador]:` prefix', async () => {
     const root = TestBed.inject(WorkspaceService).root() as FsDirectoryHandle;
-    const fs = new GitFsAdapter(root);
+    const fs = new GitFsAdapter(root, nativeFs);
     await svc.save('entity-1', 'Mi nota', []);
     const log = await git.log({ fs, dir: '/', ref: activeVariant.refs.draft, depth: 1 });
     expect(log[0]!.commit.message.startsWith('auto [borrador]:')).toBe(true);
@@ -202,7 +221,7 @@ describe('DraftsService', () => {
 
   it('throws VER-023 when the persisted file has a future schemaVersion', async () => {
     const root = TestBed.inject(WorkspaceService).root() as FsDirectoryHandle;
-    const fs = new GitFsAdapter(root);
+    const fs = new GitFsAdapter(root, nativeFs);
     const poisoned = new TextEncoder().encode(
       JSON.stringify({ schemaVersion: 99, entityId: 'entity-1', marks: [] }),
     );

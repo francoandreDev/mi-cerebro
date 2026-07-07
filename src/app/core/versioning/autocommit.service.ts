@@ -14,6 +14,7 @@ import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
 import { ErrorService } from '@core/errors/error.service';
 import { FsLockService } from '@core/fs/fs-lock.service';
+import { FsService } from '@core/fs/fs.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { SettingsService } from '@core/settings/settings.service';
 
@@ -36,6 +37,7 @@ export class AutocommitService {
   private readonly router = inject(Router);
   private readonly errors = inject(ErrorService);
   private readonly settings = inject(SettingsService);
+  private readonly fs = inject(FsService);
 
   private readonly stateSignal = signal<AutocommitState>('idle');
   private readonly lastCommitAtSignal = signal<Date | null>(null);
@@ -185,7 +187,7 @@ export class AutocommitService {
 
   private adapter(): GitFsAdapter | null {
     const root = this.workspace.root();
-    return root ? new GitFsAdapter(root) : null;
+    return root ? new GitFsAdapter(root, this.fs) : null;
   }
 
   private wrapError(cause: unknown, reason: string): AppError {

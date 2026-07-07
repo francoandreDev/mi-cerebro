@@ -7,10 +7,13 @@
 import * as git from 'isomorphic-git';
 import { describe, expect, it } from 'vitest';
 
+import { BrowserNativeFs } from '@core/fs/adapters/browser-native-fs';
 import type { FsDirectoryHandle } from '@core/fs/fs.types';
 
 import { readBranchBlob, writeBranchBlob } from './branch-blob-ops';
 import { GitFsAdapter } from './git-fs.adapter';
+
+const nativeFs = new BrowserNativeFs();
 
 class NotFound extends DOMException {
   constructor() {
@@ -60,7 +63,10 @@ class MockFileHandle {
   kind = 'file' as const;
   contents = new Uint8Array();
   lastModified = mockClock;
-  constructor(public readonly name: string) {}
+  constructor(
+    public name: string,
+    private parent?: MockDirHandle,
+  ) {}
   async getFile(): Promise<MockFile> {
     const f = new MockFile(this.contents);
     f.size = this.contents.byteLength;
@@ -70,46 +76,57 @@ class MockFileHandle {
   async createWritable(): Promise<MockWritable> {
     return new MockWritable(this);
   }
+  async move(dest: MockDirHandle, newName?: string): Promise<void> {
+    const targetName = newName ?? this.name;
+    if (this.parent) this.parent.children.delete(this.name);
+    this.name = targetName;
+    this.parent = dest;
+    dest.children.set(targetName, this);
+  }
 }
 
 class MockDirHandle {
-  kind = 'dir' as const;
-  readonly entries = new Map<string, MockDirHandle | MockFileHandle>();
+  kind = 'directory' as const;
+  readonly children = new Map<string, MockDirHandle | MockFileHandle>();
   constructor(public readonly name = '/') {}
 
   async getDirectoryHandle(name: string, opts?: { create?: boolean }): Promise<MockDirHandle> {
-    const e = this.entries.get(name);
-    if (e && e.kind === 'dir') return e;
+    const e = this.children.get(name);
+    if (e && e.kind === 'directory') return e;
     if (e && e.kind === 'file') throw new TypeMismatch();
     if (opts?.create) {
       const created = new MockDirHandle(name);
-      this.entries.set(name, created);
+      this.children.set(name, created);
       return created;
     }
     throw new NotFound();
   }
 
   async getFileHandle(name: string, opts?: { create?: boolean }): Promise<MockFileHandle> {
-    const e = this.entries.get(name);
+    const e = this.children.get(name);
     if (e && e.kind === 'file') return e;
-    if (e && e.kind === 'dir') throw new TypeMismatch();
+    if (e && e.kind === 'directory') throw new TypeMismatch();
     if (opts?.create) {
-      const created = new MockFileHandle(name);
-      this.entries.set(name, created);
+      const created = new MockFileHandle(name, this);
+      this.children.set(name, created);
       return created;
     }
     throw new NotFound();
   }
 
   async removeEntry(name: string, opts?: { recursive?: boolean }): Promise<void> {
-    const e = this.entries.get(name);
+    const e = this.children.get(name);
     if (!e) throw new NotFound();
-    if (e.kind === 'dir' && !opts?.recursive && e.entries.size > 0) throw new InvalidMod();
-    this.entries.delete(name);
+    if (e.kind === 'directory' && !opts?.recursive && e.children.size > 0) throw new InvalidMod();
+    this.children.delete(name);
   }
 
   async *keys(): AsyncIterable<string> {
-    for (const k of this.entries.keys()) yield k;
+    for (const k of this.children.keys()) yield k;
+  }
+
+  async *entries(): AsyncIterable<[string, MockDirHandle | MockFileHandle]> {
+    for (const [k, v] of this.children) yield [k, v];
   }
 }
 
@@ -118,7 +135,7 @@ const DIR = '/';
 
 async function bootstrapRepoWithBranch(): Promise<{ fs: GitFsAdapter; mock: MockDirHandle }> {
   const mock = new MockDirHandle();
-  const fs = new GitFsAdapter(mock as unknown as FsDirectoryHandle);
+  const fs = new GitFsAdapter(mock as unknown as FsDirectoryHandle, nativeFs);
   await git.init({ fs, dir: DIR, defaultBranch: 'main' });
   // a real first commit on main, then a sibling branch on top of it
   await fs.promises.writeFile('/seed.txt', 'seed');
@@ -165,7 +182,7 @@ describe('branch-blob-ops', () => {
 
     // why: working tree should NOT have a `comments/` directory — the
     //      branch was updated via plumbing without checkout.
-    expect(mock.entries.has('comments')).toBe(false);
+    expect(mock.children.has('comments')).toBe(false);
   });
 
   it('is idempotent: writing the same content twice returns null on the 2nd call', async () => {

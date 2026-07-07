@@ -2,10 +2,12 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
+import { PlatformService } from '@core/platform/platform.service';
 
+import { CAPACITOR_WORKSPACE_ROOT, documentsRootRef } from './adapters/capacitor-native-fs';
 import { FsService } from './fs.service';
 import { HandleStore } from './handle-store';
-import type { FsDirectoryHandle } from './fs.types';
+import type { NativeDirRef } from './native-fs.types';
 import {
   WORKSPACE_CONFIG_FILE,
   WORKSPACE_DIRS,
@@ -19,10 +21,11 @@ import {
 export class WorkspaceService {
   private readonly fs = inject(FsService);
   private readonly handles = inject(HandleStore);
+  private readonly platform = inject(PlatformService);
 
   private readonly stateSignal = signal<WorkspaceState>('checking');
-  private readonly rootSignal = signal<FsDirectoryHandle | null>(null);
-  private readonly pendingSignal = signal<FsDirectoryHandle | null>(null);
+  private readonly rootSignal = signal<NativeDirRef | null>(null);
+  private readonly pendingSignal = signal<NativeDirRef | null>(null);
 
   readonly state = this.stateSignal.asReadonly();
   readonly root = this.rootSignal.asReadonly();
@@ -33,6 +36,10 @@ export class WorkspaceService {
   async bootstrap(): Promise<void> {
     if (!this.fs.isSupported()) {
       this.stateSignal.set('unsupported');
+      return;
+    }
+    if (this.platform.current === 'capacitor') {
+      await this.bootstrapCapacitor();
       return;
     }
     const saved = await this.handles.getRoot().catch(() => null);
@@ -115,7 +122,28 @@ export class WorkspaceService {
     void this.handles.clearRoot();
   }
 
-  private async adopt(handle: FsDirectoryHandle, kind: FolderKind): Promise<void> {
+  // why: Capacitor has no folder picker and no permission-revocation model
+  //      (queryPermission/requestPermission always resolve 'granted'), so
+  //      'needs-root', 'needs-permission' and 'foreign-folder' are
+  //      structurally unreachable here — bootstrap adopts the fixed
+  //      Documents/mi-cerebro folder directly. See workspace.types.ts for
+  //      the full per-platform reachability table.
+  private async bootstrapCapacitor(): Promise<void> {
+    const root = await this.fs.getOrCreateDir(documentsRootRef(), CAPACITOR_WORKSPACE_ROOT);
+    const kind = await this.detectKind(root);
+    if (kind !== 'mi-cerebro') {
+      this.stateSignal.set('initializing');
+      try {
+        await this.initStructure(root);
+      } catch (cause) {
+        throw new AppError(ERROR_CODES.FS_002, { severity: 'fatal', cause });
+      }
+    }
+    this.rootSignal.set(root);
+    this.stateSignal.set('ready');
+  }
+
+  private async adopt(handle: NativeDirRef, kind: FolderKind): Promise<void> {
     if (kind !== 'mi-cerebro') {
       this.stateSignal.set('initializing');
       try {
@@ -131,33 +159,29 @@ export class WorkspaceService {
     this.stateSignal.set('ready');
   }
 
-  private async detectKind(handle: FsDirectoryHandle): Promise<FolderKind> {
+  private async detectKind(handle: NativeDirRef): Promise<FolderKind> {
     if (await this.hasWorkspaceMarker(handle)) return 'mi-cerebro';
     return (await this.fs.isEmpty(handle)) ? 'empty' : 'foreign';
   }
 
-  private async hasWorkspaceMarker(handle: FsDirectoryHandle): Promise<boolean> {
-    try {
-      const meta = (await handle.getDirectoryHandle(WORKSPACE_MARKER)) as FsDirectoryHandle;
-      await meta.getFileHandle(WORKSPACE_CONFIG_FILE);
-      return true;
-    } catch {
-      return false;
-    }
+  // why: hasEntry() only tells us the marker dir exists, not that it holds a
+  //      real config file, so this checks both across every platform via
+  //      NativeFs.getDir/hasEntry.
+  private async hasWorkspaceMarker(handle: NativeDirRef): Promise<boolean> {
+    const meta = await this.fs.getDir(handle, WORKSPACE_MARKER);
+    if (!meta) return false;
+    return this.fs.hasEntry(meta, WORKSPACE_CONFIG_FILE);
   }
 
-  private async initStructure(handle: FsDirectoryHandle): Promise<void> {
+  private async initStructure(handle: NativeDirRef): Promise<void> {
     for (const name of WORKSPACE_DIRS) {
       await this.fs.getOrCreateDir(handle, name);
     }
-    const meta = (await handle.getDirectoryHandle(WORKSPACE_MARKER)) as FsDirectoryHandle;
-    const file = await this.fs.getOrCreateFile(meta, WORKSPACE_CONFIG_FILE);
-    const writer = await file.createWritable();
+    const meta = await this.fs.getOrCreateDir(handle, WORKSPACE_MARKER);
     const config = {
       schemaVersion: WORKSPACE_SCHEMA_VERSION,
       createdAt: new Date().toISOString(),
     };
-    await writer.write(JSON.stringify(config, null, 2));
-    await writer.close();
+    await this.fs.writeFileAtomic(meta, WORKSPACE_CONFIG_FILE, JSON.stringify(config, null, 2));
   }
 }

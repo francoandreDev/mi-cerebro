@@ -6,6 +6,7 @@
 import { Injectable, inject } from '@angular/core';
 import * as git from 'isomorphic-git';
 
+import { FsService } from '@core/fs/fs.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { GitFsAdapter } from '@core/versioning/git-fs.adapter';
 import { MilestoneService } from '@core/versioning/milestone.service';
@@ -38,6 +39,7 @@ export interface VariantOverview {
 export class VariantsStatsService {
   private readonly workspace = inject(WorkspaceService);
   private readonly milestones = inject(MilestoneService);
+  private readonly fs = inject(FsService);
   private readonly cache = new Map<string, { headOid: string; data: VariantOverview }>();
 
   // Returns the number of commits on `variant.main` that are not yet
@@ -167,7 +169,7 @@ export class VariantsStatsService {
   private adapter(): GitFsAdapter | null {
     const root = this.workspace.root();
     if (!root) return null;
-    return new GitFsAdapter(root);
+    return new GitFsAdapter(root, this.fs);
   }
 }
 

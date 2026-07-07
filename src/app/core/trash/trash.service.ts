@@ -3,7 +3,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
 import { FsService } from '@core/fs/fs.service';
-import type { FsDirectoryHandle } from '@core/fs/fs.types';
+import type { NativeDirRef } from '@core/fs/native-fs.types';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { GoalsService } from '@features/goals/services/goals.service';
 import { ListsService } from '@features/lists/services/lists.service';
@@ -131,7 +131,7 @@ export class TrashService {
   }
 
   private async readDirMeta(
-    day: FsDirectoryHandle,
+    day: NativeDirRef,
     entry: TrashEntry,
   ): Promise<Record<string, unknown> | null> {
     const dir = await this.fs.getDir(day, entry.filename);
@@ -162,7 +162,7 @@ export class TrashService {
   }
 
   private async parseEntry(
-    day: FsDirectoryHandle,
+    day: NativeDirRef,
     filename: string,
     parentPath: readonly string[],
   ): Promise<TrashEntry | null> {
@@ -207,7 +207,7 @@ export class TrashService {
   }
 
   private async parseDirEntry(
-    day: FsDirectoryHandle,
+    day: NativeDirRef,
     name: string,
     parentPath: readonly string[],
   ): Promise<TrashEntry | null> {
@@ -243,7 +243,7 @@ export class TrashService {
     return filename.startsWith(prefix) ? filename.slice(prefix.length) : filename;
   }
 
-  private async allocDest(dir: FsDirectoryHandle, name: string): Promise<string> {
+  private async allocDest(dir: NativeDirRef, name: string): Promise<string> {
     if (!(await this.fs.hasEntry(dir, name))) return name;
     const dot = name.lastIndexOf('.');
     const base = dot >= 0 ? name.slice(0, dot) : name;
@@ -255,7 +255,7 @@ export class TrashService {
     throw new AppError(ERROR_CODES.FS_001, { severity: 'error' });
   }
 
-  private async trashRoot(readOnly = false): Promise<FsDirectoryHandle | null> {
+  private async trashRoot(readOnly = false): Promise<NativeDirRef | null> {
     const root = this.requireRoot();
     if (readOnly) {
       const meta = await this.fs.getDir(root, TRASH_META_DIR);
@@ -266,11 +266,8 @@ export class TrashService {
     return this.fs.getOrCreateDir(meta, TRASH_SUBDIR);
   }
 
-  private async dayDir(
-    root: FsDirectoryHandle,
-    path: readonly string[],
-  ): Promise<FsDirectoryHandle | null> {
-    let cursor: FsDirectoryHandle | null = await this.fs.getDir(root, TRASH_META_DIR);
+  private async dayDir(root: NativeDirRef, path: readonly string[]): Promise<NativeDirRef | null> {
+    let cursor: NativeDirRef | null = await this.fs.getDir(root, TRASH_META_DIR);
     if (!cursor) return null;
     cursor = await this.fs.getDir(cursor, TRASH_SUBDIR);
     if (!cursor) return null;
@@ -281,7 +278,7 @@ export class TrashService {
     return cursor;
   }
 
-  private requireRoot(): FsDirectoryHandle {
+  private requireRoot(): NativeDirRef {
     const root = this.workspace.root();
     if (!root) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
     return root;

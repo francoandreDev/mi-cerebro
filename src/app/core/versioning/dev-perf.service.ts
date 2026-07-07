@@ -10,6 +10,7 @@
 
 import { Injectable, inject, signal } from '@angular/core';
 
+import { FsService } from '@core/fs/fs.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
 
 import type { Caso7Detail } from './dev-perf.casos';
@@ -38,6 +39,7 @@ const TOTAL_CASES = 10;
 @Injectable({ providedIn: 'root' })
 export class DevPerfService {
   private readonly workspace = inject(WorkspaceService);
+  private readonly fs = inject(FsService);
   private readonly progressSignal = signal<ProgressState>({
     phase: 'idle',
     currentId: null,
@@ -51,7 +53,7 @@ export class DevPerfService {
   private adapter(): GitFsAdapter {
     const root = this.workspace.root();
     if (!root) throw new Error('Workspace not ready');
-    return new GitFsAdapter(root);
+    return new GitFsAdapter(root, this.fs);
   }
 
   async runAll(n: number): Promise<PerfReport> {

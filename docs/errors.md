@@ -78,6 +78,30 @@ Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `P
 - **Cómo resolver:** aceptar el prompt del banner persistente para re-autorizar.
 - **Recuperable:** sí — no se intenta tocar el disco hasta confirmar acceso.
 
+### MCB-FS-005 — Falla del plugin `fs` de Tauri
+
+- **Severidad:** error
+- **Cuándo:** una operación de `TauriNativeFs` (lectura, escritura, `getOrCreateDir`, `isEmpty`) lanza una excepción que no es una revocación de permiso (esa cae en FS-004).
+- **Causa típica:** la capability de `plugin-fs` no cubre el path accedido, el SO denegó la operación de IO nativa, o el disco está lleno.
+- **Cómo resolver:** verificar el scope de capabilities en `src-tauri/capabilities/default.json`, o liberar espacio en disco. Si persiste, exportar ZIP y reportar con el contexto del toast.
+- **Recuperable:** sí — no se pierde el borrador en memoria; el usuario puede reintentar.
+
+### MCB-FS-006 — Falla del plugin `Filesystem` de Capacitor
+
+- **Severidad:** error
+- **Cuándo:** una operación de `CapacitorNativeFs` (lectura, escritura, `getOrCreateDir`) lanza una excepción que no es una revocación de permiso.
+- **Causa típica:** IO nativo rechazado por el SO (Android/iOS), o disco/almacenamiento del dispositivo lleno.
+- **Cómo resolver:** liberar espacio en el dispositivo. Si persiste, reportar con el contexto del toast.
+- **Recuperable:** sí — no se pierde el borrador en memoria; el usuario puede reintentar.
+
+### MCB-FS-007 — Plataforma nativa detectada pero adapter sin inicializar
+
+- **Severidad:** fatal
+- **Cuándo:** `TauriNativeFs` o `CapacitorNativeFs` reciben un `NativeDirRef` de browser (`assertPathRef` falla) en vez del `PathDirRef` que siempre deberían producir/consumir.
+- **Causa típica:** guard defensivo — debería ser inalcanzable, ya que `provideNativeFs()` sólo resuelve estos adapters cuando `PlatformService.current` coincide con la plataforma nativa detectada.
+- **Cómo resolver:** reportar como bug; indica que la detección de plataforma o el wiring de DI de `NATIVE_FS` se rompió.
+- **Recuperable:** no — indica un invariante de arquitectura roto, no un estado transitorio.
+
 ---
 
 ## AUT — Autosave / concurrencia

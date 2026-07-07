@@ -3,7 +3,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
 import { FsService } from '@core/fs/fs.service';
-import type { FsDirectoryHandle } from '@core/fs/fs.types';
+import type { NativeDirRef } from '@core/fs/native-fs.types';
 import { getDirByPath, getOrCreateDirByPath, joinPath } from '@core/fs/walk';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { MigrationsService } from '@core/migrations/migrations.service';
@@ -390,7 +390,7 @@ export class BooksService {
 
   private async findChapterFile(
     bookId: string,
-    chaptersDir: FsDirectoryHandle,
+    chaptersDir: NativeDirRef,
     chapterId: string,
   ): Promise<string> {
     const cached = this.chapterFileCache.get(bookId)?.get(chapterId);
@@ -412,7 +412,7 @@ export class BooksService {
   }
 
   private async walkBooks(
-    dir: FsDirectoryHandle,
+    dir: NativeDirRef,
     folder: string,
     summaries: BookSummary[],
     folders: string[],
@@ -470,7 +470,7 @@ export class BooksService {
     return out;
   }
 
-  private async readAllChapters(bookDir: FsDirectoryHandle): Promise<readonly Chapter[]> {
+  private async readAllChapters(bookDir: NativeDirRef): Promise<readonly Chapter[]> {
     const chaptersDir = await this.fs.getOrCreateDir(bookDir, CHAPTERS_DIR);
     const out: Chapter[] = [];
     for await (const fn of this.fs.listFiles(chaptersDir, CHAPTER_FILE_SUFFIX)) {
@@ -484,7 +484,7 @@ export class BooksService {
     return out;
   }
 
-  private requireRoot(): FsDirectoryHandle {
+  private requireRoot(): NativeDirRef {
     const root = this.workspace.root();
     if (!root) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
     return root;
@@ -496,16 +496,16 @@ export class BooksService {
     return loc;
   }
 
-  private async booksDir(): Promise<FsDirectoryHandle> {
+  private async booksDir(): Promise<NativeDirRef> {
     return this.fs.getOrCreateDir(this.requireRoot(), BOOKS_DIR);
   }
 
-  private async getFolderDir(folder: string): Promise<FsDirectoryHandle | null> {
+  private async getFolderDir(folder: string): Promise<NativeDirRef | null> {
     const root = await this.booksDir();
     return getDirByPath(this.fs, root, folder);
   }
 
-  private async bookDir(id: string): Promise<FsDirectoryHandle> {
+  private async bookDir(id: string): Promise<NativeDirRef> {
     const loc = this.requireLoc(id);
     const parent = await this.getFolderDir(loc.folder);
     if (!parent) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
@@ -514,12 +514,12 @@ export class BooksService {
     return dir;
   }
 
-  private async chaptersDir(bookId: string): Promise<FsDirectoryHandle> {
+  private async chaptersDir(bookId: string): Promise<NativeDirRef> {
     const dir = await this.bookDir(bookId);
     return this.fs.getOrCreateDir(dir, CHAPTERS_DIR);
   }
 
-  private async trashDir(root: FsDirectoryHandle): Promise<FsDirectoryHandle> {
+  private async trashDir(root: NativeDirRef): Promise<NativeDirRef> {
     const meta = await this.fs.getOrCreateDir(root, TRASH_DIR);
     const trash = await this.fs.getOrCreateDir(meta, TRASH_SUBDIR);
     const today = new Date().toISOString().slice(0, 10).replace(/-/g, '/');
@@ -530,7 +530,7 @@ export class BooksService {
     return cursor;
   }
 
-  private async allocSlug(dir: FsDirectoryHandle, title: string): Promise<string> {
+  private async allocSlug(dir: NativeDirRef, title: string): Promise<string> {
     const base = toSlug(title, 'libro');
     for (let n = 1; n < 1000; n++) {
       const candidate = withSuffix(base, n);
@@ -539,7 +539,7 @@ export class BooksService {
     throw new AppError(ERROR_CODES.FS_001, { severity: 'error', context: { base } });
   }
 
-  private async allocChapterSlug(dir: FsDirectoryHandle, title: string): Promise<string> {
+  private async allocChapterSlug(dir: NativeDirRef, title: string): Promise<string> {
     const base = toSlug(title, 'capitulo');
     for (let n = 1; n < 1000; n++) {
       const candidate = `${withSuffix(base, n)}${CHAPTER_FILE_SUFFIX}`;
@@ -548,7 +548,7 @@ export class BooksService {
     throw new AppError(ERROR_CODES.FS_001, { severity: 'error', context: { base } });
   }
 
-  private async allocAvailableDir(dir: FsDirectoryHandle, name: string): Promise<string> {
+  private async allocAvailableDir(dir: NativeDirRef, name: string): Promise<string> {
     if (!(await this.fs.hasEntry(dir, name))) return name;
     for (let n = 1; n < 1000; n++) {
       const candidate = `${name}-${n}`;
@@ -626,11 +626,7 @@ const lastPosition = (list: readonly BookSummary[]): string | null => {
   return max;
 };
 
-const moveBookDir = async (
-  fs: FsService,
-  src: FsDirectoryHandle,
-  dest: FsDirectoryHandle,
-): Promise<void> => {
+const moveBookDir = async (fs: FsService, src: NativeDirRef, dest: NativeDirRef): Promise<void> => {
   for await (const filename of fs.listFiles(src)) {
     await fs.moveFile(src, filename, dest, filename);
   }

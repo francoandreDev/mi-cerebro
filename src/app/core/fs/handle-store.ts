@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 
-import type { FsDirectoryHandle } from './fs.types';
+import type { NativeDirRef } from './native-fs.types';
 
 // why: full IdbService lands in step 4; for now we only need the root handle,
 //      so a tiny dedicated DB avoids pulling in idb-keyval until then.
@@ -12,12 +12,12 @@ const ROOT_KEY = 'root';
 export class HandleStore {
   private dbPromise: Promise<IDBDatabase> | null = null;
 
-  async getRoot(): Promise<FsDirectoryHandle | null> {
+  async getRoot(): Promise<NativeDirRef | null> {
     const db = await this.openDb();
-    return this.runTx<FsDirectoryHandle | null>(db, 'readonly', (store) => store.get(ROOT_KEY));
+    return this.runTx<NativeDirRef | null>(db, 'readonly', (store) => store.get(ROOT_KEY));
   }
 
-  async setRoot(handle: FsDirectoryHandle): Promise<void> {
+  async setRoot(handle: NativeDirRef): Promise<void> {
     const db = await this.openDb();
     await this.runTx(db, 'readwrite', (store) => store.put(handle, ROOT_KEY));
   }

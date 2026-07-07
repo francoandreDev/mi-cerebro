@@ -10,6 +10,7 @@ import { Injectable, inject } from '@angular/core';
 import { diffLines } from 'diff';
 import * as git from 'isomorphic-git';
 
+import { FsService } from '@core/fs/fs.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { GitFsAdapter } from '@core/versioning/git-fs.adapter';
 
@@ -81,6 +82,7 @@ export interface EntityDiff {
 @Injectable()
 export class HistoryDiffService {
   private readonly workspace = inject(WorkspaceService);
+  private readonly fs = inject(FsService);
 
   async loadForCommit(oid: string): Promise<readonly EntityDiff[]> {
     const adapter = this.adapter();
@@ -154,7 +156,7 @@ export class HistoryDiffService {
 
   private adapter(): GitFsAdapter | null {
     const root = this.workspace.root();
-    return root ? new GitFsAdapter(root) : null;
+    return root ? new GitFsAdapter(root, this.fs) : null;
   }
 
   private async parentOidOf(fs: GitFsAdapter, oid: string): Promise<string | null> {

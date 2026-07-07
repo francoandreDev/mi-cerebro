@@ -3,7 +3,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
 import { FsService } from '@core/fs/fs.service';
-import type { FsDirectoryHandle } from '@core/fs/fs.types';
+import type { NativeDirRef } from '@core/fs/native-fs.types';
 import { getDirByPath } from '@core/fs/walk';
 import { WorkspaceService } from '@core/fs/workspace.service';
 
@@ -77,7 +77,7 @@ export class ImageReaderService {
     return this.fs.readFile(originalDir, `${imageId}.${meta.ext}`);
   }
 
-  private async galleryDir(id: string): Promise<FsDirectoryHandle> {
+  private async galleryDir(id: string): Promise<NativeDirRef> {
     const entry = this.entries().get(id);
     if (!entry) {
       throw new AppError(ERROR_CODES.FS_003, { severity: 'error', context: { galleryId: id } });

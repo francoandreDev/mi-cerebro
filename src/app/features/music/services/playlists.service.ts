@@ -3,7 +3,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
 import { FsService } from '@core/fs/fs.service';
-import type { FsDirectoryHandle } from '@core/fs/fs.types';
+import type { NativeDirRef } from '@core/fs/native-fs.types';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { toSlug, withSuffix } from '@shared/utils/slug';
 
@@ -28,8 +28,7 @@ export class PlaylistsService {
     const dir = await this.playlistsDir();
     this.idToFile.clear();
     const summaries: PlaylistSummary[] = [];
-    for await (const [name, handle] of dir.entries()) {
-      if (handle.kind !== 'file' || !name.endsWith(PLAYLIST_FILE_SUFFIX)) continue;
+    for await (const name of this.fs.listFiles(dir, PLAYLIST_FILE_SUFFIX)) {
       try {
         const raw = await this.fs.readJson<Playlist>(dir, name);
         this.idToFile.set(raw.id, name);
@@ -99,14 +98,14 @@ export class PlaylistsService {
     return f;
   }
 
-  private async playlistsDir(): Promise<FsDirectoryHandle> {
+  private async playlistsDir(): Promise<NativeDirRef> {
     const root = this.workspace.root();
     if (!root) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
     const music = await this.fs.getOrCreateDir(root, MUSIC_DIR);
     return this.fs.getOrCreateDir(music, PLAYLISTS_DIR);
   }
 
-  private async allocFilename(dir: FsDirectoryHandle, title: string): Promise<string> {
+  private async allocFilename(dir: NativeDirRef, title: string): Promise<string> {
     const base = toSlug(title || 'playlist');
     for (let n = 1; n < 1000; n++) {
       const candidate = `${withSuffix(base, n)}${PLAYLIST_FILE_SUFFIX}`;

@@ -1,7 +1,7 @@
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
 
 import { FsService } from '@core/fs/fs.service';
-import type { FsDirectoryHandle } from '@core/fs/fs.types';
+import type { NativeDirRef } from '@core/fs/native-fs.types';
 import { WorkspaceService } from '@core/fs/workspace.service';
 
 import {
@@ -181,7 +181,7 @@ export class SettingsService {
     await this.persistToFile();
   }
 
-  private async metaDir(): Promise<FsDirectoryHandle | null> {
+  private async metaDir(): Promise<NativeDirRef | null> {
     const root = this.workspace.root();
     if (!root) return null;
     try {

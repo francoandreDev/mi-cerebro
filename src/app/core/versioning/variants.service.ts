@@ -7,7 +7,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
 import { FsService } from '@core/fs/fs.service';
-import type { FsDirectoryHandle } from '@core/fs/fs.types';
+import type { NativeDirRef } from '@core/fs/native-fs.types';
 import { WorkspaceService } from '@core/fs/workspace.service';
 
 import { computeLastActivityAt, isDormant } from './variants-activity';
@@ -287,11 +287,11 @@ export class VariantsService {
         recoverable: true,
       });
     }
-    this.adapter = new GitFsAdapter(root);
+    this.adapter = new GitFsAdapter(root, this.fs);
     return this.adapter;
   }
 
-  private async metaDir(): Promise<FsDirectoryHandle | null> {
+  private async metaDir(): Promise<NativeDirRef | null> {
     const root = this.workspace.root();
     if (!root) return null;
     try {
