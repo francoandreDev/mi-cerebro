@@ -1495,6 +1495,11 @@ export const es = {
   'music.skipBack10': 'Retroceder 10 segundos',
   'music.skipForward10': 'Avanzar 10 segundos',
   'music.playShuffled': 'Reproducir aleatorio',
+  'music.youtube.placeholder': 'Pegá un link de YouTube…',
+  'music.youtube.download': 'Descargar',
+  'music.youtube.downloading': 'Descargando…',
+  'music.youtube.unavailableTooltip':
+    'Sólo disponible en la versión de escritorio de la app (Windows/Mac/Linux).',
   'tree.type.music': 'Música',
 
   'comments.title': 'Comentarios',
@@ -1598,6 +1603,13 @@ export const es = {
   'errors.mus.001.title': 'Visualización de audio no disponible',
   'errors.mus.001.message':
     'Este navegador no soporta o no pudo inicializar WebAudio. La música sigue reproduciéndose normalmente; sólo la visualización (forma de onda) queda desactivada.',
+  'errors.mus.002.title': 'Descarga de YouTube no disponible',
+  'errors.mus.002.message': 'Esta función sólo funciona en la versión de escritorio de la app.',
+  'errors.mus.003.title': 'Link de YouTube inválido',
+  'errors.mus.003.message': 'Pegá un link de un video de youtube.com o youtu.be.',
+  'errors.mus.004.title': 'Falló la descarga',
+  'errors.mus.004.message':
+    'No se pudo descargar o convertir el video a MP3. Verificá el link y tu conexión, y reintentá.',
 
   'settings.export.section.title': 'Exportar workspace',
   'settings.export.hint':

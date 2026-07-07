@@ -1,3 +1,27 @@
+// why: ffmpeg is bundled as a sidecar (externalBin) but never spawned by the
+//      JS layer directly — yt-dlp spawns it itself via `--ffmpeg-location`.
+//      Tauri copies every externalBin next to the app's own executable in
+//      both dev and production (so `Command::sidecar()` can find it), which
+//      means we can locate it the same way without knowing the exact
+//      target-triple suffix at compile time: just look for a sibling file
+//      whose name starts with the sidecar's base name.
+#[tauri::command]
+fn sidecar_path(name: String) -> Result<String, String> {
+  let exe = std::env::current_exe().map_err(|e| e.to_string())?;
+  let dir = exe
+    .parent()
+    .ok_or_else(|| "current executable has no parent directory".to_string())?;
+  let prefix = format!("{name}-");
+  let entries = std::fs::read_dir(dir).map_err(|e| e.to_string())?;
+  for entry in entries.flatten() {
+    let filename = entry.file_name().to_string_lossy().into_owned();
+    if filename.starts_with(&prefix) {
+      return Ok(entry.path().to_string_lossy().into_owned());
+    }
+  }
+  Err(format!("no sidecar named '{name}' found next to the executable"))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
@@ -5,6 +29,7 @@ pub fn run() {
     .plugin(tauri_plugin_dialog::init())
     .plugin(tauri_plugin_store::Builder::new().build())
     .plugin(tauri_plugin_shell::init())
+    .invoke_handler(tauri::generate_handler![sidecar_path])
     .setup(|app| {
       if cfg!(debug_assertions) {
         app.handle().plugin(

@@ -23,6 +23,37 @@
   gap: 6px;
 }
 .zone-head-icon { color: var(--mc-accent-primary); }
+.zone-head-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+  flex-wrap: wrap;
+}
+.youtube-download {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mc-space-1);
+}
+.youtube-download.disabled { opacity: 0.5; }
+.youtube-download input[type='url'] {
+  width: 220px;
+}
+.youtube-download button {
+  background: var(--mc-bg-elevated);
+  color: var(--mc-fg-primary);
+  border: 1px solid var(--mc-border-default);
+  padding: var(--mc-space-1) var(--mc-space-2);
+  border-radius: var(--mc-radius-md);
+  cursor: pointer;
+  font-size: var(--mc-font-size-sm);
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.youtube-download button:disabled {
+  cursor: not-allowed;
+}
 .primary {
   background: var(--mc-accent-primary);
   color: var(--mc-accent-fg);

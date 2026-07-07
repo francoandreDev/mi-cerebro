@@ -489,3 +489,27 @@ Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `P
 - **Causa típica:** navegador sin WebAudio (raro) o restricción del entorno (ej. permisos de audio, contexto sin gesto del usuario en algún flujo atípico).
 - **Cómo resolver:** no bloquea la reproducción — el `<audio>` sigue sonando por su path por defecto. Sólo se pierde el analyser que alimentará la superficie resonante (Fase 8 del redesign de música). Si el navegador lo soporta, recargar la página suele bastar.
 - **Recuperable:** sí — es un toast informativo, no bloquea nada.
+
+### MCB-MUS-002 — Descarga de YouTube no disponible en esta plataforma
+
+- **Severidad:** warning
+- **Cuándo:** `YoutubeDownloadService.download()` se invoca corriendo en navegador o Capacitor (`PlatformService.current !== 'tauri'`).
+- **Causa típica:** guard de defensa en profundidad — la UI ya debería deshabilitar el botón con tooltip en estas plataformas (§19). Sólo se ve si algo llama al servicio programáticamente.
+- **Cómo resolver:** usar la versión de escritorio (Tauri) de la app para descargar de YouTube.
+- **Recuperable:** sí — no se intenta ninguna descarga.
+
+### MCB-MUS-003 — URL de YouTube inválida
+
+- **Severidad:** warning
+- **Cuándo:** el usuario pega un link que no matchea el patrón de `youtube.com`/`youtu.be` en el input de `/music`.
+- **Causa típica:** URL de otro sitio, link mal copiado, o campo vacío.
+- **Cómo resolver:** pegar un link válido de un video de YouTube.
+- **Recuperable:** sí.
+
+### MCB-MUS-004 — Falló la descarga o conversión a MP3
+
+- **Severidad:** error
+- **Cuándo:** el sidecar `yt-dlp` termina con código de error, o el archivo `.mp3` esperado no aparece en el directorio temporal después de una corrida "exitosa".
+- **Causa típica:** video privado/eliminado/con restricción de edad o región, sin conexión de red, extractor de yt-dlp desactualizado contra un cambio de YouTube, o el sidecar `ffmpeg` no se encontró (`sidecar_path` de Tauri no lo resolvió).
+- **Cómo resolver:** verificar que el link abre en el navegador, reintentar (yt-dlp se actualiza seguido para nuevos cambios de YouTube), o revisar que la instalación de escritorio tenga los binarios `yt-dlp`/`ffmpeg` bundleados correctamente.
+- **Recuperable:** sí — no se escribe nada en la biblioteca hasta que la descarga completa OK.

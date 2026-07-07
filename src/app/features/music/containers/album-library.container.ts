@@ -21,6 +21,7 @@ import { IconComponent } from '@shared/icon/icon.component';
 import type { PlaylistSummary, Track } from '../models/music.types';
 import { MusicLibraryService } from '../services/music-library.service';
 import { PlaylistsService } from '../services/playlists.service';
+import { YoutubeDownloadService } from '../services/youtube-download.service';
 import { groupTracksByAlbum } from '../utils/album-grouping';
 import { formatDuration } from '../utils/music-format';
 import { TRACK_DRAG_MIME, hasFiles } from './music.dnd';
@@ -39,6 +40,7 @@ export class AlbumLibraryContainer {
   private readonly workspace = inject(WorkspaceService);
   private readonly errors = inject(ErrorService);
   private readonly i18n = inject(I18nService);
+  private readonly youtube = inject(YoutubeDownloadService);
 
   readonly playlistSummaries = input.required<readonly PlaylistSummary[]>();
   readonly tracksTouched = output<readonly string[]>();
@@ -51,6 +53,10 @@ export class AlbumLibraryContainer {
   protected readonly dragOver = signal(false);
   protected readonly selectedIds = signal<ReadonlySet<string>>(new Set());
   private lastClickedId: string | null = null;
+
+  protected readonly youtubeAvailable = this.youtube.isAvailable();
+  protected readonly youtubeUrl = signal('');
+  protected readonly youtubeDownloading = signal(false);
 
   private readonly libSearch = viewChild<ElementRef<HTMLInputElement>>('libSearch');
 
@@ -224,6 +230,26 @@ export class AlbumLibraryContainer {
     const ids = this.isSelected(id) ? [...this.selectedIds()] : [id];
     event.dataTransfer.setData(TRACK_DRAG_MIME, JSON.stringify(ids));
     event.dataTransfer.effectAllowed = 'copy';
+  }
+
+  protected onYoutubeUrlInput(value: string): void {
+    this.youtubeUrl.set(value);
+  }
+
+  protected async onYoutubeDownload(): Promise<void> {
+    const url = this.youtubeUrl().trim();
+    if (url === '' || this.youtubeDownloading()) return;
+    this.youtubeDownloading.set(true);
+    try {
+      const { file } = await this.youtube.download(url);
+      await this.workspace.ensureWritable();
+      await this.library.addTracks([file]);
+      this.youtubeUrl.set('');
+    } catch (e) {
+      this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize()));
+    } finally {
+      this.youtubeDownloading.set(false);
+    }
   }
 
   private async addFilesToLibrary(files: readonly File[]): Promise<void> {

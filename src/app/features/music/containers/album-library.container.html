@@ -3,11 +3,38 @@
     <mc-icon name="music-note" class="zone-head-icon" />
     {{ t('music.library') }} ({{ tracks().length }})
   </h3>
-  <label class="primary mc-hover-grow">
-    <mc-icon name="upload-simple" />
-    <span>{{ t('music.upload') }}</span>
-    <input type="file" accept="audio/mpeg,.mp3" multiple hidden (change)="onPickFiles($event)" />
-  </label>
+  <div class="zone-head-actions">
+    <div
+      class="youtube-download"
+      [class.disabled]="!youtubeAvailable"
+      [title]="youtubeAvailable ? '' : t('music.youtube.unavailableTooltip')"
+    >
+      <input
+        type="url"
+        class="search-input"
+        [value]="youtubeUrl()"
+        [disabled]="!youtubeAvailable || youtubeDownloading()"
+        (input)="onYoutubeUrlInput(asInput($event.target).value)"
+        [placeholder]="t('music.youtube.placeholder')"
+      />
+      <button
+        type="button"
+        class="mc-hover-grow"
+        [disabled]="!youtubeAvailable || youtubeDownloading() || youtubeUrl().trim() === ''"
+        (click)="onYoutubeDownload()"
+      >
+        <mc-icon name="download-simple" />
+        <span>{{
+          youtubeDownloading() ? t('music.youtube.downloading') : t('music.youtube.download')
+        }}</span>
+      </button>
+    </div>
+    <label class="primary mc-hover-grow">
+      <mc-icon name="upload-simple" />
+      <span>{{ t('music.upload') }}</span>
+      <input type="file" accept="audio/mpeg,.mp3" multiple hidden (change)="onPickFiles($event)" />
+    </label>
+  </div>
 </header>
 
 <div
