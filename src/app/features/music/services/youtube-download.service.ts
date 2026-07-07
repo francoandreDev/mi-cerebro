@@ -4,7 +4,7 @@
 // `--ffmpeg-location`, la capa JS nunca invoca ffmpeg.
 import { Injectable, inject } from '@angular/core';
 import { invoke } from '@tauri-apps/api/core';
-import { tempDir } from '@tauri-apps/api/path';
+import { join, tempDir } from '@tauri-apps/api/path';
 import { Command } from '@tauri-apps/plugin-shell';
 import { readFile, remove } from '@tauri-apps/plugin-fs';
 
@@ -13,6 +13,15 @@ import { ERROR_CODES } from '@core/errors/error.codes';
 import { PlatformService } from '@core/platform/platform.service';
 
 const YOUTUBE_URL_RE = /^https?:\/\/(www\.|m\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[\w-]+/i;
+
+// why: YouTube's newer signature-cipher challenge needs a JS runtime
+//      (deno) that yt-dlp can shell out to — without one, extraction
+//      returns "HTTP Error 403: Forbidden" for the default (web) client.
+//      Forcing the android client sidesteps the JS challenge entirely
+//      (that client's URLs aren't signature-ciphered), avoiding the need
+//      to bundle a third sidecar just for this. Verified against a real
+//      video end-to-end (title fetch + full download + mp3 conversion).
+const YOUTUBE_EXTRACTOR_ARGS = ['--extractor-args', 'youtube:player_client=android'];
 
 export interface YoutubeDownloadResult {
   readonly file: File;
@@ -53,10 +62,11 @@ export class YoutubeDownloadService {
 
     const dir = await tempDir();
     const id = crypto.randomUUID();
-    const outputTemplate = `${dir}mi-cerebro-yt-${id}.%(ext)s`;
-    const expectedPath = `${dir}mi-cerebro-yt-${id}.mp3`;
+    const outputTemplate = await join(dir, `mi-cerebro-yt-${id}.%(ext)s`);
+    const expectedPath = await join(dir, `mi-cerebro-yt-${id}.mp3`);
 
-    const result = await Command.sidecar('binaries/yt-dlp', [
+    const args = [
+      ...YOUTUBE_EXTRACTOR_ARGS,
       '-x',
       '--audio-format',
       'mp3',
@@ -67,12 +77,19 @@ export class YoutubeDownloadService {
       '-o',
       outputTemplate,
       trimmed,
-    ]).execute();
+    ];
+    const result = await Command.sidecar('binaries/yt-dlp', args).execute();
 
     if (result.code !== 0) {
       throw new AppError(ERROR_CODES.MUS_004, {
         severity: 'error',
-        context: { url: trimmed, exitCode: result.code, stderr: result.stderr.slice(-2000) },
+        context: {
+          url: trimmed,
+          exitCode: result.code,
+          args,
+          stdout: result.stdout,
+          stderr: result.stderr,
+        },
         recoverable: true,
       });
     }
@@ -110,6 +127,7 @@ export class YoutubeDownloadService {
 
   private async fetchTitle(url: string): Promise<string> {
     const result = await Command.sidecar('binaries/yt-dlp', [
+      ...YOUTUBE_EXTRACTOR_ARGS,
       '--skip-download',
       '--print',
       '%(title)s',

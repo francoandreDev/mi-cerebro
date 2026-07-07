@@ -27,16 +27,20 @@
   display: flex;
   align-items: center;
   gap: var(--mc-space-2);
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  min-width: 0;
 }
 .youtube-download {
   display: inline-flex;
   align-items: center;
   gap: var(--mc-space-1);
+  min-width: 0;
 }
 .youtube-download.disabled { opacity: 0.5; }
 .youtube-download input[type='url'] {
-  width: 220px;
+  width: 100%;
+  min-width: 0;
+  flex: 1 1 140px;
 }
 .youtube-download button {
   background: var(--mc-bg-elevated);
