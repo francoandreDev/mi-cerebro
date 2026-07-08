@@ -23,7 +23,7 @@
               [availableTags]="tags()"
               [untitledLabel]="untitledLabel()"
               [longevityDays]="item.longevityDays"
-              (open)="onOpen($event)"
+              (open)="onOpen(item.summary.id, item.summary.title)"
             />
           }
         </div>

@@ -1,5 +1,7 @@
 import type { Routes } from '@angular/router';
 
+import { entityReadyResolver } from '@core/fs/entity-ready.guard';
+
 export const writingsRoutes: Routes = [
   {
     path: '',
@@ -9,5 +11,6 @@ export const writingsRoutes: Routes = [
   {
     path: ':id',
     loadComponent: () => import('./containers/writings.container').then((m) => m.WritingsContainer),
+    resolve: { ready: entityReadyResolver },
   },
 ];

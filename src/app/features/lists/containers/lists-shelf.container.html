@@ -60,7 +60,7 @@
                   [availableTags]="tags()"
                   [untitledLabel]="untitledLabel()"
                   [query]="query()"
-                  (open)="onOpen($event)"
+                  (open)="onOpen(list.id, list.title)"
                   (remove)="onDelete($event)"
                 />
               }

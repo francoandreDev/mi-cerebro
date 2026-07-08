@@ -17,6 +17,7 @@ import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { EntityLockController } from '@core/locks/entity-lock.controller';
+import { extractEntityId } from '@core/routing/entity-slug';
 import { TagsService } from '@core/tags/tags.service';
 import { IconComponent } from '@shared/icon/icon.component';
 import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
@@ -90,7 +91,8 @@ export class GalleriesContainer {
 
   constructor() {
     effect(() => {
-      const wanted = this.id();
+      const raw = this.id();
+      const wanted = raw ? extractEntityId(raw) : undefined;
       const current = this.active();
       if (!wanted) {
         if (current) {

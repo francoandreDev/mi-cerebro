@@ -203,7 +203,7 @@ export class CommandPaletteContainer {
     }
     const text = this.parsed().text;
     if (text) this.queriesService.remember(text);
-    void this.router.navigate([...routeFor(item.kind, item.id)]);
+    void this.router.navigate([...routeFor(item.kind, item.id, item.title)]);
     this.close();
   }
 }

@@ -1,5 +1,7 @@
 import type { Routes } from '@angular/router';
 
+import { entityReadyResolver } from '@core/fs/entity-ready.guard';
+
 export const goalsRoutes: Routes = [
   {
     path: '',
@@ -9,5 +11,6 @@ export const goalsRoutes: Routes = [
   {
     path: ':id',
     loadComponent: () => import('./containers/goals.container').then((m) => m.GoalsContainer),
+    resolve: { ready: entityReadyResolver },
   },
 ];

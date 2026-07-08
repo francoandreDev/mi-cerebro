@@ -20,6 +20,7 @@ import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { EntityLockController } from '@core/locks/entity-lock.controller';
+import { entitySlugSegment, extractEntityId } from '@core/routing/entity-slug';
 import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
 
 import { ChapterEditorPaneComponent } from '../components/chapter-editor-pane.component';
@@ -94,7 +95,8 @@ export class BookReaderContainer {
       toggleIndex: () => this.indexOpen.update((v) => !v),
     });
     effect(() => {
-      const wantedBook = this.id();
+      const raw = this.id();
+      const wantedBook = raw ? extractEntityId(raw) : undefined;
       if (!wantedBook) {
         this.book.set(null);
         this.chapters.set([]);
@@ -105,7 +107,8 @@ export class BookReaderContainer {
     });
     effect(() => {
       const b = this.book();
-      const wantedCh = this.chapterId();
+      const rawCh = this.chapterId();
+      const wantedCh = rawCh ? extractEntityId(rawCh) : undefined;
       if (!b || !wantedCh) {
         this.chapter.set(null);
         return;
@@ -130,13 +133,18 @@ export class BookReaderContainer {
 
   protected onBackToDesk(): void {
     const b = this.book();
-    if (b) void this.router.navigate(['/books', b.id]);
+    if (b) void this.router.navigate(['/books', entitySlugSegment(b.title, b.id, 'libro')]);
   }
   protected onJumpTo(chId: string): void {
     const b = this.book();
     if (!b) return;
     this.indexOpen.set(false);
-    void this.router.navigate(['/books', b.id, chId]);
+    const chTitle = this.chapters().find((c) => c.id === chId)?.title ?? '';
+    void this.router.navigate([
+      '/books',
+      entitySlugSegment(b.title, b.id, 'libro'),
+      entitySlugSegment(chTitle, chId, 'capitulo'),
+    ]);
   }
   protected onToggleFocus(): void {
     this.localFocusMode.update((v) => !v);
@@ -181,7 +189,11 @@ export class BookReaderContainer {
       const ch = await this.booksService.addChapter(b.id, '');
       this.book.set(await this.booksService.readBook(b.id));
       this.chapters.set(await this.booksService.listChapters(b.id));
-      await this.router.navigate(['/books', b.id, ch.id]);
+      await this.router.navigate([
+        '/books',
+        entitySlugSegment(b.title, b.id, 'libro'),
+        entitySlugSegment(ch.title, ch.id, 'capitulo'),
+      ]);
     } catch (e) {
       this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize()));
     }

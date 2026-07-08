@@ -14,7 +14,7 @@
             <mc-writing-spine
               [writing]="view.summary"
               [untitledLabel]="untitledLabel()"
-              (open)="onOpen($event)"
+              (open)="onOpen(view.summary.id, view.summary.title)"
             />
           }
         </div>
@@ -27,7 +27,7 @@
               [availableTags]="tags()"
               [untitledLabel]="untitledLabel()"
               [ago]="view.ago"
-              (open)="onOpen($event)"
+              (open)="onOpen(view.summary.id, view.summary.title)"
               (remove)="onDelete($event)"
             />
           }
@@ -41,7 +41,7 @@
               [availableTags]="tags()"
               [untitledLabel]="untitledLabel()"
               [ago]="view.ago"
-              (open)="onOpen($event)"
+              (open)="onOpen(view.summary.id, view.summary.title)"
               (remove)="onDelete($event)"
             />
           }
@@ -77,7 +77,7 @@
         [availableTags]="tags()"
         [untitledLabel]="untitledLabel()"
         [ago]="cr.ago"
-        (open)="onOpen($event)"
+        (open)="onOpen(cr.summary.id, cr.summary.title)"
       />
       @if (restAll().length > 0) {
         <button

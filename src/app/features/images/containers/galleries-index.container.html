@@ -68,7 +68,7 @@
           [attr.aria-label]="cell.title"
           [attr.aria-current]="cell.active ? 'true' : null"
           (click)="onSelectCell(cell.summary.id)"
-          (dblclick)="openGallery(cell.summary.id)"
+          (dblclick)="openGallery(cell.summary.id, cell.summary.title)"
         >
           <span class="plant-title">{{ cell.title }}</span>
           <span class="plant-sub">{{ cell.subtitle }}</span>

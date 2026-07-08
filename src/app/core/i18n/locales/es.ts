@@ -85,6 +85,10 @@ export const es = {
   'errors.fs.007.message':
     'La app detectó una plataforma nativa pero el módulo de archivos correspondiente no está listo. Reiniciá la app; si persiste, reportá el problema.',
 
+  'errors.fs.008.title': 'Entidad no encontrada',
+  'errors.fs.008.message':
+    'No se encontró esta entidad ni siquiera después de refrescar el índice contra el disco. Probablemente fue eliminada por fuera de la app.',
+
   'errors.aut.001.title': 'No se pudo guardar el borrador',
   'errors.aut.001.message':
     'No pude escribir el borrador local de tu trabajo. Tus cambios siguen en memoria, pero podrían perderse si cerrás la pestaña.',

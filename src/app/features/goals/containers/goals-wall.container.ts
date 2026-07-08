@@ -6,6 +6,7 @@ import { withReauthIfNeeded } from '@core/errors/with-reauth';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { entitySlugSegment } from '@core/routing/entity-slug';
 import type { Tag } from '@core/tags/tag.types';
 import { TagsService } from '@core/tags/tags.service';
 import { IconComponent } from '@shared/icon/icon.component';
@@ -308,7 +309,10 @@ export class GoalsWallContainer {
   private async onStarTap(star: StarVm, ev: PointerEvent): Promise<void> {
     if (ev.shiftKey) {
       this.peekGoalId.set(null);
-      await this.router.navigate(['/goals', star.goalId]);
+      await this.router.navigate([
+        '/goals',
+        entitySlugSegment(this.goalTitle(star.goalId), star.goalId),
+      ]);
       return;
     }
     if (this.peekGoalId() !== star.goalId) {
@@ -317,7 +321,10 @@ export class GoalsWallContainer {
     }
     if (star.stepId === null) {
       this.peekGoalId.set(null);
-      await this.router.navigate(['/goals', star.goalId]);
+      await this.router.navigate([
+        '/goals',
+        entitySlugSegment(this.goalTitle(star.goalId), star.goalId),
+      ]);
       return;
     }
     try {
@@ -347,7 +354,11 @@ export class GoalsWallContainer {
     const id = this.peekGoalId();
     if (!id) return;
     this.peekGoalId.set(null);
-    await this.router.navigate(['/goals', id]);
+    await this.router.navigate(['/goals', entitySlugSegment(this.goalTitle(id), id)]);
+  }
+
+  private goalTitle(id: string): string {
+    return this.summaries().find((s) => s.id === id)?.title ?? '';
   }
   protected async onPeekRemove(): Promise<void> {
     const id = this.peekGoalId();
@@ -417,7 +428,7 @@ export class GoalsWallContainer {
       await this.workspace.ensureWritable();
       const goal = await this.goalsService.create(title);
       this.newTitle.set('');
-      await this.router.navigate(['/goals', goal.id]);
+      await this.router.navigate(['/goals', entitySlugSegment(goal.title, goal.id)]);
     } catch (e) {
       this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize()));
     } finally {

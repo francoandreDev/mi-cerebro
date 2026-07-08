@@ -24,7 +24,7 @@
         [note]="note"
         [availableTags]="tags()"
         [untitledLabel]="untitledLabel()"
-        (open)="onOpen($event)"
+        (open)="onOpen(note.id, note.title)"
         (remove)="onDelete($event)"
       />
     }

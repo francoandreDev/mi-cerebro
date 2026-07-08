@@ -14,6 +14,7 @@ import { withReauthIfNeeded } from '@core/errors/with-reauth';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { entitySlugSegment } from '@core/routing/entity-slug';
 import { TagsService } from '@core/tags/tags.service';
 import { createDndController } from '@shared/utils/dnd-controller';
 
@@ -124,8 +125,8 @@ export class TasksGardenContainer {
     persistBool(WATERING_KEY, next);
   }
 
-  protected onOpen(id: string): void {
-    void this.router.navigate(['/tasks', id]);
+  protected onOpen(id: string, title: string): void {
+    void this.router.navigate(['/tasks', entitySlugSegment(title, id)]);
   }
 
   protected onOpenPatio(): void {

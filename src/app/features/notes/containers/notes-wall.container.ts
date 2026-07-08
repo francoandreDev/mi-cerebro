@@ -7,6 +7,7 @@ import { withReauthIfNeeded } from '@core/errors/with-reauth';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { entitySlugSegment } from '@core/routing/entity-slug';
 import { TagsService } from '@core/tags/tags.service';
 import { IconComponent } from '@shared/icon/icon.component';
 
@@ -69,8 +70,8 @@ export class NotesWallContainer {
     return this.i18n.t(key);
   }
 
-  protected onOpen(id: string): void {
-    void this.router.navigate(['/notes', id]);
+  protected onOpen(id: string, title: string): void {
+    void this.router.navigate(['/notes', entitySlugSegment(title, id)]);
   }
 
   protected async onCreate(title: string): Promise<void> {

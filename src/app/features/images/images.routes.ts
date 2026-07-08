@@ -1,5 +1,7 @@
 import type { Routes } from '@angular/router';
 
+import { entityReadyResolver } from '@core/fs/entity-ready.guard';
+
 export const imagesRoutes: Routes = [
   {
     path: '',
@@ -10,5 +12,6 @@ export const imagesRoutes: Routes = [
     path: ':id',
     loadComponent: () =>
       import('./containers/galleries.container').then((m) => m.GalleriesContainer),
+    resolve: { ready: entityReadyResolver },
   },
 ];

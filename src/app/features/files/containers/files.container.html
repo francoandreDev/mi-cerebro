@@ -22,7 +22,7 @@
               [untitledLabel]="t('files.untitledTitle')"
               [number]="i + 1"
               [isOpen]="active()?.id === summary.id"
-              (open)="onOpenCollection($event)"
+              (open)="onOpenCollection(summary.id, summary.title)"
             />
           </li>
           @if (active() && active()!.id === summary.id && inlineMode()) {

@@ -39,6 +39,9 @@ export class WorkspaceRefreshService {
   private readonly musicLibrary = inject(MusicLibraryService);
   private readonly playlists = inject(PlaylistsService);
 
+  private ready = false;
+  private inFlight: Promise<void> | null = null;
+
   // why: ordered the same way the workspace sidebar's boot chain runs,
   //      so behavior at boot and at switch is identical.
   async refreshAll(): Promise<void> {
@@ -54,5 +57,21 @@ export class WorkspaceRefreshService {
     await this.reminders.refresh();
     await this.musicLibrary.refresh();
     await this.playlists.refresh();
+    this.ready = true;
+  }
+
+  // why: boot (WorkspaceSidebarContainer) y la ruta de detalle (§20b,
+  //      entity-ready.guard.ts) piden lo mismo en paralelo en un reload
+  //      directo — dedupea en un único walk compartido en vez de pisarse
+  //      con dos refreshAll() concurrentes, y no repite el walk una vez
+  //      que ya corrió.
+  async ensureReady(): Promise<void> {
+    if (this.ready) return;
+    if (!this.inFlight) {
+      this.inFlight = this.refreshAll().finally(() => {
+        this.inFlight = null;
+      });
+    }
+    return this.inFlight;
   }
 }

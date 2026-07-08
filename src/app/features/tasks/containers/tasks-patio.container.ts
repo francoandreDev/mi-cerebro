@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { entitySlugSegment } from '@core/routing/entity-slug';
 import { TagsService } from '@core/tags/tags.service';
 
 import { HarvestedPlantComponent } from '../components/harvested-plant.component';
@@ -98,8 +99,8 @@ export class TasksPatioContainer {
     void this.router.navigate(['/tasks']);
   }
 
-  protected onOpen(id: string): void {
-    void this.router.navigate(['/tasks', id]);
+  protected onOpen(id: string, title: string): void {
+    void this.router.navigate(['/tasks', entitySlugSegment(title, id)]);
   }
 }
 

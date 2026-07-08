@@ -541,3 +541,11 @@ Formato por entrada:
 
 - **Qué**: los campos que la app mantiene mecánicamente (ids, timestamps, `schemaVersion`, `position` fractional-index, y extras por familia — `enteredHoyAt` en tasks, `progress`/`wallCenter` en goals, `bookId`/`pageCount` en chapters, `nextPingAt` en reminders) ya no aparecen en el diff de historial.
 - **Cómo**: filtro downstream en `diff.utils.ts` (`computeUserFields` + `systemKeysFor` con set universal + overrides por familia). El JSON en disco los conserva porque runtime los usa; el pipeline de diff los ignora al leerlos, así que la historia vieja se ve limpia retroactivamente sin migrar datos. El shape del diff colapsó de `{ user, system }` a un array plano; el `systemExpandedSignal` del container quedó eliminado.
+
+## Fs — Antipatrón `MCB-FS-003` mal usado, deuda restante (origen: §20a, 2026-07-08)
+
+### Migrar `findPath()` de Notes/Tasks/Goals/Lists/Writings y `findChapterFile` de Books a `MCB-FS-008`
+
+- **Qué**: `§20a` migró `bookDir`/`requireLoc` de `BooksService`/`GalleriesService`/`FilesService` (las 3 entidades directorio-por-entidad) de tirar `MCB-FS-003` a `MCB-FS-008` cuando un `id` no aparece ni tras re-caminar el filesystem. El mismo antipatrón sigue vivo en el `findPath()` interno de `NotesService`/`TasksService`/`GoalsService`/`ListsService`/`WritingsService` (entidades archivo-plano-con-sufijo, patrón preexistente que §20a tomó como referencia pero no tocó) y en `BooksService#findChapterFile` (resolución de capítulo dentro de un libro, walk-based igual que `findPath`, mismo throw final).
+- **Por qué se difirió**: `§20a` acotó su alcance explícitamente a los "dos usos indebidos" nombrados en el roadmap (`books.service.ts`, `bookDir`/`requireLoc`); generalizar a los otros 6 sitios es mecánico pero son call sites adicionales fuera de ese texto, y tocarlos ameritaba su propia revisión (ej. decidir si `findChapterFile` amerita un código distinto de `findLoc`/`findPath` al nivel de libro, dado que resuelve una sub-entidad).
+- **Target**: sin asignar.

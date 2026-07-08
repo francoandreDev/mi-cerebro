@@ -18,6 +18,7 @@ import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { EntityLockController } from '@core/locks/entity-lock.controller';
+import { entitySlugSegment, extractEntityId } from '@core/routing/entity-slug';
 import { TagsService } from '@core/tags/tags.service';
 import {
   ConfirmDialogComponent,
@@ -125,7 +126,8 @@ export class BookOpenContainer {
 
   constructor() {
     effect(() => {
-      const wanted = this.id();
+      const raw = this.id();
+      const wanted = raw ? extractEntityId(raw) : undefined;
       const current = this.active();
       if (!wanted) {
         if (current) {
@@ -242,7 +244,12 @@ export class BookOpenContainer {
   protected onOpenChapter(chapterId: string): void {
     const book = this.active();
     if (!book) return;
-    void this.router.navigate(['/books', book.id, chapterId]);
+    const chapterTitle = this.chapters().find((c) => c.id === chapterId)?.title ?? '';
+    void this.router.navigate([
+      '/books',
+      entitySlugSegment(book.title, book.id, 'libro'),
+      entitySlugSegment(chapterTitle, chapterId, 'capitulo'),
+    ]);
   }
 
   protected async onAddChapter(): Promise<void> {
@@ -253,7 +260,11 @@ export class BookOpenContainer {
       const ch = await this.booksService.addChapter(book.id, '');
       this.chapters.set(await this.booksService.listChapters(book.id));
       this.active.set(await this.booksService.readBook(book.id));
-      await this.router.navigate(['/books', book.id, ch.id]);
+      await this.router.navigate([
+        '/books',
+        entitySlugSegment(book.title, book.id, 'libro'),
+        entitySlugSegment(ch.title, ch.id, 'capitulo'),
+      ]);
     } catch (e) {
       this.errors.report(this.withReauth(e));
     }

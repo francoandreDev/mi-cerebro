@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { ReminderSchedulerService } from '@core/reminders/reminder-scheduler.service';
+import { entitySlugSegment } from '@core/routing/entity-slug';
 import type { ReminderSummary } from '../models/reminder.types';
 import { IconComponent } from '@shared/icon/icon.component';
 import type { IconName } from '@shared/icon/icons.data';
@@ -115,7 +116,7 @@ export class ReminderToastContainer {
 
   protected open(r: ReminderSummary): void {
     if (r.sourceKind === 'goal' && r.sourceId) {
-      void this.router.navigate(['/goals', r.sourceId]);
+      void this.router.navigate(['/goals', entitySlugSegment(r.title, r.sourceId)]);
     } else {
       void this.router.navigate(['/reminders']);
     }

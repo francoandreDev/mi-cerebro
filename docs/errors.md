@@ -69,6 +69,7 @@ Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `P
 - **Causa típica:** el usuario movió o renombró la carpeta del workspace por fuera de la app.
 - **Cómo resolver:** elegir de nuevo la carpeta raíz en la pantalla que aparece; si fue movida, navegar a su nueva ubicación.
 - **Recuperable:** sí — los borradores en IndexedDB se ofrecen al reabrir.
+- **Nota de alcance (§20a):** este código está reservado para cuando la **carpeta raíz del workspace** realmente no está (`WorkspaceService.requireRoot()`). `BooksService`/`GalleriesService`/`FilesService` migraron su uso indebido de "id no encontrado ni tras re-caminar el filesystem" a `MCB-FS-008`. **Deuda conocida, sin cerrar todavía:** `NotesService`/`TasksService`/`GoalsService`/`ListsService`/`WritingsService` (su `findPath()` interno) y `BooksService#findChapterFile` siguen tirando `MCB-FS-003` para ese mismo caso de "no encontrado tras el walk" — comparten el antipatrón pero quedaron fuera del alcance explícito de 20a (que se limitó a `bookDir`/`requireLoc` de las 3 entidades directorio-por-entidad). Migrarlos a `MCB-FS-008` queda sin fase asignada.
 
 ### MCB-FS-004 — Permisos revocados
 
@@ -101,6 +102,14 @@ Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `P
 - **Causa típica:** guard defensivo — debería ser inalcanzable, ya que `provideNativeFs()` sólo resuelve estos adapters cuando `PlatformService.current` coincide con la plataforma nativa detectada.
 - **Cómo resolver:** reportar como bug; indica que la detección de plataforma o el wiring de DI de `NATIVE_FS` se rompió.
 - **Recuperable:** no — indica un invariante de arquitectura roto, no un estado transitorio.
+
+### MCB-FS-008 — Entidad no encontrada tras refrescar el índice
+
+- **Severidad:** error
+- **Cuándo:** se pide leer/escribir una entidad (libro, galería, colección de archivos) por `id`, el caché en memoria `id → ruta` no lo tiene, y un re-walk completo del filesystem tampoco encuentra ningún archivo con ese `id`.
+- **Causa típica:** la entidad fue borrada por fuera de la app (o desde otra pestaña/dispositivo) después de poblado el caché.
+- **Cómo resolver:** volver al listado — la entidad ya no existe. Si se esperaba que existiera, verificar la papelera (`.mi-cerebro/trash/`) o el historial de versiones.
+- **Recuperable:** no — a diferencia de `MCB-FS-003` (carpeta raíz del workspace movida/eliminada), acá el workspace está intacto y la búsqueda ya fue exhaustiva.
 
 ---
 

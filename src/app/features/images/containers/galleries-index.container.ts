@@ -15,6 +15,7 @@ import { withReauthIfNeeded } from '@core/errors/with-reauth';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { entitySlugSegment } from '@core/routing/entity-slug';
 import { TagsService } from '@core/tags/tags.service';
 import { IconComponent } from '@shared/icon/icon.component';
 import { hashColor } from '@shared/utils/hash-color';
@@ -180,11 +181,13 @@ export class GalleriesIndexContainer {
 
   protected onOpenActive(): void {
     const id = this.activeRoomId();
-    if (id) void this.router.navigate(['/images', id]);
+    if (!id) return;
+    const title = this.summaries().find((s) => s.id === id)?.title ?? '';
+    void this.router.navigate(['/images', entitySlugSegment(title, id, 'galeria')]);
   }
 
-  protected openGallery(id: string): void {
-    void this.router.navigate(['/images', id]);
+  protected openGallery(id: string, title: string): void {
+    void this.router.navigate(['/images', entitySlugSegment(title, id, 'galeria')]);
   }
 
   protected onPreviewOpen(_imageId: string): void {
@@ -195,7 +198,10 @@ export class GalleriesIndexContainer {
     try {
       await this.workspace.ensureWritable();
       const gallery = await this.galleriesService.createGallery('');
-      await this.router.navigate(['/images', gallery.id]);
+      await this.router.navigate([
+        '/images',
+        entitySlugSegment(gallery.title, gallery.id, 'galeria'),
+      ]);
     } catch (e) {
       this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize()));
     }

@@ -1,3 +1,5 @@
+import { entitySlugSegment } from '@core/routing/entity-slug';
+
 export type CalendarEventKind = 'task' | 'goal' | 'reminder';
 
 export interface CalendarEvent {
@@ -18,7 +20,7 @@ export interface CalendarFilters {
 export const ALL_CALENDAR_KINDS: readonly CalendarEventKind[] = ['task', 'goal', 'reminder'];
 
 export const eventRoute = (event: CalendarEvent): readonly string[] => {
-  if (event.kind === 'task') return ['/tasks', event.entityId];
-  if (event.kind === 'goal') return ['/goals', event.entityId];
+  if (event.kind === 'task') return ['/tasks', entitySlugSegment(event.title, event.entityId)];
+  if (event.kind === 'goal') return ['/goals', entitySlugSegment(event.title, event.entityId)];
   return ['/reminders'];
 };

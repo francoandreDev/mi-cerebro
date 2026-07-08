@@ -18,6 +18,7 @@ import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { EntityLockController } from '@core/locks/entity-lock.controller';
+import { entitySlugSegment, extractEntityId } from '@core/routing/entity-slug';
 import { TagsService } from '@core/tags/tags.service';
 import { IconComponent } from '@shared/icon/icon.component';
 import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
@@ -75,7 +76,8 @@ export class FilesContainer {
 
   constructor() {
     effect(() => {
-      const wanted = this.id();
+      const raw = this.id();
+      const wanted = raw ? extractEntityId(raw) : undefined;
       const current = this.active();
       if (!wanted) {
         if (current) this.active.set(null);
@@ -157,15 +159,18 @@ export class FilesContainer {
     await this.router.navigate(['/files']);
   }
 
-  protected async onOpenCollection(id: string): Promise<void> {
-    await this.router.navigate(['/files', id]);
+  protected async onOpenCollection(id: string, title: string): Promise<void> {
+    await this.router.navigate(['/files', entitySlugSegment(title, id, 'coleccion')]);
   }
 
   protected async onCreateCollection(): Promise<void> {
     try {
       await this.workspace.ensureWritable();
       const created = await this.filesService.createCollection('');
-      await this.router.navigate(['/files', created.id]);
+      await this.router.navigate([
+        '/files',
+        entitySlugSegment(created.title, created.id, 'coleccion'),
+      ]);
     } catch (e) {
       this.errors.report(this.withReauthIfNeeded(e));
     }

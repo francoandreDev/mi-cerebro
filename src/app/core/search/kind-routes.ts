@@ -1,3 +1,5 @@
+import { entitySlugSegment, extractEntityId } from '@core/routing/entity-slug';
+
 import type { EntityKind } from './search.types';
 
 // why: maps `SearchKind` ↔ Angular router URL. Lives in core so features
@@ -26,11 +28,11 @@ const SEGMENT_TO_KIND: Readonly<Record<string, EntityKind>> = {
   files: 'file',
 };
 
-export function routeFor(kind: EntityKind, id: string): readonly string[] {
+export function routeFor(kind: EntityKind, id: string, title = ''): readonly string[] {
   const base = ROUTES[kind];
   if (!base) return ['/notes'];
   if (kind === 'reminder') return base;
-  return [...base, id];
+  return [...base, entitySlugSegment(title, id)];
 }
 
 export interface DetailRouteRef {
@@ -45,9 +47,9 @@ export function parseDetailUrl(url: string): DetailRouteRef | null {
   const path = url.split('?')[0]?.split('#')[0] ?? '';
   const parts = path.split('/').filter((s) => s.length > 0);
   const first = parts[0];
-  const id = parts[1];
-  if (!first || !id) return null;
+  const segment = parts[1];
+  if (!first || !segment) return null;
   const kind = SEGMENT_TO_KIND[first];
   if (!kind) return null;
-  return { kind, id };
+  return { kind, id: extractEntityId(segment) };
 }

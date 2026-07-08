@@ -242,7 +242,7 @@ export class FilesService {
 
   async deleteCollectionToTrash(id: string): Promise<void> {
     const root = this.requireRoot();
-    const loc = this.requireLoc(id);
+    const loc = await this.findLoc(id);
     const parent = await this.getFolderDir(loc.folder);
     if (!parent) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
     const srcDir = await this.fs.getDir(parent, loc.slug);
@@ -278,7 +278,7 @@ export class FilesService {
   }
 
   async moveCollectionToFolder(id: string, newFolder: string): Promise<void> {
-    const loc = this.requireLoc(id);
+    const loc = await this.findLoc(id);
     if (loc.folder === newFolder) return;
     const root = await this.filesDir();
     const srcParent = await this.getFolderDir(loc.folder);
@@ -339,10 +339,40 @@ export class FilesService {
     return root;
   }
 
-  private requireLoc(id: string): CollectionLocation {
-    const loc = this.idToLoc.get(id);
-    if (!loc) throw new AppError(ERROR_CODES.FS_003, { severity: 'error', context: { id } });
-    return loc;
+  // why: reload directo puede montar la ruta de detalle antes de que el
+  //      sidebar dispare refresh() y puebla idToLoc — re-caminamos el
+  //      filesystem como fallback en vez de asumir el id borrado (§20a).
+  private async findLoc(id: string): Promise<CollectionLocation> {
+    const cached = this.idToLoc.get(id);
+    if (cached) return cached;
+    const root = await this.filesDir();
+    const found = await this.walkForLoc(root, '', id);
+    if (found) return found;
+    throw new AppError(ERROR_CODES.FS_008, { severity: 'error', context: { id } });
+  }
+
+  private async walkForLoc(
+    dir: NativeDirRef,
+    folder: string,
+    id: string,
+  ): Promise<CollectionLocation | null> {
+    for await (const name of this.fs.listSubdirs(dir)) {
+      const sub = await this.fs.getDir(dir, name);
+      if (!sub) continue;
+      if (await this.fs.hasEntry(sub, COLLECTION_META_FILE)) {
+        try {
+          const raw = await this.fs.readJson<FileCollection>(sub, COLLECTION_META_FILE);
+          this.idToLoc.set(raw.id, { folder, slug: name });
+          if (raw.id === id) return { folder, slug: name };
+        } catch {
+          /* skip corrupt */
+        }
+      } else {
+        const found = await this.walkForLoc(sub, joinPath(folder, name), id);
+        if (found) return found;
+      }
+    }
+    return null;
   }
 
   private async filesDir(): Promise<NativeDirRef> {
@@ -355,11 +385,11 @@ export class FilesService {
   }
 
   private async collectionDir(id: string): Promise<NativeDirRef> {
-    const loc = this.requireLoc(id);
+    const loc = await this.findLoc(id);
     const parent = await this.getFolderDir(loc.folder);
     if (!parent) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
     const dir = await this.fs.getDir(parent, loc.slug);
-    if (!dir) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
+    if (!dir) throw new AppError(ERROR_CODES.FS_008, { severity: 'error', context: { id } });
     return dir;
   }
 

@@ -14,6 +14,7 @@ import { withReauthIfNeeded } from '@core/errors/with-reauth';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { entitySlugSegment } from '@core/routing/entity-slug';
 
 import { IconComponent } from '@shared/icon/icon.component';
 
@@ -156,7 +157,8 @@ export class BookshelfContainer {
   }
   protected onCatalogSelect(id: string): void {
     this.closeCatalog();
-    this.openBook(id);
+    const title = this.summaries().find((s) => s.id === id)?.title ?? '';
+    this.openBook(id, title);
   }
   protected isCollapsed(folder: string): boolean {
     return this.collapsedShelves().has(folder);
@@ -169,21 +171,21 @@ export class BookshelfContainer {
       return next;
     });
   }
-  protected openBook(id: string): void {
+  protected openBook(id: string, title: string): void {
     if (this.opening() !== null) return;
     this.opening.set(id);
     // why: la animación de apertura dura ~520ms (ver .slot.opening en CSS).
     //      Navegamos al cerrarse para que el usuario vea el libro saliendo
     //      antes del cambio de ruta.
     window.setTimeout(() => {
-      void this.router.navigate(['/books', id]);
+      void this.router.navigate(['/books', entitySlugSegment(title, id, 'libro')]);
     }, 520);
   }
   protected async createBook(): Promise<void> {
     try {
       await this.workspace.ensureWritable();
       const book = await this.booksService.createBook('');
-      await this.router.navigate(['/books', book.id]);
+      await this.router.navigate(['/books', entitySlugSegment(book.title, book.id, 'libro')]);
     } catch (e) {
       this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize()));
     }

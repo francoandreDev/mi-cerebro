@@ -22,6 +22,7 @@ import { CreationIntentService } from '@core/intents/creation-intent.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { PlayerService } from '@core/music/player.service';
+import { entitySlugSegment } from '@core/routing/entity-slug';
 import { CommandPaletteService } from '@core/search/command-palette.service';
 import type { Tag } from '@core/tags/tag.types';
 import { TagsService } from '@core/tags/tags.service';
@@ -206,7 +207,7 @@ export class WorkspaceSidebarContainer {
   constructor() {
     void (async () => {
       try {
-        await this.workspaceRefresh.refreshAll();
+        await this.workspaceRefresh.ensureReady();
         await this.variantsService.refresh();
       } catch (e: unknown) {
         this.errors.report(e);
@@ -627,18 +628,42 @@ export class WorkspaceSidebarContainer {
     const kind = nodeId.slice(0, colon);
     const id = nodeId.slice(colon + 1);
     const route = KIND_TO_ROUTE[kind as EntityKind];
-    if (route) void this.router.navigate([route, id]);
+    if (!route) return;
+    const title = this.nodeLabels().get(nodeId) ?? '';
+    void this.router.navigate([route, entitySlugSegment(title, id)]);
   }
 
   private async createByKind(kind: EntityKind): Promise<readonly [string, string]> {
-    if (kind === 'note') return ['/notes', (await this.notesService.create('')).id];
-    if (kind === 'task') return ['/tasks', (await this.tasksService.create('')).id];
-    if (kind === 'goal') return ['/goals', (await this.goalsService.create('')).id];
-    if (kind === 'list') return ['/lists', (await this.listsService.create('')).id];
-    if (kind === 'writing') return ['/writings', (await this.writingsService.create('')).id];
-    if (kind === 'book') return ['/books', (await this.booksService.createBook('')).id];
-    if (kind === 'image') return ['/images', (await this.galleriesService.createGallery('')).id];
-    return ['/files', (await this.filesService.createCollection('')).id];
+    if (kind === 'note') {
+      const n = await this.notesService.create('');
+      return ['/notes', entitySlugSegment(n.title, n.id)];
+    }
+    if (kind === 'task') {
+      const t = await this.tasksService.create('');
+      return ['/tasks', entitySlugSegment(t.title, t.id)];
+    }
+    if (kind === 'goal') {
+      const g = await this.goalsService.create('');
+      return ['/goals', entitySlugSegment(g.title, g.id)];
+    }
+    if (kind === 'list') {
+      const l = await this.listsService.create('');
+      return ['/lists', entitySlugSegment(l.title, l.id)];
+    }
+    if (kind === 'writing') {
+      const w = await this.writingsService.create('');
+      return ['/writings', entitySlugSegment(w.title, w.id)];
+    }
+    if (kind === 'book') {
+      const b = await this.booksService.createBook('');
+      return ['/books', entitySlugSegment(b.title, b.id, 'libro')];
+    }
+    if (kind === 'image') {
+      const g = await this.galleriesService.createGallery('');
+      return ['/images', entitySlugSegment(g.title, g.id, 'galeria')];
+    }
+    const c = await this.filesService.createCollection('');
+    return ['/files', entitySlugSegment(c.title, c.id, 'coleccion')];
   }
 
   private jumpToCursor(): void {

@@ -175,7 +175,7 @@
                 [class.dragging]="draggingId() === v.summary.id"
                 [attr.aria-label]="v.summary.title || t('books.untitledTitle')"
                 draggable="true"
-                (click)="openBook(v.summary.id)"
+                (click)="openBook(v.summary.id, v.summary.title)"
                 (dragstart)="onDragStart(v.summary.id, $event)"
                 (dragend)="onDragEnd()"
                 (drop)="onDropOnSlot(v.summary.id, $event)"
@@ -240,7 +240,7 @@
   <ul class="list">
     @for (v of views(); track v.summary.id) {
       <li>
-        <button type="button" class="row-btn" (click)="openBook(v.summary.id)">
+        <button type="button" class="row-btn" (click)="openBook(v.summary.id, v.summary.title)">
           <span class="bullet">
             <mc-book-volume
               [bookId]="v.summary.id"

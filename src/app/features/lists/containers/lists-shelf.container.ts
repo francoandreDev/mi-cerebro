@@ -15,6 +15,7 @@ import { withReauthIfNeeded } from '@core/errors/with-reauth';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { entitySlugSegment } from '@core/routing/entity-slug';
 import { TagsService } from '@core/tags/tags.service';
 import { IconComponent } from '@shared/icon/icon.component';
 
@@ -153,8 +154,8 @@ export class ListsShelfContainer {
     return this.i18n.t(key);
   }
 
-  protected onOpen(id: string): void {
-    void this.router.navigate(['/lists', id]);
+  protected onOpen(id: string, title: string): void {
+    void this.router.navigate(['/lists', entitySlugSegment(title, id)]);
   }
 
   protected onQueryInput(event: Event): void {
@@ -203,7 +204,7 @@ export class ListsShelfContainer {
     try {
       await this.workspace.ensureWritable();
       const list = await this.listsService.create(title);
-      await this.router.navigate(['/lists', list.id]);
+      await this.router.navigate(['/lists', entitySlugSegment(list.title, list.id)]);
     } catch (e) {
       this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize()));
     } finally {
