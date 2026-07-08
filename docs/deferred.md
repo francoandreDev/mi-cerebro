@@ -519,12 +519,17 @@ Formato por entrada:
 
 ## Sync — Push a remoto no funciona (origen: uso manual, 2026-07-01)
 
-### Investigar por qué falla `pushAll` contra el remoto real
+### ~~Investigar por qué falla `pushAll` contra el remoto real~~ (resuelto 2026-07-08)
 
-- **Qué**: en uso real desde `/sync`, disparar "Push todo" no llega a subir los refs al remoto. Falta identificar en qué capa se rompe: credenciales/PAT (`RemoteConfig`), transporte (`isomorphic-git` + CORS proxy), refspec (`heads/<variant>-<facet>`), o el side-effect de `persistLastPushAt` sobre `secrets.json`. La UI del rediseño (tubos, palancas, sello) refleja outcomes que el `RemoteService` reporta — si esos outcomes vienen `error`/`absent`, el problema es aguas arriba de la consola.
-- **Por qué se difirió**: descubierto al final de la sesión que cerró el rediseño de `/sync` (pasos 5-8 del `docs/redesign.md`). Diagnosticar requiere sesión dedicada con acceso al repo remoto real, credenciales de prueba, y probablemente devtools abierto para ver la respuesta HTTP del CORS proxy. La consola de tubos ya está lista para mostrar el diagnóstico honestamente cuando el fix llegue.
-- **Cómo empezar**: reproducir con un remoto configurado, mirar `lastPushOutcomes` en el store y el mensaje real que llega al `AppError` (código `MCB-NET-004` esperado si el push falla); si el error viene de auth, revisar `RemoteConfig` (PAT vs deviceflow) en `secrets.json`; si viene de transporte, revisar el CORS proxy configurado en `versioning/http.ts`.
-- **Target**: sin asignar — próxima sesión dedicada de sync/versionado.
+- **Qué**: en uso real desde `/sync`, disparar "Push todo" no llegaba a subir los refs al remoto — todos los refs volvían `error`, la mayoría con mensaje `"unknown"`.
+- **Estado**: cerrado. Eran cuatro bugs independientes en `remote-bulk.ts`/`remote.service.ts`, ninguno de red/auth/CORS (el proxy público y el PAT funcionaban bien):
+  1. `classifyPushResult`'s `realFailure` trataba `undefined`/`''` como fallo real — `isomorphic-git` nunca pone `result.error = null` en un push exitoso, lo deja `undefined`/`''`, así que **todo** push exitoso se clasificaba como error.
+  2. `refErrorOf` buscaba `result.refs[ref]` con el nombre corto del ref (`variant/x/main`), pero `isomorphic-git` indexa esa tabla con el nombre completo que devuelve el servidor (`refs/heads/variant/x/main`) — el lookup nunca encontraba nada.
+  3. Una branch de facet (`draft`/`comments`) que nunca se creó porque la variante nunca entró en ese modo (creación perezosa) se reportaba como `error` permanente en cada `pushAll`/`fetchAll` en vez de `absent` — mismo tratamiento que ya existía para refs ausentes del lado del fetch, ahora aplicado también al lookup por nombre de `isomorphic-git`'s `NotFoundError`.
+  4. `fetchAll` nunca funcionó: la app nunca llamaba `git.addRemote()`, así que `.git/config` no tenía `[remote "origin"]` y `git.fetch()` tiraba `NoRefspecError` en los 12 refs. Fix: `ensureRemoteConfigured()` (llamada idempotente a `git.addRemote(..., force: true)`, sin red) al inicio de cada `fetchAll()` — se auto-repara sin pedirle al usuario que reconfigure nada.
+     Además, el `main` local y el `main` remoto habían divergido de raíz: el repo GitHub apuntado (`francoandreDev/docs`) tenía 2 commits viejos sin relación al proyecto. Confirmado con el usuario que no hacía falta conservarlos — se resolvió con un force-push puntual de `main` (no repetible, fue una operación manual de esta sesión, no un fix de código).
+     4 tests de regresión nuevos en `remote-bulk.spec.ts` (12/12 pasan) usando la forma real de respuesta de GitHub capturada en vivo. `/sync` ahora muestra "Todo en orden (12 refs)".
+- **Nota aparte**: `docs/deferred.priority-order.md` (§sección `Cómo empezar`) decía revisar el CORS proxy en `versioning/http.ts` — ese archivo no existe; la wiring real está en `remote-bulk.ts`. Corregido en este cierre.
 
 ## Editor — `:global()` no llega al contenido de ProseMirror (origen: cierre §19.16e-i, 2026-07-06)
 

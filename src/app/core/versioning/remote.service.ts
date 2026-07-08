@@ -22,6 +22,7 @@ import {
   writeRemoteSecrets,
 } from './remote.config.io';
 import {
+  ensureRemoteConfigured,
   gitFetchOne,
   gitPushOne,
   gitPushWithLeaseOne,
@@ -218,6 +219,7 @@ export class RemoteService {
       this.fetchingSignal.set(true);
       try {
         const adapter = this.requireGitFs();
+        await ensureRemoteConfigured(adapter, cfg.url);
         const outcomes = await runBulk(targets, gitFetchOne(adapter, cfg));
         this.lastFetchOutcomesSignal.set(outcomes);
         this.lastBulkAtSignal.set(new Date().toISOString());

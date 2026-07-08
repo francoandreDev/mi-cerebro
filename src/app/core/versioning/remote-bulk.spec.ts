@@ -6,6 +6,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  classifyPushResult,
   listRefTargets,
   remoteTrackingRef,
   runBulk,
@@ -108,6 +109,49 @@ describe('runBulk', () => {
     };
     await runBulk(targets, syncOne);
     expect(maxInFlight).toBe(1);
+  });
+});
+
+describe('classifyPushResult', () => {
+  // why: isomorphic-git's PushResult never sets `.error` on success — it's
+  //      `undefined`, not `null` — and keys `.refs` by the full
+  //      `refs/heads/<ref>` name the server echoes back, not the short name
+  //      passed as `ref`/`remoteRef`. A real MCB-NET-004 incident showed
+  //      pushAll marking every successful ref as `unknown` error because of
+  //      this mismatch — this locks in the fix against both regressions.
+  it('classifies a successful push as ok, not error', () => {
+    const result = {
+      ok: true,
+      refs: { 'refs/heads/variant/nueva/main': { ok: true, error: '' } },
+    };
+    expect(classifyPushResult(result, 'variant/nueva/main')).toEqual({ status: 'ok' });
+  });
+
+  it('classifies an up-to-date push using the full-ref-keyed entry', () => {
+    const result = {
+      ok: true,
+      refs: { 'refs/heads/main': { ok: true, error: 'up to date' } },
+    };
+    expect(classifyPushResult(result, 'main').status).toBe('up-to-date');
+  });
+
+  it('surfaces a real per-ref rejection message', () => {
+    const result = {
+      ok: true,
+      refs: { 'refs/heads/main': { ok: false, error: 'non-fast-forward' } },
+    };
+    expect(classifyPushResult(result, 'main')).toEqual({
+      status: 'error',
+      error: 'non-fast-forward',
+    });
+  });
+
+  it('classifies a top-level unpack failure as error with its message', () => {
+    const result = { ok: false, error: 'index-pack failed' };
+    expect(classifyPushResult(result, 'main')).toEqual({
+      status: 'error',
+      error: 'index-pack failed',
+    });
   });
 });
 
