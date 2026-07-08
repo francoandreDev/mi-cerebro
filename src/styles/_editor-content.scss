@@ -1,0 +1,96 @@
+// Impacto Alto #1 — editor.component.css `:global(...)` rules for ProseMirror
+// content (comment clouds, image-ref, draft marks, placeholder) never
+// matched at runtime: Angular's component-scoped CSS attaches its
+// `[_ngcontent-x]` scoping attribute to the same compound as `:global()`
+// instead of leaving it truly global, and ProseMirror renders this DOM
+// outside the template compiler so it never carries that attribute. Same
+// root cause `_editor-highlight.scss` and `_book-editor.scss` already
+// worked around — moved here as one true global stylesheet instead.
+
+// why: subtle dotted underline in the same desaturated accent the cloud
+// uses, so the reader sees which words the comment covers without the
+// run of text fighting with the cloud icon itself.
+mc-editor .editor-host .mc-comment-range {
+  border-bottom: 1px dotted var(--comment-accent);
+}
+// why: visible gap on both sides so the caret has a clickable area
+// to land before/after the cloud without hitting the button hitbox.
+mc-editor .editor-host .mc-comment-cloud {
+  display: inline-block;
+  vertical-align: baseline;
+  margin: 0 6px;
+  padding: 1px 3px;
+  background: transparent;
+  border: 0;
+  color: var(--comment-accent);
+  cursor: pointer;
+  border-radius: var(--mc-radius-sm);
+  user-select: none;
+}
+mc-editor .editor-host .mc-comment-cloud:hover,
+mc-editor .editor-host .mc-comment-cloud:focus-visible {
+  color: var(--mc-fg-primary);
+  background: var(--mc-bg-elevated);
+  outline: none;
+}
+mc-editor .editor-host .mc-image-ref {
+  display: inline-block;
+  vertical-align: middle;
+}
+mc-editor .editor-host .mc-image-ref img {
+  max-width: 320px;
+  max-height: 240px;
+  border-radius: var(--mc-radius-sm);
+}
+mc-editor .editor-host .mc-image-ref--missing {
+  display: inline-block;
+  padding: 2px 6px;
+  border: 1px dashed var(--mc-border-default);
+  color: var(--mc-fg-muted);
+}
+mc-editor .editor-host .ProseMirror {
+  outline: none;
+  min-height: 180px;
+}
+mc-editor .editor-host .mc-draft-mutate {
+  background: rgba(250, 204, 21, 0.15);
+  border-left: 3px solid #d97706;
+  padding-left: var(--mc-space-1);
+}
+mc-editor .editor-host .mc-draft-strike {
+  text-decoration: line-through;
+  color: var(--mc-fg-muted);
+  background: rgba(239, 68, 68, 0.08);
+  border-left: 3px solid #ef4444;
+  padding-left: var(--mc-space-1);
+}
+// why: insertions have no anchor point in main (the block doesn't exist
+// yet), so instead of a node-class decoration they render as a ghost
+// preview of the proposed block at the end of the doc — where accepting
+// the mark would actually land it.
+mc-editor .editor-host .mc-draft-insert {
+  margin: var(--mc-space-2) 0;
+  padding: var(--mc-space-2);
+  border: 1px dashed #16a34a;
+  border-radius: var(--mc-radius-sm);
+  background: rgba(34, 197, 94, 0.08);
+  cursor: pointer;
+}
+mc-editor .editor-host .mc-draft-insert:hover,
+mc-editor .editor-host .mc-draft-insert:focus-visible {
+  background: rgba(34, 197, 94, 0.16);
+  outline: none;
+}
+mc-editor .editor-host .mc-draft-insert > *:first-child {
+  margin-top: 0;
+}
+mc-editor .editor-host .mc-draft-insert > *:last-child {
+  margin-bottom: 0;
+}
+mc-editor .editor-host .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--mc-fg-muted);
+  pointer-events: none;
+  float: left;
+  height: 0;
+}
