@@ -6,7 +6,7 @@
 >
   <canvas #canvas class="canvas"></canvas>
   @if (!hasAudioPipeline()) {
-    <p class="caption caption-warn">{{ t('music.surface.noAudioGraph') }}</p>
+    <p class="caption">{{ t('music.surface.noTrackLoaded') }}</p>
   } @else if (!isPlaying()) {
     <p class="caption">{{ t('music.surface.idleHint') }}</p>
     <p class="caption caption-sub">{{ t('music.surface.volumeNote') }}</p>

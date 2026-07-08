@@ -74,6 +74,7 @@
           class="deadline-picker"
           mcAutofocus
           [value]="goal().deadline ?? ''"
+          [min]="todayIso"
           (change)="onDeadlinePick($event)"
           (blur)="deadlineOpen.set(false)"
         />

@@ -60,6 +60,10 @@ export class TagsContainer {
     return this.i18n.t(key, params);
   }
 
+  protected usageLabel(count: number): string {
+    return this.t(count === 1 ? 'tags.page.usageCountOne' : 'tags.page.usageCountMany', { count });
+  }
+
   protected onQueryInput(event: Event): void {
     this.query.set((event.target as HTMLInputElement).value);
   }

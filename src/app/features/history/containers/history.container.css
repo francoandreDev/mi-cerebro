@@ -409,15 +409,11 @@
    con banderines de fósiles y ventana visible como marco iluminado.
    Sticky abajo del scroll para que siempre esté a la vista. */
 .stratum-minimap {
-  position: sticky;
-  bottom: 0;
-  margin: 8px 12px 16px;
+  margin: 16px 12px 8px;
   padding: 6px 8px 8px;
-  background: color-mix(in srgb, var(--mc-bg-base, #fff) 92%, transparent);
-  backdrop-filter: blur(2px);
+  background: var(--mc-bg-base, #fff);
   border: 1px solid var(--mc-border-subtle, rgba(0, 0, 0, 0.08));
   border-radius: 6px;
-  z-index: 2;
 }
 
 .stratum-minimap-hint {

@@ -1,4 +1,10 @@
 <div class="pane">
+  <header class="topbar">
+    <button type="button" class="back" (click)="onBackToIndex()">
+      <mc-icon name="arrow-left" />
+      <span>{{ t('goals.backToIndex') }}</span>
+    </button>
+  </header>
   @if (active(); as goal) {
     @if (lock.showForeign()) {
       <mc-lock-banner

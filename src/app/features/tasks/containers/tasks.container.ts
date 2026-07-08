@@ -57,6 +57,10 @@ export class TasksContainer {
     return this.i18n.t(key);
   }
 
+  protected async onBackToIndex(): Promise<void> {
+    await this.router.navigate(['/tasks']);
+  }
+
   protected onTitleChange(title: string): void {
     this.patch((current) => ({ ...current, title }));
   }

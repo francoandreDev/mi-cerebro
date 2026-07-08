@@ -149,7 +149,7 @@
                       <mc-icon name="play" />
                     }
                   </button>
-                  <span class="title">
+                  <span class="title" [attr.title]="tr.title ?? tr.originalName">
                     @if (currentTrackId() === tr.id) {
                       <span class="eq" [class.paused]="!isPlaying()" aria-hidden="true">
                         <i></i><i></i><i></i>

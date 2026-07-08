@@ -62,6 +62,7 @@ export class GoalConstellationEditorComponent {
   protected readonly renamingId = signal<string | null>(null);
   protected readonly renameDraft = signal<string>('');
   protected readonly deadlineOpen = signal<boolean>(false);
+  protected readonly todayIso = new Date().toISOString().slice(0, 10);
   protected readonly renamingTitle = signal<boolean>(false);
   protected readonly titleDraft = signal<string>('');
   protected readonly hintDismissed = signal<boolean>(false);
@@ -319,9 +320,8 @@ export class GoalConstellationEditorComponent {
 
   protected onDeadlinePick(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
-    if (value === '') return;
+    if (value === '' || value < this.todayIso) return;
     this.deadlineChange.emit(value);
-    this.deadlineOpen.set(false);
   }
 
   protected onDeadlineClear(event: Event): void {

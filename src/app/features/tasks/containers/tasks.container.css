@@ -26,3 +26,30 @@
   color: var(--mc-accent-primary);
   opacity: 0.55;
 }
+.topbar {
+  display: flex;
+  align-items: center;
+  padding: var(--mc-space-2) var(--mc-space-4);
+}
+.back {
+  align-self: flex-start;
+  background: transparent;
+  color: var(--mc-fg-muted);
+  border: 0;
+  border-radius: var(--mc-radius-sm);
+  padding: 4px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--mc-font-size-xs);
+  cursor: pointer;
+}
+.back mc-icon {
+  font-size: 1em;
+}
+.back:hover,
+.back:focus-visible {
+  color: var(--mc-fg-primary);
+  background: var(--mc-bg-elevated);
+  outline: none;
+}

@@ -58,6 +58,10 @@ export class ListsContainer {
     return this.i18n.t(key);
   }
 
+  protected async onBackToIndex(): Promise<void> {
+    await this.router.navigate(['/lists']);
+  }
+
   protected onTitleChange(title: string): void {
     const current = this.active();
     if (!current || !this.lock.guardWrite()) return;

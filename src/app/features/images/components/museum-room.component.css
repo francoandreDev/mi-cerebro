@@ -97,6 +97,9 @@
   padding: clamp(24px, 4vh, 60px) var(--mc-space-3) 22%;
   display: flex;
   align-items: center;
+  /* why: without this, a wall with few/small frames leaves them stuck at the
+     left edge instead of centered — "safe" avoids clipping when it overflows. */
+  justify-content: safe center;
   gap: clamp(16px, 3vw, 36px);
   overflow-x: auto;
   overflow-y: hidden;

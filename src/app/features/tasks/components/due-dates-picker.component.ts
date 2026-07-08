@@ -32,6 +32,7 @@ import { McDatePipe } from '@shared/pipes/mc-date.pipe';
           type="date"
           class="input"
           [value]="draft()"
+          [min]="today()"
           [attr.aria-label]="t('tasks.due.add')"
           (change)="onPick($event)"
         />
@@ -53,9 +54,13 @@ export class DueDatesPickerComponent {
     return this.i18n.t(key);
   }
 
+  protected today(): string {
+    return today();
+  }
+
   protected onPick(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
-    if (value === '') return;
+    if (value === '' || value < today()) return;
     if (this.dates().includes(value)) {
       this.draft.set('');
       return;

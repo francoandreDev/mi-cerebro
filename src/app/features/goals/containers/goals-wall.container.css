@@ -405,8 +405,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  opacity: 0;
-  transition: opacity 150ms ease;
+  opacity: 1;
   pointer-events: none;
 }
 .star-sublabel {
@@ -423,8 +422,6 @@
   transition: opacity 150ms ease;
   pointer-events: none;
 }
-.star:hover .star-label,
-.star:focus-visible .star-label,
 .star:hover .star-sublabel,
 .star:focus-visible .star-sublabel {
   opacity: 1;

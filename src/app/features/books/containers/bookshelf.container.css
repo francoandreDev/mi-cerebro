@@ -198,6 +198,10 @@
 .shelves {
   display: flex;
   flex-direction: column;
+  /* why: sin esto cada .shelf se estira (stretch, default) al ancho completo
+     del mueble aunque tenga pocos libros, dejando la tabla de madera vacía
+     a la derecha. flex-start deja que el shelf se achique a su contenido. */
+  align-items: flex-start;
   gap: 32px;
 }
 

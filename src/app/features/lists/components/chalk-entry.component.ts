@@ -38,6 +38,9 @@ const splitHighlight = (text: string, query: string): readonly Segment[] => {
   selector: 'mc-chalk-entry',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [IconComponent],
+  host: {
+    '[class.entry-empty]': '!list().previewItems.length',
+  },
   template: `
     <article
       class="entry"
@@ -105,6 +108,12 @@ const splitHighlight = (text: string, query: string): readonly Segment[] => {
       break-inside: avoid;
       margin-bottom: var(--mc-space-5);
     }
+    /* why: el placeholder de "lista vacía" es una sola línea — no necesita el
+       mismo respiro que una card con contenido. Reduce el hueco muerto entre
+       grupos alfabéticos consecutivos cuando una lista no tiene ítems. */
+    :host(.entry-empty) {
+      margin-bottom: var(--mc-space-2);
+    }
     .entry {
       position: relative;
       display: flex;
@@ -129,6 +138,9 @@ const splitHighlight = (text: string, query: string): readonly Segment[] => {
     }
     .entry.matched {
       background: rgba(255, 255, 255, 0.05);
+    }
+    :host(.entry-empty) .entry {
+      padding-bottom: var(--mc-space-1);
     }
     .head {
       display: flex;

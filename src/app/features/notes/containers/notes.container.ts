@@ -57,6 +57,10 @@ export class NotesContainer {
     return this.i18n.t(key);
   }
 
+  protected async onBackToIndex(): Promise<void> {
+    await this.router.navigate(['/notes']);
+  }
+
   protected onTitleChange(title: string): void {
     const current = this.active();
     if (!current || !this.lock.guardWrite()) return;

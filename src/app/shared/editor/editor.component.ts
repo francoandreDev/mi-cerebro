@@ -299,6 +299,11 @@ export class EditorComponent {
   }
 
   private mount(): void {
+    // why: extensions like block-id can normalize the doc (e.g. assign
+    // missing ids) via an appendTransaction right after construction, which
+    // fires onUpdate for content nobody actually edited — suppress it same
+    // as any other programmatic setContent, or the UI flashes "unsaved".
+    this.suppressEmit = true;
     this.editor = createEditorInstance({
       element: this.host().nativeElement,
       reader: this.reader,
@@ -314,6 +319,7 @@ export class EditorComponent {
       getComments: () => this.commentsCoord.list(),
       onRangesMapped: (updates) => this.commentsCoord.applyRangeUpdates(updates),
     });
+    this.suppressEmit = false;
 
     const opts = { injector: this.injector };
     effect(() => this.editor?.setEditable(this.editable()), opts);

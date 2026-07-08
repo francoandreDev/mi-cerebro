@@ -109,32 +109,31 @@ const calendarDiff = (from: Date, to: Date): DurationParts => {
 const daysInMonth = (year: number, monthZero: number): number =>
   new Date(Date.UTC(year, monthZero + 1, 0)).getUTCDate();
 
-const UNIT_LABELS: readonly (readonly [keyof DurationParts, string, string])[] = [
-  ['years', 'año', 'años'],
-  ['months', 'mes', 'meses'],
-  ['days', 'día', 'días'],
-  ['hours', 'hora', 'horas'],
-  ['minutes', 'minuto', 'minutos'],
-  ['seconds', 'segundo', 'segundos'],
+// why: formato compacto — sólo la unidad más grande aplicable (d/h/min),
+// evita textos larguísimos como "hace 1 hora 49 minutos y 33 segundos".
+// Ningún call site de mcDate (notes/history/reminders/trash) necesita el
+// desglose completo, así que no se agrega un flag "compact" — es el único
+// comportamiento del pipe.
+const COMPACT_UNITS: readonly (readonly [keyof DurationParts, string])[] = [
+  ['years', 'a'],
+  ['months', 'm'],
+  ['days', 'd'],
+  ['hours', 'h'],
+  ['minutes', 'min'],
 ];
 
-const formatDuration = (parts: DurationParts): string => {
-  const tokens: string[] = [];
-  for (const [key, singular, plural] of UNIT_LABELS) {
+const formatDurationCompact = (parts: DurationParts): string => {
+  for (const [key, suffix] of COMPACT_UNITS) {
     const n = parts[key];
-    if (n <= 0) continue;
-    tokens.push(`${n} ${n === 1 ? singular : plural}`);
+    if (n > 0) return `${n}${suffix}`;
   }
-  if (tokens.length === 0) return '';
-  if (tokens.length === 1) return tokens[0]!;
-  const last = tokens.pop()!;
-  return `${tokens.join(' ')} y ${last}`;
+  return '';
 };
 
 const relativeEs = (date: Date, now: Date): string => {
   const past = date.getTime() <= now.getTime();
   const [from, to] = past ? [date, now] : [now, date];
-  const duration = formatDuration(calendarDiff(from, to));
-  if (!duration) return '';
-  return past ? `hace ${duration}` : `en ${duration}`;
+  const compact = formatDurationCompact(calendarDiff(from, to));
+  if (!compact) return past ? 'hace unos segundos' : 'en unos segundos';
+  return past ? `hace ${compact}` : `en ${compact}`;
 };

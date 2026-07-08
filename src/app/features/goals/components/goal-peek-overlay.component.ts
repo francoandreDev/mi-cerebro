@@ -103,7 +103,7 @@ export class GoalPeekOverlayComponent {
   }
   protected onDeadlinePick(event: Event): void {
     const v = (event.target as HTMLInputElement).value;
-    this.deadlineOpen.set(false);
+    if (v !== '' && v < this.today()) return;
     this.deadlineChange.emit(v === '' ? null : v);
   }
   protected onDeadlineClear(event: Event): void {

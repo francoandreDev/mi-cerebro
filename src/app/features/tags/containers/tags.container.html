@@ -47,7 +47,7 @@
             </button>
           }
 
-          <span class="usage">{{ t('tags.page.usageCount', { count: row.usageCount }) }}</span>
+          <span class="usage">{{ usageLabel(row.usageCount) }}</span>
 
           <div class="actions">
             <button type="button" class="action" (click)="toggleMerge(row.tag.id)">
