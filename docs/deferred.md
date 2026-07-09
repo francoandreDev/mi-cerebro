@@ -22,8 +22,8 @@ Formato por entrada:
 ### Carpetas / jerarquía real dentro de notas
 
 - **Qué**: poder anidar notas en carpetas creadas por el usuario, no sólo un grupo raíz "Notas".
-- **Por qué**: el árbol del paso 6 ya soporta hijos arbitrarios; lo único que falta es UI para crear/renombrar/mover carpetas y persistencia de la jerarquía.
-- **Target**: §19.9bis (papelera + carpetas).
+- **Por qué**: ~~el árbol del paso 6 ya soporta hijos arbitrarios; lo único que falta es UI para crear/renombrar/mover carpetas y persistencia de la jerarquía~~ **corregido 2026-07-09**: el backend y la UI de árbol YA existen completos (`FoldersService`, `NotesService.moveToFolder`, `buildFolderTree`, botón "+carpeta" y context menu en `folder-actions.ts`) y tratan `note` exactamente igual que las otras 7 entidades. El problema real es otro: ese panel de árbol está oculto en `/notes` (y en las otras 7 secciones) desde que cada una se rediseñó a vista de tarjetas — ver "Árbol de carpetas huérfano tras los rediseños de tarjetas" más abajo. Este ítem queda subsumido por ese, que es la pieza transversal real.
+- **Target**: ver "Árbol de carpetas huérfano tras los rediseños de tarjetas" (origen: paso 6).
 
 ---
 
@@ -34,6 +34,13 @@ Formato por entrada:
 - **Qué**: combinaciones de filtros por tipo (notas+tasks+goals, etc.) descritos en §10.
 - **Por qué**: sólo existe la entidad Note hoy. El filtro por tag ya está cubierto en 7b.
 - **Target**: §19.9 (resto de entidades).
+
+### Árbol de carpetas huérfano tras los rediseños de tarjetas
+
+- **Qué**: el panel con el árbol jerárquico de carpetas (`WorkspaceSidebarContainer` → `mc-tree`, `buildFolderTree`, botón "+carpeta", context menu crear/renombrar/mover/borrar de `folder-actions.ts`, todo respaldado por `FoldersService`) sigue completo y funcional en el código, y trata las 8 entidades (`note`, `task`, `goal`, `list`, `writing`, `book`, `image`, `file`) exactamente igual. Pero es **inalcanzable desde la UI**: `PANE_HIDDEN_PREFIXES` en `workspace-sidebar.container.ts` incluye hoy los 8 prefijos de ruta (`/notes`, `/tasks`, `/goals`, `/lists`, `/writings`, `/books`, `/images`, `/files`), así que el panel nunca se renderiza para ninguna sección — no hay ninguna ruta donde el usuario pueda crear, ver o mover una carpeta.
+- **Por qué se difirió**: cada sección fue agregada a esa lista, una por una, al rediseñarse de "árbol + lista plana" a una vista tipo tarjetas ("wall"/"shelf"/"cork board" — ver commits `e7faba2b` lists, y equivalentes para tasks/goals/writings/books/images/files/notes). Cada rediseño resolvió su propia metáfora visual sin definir qué reemplaza a la navegación por carpetas dentro de esa metáfora. El backend (`FoldersService` + `moveToFolder`/`setPosition` por servicio) quedó intacto porque nadie lo tocó, no porque se haya decidido conservarlo.
+- **Nota**: esto **reemplaza** la entrada previa "Carpetas / jerarquía real dentro de notas" (arriba, origen paso 5) y la afirmación de "Navegación por carpetas / DnD entre carpetas en /files" (abajo, origen rediseño /files) de que "la sidebar global todavía expone el árbol... mientras tanto" — esa afirmación ya no es cierta para ninguna sección, incluida `/files`.
+- **Target**: sin asignar — es una decisión de diseño transversal (cómo se ve/crea/mueve una carpeta dentro de la metáfora de tarjetas), no un fix puntual de una sección. Discutir antes de tocar código.
 
 ---
 
@@ -394,8 +401,8 @@ Formato por entrada:
 ### Navegación por carpetas / DnD entre carpetas en /files
 
 - **Qué**: el `files-index-rail` viejo exponía un árbol jerárquico de carpetas con DnD para mover colecciones entre carpetas, crear/renombrar carpetas y filtro de búsqueda. Con el rediseño "cork shelf", `/files` muestra una grilla plana de colecciones (ordenada por `position`) y no expone esa jerarquía visualmente.
-- **Por qué se difirió**: la pieza de árbol jerárquico chocaba con la metáfora de tablero (un corcho no tiene "subcarpetas"). El backend (`FoldersService`, `FilesService.moveCollectionToFolder`, `setPosition`) sigue intacto; lo único que falta es UI. La sidebar global todavía expone el árbol completo con DnD para quien lo necesite mientras tanto.
-- **Target**: sin asignar — abrir si aparece dolor real de "tengo demasiadas colecciones planas y necesito agruparlas desde la propia página".
+- **Por qué se difirió**: la pieza de árbol jerárquico chocaba con la metáfora de tablero (un corcho no tiene "subcarpetas"). El backend (`FoldersService`, `FilesService.moveCollectionToFolder`, `setPosition`) sigue intacto; lo único que falta es UI. ~~La sidebar global todavía expone el árbol completo con DnD para quien lo necesite mientras tanto.~~ **corregido 2026-07-09**: falso — desde que el resto de secciones también se rediseñaron a tarjetas, `/files` quedó en `PANE_HIDDEN_PREFIXES` igual que las otras 7 y ese panel no se renderiza en ninguna ruta. Ver "Árbol de carpetas huérfano tras los rediseños de tarjetas" (origen paso 6) — este ítem queda subsumido por ese.
+- **Target**: ver "Árbol de carpetas huérfano tras los rediseños de tarjetas" (origen: paso 6).
 
 ### Posición libre real (drag x/y) en el tablero
 
