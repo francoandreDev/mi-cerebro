@@ -46,6 +46,27 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
           </button>
         }
       </header>
+      <div class="schedule-row">
+        <mc-icon [name]="note().scheduledFor ? 'calendar-check' : 'calendar-blank'" />
+        <input
+          type="date"
+          class="schedule-input"
+          [value]="scheduledForValue()"
+          [disabled]="!editable()"
+          [attr.aria-label]="t('notes.scheduledFor')"
+          (change)="onScheduledForInput($event)"
+        />
+        @if (note().scheduledFor && editable()) {
+          <button
+            type="button"
+            class="schedule-clear"
+            [attr.aria-label]="t('notes.scheduledForClear')"
+            (click)="scheduledForChange.emit(null)"
+          >
+            <mc-icon name="x" />
+          </button>
+        }
+      </div>
       <mc-tag-picker
         [availableTags]="availableTags()"
         [selectedIds]="note().tags"
@@ -110,6 +131,32 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
     .status[data-status='saved'] mc-icon {
       color: var(--mc-success, #4caf7a);
     }
+    .schedule-row {
+      display: flex;
+      align-items: center;
+      gap: var(--mc-space-2);
+      color: var(--mc-fg-muted);
+      font-size: var(--mc-font-size-sm);
+    }
+    .schedule-input {
+      background: transparent;
+      border: 1px solid var(--mc-border-default);
+      border-radius: var(--mc-radius-sm);
+      color: var(--mc-fg-primary);
+      padding: 2px 6px;
+      font-size: var(--mc-font-size-sm);
+    }
+    .schedule-clear {
+      display: inline-flex;
+      align-items: center;
+      background: transparent;
+      border: none;
+      color: var(--mc-fg-muted);
+      cursor: pointer;
+    }
+    .schedule-clear:hover {
+      color: var(--mc-danger, #d04a4a);
+    }
     .danger {
       background: transparent;
       color: var(--mc-fg-muted);
@@ -140,6 +187,7 @@ export class NoteEditorPaneComponent {
   readonly removeNote = output<void>();
   readonly addTag = output<string>();
   readonly removeTag = output<string>();
+  readonly scheduledForChange = output<string | null>();
 
   private readonly i18n = inject(I18nService);
   protected readonly focusMode = inject(FocusModeService);
@@ -158,5 +206,13 @@ export class NoteEditorPaneComponent {
   protected onTitleInput(event: Event): void {
     const target = event.target as HTMLInputElement | null;
     if (target) this.titleChange.emit(target.value);
+  }
+  protected scheduledForValue(): string {
+    return this.note().scheduledFor ?? '';
+  }
+  protected onScheduledForInput(event: Event): void {
+    const target = event.target as HTMLInputElement | null;
+    if (!target) return;
+    this.scheduledForChange.emit(target.value || null);
   }
 }

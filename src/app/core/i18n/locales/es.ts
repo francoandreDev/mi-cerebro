@@ -513,6 +513,8 @@ export const es = {
   'notes.placeholderBody': 'Escribí algo...',
   'notes.deleteConfirm': '¿Mover "{title}" a la papelera?',
   'notes.delete': 'Eliminar',
+  'notes.scheduledFor': 'Fecha (aparece en /calendar)',
+  'notes.scheduledForClear': 'Quitar fecha',
   'notes.status.saved': 'Guardado',
   'notes.status.saving': 'Guardando...',
   'notes.status.unsaved': 'Sin guardar',
@@ -583,6 +585,12 @@ export const es = {
   'shortcuts.treeFilter': 'Foco al filtro del árbol',
   'shortcuts.create': 'Crear nueva entidad (según ruta)',
   'shortcuts.focusMode': 'Modo pantalla completa de edición',
+  'shortcuts.quickCapture': 'Anotar una idea sin salir de la sección actual',
+
+  'quickCapture.title': 'Anotar una idea',
+  'quickCapture.placeholder': 'Escribí algo... la primera línea es el título',
+  'quickCapture.hint': 'Enter para guardar · Shift+Enter salto de línea · Esc cancelar',
+  'quickCapture.openNote': 'Abrir',
 
   'errors.aut.005.title': 'Esta entidad está abierta en otra pestaña',
   'errors.aut.005.message':
@@ -1287,6 +1295,13 @@ export const es = {
   'calendar.day.newTask': 'Nueva tarea',
   'calendar.day.newGoal': 'Nueva meta',
   'calendar.day.newReminder': 'Nuevo recordatorio',
+  'calendar.kind.note': 'Notas',
+  'calendar.day.newNote': 'Nueva nota',
+  'calendar.view.week': 'Semana',
+  'calendar.day.openBook': 'Ver en la agenda',
+  'calendar.book.close': 'Cerrar libro',
+  'calendar.book.emptyDay': 'Página en blanco.',
+  'calendar.book.weekHeading': 'Semana del {date}',
   'tree.type.calendar': 'Calendario',
   'tree.type.reminders': 'Recordatorios',
 
@@ -1619,6 +1634,8 @@ export const es = {
   'errors.mus.004.title': 'Falló la descarga',
   'errors.mus.004.message':
     'No se pudo descargar o convertir el video a MP3. Verificá el link y tu conexión, y reintentá.',
+  'errors.ui.001.title': 'Nota creada',
+  'errors.ui.001.message': 'Se guardó en la raíz de tus notas.',
 
   'settings.export.section.title': 'Exportar workspace',
   'settings.export.hint':

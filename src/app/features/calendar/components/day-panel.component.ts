@@ -136,6 +136,9 @@ interface KindGroup {
     .group[data-kind='reminder'] h4 mc-icon {
       color: var(--mc-danger, #d04a4a);
     }
+    .group[data-kind='note'] h4 mc-icon {
+      color: var(--mc-note, #8a7ad1);
+    }
     .count {
       color: var(--mc-fg-muted);
       font-size: var(--mc-font-size-xs);
@@ -196,12 +199,14 @@ export class CalendarDayPanelComponent {
   protected kindIcon(kind: CalendarEventKind): IconName {
     if (kind === 'task') return 'check-square';
     if (kind === 'goal') return 'target';
+    if (kind === 'note') return 'note';
     return 'bell';
   }
 
   protected kindLabel(kind: CalendarEventKind): string {
     if (kind === 'task') return this.t('calendar.kind.task');
     if (kind === 'goal') return this.t('calendar.kind.goal');
+    if (kind === 'note') return this.t('calendar.kind.note');
     return this.t('calendar.kind.reminder');
   }
 
@@ -212,7 +217,7 @@ export class CalendarDayPanelComponent {
       bucket.push(e);
       map.set(e.kind, bucket);
     }
-    const order: CalendarEventKind[] = ['task', 'goal', 'reminder'];
+    const order: CalendarEventKind[] = ['task', 'goal', 'reminder', 'note'];
     return order.filter((k) => map.has(k)).map((k) => ({ kind: k, events: map.get(k) ?? [] }));
   });
 }

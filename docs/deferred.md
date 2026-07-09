@@ -500,11 +500,11 @@ Formato por entrada:
 
 ## Cross-section / vista unificada (origen: home guide audit, 2026-06-30)
 
-### Quick-capture global de nota desde cualquier sección
+### ~~Quick-capture global de nota desde cualquier sección~~ (resuelto 2026-07-09)
 
-- **Qué**: un atajo (ej. `Ctrl+Shift+N`) que abra un overlay para crear una nota nueva **sin salir de la sección actual** (sirve mientras leés un libro, mirás el museo, escuchás música, etc.). Hoy `Ctrl+N` está cableado a `CreationIntentService` que crea la entidad cuya URL estás visitando — en /books crea libro, en /tasks crea tarea. No hay forma de capturar una idea suelta sin perder el contexto visual.
-- **Por qué se difirió**: la app no tiene un layer de overlay/dialog global para entrada de texto que escriba a /notes en segundo plano. Implementarlo bien implica decidir: dónde guardarla en el árbol, qué tags preseleccionar (¿el tag activo de la sección? ¿ninguno?), cómo notificar que se creó. El flow de "estudiar profundizando un tema" en el home depende de esto.
-- **Target**: sin asignar.
+- **Qué**: un atajo que abra un overlay para crear una nota nueva **sin salir de la sección actual** (sirve mientras leés un libro, mirás el museo, escuchás música, etc.). Hoy `Alt+N` (`CreationIntentService`) crea la entidad cuya URL estás visitando — en /books crea libro, en /tasks crea tarea. No hay forma de capturar una idea suelta sin perder el contexto visual.
+- **Estado**: cerrado. `QuickCaptureService` (`core/intents/quick-capture.service.ts`) registra `Alt+Shift+N` con scope `global` en `ShortcutsService` (no `Ctrl+Shift+N`: ese combo lo captura Chrome para "ventana de incógnito" antes de llegar a la página en una pestaña normal). Abre `QuickCaptureDialogComponent` (`shared/quick-capture/`, mismo esqueleto que `confirm-dialog.component.ts`, montado una sola vez en `AppShellContainer` junto al resto de overlays globales) con un textarea: `Enter` guarda, `Shift+Enter` hace salto de línea, `Esc` cancela. La primera línea se usa como título de la nota y el resto de líneas no vacías se guardan como párrafos del cuerpo (`NotesService.create` + `save`). Decisiones tomadas: la nota siempre cae en la raíz de `/notes` (`folder: ''`, igual que el resto de creaciones vía `Alt+N`) y no se preseleccionan tags (no existe un concepto de "tag activo" persistente entre secciones — los `activeTagIds` de cada wall container son filtros locales efímeros). Confirmación vía toast informativo reutilizando `AppError`/`ErrorService` (`MCB-UI-001`, ver `docs/errors.md`), con una acción "Abrir" que navega a la nota — esto requirió extender `ErrorToastComponent` para renderizar `error().actions` como botones (antes sólo lo hacía el modal). Verificado en runtime: disparado desde `/books`, permanece en `/books` tras guardar (no navega), el toast aparece con el código y el botón "Abrir" lleva a `/notes/<slug>-<id>` con título y cuerpo correctos. 6/6 tests nuevos en `quick-capture.service.spec.ts`.
+- **Target**: cerrado.
 
 ### Vista unificada cross-section por tag
 

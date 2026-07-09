@@ -94,6 +94,14 @@ export class NotesContainer {
     }
   }
 
+  protected onScheduledForChange(scheduledFor: string | null): void {
+    const current = this.active();
+    if (!current || !this.lock.guardWrite()) return;
+    const next = { ...current, scheduledFor };
+    this.active.set(next);
+    this.scheduleSave(next);
+  }
+
   protected onRemoveTag(id: string): void {
     const current = this.active();
     if (!current || !this.lock.guardWrite()) return;

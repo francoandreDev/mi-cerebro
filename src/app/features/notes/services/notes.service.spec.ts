@@ -28,7 +28,7 @@ describe('NotesService', () => {
     const note = await svc.create('Hola');
     expect(note.id).toMatch(/[0-9a-f-]{36}/);
     expect(note.title).toBe('Hola');
-    expect(note.schemaVersion).toBe(3);
+    expect(note.schemaVersion).toBe(4);
     expect(note.position).toBeTypeOf('string');
     expect(note.position).not.toBe('');
     const notes = fs.root.dirs.get('notes')!;
@@ -85,6 +85,22 @@ describe('NotesService', () => {
     while (cursor.dirs.size === 1) cursor = [...cursor.dirs.values()][0]!;
     expect(cursor.files.size).toBe(1);
     expect([...cursor.files.keys()][0]).toMatch(new RegExp(`^note__${note.id}__hola.json$`));
+  });
+
+  it('setScheduledFor persists the date and clears it back to null', async () => {
+    const note = await svc.create('Con fecha');
+    await svc.setScheduledFor(note.id, '2026-08-01');
+    let summaries = await svc.refresh();
+    expect(summaries.find((s) => s.id === note.id)?.scheduledFor).toBe('2026-08-01');
+    await svc.setScheduledFor(note.id, null);
+    summaries = await svc.refresh();
+    expect(summaries.find((s) => s.id === note.id)?.scheduledFor).toBeNull();
+  });
+
+  it('new notes have scheduledFor null by default', async () => {
+    const note = await svc.create('Sin fecha');
+    const summaries = await svc.refresh();
+    expect(summaries.find((s) => s.id === note.id)?.scheduledFor).toBeNull();
   });
 
   it('registers a note kind in the MigrationsService at construct', async () => {

@@ -95,6 +95,9 @@ import { formatDayMonth } from '../utils/calendar-dates';
     header[data-kind='reminder'] .kind-icon {
       color: var(--mc-danger, #d04a4a);
     }
+    header[data-kind='note'] .kind-icon {
+      color: var(--mc-note, #8a7ad1);
+    }
     .bullet {
       color: var(--mc-fg-muted);
       font-size: 0.85em;
@@ -195,6 +198,7 @@ export class CalendarKindCardComponent {
     const k = this.kind();
     if (k === 'task') return this.t('calendar.kind.task');
     if (k === 'goal') return this.t('calendar.kind.goal');
+    if (k === 'note') return this.t('calendar.kind.note');
     return this.t('calendar.kind.reminder');
   }
 
@@ -202,6 +206,7 @@ export class CalendarKindCardComponent {
     const k = this.kind();
     if (k === 'task') return 'check-square';
     if (k === 'goal') return 'target';
+    if (k === 'note') return 'note';
     return 'bell';
   }
 
@@ -209,6 +214,7 @@ export class CalendarKindCardComponent {
     const k = this.kind();
     if (k === 'task') return this.t('calendar.day.newTask');
     if (k === 'goal') return this.t('calendar.day.newGoal');
+    if (k === 'note') return this.t('calendar.day.newNote');
     return this.t('calendar.day.newReminder');
   }
 

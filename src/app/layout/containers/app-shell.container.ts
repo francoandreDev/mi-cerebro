@@ -5,6 +5,7 @@ import { ContinuityService } from '@core/continuity/continuity.service';
 import { ErrorService } from '@core/errors/error.service';
 import { FocusModeService } from '@core/focus-mode/focus-mode.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
+import { QuickCaptureService } from '@core/intents/quick-capture.service';
 import { GoalRemindersSyncService } from '@core/reminders/goal-reminders-sync.service';
 import { SettingsService } from '@core/settings/settings.service';
 import { KeyboardHelpDialogComponent } from '@core/shortcuts/keyboard-help-dialog.component';
@@ -19,6 +20,7 @@ import { ReminderToastContainer } from '@features/reminders/containers/reminder-
 import { CommandPaletteContainer } from '@features/search/containers/command-palette.container';
 
 import { RemoteDivergenceBannerComponent } from '@layout/components/remote-divergence-banner.component';
+import { QuickCaptureDialogComponent } from '@shared/quick-capture/quick-capture-dialog.component';
 
 import { VariantSwitchOverlayContainer } from './variant-switch-overlay.container';
 import { ErrorDisplayContainer } from './error-display.container';
@@ -39,6 +41,7 @@ import { WorkspaceSidebarContainer } from './workspace-sidebar.container';
     VariantSwitchOverlayContainer,
     RemoteDivergenceBannerComponent,
     KeyboardHelpDialogComponent,
+    QuickCaptureDialogComponent,
   ],
   template: `
     @if (workspace.isReady()) {
@@ -55,6 +58,11 @@ import { WorkspaceSidebarContainer } from './workspace-sidebar.container';
       </div>
       <mc-command-palette />
       <mc-keyboard-help-dialog />
+      <mc-quick-capture-dialog
+        [visible]="quickCapture.open()"
+        (submitted)="quickCapture.capture($event)"
+        (cancelled)="quickCapture.closeDialog()"
+      />
       @if (!focusMode.active()) {
         <mc-reminder-toast />
         <mc-mini-player />
@@ -88,6 +96,9 @@ export class AppShellContainer {
   protected readonly theme = inject(ThemeService);
   protected readonly workspace = inject(WorkspaceService);
   protected readonly focusMode = inject(FocusModeService);
+  // why: instantiate eagerly so Alt+Shift+N works everywhere, not just
+  //      once a container that happens to inject it renders.
+  protected readonly quickCapture = inject(QuickCaptureService);
   private readonly errors = inject(ErrorService);
   private readonly autocommit = inject(AutocommitService);
   // why: instantiate AutoPushService eagerly so its effect on

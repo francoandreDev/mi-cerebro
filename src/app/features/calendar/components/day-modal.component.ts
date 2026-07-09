@@ -34,6 +34,10 @@ import { CalendarDayPanelComponent } from './day-panel.component';
       >
         <mc-icon name="x" />
       </button>
+      <button type="button" class="book-link" (click)="openBook.emit(date())">
+        <mc-icon name="books" />
+        {{ t('calendar.day.openBook') }}
+      </button>
       <mc-calendar-day-panel
         [date]="date()"
         [events]="events()"
@@ -83,6 +87,20 @@ import { CalendarDayPanelComponent } from './day-panel.component';
     .x:hover {
       color: var(--mc-fg-primary);
     }
+    .book-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: transparent;
+      border: 0;
+      color: var(--mc-fg-muted);
+      cursor: pointer;
+      font-size: var(--mc-font-size-sm);
+      padding: 0 0 var(--mc-space-2);
+    }
+    .book-link:hover {
+      color: var(--mc-accent-primary);
+    }
   `,
 })
 export class CalendarDayModalComponent {
@@ -93,6 +111,7 @@ export class CalendarDayModalComponent {
   readonly createTask = output<void>();
   readonly createGoal = output<void>();
   readonly createReminder = output<void>();
+  readonly openBook = output<string>();
 
   private readonly i18n = inject(I18nService);
 

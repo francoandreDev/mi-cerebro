@@ -258,12 +258,14 @@ export class CalendarToolbarComponent {
   protected kindLabel(e: CalendarEvent): string {
     if (e.kind === 'task') return this.t('calendar.kind.task');
     if (e.kind === 'goal') return this.t('calendar.kind.goal');
+    if (e.kind === 'note') return this.t('calendar.kind.note');
     return this.t('calendar.kind.reminder');
   }
 
   protected kindIcon(e: CalendarEvent): IconName {
     if (e.kind === 'task') return 'check-square';
     if (e.kind === 'goal') return 'target';
+    if (e.kind === 'note') return 'note';
     return 'bell';
   }
 

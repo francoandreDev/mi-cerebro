@@ -25,6 +25,19 @@ export const addMonths = (
   return { year: d.getFullYear(), month: d.getMonth() };
 };
 
+export const addDays = (iso: string, delta: number): string => {
+  const d = parseIsoDay(iso) ?? new Date();
+  d.setDate(d.getDate() + delta);
+  return formatIsoDay(d);
+};
+
+// why: Monday-start week to match buildMonthGrid's Mon..Sun grid.
+export const startOfWeek = (iso: string): string => {
+  const d = parseIsoDay(iso) ?? new Date();
+  const dow = (d.getDay() + 6) % 7;
+  return addDays(formatIsoDay(d), -dow);
+};
+
 export interface MonthDay {
   readonly iso: string;
   readonly day: number;
@@ -68,6 +81,20 @@ export const MONTH_NAMES_ES = [
 ] as const;
 
 export const WEEKDAY_SHORT_ES = ['L', 'M', 'X', 'J', 'V', 'S', 'D'] as const;
+
+export interface WeekDay {
+  readonly iso: string;
+  readonly day: number;
+  readonly weekday: string;
+  readonly isWeekend: boolean;
+}
+
+export const buildWeekDays = (mondayIso: string): readonly WeekDay[] =>
+  WEEKDAY_SHORT_ES.map((weekday, i) => {
+    const iso = addDays(mondayIso, i);
+    const d = parseIsoDay(iso) ?? new Date();
+    return { iso, day: d.getDate(), weekday, isWeekend: i >= 5 };
+  });
 
 export const formatDayMonth = (iso: string): string => {
   const d = parseIsoDay(iso);

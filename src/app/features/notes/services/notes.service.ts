@@ -32,6 +32,7 @@ import {
   type Note,
   type NoteSummary,
 } from '../models/note.types';
+import { scheduledForMigrationStep } from './scheduled-for.migration';
 
 const TRASH_DIR = '.mi-cerebro';
 const TRASH_SUBDIR = 'trash';
@@ -58,7 +59,7 @@ export class NotesService {
     this.migrations.register({
       kind: NOTE_KIND,
       latest: NOTE_SCHEMA_VERSION,
-      steps: [blockIdMigrationStep(1), positionSeedMigrationStep(2)],
+      steps: [blockIdMigrationStep(1), positionSeedMigrationStep(2), scheduledForMigrationStep(3)],
     });
   }
 
@@ -162,6 +163,19 @@ export class NotesService {
     await this.fs.writeFileAtomic(subdir, filename, JSON.stringify(updated, null, 2));
     this.summariesSignal.update((list) =>
       sortByPosition(list.map((s) => (s.id === id ? { ...s, position } : s))),
+    );
+  }
+
+  async setScheduledFor(id: string, scheduledFor: string | null): Promise<void> {
+    const note = await this.read(id);
+    const updated: Note = { ...note, scheduledFor, updatedAt: new Date().toISOString() };
+    const dir = await this.notesDir();
+    const { folder, filename } = splitRelativePath(await this.findPath(dir, id));
+    const subdir = await getDirByPath(this.fs, dir, folder);
+    if (!subdir) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
+    await this.fs.writeFileAtomic(subdir, filename, JSON.stringify(updated, null, 2));
+    this.summariesSignal.update((list) =>
+      list.map((s) => (s.id === id ? { ...s, scheduledFor } : s)),
     );
   }
 
@@ -306,6 +320,7 @@ export class NotesService {
       folder,
       position: note.position ?? '',
       preview: buildPreview(note.body),
+      scheduledFor: note.scheduledFor ?? null,
     };
   }
 

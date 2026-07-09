@@ -65,18 +65,44 @@
         <mc-icon name="squares-four" />
         {{ t('calendar.view.year') }}
       </button>
+      <button
+        type="button"
+        class="chip"
+        [class.active]="view() === 'week'"
+        (click)="setView('week')"
+      >
+        <mc-icon name="books" />
+        {{ t('calendar.view.week') }}
+      </button>
     </div>
   </header>
 
   <div class="wall">
     <div class="grid-col">
       @if (view() === 'month') {
-        <mc-calendar-month-grid
+        <mc-calendar-light-table
           [year]="cursor().year"
           [month]="cursor().month"
           [selected]="cursor().day"
           [events]="monthEvents()"
+          [kindFilter]="kindFilter()"
           (pick)="onPickDay($event)"
+          (toggleKind)="onToggleKind($event)"
+        />
+      } @else if (view() === 'week') {
+        <mc-calendar-leather-book
+          [weekStart]="weekStart()"
+          [selected]="cursor().day"
+          [events]="weekEvents()"
+          (pick)="onPickBookDay($event)"
+          (prevWeek)="onPrevWeek()"
+          (nextWeek)="onNextWeek()"
+          (dismiss)="onCloseBook()"
+          (openEvent)="onOpenEvent($event)"
+          (createTask)="onCreateTask()"
+          (createGoal)="onCreateGoal()"
+          (createReminder)="onCreateReminder()"
+          (createNote)="onCreateNote()"
         />
       } @else {
         <mc-calendar-year-grid
@@ -119,6 +145,7 @@
       (createTask)="onCreateTask()"
       (createGoal)="onCreateGoal()"
       (createReminder)="onCreateReminder()"
+      (openBook)="onOpenBook($event)"
     />
   }
 </section>

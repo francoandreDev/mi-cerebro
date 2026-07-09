@@ -1,6 +1,7 @@
 import { Injectable, computed, inject } from '@angular/core';
 
 import { GoalsService } from '@features/goals/services/goals.service';
+import { NotesService } from '@features/notes/services/notes.service';
 import { RemindersService } from '@features/reminders/services/reminders.service';
 import { TasksService } from '@features/tasks/services/tasks.service';
 
@@ -15,6 +16,7 @@ export class CalendarEventsService {
   private readonly tasks = inject(TasksService);
   private readonly goals = inject(GoalsService);
   private readonly reminders = inject(RemindersService);
+  private readonly notes = inject(NotesService);
 
   readonly events = computed<readonly CalendarEvent[]>(() => {
     const out: CalendarEvent[] = [];
@@ -58,6 +60,20 @@ export class CalendarEventsService {
         date,
         tags: [],
         done: r.done,
+      });
+    }
+    for (const n of this.notes.summaries()) {
+      if (!n.scheduledFor) continue;
+      const date = isoDay(n.scheduledFor);
+      if (!date) continue;
+      out.push({
+        id: `note:${n.id}`,
+        entityId: n.id,
+        kind: 'note',
+        title: n.title,
+        date,
+        tags: n.tags,
+        done: false,
       });
     }
     out.sort((a, b) => a.date.localeCompare(b.date) || a.title.localeCompare(b.title));

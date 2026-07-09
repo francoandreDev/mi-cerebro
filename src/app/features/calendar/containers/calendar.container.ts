@@ -17,13 +17,21 @@ import { IconComponent } from '@shared/icon/icon.component';
 
 import { CalendarDayModalComponent } from '../components/day-modal.component';
 import { CalendarKindCardComponent } from '../components/kind-card.component';
-import { CalendarMonthGridComponent } from '../components/month-grid.component';
+import { CalendarLeatherBookComponent } from '../components/leather-book.component';
+import { CalendarLightTableComponent } from '../components/light-table.component';
 import { CalendarTagFilterComponent } from '../components/tag-filter.component';
 import { CalendarToolbarComponent } from '../components/toolbar.component';
 import { CalendarYearGridComponent } from '../components/year-grid.component';
-import { MONTH_NAMES_ES, addMonths, parseIsoDay, todayIso } from '../utils/calendar-dates';
+import {
+  MONTH_NAMES_ES,
+  addDays,
+  addMonths,
+  parseIsoDay,
+  startOfWeek,
+  todayIso,
+} from '../utils/calendar-dates';
 
-type ViewMode = 'month' | 'year';
+type ViewMode = 'month' | 'year' | 'week';
 
 interface WallGroup {
   readonly kind: CalendarEventKind;
@@ -34,8 +42,9 @@ interface WallGroup {
   selector: 'mc-calendar',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CalendarMonthGridComponent,
+    CalendarLightTableComponent,
     CalendarYearGridComponent,
+    CalendarLeatherBookComponent,
     CalendarDayModalComponent,
     CalendarKindCardComponent,
     CalendarTagFilterComponent,
@@ -63,7 +72,9 @@ export class CalendarContainer {
 
   protected readonly view = computed<ViewMode>(() => {
     const v = this.params().get('view');
-    return v === 'year' ? 'year' : 'month';
+    if (v === 'year') return 'year';
+    if (v === 'week') return 'week';
+    return 'month';
   });
 
   protected readonly cursor = computed<{ year: number; month: number; day: string | null }>(() => {
@@ -120,6 +131,16 @@ export class CalendarContainer {
     return this.visibleEvents().filter((e) => e.date === day);
   });
 
+  protected readonly weekStart = computed<string>(() =>
+    startOfWeek(this.cursor().day ?? todayIso()),
+  );
+
+  protected readonly weekEvents = computed<readonly CalendarEvent[]>(() => {
+    const start = this.weekStart();
+    const end = addDays(start, 6);
+    return this.visibleEvents().filter((e) => e.date >= start && e.date <= end);
+  });
+
   protected readonly wallGroups = computed<readonly WallGroup[]>(() => {
     const prefix = this.periodPrefix();
     const inPeriod = this.tagFilteredEvents().filter((e) => e.date.startsWith(prefix));
@@ -166,6 +187,8 @@ export class CalendarContainer {
     const { year, month } = this.cursor();
     if (this.view() === 'year') {
       void this.navigate({ cursor: `${year - 1}-01-01`, day: null });
+    } else if (this.view() === 'week') {
+      this.onPrevWeek();
     } else {
       const next = addMonths(year, month, -1);
       void this.navigate({ cursor: isoFirst(next.year, next.month), day: null });
@@ -176,10 +199,35 @@ export class CalendarContainer {
     const { year, month } = this.cursor();
     if (this.view() === 'year') {
       void this.navigate({ cursor: `${year + 1}-01-01`, day: null });
+    } else if (this.view() === 'week') {
+      this.onNextWeek();
     } else {
       const next = addMonths(year, month, 1);
       void this.navigate({ cursor: isoFirst(next.year, next.month), day: null });
     }
+  }
+
+  protected onPrevWeek(): void {
+    const start = addDays(this.weekStart(), -7);
+    void this.navigate({ cursor: start, day: start });
+  }
+
+  protected onNextWeek(): void {
+    const start = addDays(this.weekStart(), 7);
+    void this.navigate({ cursor: start, day: start });
+  }
+
+  protected onPickBookDay(iso: string): void {
+    void this.navigate({ day: iso });
+  }
+
+  protected onCloseBook(): void {
+    void this.navigate({ view: 'month' });
+  }
+
+  protected onOpenBook(iso: string): void {
+    this.modalOpen.set(false);
+    void this.navigate({ view: 'week', cursor: iso, day: iso });
   }
 
   protected onToday(): void {
@@ -245,6 +293,7 @@ export class CalendarContainer {
   protected onCreateForKind(kind: CalendarEventKind): void {
     if (kind === 'task') void this.onCreateTask();
     else if (kind === 'goal') void this.onCreateGoal();
+    else if (kind === 'note') void this.onCreateNote();
     else void this.onCreateReminder();
   }
 
@@ -258,6 +307,10 @@ export class CalendarContainer {
 
   protected async onCreateReminder(): Promise<void> {
     await this.router.navigate(['/reminders']);
+  }
+
+  protected async onCreateNote(): Promise<void> {
+    await this.router.navigate(['/notes']);
   }
 
   private async navigate(patch: {

@@ -522,3 +522,13 @@ Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `P
 - **Causa típica:** video privado/eliminado/con restricción de edad o región, sin conexión de red, extractor de yt-dlp desactualizado contra un cambio de YouTube, o el sidecar `ffmpeg` no se encontró (`sidecar_path` de Tauri no lo resolvió).
 - **Cómo resolver:** verificar que el link abre en el navegador, reintentar (yt-dlp se actualiza seguido para nuevos cambios de YouTube), o revisar que la instalación de escritorio tenga los binarios `yt-dlp`/`ffmpeg` bundleados correctamente.
 - **Recuperable:** sí — no se escribe nada en la biblioteca hasta que la descarga completa OK.
+
+## UI — Validación / interacción / atajos
+
+### MCB-UI-001 — Nota creada por captura rápida
+
+- **Severidad:** info
+- **Cuándo:** `QuickCaptureService.capture()` termina de crear la nota disparada por el atajo global `Alt+Shift+N`.
+- **Causa típica:** no es un error — es la confirmación informativa de que la nota se guardó en la raíz de `/notes` sin salir de la sección actual. El toast incluye una acción "Abrir" para navegar directo a la nota.
+- **Cómo resolver:** no aplica.
+- **Recuperable:** no aplica (no es una falla).
