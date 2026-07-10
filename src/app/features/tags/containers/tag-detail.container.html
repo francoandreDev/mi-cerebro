@@ -1,0 +1,182 @@
+<div class="page">
+  <header class="header">
+    <a routerLink="/tags" class="back" [attr.aria-label]="t('tags.detail.back')">
+      <mc-icon name="arrow-left" />
+    </a>
+    @if (tag(); as t2) {
+      <span class="dot" [mcBgColor]="tagColor()"></span>
+      <h1>{{ t2.label }}</h1>
+    } @else {
+      <h1>{{ t('tags.detail.notFound') }}</h1>
+    }
+  </header>
+
+  @if (tag() && isEmpty()) {
+    <p class="empty">{{ t('tags.detail.empty') }}</p>
+  }
+
+  @if (noteItems().length) {
+    <section class="group">
+      <h2><mc-icon name="note" />{{ t('notes.title') }} ({{ noteItems().length }})</h2>
+      <div class="cards">
+        @for (n of noteItems(); track n.id) {
+          <mc-note-slip-card
+            [id]="n.id"
+            [title]="n.title"
+            [untitledLabel]="untitledLabel('note')"
+            [preview]="n.preview"
+            [updatedAt]="n.updatedAt"
+            [tagIds]="n.tags"
+            [availableTags]="availableTags()"
+            (open)="open('note', n.id, n.title)"
+          />
+        }
+      </div>
+    </section>
+  }
+
+  @if (taskItems().length) {
+    <section class="group">
+      <h2><mc-icon name="check-square" />{{ t('tasks.title') }} ({{ taskItems().length }})</h2>
+      <div class="cards">
+        @for (task of taskItems(); track task.id) {
+          <mc-tagged-generic-card
+            [id]="task.id"
+            [title]="task.title"
+            [untitledLabel]="untitledLabel('task')"
+            [subtitle]="taskSubtitle(task.dueDates)"
+            icon="check-square"
+            [tagIds]="task.tags"
+            [availableTags]="availableTags()"
+            (open)="open('task', task.id, task.title)"
+          />
+        }
+      </div>
+    </section>
+  }
+
+  @if (goalItems().length) {
+    <section class="group">
+      <h2><mc-icon name="target" />{{ t('goals.title') }} ({{ goalItems().length }})</h2>
+      <div class="cards stars">
+        @for (goal of goalItems(); track goal.id) {
+          <mc-goal-star-mini
+            [id]="goal.id"
+            [title]="goal.title"
+            [untitledLabel]="untitledLabel('goal')"
+            [deadline]="goal.deadline"
+            [completed]="goal.completed"
+            [priority]="goal.priority"
+            [today]="today()"
+            (open)="open('goal', goal.id, goal.title)"
+          />
+        }
+      </div>
+    </section>
+  }
+
+  @if (listItems().length) {
+    <section class="group">
+      <h2><mc-icon name="list-bullets" />{{ t('lists.title') }} ({{ listItems().length }})</h2>
+      <div class="cards">
+        @for (list of listItems(); track list.id) {
+          <mc-chalk-entry-card
+            [id]="list.id"
+            [title]="list.title"
+            [untitledLabel]="untitledLabel('list')"
+            [previewItems]="list.previewItems"
+            [tagIds]="list.tags"
+            [availableTags]="availableTags()"
+            (open)="open('list', list.id, list.title)"
+          />
+        }
+      </div>
+    </section>
+  }
+
+  @if (writingItems().length) {
+    <section class="group">
+      <h2><mc-icon name="pen-nib" />{{ t('writings.title') }} ({{ writingItems().length }})</h2>
+      <div class="cards">
+        @for (w of writingItems(); track w.id) {
+          <mc-writing-card-preview
+            [id]="w.id"
+            [title]="w.title"
+            [untitledLabel]="untitledLabel('writing')"
+            [preview]="w.preview"
+            [wordsLabel]="wordsLabel(w.wordCount)"
+            [updatedAt]="w.updatedAt"
+            [tagIds]="w.tags"
+            [availableTags]="availableTags()"
+            (open)="open('writing', w.id, w.title)"
+          />
+        }
+      </div>
+    </section>
+  }
+
+  @if (bookItems().length) {
+    <section class="group">
+      <h2><mc-icon name="books" />{{ t('books.title') }} ({{ bookItems().length }})</h2>
+      <div class="cards shelf">
+        @for (book of bookItems(); track book.id) {
+          <button
+            type="button"
+            class="volume-btn"
+            [attr.aria-label]="book.title || untitledLabel('book')"
+            (click)="open('book', book.id, book.title)"
+          >
+            <mc-book-volume
+              [bookId]="book.id"
+              [title]="book.title"
+              [subtitle]="book.subtitle"
+              [untitledLabel]="untitledLabel('book')"
+              [chapterCount]="book.chapterCount"
+              [accent]="book.accent"
+              density="compact"
+            />
+          </button>
+        }
+      </div>
+    </section>
+  }
+
+  @if (imageItems().length) {
+    <section class="group">
+      <h2><mc-icon name="image-square" />{{ t('images.title') }} ({{ imageItems().length }})</h2>
+      <div class="cards">
+        @for (gallery of imageItems(); track gallery.id) {
+          <mc-tagged-generic-card
+            [id]="gallery.id"
+            [title]="gallery.title"
+            [untitledLabel]="untitledLabel('image')"
+            [subtitle]="imageCountLabel(gallery.imageCount)"
+            icon="image-square"
+            [tagIds]="gallery.tags"
+            [availableTags]="availableTags()"
+            (open)="open('image', gallery.id, gallery.title)"
+          />
+        }
+      </div>
+    </section>
+  }
+
+  @if (fileItems().length) {
+    <section class="group">
+      <h2><mc-icon name="folder" />{{ t('files.title') }} ({{ fileItems().length }})</h2>
+      <div class="cards lockers">
+        @for (file of fileItems(); track file.id; let i = $index) {
+          <mc-file-locker-card
+            [id]="file.id"
+            [title]="file.title"
+            [untitledLabel]="untitledLabel('file')"
+            [number]="i + 1"
+            [tagIds]="file.tags"
+            [availableTags]="availableTags()"
+            (open)="open('file', file.id, file.title)"
+          />
+        }
+      </div>
+    </section>
+  }
+</div>
