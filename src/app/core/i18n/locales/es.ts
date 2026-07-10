@@ -564,11 +564,16 @@ export const es = {
   'tags.page.deleteConfirmUsed':
     '¿Eliminar la etiqueta "{label}"? Se quitará de {count} entidad(es) que la usan.',
 
+  'tags.detail.back': 'Volver a etiquetas',
+  'tags.detail.notFound': 'Esta etiqueta ya no existe.',
+  'tags.detail.empty': 'Nada tiene esta etiqueta todavía.',
+
   'palette.label': 'Búsqueda global',
   'palette.openButton': 'Abrir búsqueda global',
   'palette.placeholder': 'Buscar... (probá tag:trabajo)',
   'palette.empty': 'Escribí para buscar entre tus notas.',
   'palette.unknownTag': 'No existe la etiqueta',
+  'palette.viewTag': 'Ver todo lo de #{label}',
   'palette.hint': '↑↓ navegar · enter abrir · esc cerrar',
   'palette.kindUnknown': 'Otro',
   'palette.recents.title': 'Recientes',

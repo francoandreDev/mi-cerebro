@@ -27,4 +27,10 @@ export interface QueryItem {
   readonly text: string;
 }
 
-export type PaletteItem = EntityItem | QueryItem;
+export interface TagViewItem {
+  readonly type: 'tagView';
+  readonly tagId: string;
+  readonly label: string;
+}
+
+export type PaletteItem = EntityItem | QueryItem | TagViewItem;

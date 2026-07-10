@@ -16,10 +16,10 @@ import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { entitySlugSegment } from '@core/routing/entity-slug';
 
+import { BookVolumeComponent } from '@shared/entity-cards/book-volume.component';
 import { IconComponent } from '@shared/icon/icon.component';
 
 import { BookCatalogOverlayComponent } from '../components/book-catalog-overlay.component';
-import { BookVolumeComponent } from '../components/book-volume.component';
 import type { BookSummary } from '../models/book.types';
 import { BooksService } from '../services/books.service';
 import { readDragId, shelfDropTarget, slotDropTarget } from './bookshelf-dnd';

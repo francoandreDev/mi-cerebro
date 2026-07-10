@@ -29,6 +29,7 @@ import {
   type EntityItem,
   type PaletteItem,
   type QueryItem,
+  type TagViewItem,
 } from './command-palette.types';
 
 @Component({
@@ -98,11 +99,23 @@ export class CommandPaletteContainer {
     }));
   });
 
+  protected readonly tagViewItem = computed<TagViewItem | null>(() => {
+    if (!this.open() || this.mode() !== 'results') return null;
+    const tagId = this.parsed().tagIds[0];
+    if (!tagId) return null;
+    const tag = this.tagsService.byId(tagId);
+    if (!tag) return null;
+    return { type: 'tagView' as const, tagId, label: tag.label };
+  });
+
+  protected readonly tagViewOffset = computed(() => (this.tagViewItem() ? 1 : 0));
+
   protected readonly items = computed<readonly PaletteItem[]>(() => {
     if (this.mode() === 'recents') {
       return [...this.recentsItems(), ...this.queryItems()];
     }
-    return this.entityItems();
+    const tagView = this.tagViewItem();
+    return tagView ? [tagView, ...this.entityItems()] : this.entityItems();
   });
 
   constructor() {
@@ -119,8 +132,8 @@ export class CommandPaletteContainer {
     });
   }
 
-  protected t(key: TranslationKey): string {
-    return this.i18n.t(key);
+  protected t(key: TranslationKey, params?: Record<string, string | number>): string {
+    return this.i18n.t(key, params);
   }
 
   protected kindKey(kind: string): TranslationKey {
@@ -199,6 +212,11 @@ export class CommandPaletteContainer {
       this.query.set(item.text);
       this.cursor.set(0);
       queueMicrotask(() => this.inputEl()?.nativeElement.focus());
+      return;
+    }
+    if (item.type === 'tagView') {
+      void this.router.navigate(['/tags', item.tagId]);
+      this.close();
       return;
     }
     const text = this.parsed().text;

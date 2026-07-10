@@ -88,13 +88,26 @@
         </p>
       } @else {
         <ul class="results" role="listbox">
+          @if (tagViewItem(); as tv) {
+            <li
+              class="hit tag-view"
+              role="option"
+              [class.highlight]="cursor() === 0"
+              [attr.aria-selected]="cursor() === 0"
+              (mouseenter)="cursor.set(0)"
+              (mousedown)="pick($event, tv)"
+            >
+              <mc-icon name="tag" class="kind-icon" />
+              <div class="title">{{ t('palette.viewTag', { label: tv.label }) }}</div>
+            </li>
+          }
           @for (h of entityItems(); track h.id; let i = $index) {
             <li
               class="hit"
               role="option"
-              [class.highlight]="cursor() === i"
-              [attr.aria-selected]="cursor() === i"
-              (mouseenter)="cursor.set(i)"
+              [class.highlight]="cursor() === i + tagViewOffset()"
+              [attr.aria-selected]="cursor() === i + tagViewOffset()"
+              (mouseenter)="cursor.set(i + tagViewOffset())"
               (mousedown)="pick($event, h)"
             >
               <div class="kind">{{ t(kindKey(h.kind)) }}</div>
