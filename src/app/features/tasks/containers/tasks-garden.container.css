@@ -186,3 +186,19 @@
     transition: none;
   }
 }
+
+@media (max-width: 480px) {
+  .head {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
+
+  .compose {
+    max-width: none;
+    width: 100%;
+  }
+
+  .planters {
+    grid-template-columns: 1fr;
+  }
+}

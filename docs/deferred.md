@@ -572,6 +572,6 @@ Formato por entrada:
 
 ### Auditar y arreglar el resto de las features sin @media
 
-- **Qué**: §21 sólo cerró el shell (rail, §21a) + 2 páginas (home §21b, notes §21c). Quedan sin auditar/arreglar: tasks (kanban de columnas horizontales, no colapsa a viewport angosto), goals, tags, files, variants, trash, images, bookshelf/book-reader (parcial). Las que ya tienen algún `@media` (calendar, history, music, reminders, settings, sync, writings-shelf) tampoco se re-verificaron a 393px en esta sesión salvo calendar, que mostró overflow en la columna "Sábado" de la grilla mensual.
-- **Por qué se difirió**: alcance explícito de §21 era "sentar las bases" (shell + 2 páginas fáciles), no una pasada completa — cada página tiene su propio layout por diseño (§4.6.14b), así que cada una necesita su propio breakpoint y revisión visual, no hay fix global posible más allá del rail.
+- **Qué**: §21 cerró el shell (rail, §21a) + home/notes (§21b/21c) + tasks/goals/files (§21d, sesión 9). Quedan sin auditar/arreglar: tags, variants, trash, images, bookshelf/book-reader (parcial). Las que ya tienen algún `@media` (calendar, history, music, reminders, settings, sync, writings-shelf) tampoco se re-verificaron a 393px salvo calendar, que mostró overflow en la columna "Sábado" de la grilla mensual.
+- **Por qué se difirió**: alcance explícito de §21 era "sentar las bases" (shell + 2 páginas fáciles) e ir sección por sección después — cada página tiene su propio layout por diseño (§4.6.14b), así que cada una necesita su propio breakpoint y revisión visual, no hay fix global posible más allá del rail.
 - **Target**: §19.21d.

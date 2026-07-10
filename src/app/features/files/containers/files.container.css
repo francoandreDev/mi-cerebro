@@ -78,6 +78,20 @@
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: var(--mc-space-3);
 }
+
+@media (max-width: 480px) {
+  .wall-wrap {
+    padding: var(--mc-space-2);
+  }
+
+  .wall-board {
+    padding: var(--mc-space-3);
+  }
+
+  .wall-grid {
+    grid-template-columns: 1fr;
+  }
+}
 .wall-slot { display: block; }
 
 /* the floor strip below the wall (subtle base shadow) */
