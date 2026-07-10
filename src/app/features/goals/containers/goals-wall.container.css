@@ -215,8 +215,18 @@
       transparent 70%
     ),
     linear-gradient(180deg, #05091e 0%, #010207 100%);
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   border: 1px solid var(--mc-border-default);
+}
+/* why: el canvas mantiene su ancho real (no se achica en viewport angosto,
+   ver §21d) — bajo ese ancho el .sky hace scroll horizontal en vez de
+   apretar las estrellas hasta que las etiquetas se solapen. */
+.sky-canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-width: 100%;
 }
 /* why: starfield decorativo de fondo (puntitos blancos) usando box-shadow múltiple. */
 .sky::before,
@@ -504,8 +514,10 @@
   .sky {
     min-height: 300px;
   }
+}
 
-  .star-label {
-    max-width: 120px;
+@media (max-width: 700px) {
+  .sky-canvas {
+    min-width: 640px;
   }
 }

@@ -92,107 +92,109 @@
     <p class="wall-empty">{{ t('goals.wall.emptyHint') }}</p>
   } @else {
     <div class="sky" role="region" [attr.aria-label]="t('goals.title')">
-      <svg
-        class="sky-lines"
-        viewBox="0 0 100 100"
-        preserveAspectRatio="none"
-        aria-hidden="true"
-        focusable="false"
-      >
-        @for (link of links(); track link.goalId + '|' + link.a + '|' + link.b) {
-          <line
-            class="link"
-            [class.dim]="link.dim"
-            [attr.x1]="link.x1"
-            [attr.y1]="link.y1"
-            [attr.x2]="link.x2"
-            [attr.y2]="link.y2"
-          />
-        }
-      </svg>
-      <ul class="stars" [attr.aria-label]="t('goals.title')">
-        @for (star of stars(); track star.key) {
-          <li
-            class="star-slot"
-            [style.left.%]="star.x"
-            [style.top.%]="star.y"
-            [class.dim]="star.dim"
-          >
-            <button
-              type="button"
-              class="star"
-              [class.completed]="star.state === 'completed'"
-              [class.overdue]="star.state === 'overdue'"
-              [class.soon]="star.state === 'soon'"
-              [class.pulsing]="star.pulsing"
-              [class.done]="star.done"
-              [class.step]="star.stepId !== null"
-              [style.--star-size.px]="star.size"
-              [style.--star-glow.px]="star.glow"
-              [style.--star-opacity]="star.opacity"
-              [class.dragging]="dragCenter()?.goalId === star.goalId"
-              [attr.aria-label]="ariaLabelFor(star)"
-              [attr.aria-pressed]="star.stepId !== null ? star.done : null"
-              (pointerdown)="onStarDown(star, $event)"
-              (pointermove)="onStarMove($event)"
-              (pointerup)="onStarUp(star, $event)"
+      <div class="sky-canvas">
+        <svg
+          class="sky-lines"
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+          focusable="false"
+        >
+          @for (link of links(); track link.goalId + '|' + link.a + '|' + link.b) {
+            <line
+              class="link"
+              [class.dim]="link.dim"
+              [attr.x1]="link.x1"
+              [attr.y1]="link.y1"
+              [attr.x2]="link.x2"
+              [attr.y2]="link.y2"
+            />
+          }
+        </svg>
+        <ul class="stars" [attr.aria-label]="t('goals.title')">
+          @for (star of stars(); track star.key) {
+            <li
+              class="star-slot"
+              [style.left.%]="star.x"
+              [style.top.%]="star.y"
+              [class.dim]="star.dim"
             >
-              <svg
-                class="star-svg"
-                viewBox="-50 -50 100 100"
-                preserveAspectRatio="xMidYMid meet"
-                aria-hidden="true"
-                focusable="false"
+              <button
+                type="button"
+                class="star"
+                [class.completed]="star.state === 'completed'"
+                [class.overdue]="star.state === 'overdue'"
+                [class.soon]="star.state === 'soon'"
+                [class.pulsing]="star.pulsing"
+                [class.done]="star.done"
+                [class.step]="star.stepId !== null"
+                [style.--star-size.px]="star.size"
+                [style.--star-glow.px]="star.glow"
+                [style.--star-opacity]="star.opacity"
+                [class.dragging]="dragCenter()?.goalId === star.goalId"
+                [attr.aria-label]="ariaLabelFor(star)"
+                [attr.aria-pressed]="star.stepId !== null ? star.done : null"
+                (pointerdown)="onStarDown(star, $event)"
+                (pointermove)="onStarMove($event)"
+                (pointerup)="onStarUp(star, $event)"
               >
-                <circle class="star-halo" cx="0" cy="0" r="26" />
-                <circle class="star-halo-mid" cx="0" cy="0" r="12" />
-                <ellipse class="star-spike" rx="44" ry="0.45" cx="0" cy="0" />
-                <ellipse class="star-spike" rx="0.45" ry="44" cx="0" cy="0" />
-                <ellipse
-                  class="star-spike star-spike-diag"
-                  rx="22"
-                  ry="0.3"
-                  cx="0"
-                  cy="0"
-                  transform="rotate(45)"
-                />
-                <ellipse
-                  class="star-spike star-spike-diag"
-                  rx="22"
-                  ry="0.3"
-                  cx="0"
-                  cy="0"
-                  transform="rotate(-45)"
-                />
-                <circle class="star-core" cx="0" cy="0" r="3" />
-              </svg>
-              <span class="star-label">{{ star.title }}</span>
-              @if (star.stepId !== null) {
-                <span class="star-sublabel" aria-hidden="true">{{ star.goalTitle }}</span>
-              }
-            </button>
-          </li>
+                <svg
+                  class="star-svg"
+                  viewBox="-50 -50 100 100"
+                  preserveAspectRatio="xMidYMid meet"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <circle class="star-halo" cx="0" cy="0" r="26" />
+                  <circle class="star-halo-mid" cx="0" cy="0" r="12" />
+                  <ellipse class="star-spike" rx="44" ry="0.45" cx="0" cy="0" />
+                  <ellipse class="star-spike" rx="0.45" ry="44" cx="0" cy="0" />
+                  <ellipse
+                    class="star-spike star-spike-diag"
+                    rx="22"
+                    ry="0.3"
+                    cx="0"
+                    cy="0"
+                    transform="rotate(45)"
+                  />
+                  <ellipse
+                    class="star-spike star-spike-diag"
+                    rx="22"
+                    ry="0.3"
+                    cx="0"
+                    cy="0"
+                    transform="rotate(-45)"
+                  />
+                  <circle class="star-core" cx="0" cy="0" r="3" />
+                </svg>
+                <span class="star-label">{{ star.title }}</span>
+                @if (star.stepId !== null) {
+                  <span class="star-sublabel" aria-hidden="true">{{ star.goalTitle }}</span>
+                }
+              </button>
+            </li>
+          }
+        </ul>
+        @if (peekSummary(); as peek) {
+          @if (peekAnchor(); as anchor) {
+            <mc-goal-peek-overlay
+              [summary]="peek"
+              [anchorX]="anchor.x"
+              [anchorY]="anchor.y"
+              [today]="today()"
+              (titleChange)="onPeekTitleChange($event)"
+              (completedChange)="onPeekCompletedChange($event)"
+              (deadlineChange)="onPeekDeadlineChange($event)"
+              (priorityChange)="onPeekPriorityChange($event)"
+              (removeGoal)="onPeekRemove()"
+              (openMap)="onPeekOpenMap()"
+              (closed)="onPeekClose()"
+            />
+          }
         }
-      </ul>
+      </div>
       @if (hasFilter() && allDim()) {
         <p class="sky-empty">{{ t('goals.wall.noMatch') }}</p>
-      }
-      @if (peekSummary(); as peek) {
-        @if (peekAnchor(); as anchor) {
-          <mc-goal-peek-overlay
-            [summary]="peek"
-            [anchorX]="anchor.x"
-            [anchorY]="anchor.y"
-            [today]="today()"
-            (titleChange)="onPeekTitleChange($event)"
-            (completedChange)="onPeekCompletedChange($event)"
-            (deadlineChange)="onPeekDeadlineChange($event)"
-            (priorityChange)="onPeekPriorityChange($event)"
-            (removeGoal)="onPeekRemove()"
-            (openMap)="onPeekOpenMap()"
-            (closed)="onPeekClose()"
-          />
-        }
       }
     </div>
   }

@@ -261,8 +261,8 @@ export class GoalsWallContainer {
     if (ev.button !== 0) return;
     const t = ev.currentTarget as Element;
     t.setPointerCapture(ev.pointerId);
-    const sky = t.closest('.sky') as HTMLElement | null;
-    const r = (sky ?? document.body).getBoundingClientRect();
+    const canvas = t.closest('.sky-canvas') as HTMLElement | null;
+    const r = (canvas ?? document.body).getBoundingClientRect();
     const goal = this.summaries().find((s) => s.id === star.goalId);
     const { cx, cy } = this.centerOf(goal ?? { id: star.goalId });
     this.dragRef = {
