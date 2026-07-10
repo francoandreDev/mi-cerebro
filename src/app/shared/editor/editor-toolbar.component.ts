@@ -1,9 +1,10 @@
 // 13f — Dumb toolbar for the editor. Holds the image-picker trigger, the
 // view segmented control (clean | combined), the index popover toggles
-// (comments / drafts), the highlight-color picker (§19.16e-i), and the
-// session status flags. All state lives in the host editor; this
-// component is pure UI (the highlight menu's open/closed flag is local
-// presentation state, same as any other dropdown).
+// (comments / drafts), the highlight-color picker (§19.16e-i), the list
+// toggle buttons, and the session status flags. All state lives in the
+// host editor; this component is pure UI (the highlight menu's
+// open/closed flag is local presentation state, same as any other
+// dropdown).
 
 import {
   ChangeDetectionStrategy,
@@ -50,6 +51,88 @@ const HIGHLIGHT_SWATCH_LABELS: Record<string, TranslationKey> = {
           [attr.aria-label]="t('editor.insertImage')"
         >
           <mc-icon name="image" /> {{ t('editor.insertImage') }}
+        </button>
+      }
+      @if (editable()) {
+        <button
+          type="button"
+          class="ghost"
+          [attr.aria-pressed]="boldActive()"
+          [attr.aria-label]="t('editor.mark.bold')"
+          (click)="toggleBold.emit()"
+        >
+          <mc-icon name="text-b" />
+        </button>
+        <button
+          type="button"
+          class="ghost"
+          [attr.aria-pressed]="italicActive()"
+          [attr.aria-label]="t('editor.mark.italic')"
+          (click)="toggleItalic.emit()"
+        >
+          <mc-icon name="text-italic" />
+        </button>
+        <button
+          type="button"
+          class="ghost"
+          [attr.aria-pressed]="activeHeadingLevel() === 2"
+          [attr.aria-label]="t('editor.heading.level2')"
+          (click)="setHeadingLevel.emit(2)"
+        >
+          <mc-icon name="text-h-two" />
+        </button>
+        <button
+          type="button"
+          class="ghost"
+          [attr.aria-pressed]="activeHeadingLevel() === 3"
+          [attr.aria-label]="t('editor.heading.level3')"
+          (click)="setHeadingLevel.emit(3)"
+        >
+          <mc-icon name="text-h-three" />
+        </button>
+        <button
+          type="button"
+          class="ghost"
+          [attr.aria-pressed]="activeHeadingLevel() === 4"
+          [attr.aria-label]="t('editor.heading.level4')"
+          (click)="setHeadingLevel.emit(4)"
+        >
+          <mc-icon name="text-h-four" />
+        </button>
+        <button
+          type="button"
+          class="ghost"
+          [attr.aria-pressed]="citationActive()"
+          [attr.aria-label]="t('editor.citation')"
+          (click)="toggleCitation.emit()"
+        >
+          <mc-icon name="quotes" />
+        </button>
+        <button
+          type="button"
+          class="ghost"
+          [attr.aria-pressed]="bulletListActive()"
+          [attr.aria-label]="t('editor.list.bullet')"
+          (click)="toggleBulletList.emit()"
+        >
+          <mc-icon name="list-bullets" />
+        </button>
+        <button
+          type="button"
+          class="ghost"
+          [attr.aria-pressed]="orderedListActive()"
+          [attr.aria-label]="t('editor.list.ordered')"
+          (click)="toggleOrderedList.emit()"
+        >
+          <mc-icon name="list-numbers" />
+        </button>
+        <button
+          type="button"
+          class="ghost"
+          [attr.aria-label]="t('editor.sceneBreak')"
+          (click)="insertSceneBreak.emit()"
+        >
+          <mc-icon name="minus" />
         </button>
       }
       @if (editable()) {
@@ -158,12 +241,25 @@ export class EditorToolbarComponent {
   readonly draftsIndexOpen = input<boolean>(false);
   readonly sessionActive = input<boolean>(false);
   readonly lastSaveCount = input<number | null>(null);
+  readonly bulletListActive = input<boolean>(false);
+  readonly orderedListActive = input<boolean>(false);
+  readonly boldActive = input<boolean>(false);
+  readonly italicActive = input<boolean>(false);
+  readonly activeHeadingLevel = input<2 | 3 | 4 | 0>(0);
+  readonly citationActive = input<boolean>(false);
 
   readonly openPicker = output<void>();
   readonly setView = output<EditorView>();
   readonly toggleCommentsIndex = output<void>();
   readonly toggleDraftsIndex = output<void>();
+  readonly setHeadingLevel = output<2 | 3 | 4>();
+  readonly toggleCitation = output<void>();
+  readonly toggleBold = output<void>();
+  readonly toggleItalic = output<void>();
+  readonly insertSceneBreak = output<void>();
   readonly pickHighlight = output<string | null>();
+  readonly toggleBulletList = output<void>();
+  readonly toggleOrderedList = output<void>();
 
   protected readonly swatches = HIGHLIGHT_SWATCHES;
   protected readonly highlightMenuOpen = signal(false);

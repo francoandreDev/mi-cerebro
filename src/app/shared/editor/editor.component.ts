@@ -81,6 +81,12 @@ export class EditorComponent {
   protected readonly draftsIndexOpen = signal(false);
   protected readonly draftFocusId = signal<string | null>(null);
   protected readonly bubble = signal<{ top: number; left: number } | null>(null);
+  protected readonly bulletListActive = signal(false);
+  protected readonly orderedListActive = signal(false);
+  protected readonly boldActive = signal(false);
+  protected readonly italicActive = signal(false);
+  protected readonly activeHeadingLevel = signal<2 | 3 | 4 | 0>(0);
+  protected readonly citationActive = signal(false);
   protected readonly draftSession = new DraftSessionController({
     drafts: this.drafts,
     editor: () => this.editor,
@@ -246,6 +252,82 @@ export class EditorComponent {
     else ed.chain().focus().toggleHighlight({ color }).run();
   }
 
+  // why: not just `protected` — books' chapter-editor-pane hides the
+  //      in-shell toolbar entirely (CSS multicol pagination can't carry
+  //      it, see _book-editor.scss) and drives list toggling from its own
+  //      chrome instead, via a ViewChild reference to this component.
+  toggleBulletList(): void {
+    this.editor?.chain().focus().toggleBulletList().run();
+  }
+
+  toggleOrderedList(): void {
+    this.editor?.chain().focus().toggleOrderedList().run();
+  }
+
+  isBulletListActive(): boolean {
+    return this.bulletListActive();
+  }
+
+  isOrderedListActive(): boolean {
+    return this.orderedListActive();
+  }
+
+  toggleBold(): void {
+    this.editor?.chain().focus().toggleBold().run();
+  }
+
+  toggleItalic(): void {
+    this.editor?.chain().focus().toggleItalic().run();
+  }
+
+  isBoldActive(): boolean {
+    return this.boldActive();
+  }
+
+  isItalicActive(): boolean {
+    return this.italicActive();
+  }
+
+  insertSceneBreak(): void {
+    this.editor?.chain().focus().setHorizontalRule().run();
+  }
+
+  // why: levels capped at 2-4 — the chapter title (books) / entity title
+  //      already reads as the de-facto H1, so H1 stays out of the schema
+  //      entirely (see setup-editor.ts's `levels: [2, 3, 4]`).
+  setHeadingLevel(level: 2 | 3 | 4): void {
+    this.editor?.chain().focus().toggleHeading({ level }).run();
+  }
+
+  isHeadingLevelActive(level: 2 | 3 | 4): boolean {
+    return this.activeHeadingLevel() === level;
+  }
+
+  toggleCitation(): void {
+    this.editor?.chain().focus().toggleCitation().run();
+  }
+
+  isCitationActive(): boolean {
+    return this.citationActive();
+  }
+
+  private refreshListActiveState(ed: Editor): void {
+    this.bulletListActive.set(ed.isActive('bulletList'));
+    this.orderedListActive.set(ed.isActive('orderedList'));
+    this.boldActive.set(ed.isActive('bold'));
+    this.italicActive.set(ed.isActive('italic'));
+    this.activeHeadingLevel.set(
+      ed.isActive('heading', { level: 2 })
+        ? 2
+        : ed.isActive('heading', { level: 3 })
+          ? 3
+          : ed.isActive('heading', { level: 4 })
+            ? 4
+            : 0,
+    );
+    this.citationActive.set(ed.isActive('citation'));
+  }
+
   private ensureCombined(): void {
     if (this.view() !== 'combined') this.view.set('combined');
   }
@@ -282,6 +364,7 @@ export class EditorComponent {
   }
 
   private onEditorUpdate(ed: Editor): void {
+    this.refreshListActiveState(ed);
     if (this.suppressEmit) return;
     const json = ed.getJSON();
     if (this.draftSession.captureUpdate(json)) return;
@@ -289,6 +372,7 @@ export class EditorComponent {
   }
 
   private onEditorSelectionUpdate(ed: Editor): void {
+    this.refreshListActiveState(ed);
     const { from, to } = ed.state.selection;
     const showBubble =
       this.view() === 'combined' &&
@@ -309,6 +393,10 @@ export class EditorComponent {
       reader: this.reader,
       initialContent: this.value(),
       editable: this.editable(),
+      citationAttributionPlaceholders: {
+        author: () => this.i18n.t('editor.citation.authorPlaceholder'),
+        year: () => this.i18n.t('editor.citation.yearPlaceholder'),
+      },
       onCloudClick: (id) =>
         this.commentsCoord.openExisting(id, cloudRect(this.host().nativeElement, id)),
       cloudAriaLabel: () => this.i18n.t('editor.cloud.aria'),

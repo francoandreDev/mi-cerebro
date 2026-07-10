@@ -9,7 +9,7 @@ export const BLOCK_ID_ATTR = 'blockId';
 export const BLOCK_ID_TARGET_TYPES: ReadonlySet<string> = new Set([
   'paragraph',
   'heading',
-  'blockquote',
+  'citation',
   'codeBlock',
   'listItem',
   'horizontalRule',

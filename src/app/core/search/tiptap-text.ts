@@ -18,7 +18,8 @@ export const extractPlainText = (doc: JSONContent | undefined): string => {
 const BLOCK_TYPES = new Set([
   'paragraph',
   'heading',
-  'blockquote',
+  'citation',
+  'citationAttribution',
   'codeBlock',
   'bulletList',
   'orderedList',

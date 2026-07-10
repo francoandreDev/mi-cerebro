@@ -50,6 +50,11 @@ export class ChapterEditorPaneComponent {
   private readonly pagesRef = viewChild<ElementRef<HTMLElement>>('pagesEl');
   private readonly spreadRef = viewChild<ElementRef<HTMLElement>>('spreadEl');
   private readonly titleRef = viewChild<ElementRef<HTMLInputElement>>('titleEl');
+  // why: the book pagination CSS hides mc-editor's own toolbar entirely
+  //      (see _book-editor.scss) — list toggling is triggered from the
+  //      pane's ui-bar instead, by calling straight into the editor
+  //      component's public toggle methods.
+  private readonly editorRef = viewChild(EditorComponent);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly currentSpread = signal<number>(0);
@@ -232,6 +237,45 @@ export class ChapterEditorPaneComponent {
   protected onTitleInput(event: Event): void {
     const target = event.target as HTMLInputElement | null;
     if (target) this.titleChange.emit(target.value);
+  }
+  protected toggleBulletList(): void {
+    this.editorRef()?.toggleBulletList();
+  }
+  protected toggleOrderedList(): void {
+    this.editorRef()?.toggleOrderedList();
+  }
+  protected bulletListActive(): boolean {
+    return this.editorRef()?.isBulletListActive() ?? false;
+  }
+  protected orderedListActive(): boolean {
+    return this.editorRef()?.isOrderedListActive() ?? false;
+  }
+  protected toggleBold(): void {
+    this.editorRef()?.toggleBold();
+  }
+  protected toggleItalic(): void {
+    this.editorRef()?.toggleItalic();
+  }
+  protected boldActive(): boolean {
+    return this.editorRef()?.isBoldActive() ?? false;
+  }
+  protected italicActive(): boolean {
+    return this.editorRef()?.isItalicActive() ?? false;
+  }
+  protected insertSceneBreak(): void {
+    this.editorRef()?.insertSceneBreak();
+  }
+  protected setHeadingLevel(level: 2 | 3 | 4): void {
+    this.editorRef()?.setHeadingLevel(level);
+  }
+  protected toggleCitation(): void {
+    this.editorRef()?.toggleCitation();
+  }
+  protected headingLevelActive(level: 2 | 3 | 4): boolean {
+    return this.editorRef()?.isHeadingLevelActive(level) ?? false;
+  }
+  protected citationActive(): boolean {
+    return this.editorRef()?.isCitationActive() ?? false;
   }
 }
 

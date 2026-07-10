@@ -52,6 +52,77 @@ mc-editor .editor-host .ProseMirror {
   outline: none;
   min-height: 180px;
 }
+// why: baseline citation styling for the non-book entities (notes, tasks,
+// goals, writings) — the book view overrides these with a paper-themed,
+// higher-specificity version scoped under `.book-editor` in
+// _book-editor.scss. Both quote marks render the moment the citation
+// exists (::before / ::after) — there's no separate "closing" step.
+mc-editor .editor-host .ProseMirror blockquote {
+  position: relative;
+  margin: 1em 1.5em;
+  padding-left: 0.25em;
+  font-style: italic;
+  color: var(--mc-fg-muted);
+}
+mc-editor .editor-host .ProseMirror blockquote::before {
+  content: '\201C';
+  position: absolute;
+  left: -0.75em;
+  top: -0.1em;
+  font-style: normal;
+  font-size: 1.8em;
+  line-height: 1;
+  color: var(--mc-fg-muted);
+}
+// why: mirror image of the opening mark — same size/color/offset,
+// anchored to the LAST paragraph's own box (not the blockquote's, which
+// may extend further down to include the attribution footer).
+mc-editor .editor-host .ProseMirror blockquote > p:last-of-type {
+  position: relative;
+}
+mc-editor .editor-host .ProseMirror blockquote > p:last-of-type::after {
+  content: '\201D';
+  position: absolute;
+  right: -0.75em;
+  bottom: -0.1em;
+  font-style: normal;
+  font-size: 1.8em;
+  line-height: 1;
+  color: var(--mc-fg-muted);
+}
+// why: author/year (see citation.ext.ts) are two real <input>s in a
+// NodeView — styled to disappear as form fields and read as plain running
+// text ("— Autor, Año"), sized to their own content via JS.
+mc-editor .editor-host .ProseMirror footer[data-citation-attribution] {
+  margin-top: 0.3em;
+  font-style: normal;
+  font-size: var(--mc-font-size-sm);
+  text-align: right;
+  color: var(--mc-fg-muted);
+}
+mc-editor .editor-host .ProseMirror footer[data-citation-attribution]::before {
+  content: '— ';
+}
+mc-editor .editor-host .ProseMirror footer[data-citation-attribution] input {
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: right;
+}
+mc-editor .editor-host .ProseMirror footer[data-citation-attribution] input::placeholder {
+  color: var(--mc-fg-muted);
+  opacity: 0.6;
+}
+mc-editor .editor-host .ProseMirror footer[data-citation-attribution] input:focus {
+  color: var(--mc-fg-primary);
+}
+mc-editor .editor-host .ProseMirror .mc-citation-sep {
+  color: var(--mc-fg-muted);
+}
 mc-editor .editor-host .mc-draft-mutate {
   background: rgba(250, 204, 21, 0.15);
   border-left: 3px solid #d97706;

@@ -1,9 +1,10 @@
 // 19.16e-iv — JSON→DOM mini-renderer for insertion-only diff-marks. `after`
-// is a single block-level node (paragraph/heading/blockquote/list/codeBlock/
+// is a single block-level node (paragraph/heading/citation/list/codeBlock/
 // horizontalRule — whatever the top-level doc accepts, per draft-apply.ts),
 // never a full doc. Covers the node/mark set StarterKit + the highlight
-// extension actually produce; anything else falls back to a generic `div`
-// so an unexpected node type still renders its text instead of throwing.
+// extension + the custom citation node actually produce; anything else
+// falls back to a generic `div` so an unexpected node type still renders
+// its text instead of throwing.
 
 import type { JSONContent } from '@tiptap/core';
 
@@ -11,7 +12,8 @@ import { HIGHLIGHT_COLOR_ATTR } from '../highlight/highlight.ext';
 
 const NODE_TAGS: Record<string, string> = {
   paragraph: 'p',
-  blockquote: 'blockquote',
+  citation: 'blockquote',
+  citationAttribution: 'footer',
   bulletList: 'ul',
   orderedList: 'ol',
   listItem: 'li',

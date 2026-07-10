@@ -92,6 +92,7 @@
 .ui-bar {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--mc-space-2);
   font-family: var(--mc-font-sans);
 }
@@ -133,6 +134,32 @@
   border-color: var(--mc-accent-primary);
 }
 .focus-toggle.active {
+  color: var(--mc-accent-fg, var(--mc-bg-base));
+  background: var(--mc-accent-primary);
+  border-color: var(--mc-accent-primary);
+}
+
+/* why: mc-editor's own toolbar is display:none inside the book pagination
+   (see _book-editor.scss) — these two mirror its bullet/ordered list
+   buttons in the pane's own chrome instead. */
+.list-toggle {
+  background: transparent;
+  border: 1px solid var(--mc-border-default);
+  color: var(--mc-fg-muted);
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  font-size: 1rem;
+  border-radius: var(--mc-radius-md);
+  cursor: pointer;
+  line-height: 1;
+}
+.list-toggle:hover {
+  color: var(--mc-fg-primary);
+  border-color: var(--mc-accent-primary);
+}
+.list-toggle.active {
   color: var(--mc-accent-fg, var(--mc-bg-base));
   background: var(--mc-accent-primary);
   border-color: var(--mc-accent-primary);

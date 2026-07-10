@@ -106,7 +106,8 @@
     margin: 0;
   }
   mc-editor .ProseMirror h2,
-  mc-editor .ProseMirror h3 {
+  mc-editor .ProseMirror h3,
+  mc-editor .ProseMirror h4 {
     font-family: var(--mc-font-serif);
     font-weight: 600;
     margin: 1.2em 0 0.3em;
@@ -121,12 +122,90 @@
   mc-editor .ProseMirror h3 {
     font-size: 1.1em;
   }
-  mc-editor .ProseMirror blockquote {
-    margin: 1em;
+  mc-editor .ProseMirror h4 {
+    font-size: 1em;
     font-style: italic;
-    color: var(--mc-fg-muted);
-    border-left: 2px solid var(--mc-border-default);
-    padding-left: 1em;
+  }
+  // why: citation node (see @core/tiptap/citation) renders as <blockquote>
+  //      — large hanging quote marks instead of the old plain left-border
+  //      treatment, per the user's ask for "formato con comillas". Both
+  //      open AND close render the moment the citation exists (::before /
+  //      ::after, no user action) — there's no separate "closing" step.
+  //      break-inside:avoid keeps a short quote from splitting mid-way
+  //      across the book's CSS-column page break.
+  mc-editor .ProseMirror blockquote {
+    position: relative;
+    margin: 1.4em 2.4em;
+    font-style: italic;
+    color: var(--mc-book-paper-fg);
+    break-inside: avoid;
+  }
+  mc-editor .ProseMirror blockquote::before {
+    content: '\201C';
+    position: absolute;
+    left: -0.62em;
+    top: -0.05em;
+    font-family: var(--mc-font-serif);
+    font-style: normal;
+    font-size: 2.4em;
+    line-height: 1;
+    color: var(--mc-book-paper-muted);
+  }
+  // why: mirror image of the opening mark — same font/size/color/offset,
+  //      anchored to the LAST paragraph's own box (not the blockquote's,
+  //      which may extend further down to include the attribution
+  //      footer) so it hangs right where the quoted text actually ends.
+  mc-editor .ProseMirror blockquote > p:last-of-type {
+    position: relative;
+  }
+  mc-editor .ProseMirror blockquote > p:last-of-type::after {
+    content: '\201D';
+    position: absolute;
+    right: -0.62em;
+    bottom: -0.05em;
+    font-family: var(--mc-font-serif);
+    font-style: normal;
+    font-size: 2.4em;
+    line-height: 1;
+    color: var(--mc-book-paper-muted);
+  }
+  // why: author/year (see citation.ext.ts) are two real <input>s in a
+  //      NodeView, not free text — styled to disappear as form fields and
+  //      read as plain running text ("— Autor, Año"), sized to their own
+  //      content via JS so they don't sit inside fixed-width boxes.
+  mc-editor .ProseMirror footer[data-citation-attribution] {
+    margin-top: 0.5em;
+    font-style: normal;
+    font-variant: small-caps;
+    letter-spacing: 0.03em;
+    font-size: 0.85em;
+    text-align: right;
+    color: var(--mc-book-paper-muted);
+  }
+  mc-editor .ProseMirror footer[data-citation-attribution]::before {
+    content: '— ';
+  }
+  mc-editor .ProseMirror footer[data-citation-attribution] input {
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    font-variant: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+    text-align: right;
+  }
+  mc-editor .ProseMirror footer[data-citation-attribution] input::placeholder {
+    color: var(--mc-book-paper-muted);
+    opacity: 0.6;
+  }
+  mc-editor .ProseMirror footer[data-citation-attribution] input:focus {
+    color: var(--mc-book-paper-fg);
+  }
+  mc-editor .ProseMirror .mc-citation-sep {
+    color: var(--mc-book-paper-muted);
   }
   mc-editor .ProseMirror hr {
     border: none;

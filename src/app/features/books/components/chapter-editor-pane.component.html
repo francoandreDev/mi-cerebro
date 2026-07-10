@@ -14,6 +14,105 @@
     <header class="ui-bar">
       <span class="spacer"></span>
       <span class="status" [attr.data-status]="status()">{{ statusLabel() }}</span>
+      @if (editable()) {
+        <button
+          type="button"
+          class="list-toggle"
+          [class.active]="boldActive()"
+          [attr.aria-pressed]="boldActive()"
+          [attr.aria-label]="t('editor.mark.bold')"
+          [title]="t('editor.mark.bold')"
+          (click)="toggleBold()"
+        >
+          <mc-icon name="text-b" />
+        </button>
+        <button
+          type="button"
+          class="list-toggle"
+          [class.active]="italicActive()"
+          [attr.aria-pressed]="italicActive()"
+          [attr.aria-label]="t('editor.mark.italic')"
+          [title]="t('editor.mark.italic')"
+          (click)="toggleItalic()"
+        >
+          <mc-icon name="text-italic" />
+        </button>
+        <button
+          type="button"
+          class="list-toggle"
+          [class.active]="headingLevelActive(2)"
+          [attr.aria-pressed]="headingLevelActive(2)"
+          [attr.aria-label]="t('editor.heading.level2')"
+          [title]="t('editor.heading.level2')"
+          (click)="setHeadingLevel(2)"
+        >
+          <mc-icon name="text-h-two" />
+        </button>
+        <button
+          type="button"
+          class="list-toggle"
+          [class.active]="headingLevelActive(3)"
+          [attr.aria-pressed]="headingLevelActive(3)"
+          [attr.aria-label]="t('editor.heading.level3')"
+          [title]="t('editor.heading.level3')"
+          (click)="setHeadingLevel(3)"
+        >
+          <mc-icon name="text-h-three" />
+        </button>
+        <button
+          type="button"
+          class="list-toggle"
+          [class.active]="headingLevelActive(4)"
+          [attr.aria-pressed]="headingLevelActive(4)"
+          [attr.aria-label]="t('editor.heading.level4')"
+          [title]="t('editor.heading.level4')"
+          (click)="setHeadingLevel(4)"
+        >
+          <mc-icon name="text-h-four" />
+        </button>
+        <button
+          type="button"
+          class="list-toggle"
+          [class.active]="citationActive()"
+          [attr.aria-pressed]="citationActive()"
+          [attr.aria-label]="t('editor.citation')"
+          [title]="t('editor.citation')"
+          (click)="toggleCitation()"
+        >
+          <mc-icon name="quotes" />
+        </button>
+        <button
+          type="button"
+          class="list-toggle"
+          [class.active]="bulletListActive()"
+          [attr.aria-pressed]="bulletListActive()"
+          [attr.aria-label]="t('editor.list.bullet')"
+          [title]="t('editor.list.bullet')"
+          (click)="toggleBulletList()"
+        >
+          <mc-icon name="list-bullets" />
+        </button>
+        <button
+          type="button"
+          class="list-toggle"
+          [class.active]="orderedListActive()"
+          [attr.aria-pressed]="orderedListActive()"
+          [attr.aria-label]="t('editor.list.ordered')"
+          [title]="t('editor.list.ordered')"
+          (click)="toggleOrderedList()"
+        >
+          <mc-icon name="list-numbers" />
+        </button>
+        <button
+          type="button"
+          class="list-toggle"
+          [attr.aria-label]="t('editor.sceneBreak')"
+          [title]="t('editor.sceneBreak')"
+          (click)="insertSceneBreak()"
+        >
+          <mc-icon name="minus" />
+        </button>
+      }
       <button
         type="button"
         class="focus-toggle"
