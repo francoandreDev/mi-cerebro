@@ -570,8 +570,8 @@ Formato por entrada:
 
 ## Responsive mobile — pantallas pendientes (origen: §21, 2026-07-10)
 
-### Auditar y arreglar el resto de las features sin @media
+### Re-verificar a 393px las pantallas que ya tenían algún @media
 
-- **Qué**: §21 cerró el shell (rail, §21a) + home/notes (§21b/21c) + tasks/goals/files (§21d, sesión 9). Quedan sin auditar/arreglar: tags, variants, trash, images, bookshelf/book-reader (parcial). Las que ya tienen algún `@media` (calendar, history, music, reminders, settings, sync, writings-shelf) tampoco se re-verificaron a 393px salvo calendar, que mostró overflow en la columna "Sábado" de la grilla mensual.
-- **Por qué se difirió**: alcance explícito de §21 era "sentar las bases" (shell + 2 páginas fáciles) e ir sección por sección después — cada página tiene su propio layout por diseño (§4.6.14b), así que cada una necesita su propio breakpoint y revisión visual, no hay fix global posible más allá del rail.
+- **Qué**: §21 cerró el shell (rail, §21a), home/notes (§21b/21c), y tasks/goals/files/tags/trash/images/bookshelf/variants (§21d, sesiones 9-10) — las 8 entidades con vista de tarjetas + tags + variants ya tienen tratamiento responsive. Queda sólo re-verificar a 393px las pantallas que ya traían algún `@media` de antes de §21 (calendar, history, music, reminders, settings, sync, writings-shelf): no se auditaron en esta pasada salvo calendar, que mostró overflow en la columna "Sábado" de la grilla mensual.
+- **Por qué se difirió**: alcance de §21 priorizó primero las pantallas sin ningún `@media` (mayor riesgo de overflow duro); las que ya tenían algo son candidatas a bugs más finos (breakpoint mal elegido, un caso puntual como el de calendar) en vez de ausencia total de tratamiento.
 - **Target**: §19.21d.

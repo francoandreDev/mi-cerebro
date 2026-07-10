@@ -39,6 +39,10 @@
 .header h1 {
   margin: 0;
   font-size: var(--mc-font-size-xl);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .empty {
@@ -91,4 +95,20 @@
 .volume-btn:focus-visible {
   outline: 2px solid var(--mc-focus-ring, var(--mc-accent-primary));
   outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+  .page {
+    padding: var(--mc-space-3);
+  }
+
+  .cards,
+  .cards.stars,
+  .cards.lockers {
+    grid-template-columns: 1fr;
+  }
+
+  .cards.shelf {
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  }
 }

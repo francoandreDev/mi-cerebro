@@ -621,3 +621,25 @@
   color: var(--mc-fg-muted);
   font-size: var(--mc-font-size-sm);
 }
+
+@media (max-width: 480px) {
+  :host {
+    padding: var(--mc-space-3);
+  }
+
+  .bookcase {
+    padding: 18px 12px 24px;
+  }
+
+  /* why: los libros no wrappean (estante real, no grilla) — bajo este ancho
+     el estante hace scroll horizontal propio en vez de desbordar la página
+     entera sin ninguna señal visual (mismo criterio que .frames en museum-room). */
+  .shelf {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .row {
+    overflow-x: auto;
+    padding: 0 var(--mc-space-2);
+  }
+}

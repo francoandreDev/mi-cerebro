@@ -328,3 +328,21 @@
   opacity: 0.55;
   cursor: not-allowed;
 }
+
+@media (max-width: 700px) {
+  :host {
+    padding: 1rem;
+  }
+
+  /* why: 5 columnas (path/kind/preview×2/acciones) no colapsan a 1fr sin
+     perder la comparación lado a lado que es el propósito de la tabla —
+     mismo criterio que .frames (museum) y .row (bookshelf): scroll propio
+     en vez de comprimir hasta perder legibilidad. */
+  .table {
+    overflow-x: auto;
+  }
+
+  .row {
+    min-width: 640px;
+  }
+}

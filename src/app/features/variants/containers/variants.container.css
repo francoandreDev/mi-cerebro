@@ -18,6 +18,7 @@
   padding: var(--mc-space-4) var(--mc-space-5);
   border-bottom: 1px solid var(--mc-border-default);
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
 .page-head h2 {
   margin: 0;
@@ -139,6 +140,7 @@
 .head-actions {
   display: flex;
   gap: var(--mc-space-2);
+  flex-wrap: wrap;
 }
 
 .canvas {
@@ -185,7 +187,7 @@
   border: 1px solid var(--mc-border-strong);
   border-radius: var(--mc-radius-md);
   padding: var(--mc-space-4);
-  min-width: 420px;
+  width: min(420px, calc(100vw - var(--mc-space-6)));
   max-width: 560px;
   display: flex;
   flex-direction: column;
@@ -250,4 +252,16 @@
 .palette button.swatch-btn:focus-visible {
   outline: 2px solid var(--mc-focus-ring);
   outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+  .page-head {
+    padding: var(--mc-space-3);
+  }
+
+  .head-actions .search-wrap {
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+  }
 }

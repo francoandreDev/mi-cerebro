@@ -182,3 +182,17 @@
   border-color: var(--mc-accent-primary);
   color: var(--mc-accent-primary);
 }
+
+@media (max-width: 480px) {
+  :host {
+    padding: var(--mc-space-2);
+  }
+
+  .filter {
+    min-width: 0;
+  }
+
+  .planta-grid {
+    grid-template-columns: 1fr;
+  }
+}

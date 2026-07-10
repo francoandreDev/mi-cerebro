@@ -300,3 +300,18 @@
   background: var(--mc-fg-warning, #cf222e);
   color: var(--mc-bg-base);
 }
+
+@media (max-width: 480px) {
+  :host {
+    padding: var(--mc-space-3);
+  }
+
+  .search {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
