@@ -11,7 +11,34 @@
       }
     </div>
     <div class="np-meta-block">
-      <p class="np-title" [title]="np.originalName">{{ displayTitle() }}</p>
+      <div class="np-title-row">
+        <p class="np-title" [title]="np.originalName">{{ displayTitle() }}</p>
+        @if (displayLyrics(); as lyrics) {
+          <button
+            type="button"
+            class="np-lyrics-toggle mc-hover-grow"
+            [class.is-active]="showLyrics()"
+            [attr.aria-pressed]="showLyrics()"
+            [attr.aria-label]="t('music.lyrics.toggle')"
+            [title]="t('music.lyrics.toggle')"
+            (click)="onToggleLyrics()"
+          >
+            <mc-icon name="quotes" />
+          </button>
+        } @else {
+          <button
+            type="button"
+            class="np-lyrics-external-toggle mc-hover-grow"
+            [class.is-active]="externalOpen()"
+            [attr.aria-pressed]="externalOpen()"
+            [title]="t('music.lyrics.searchOnline')"
+            (click)="externalOpen() ? onCloseExternalSearch() : onOpenExternalSearch()"
+          >
+            <mc-icon name="magnifying-glass" />
+            <span>{{ t('music.lyrics.searchOnline') }}</span>
+          </button>
+        }
+      </div>
       @if (displayArtist() || displayAlbum()) {
         <p class="np-meta">
           @if (displayArtist(); as a) {
@@ -27,6 +54,72 @@
       }
       @if (sourceTitle(); as src) {
         <p class="np-source">{{ src }}</p>
+      }
+      @if (showLyrics() && displayLyrics(); as lyrics) {
+        <div class="np-lyrics">{{ lyrics }}</div>
+      }
+      @if (externalOpen()) {
+        <div class="np-external-lyrics">
+          <div class="ext-head">
+            <span class="ext-badge">{{ t('music.lyrics.externalBadge') }}</span>
+            <button
+              type="button"
+              class="ext-close"
+              [attr.aria-label]="t('common.close')"
+              (click)="onCloseExternalSearch()"
+            >
+              <mc-icon name="x" />
+            </button>
+          </div>
+
+          <p class="ext-filename-hint">
+            {{ t('music.lyrics.filenameHint') }}: {{ np.originalName }}
+          </p>
+
+          <div class="ext-query-row">
+            <input
+              type="text"
+              class="ext-query-input"
+              [value]="externalArtist()"
+              [placeholder]="t('music.lyrics.artistPlaceholder')"
+              [attr.aria-label]="t('music.lyrics.artistPlaceholder')"
+              (input)="onExternalArtistInput(asInput($event.target).value)"
+              (keydown.enter)="onSearchExternal()"
+            />
+            <input
+              type="text"
+              class="ext-query-input"
+              [value]="externalTitle()"
+              [placeholder]="t('music.lyrics.titlePlaceholder')"
+              [attr.aria-label]="t('music.lyrics.titlePlaceholder')"
+              (input)="onExternalTitleInput(asInput($event.target).value)"
+              (keydown.enter)="onSearchExternal()"
+            />
+            <button
+              type="button"
+              class="ext-search-btn mc-hover-grow"
+              [disabled]="externalStatus() === 'loading'"
+              (click)="onSearchExternal()"
+            >
+              {{ t('music.lyrics.search') }}
+            </button>
+          </div>
+
+          @switch (externalStatus()) {
+            @case ('loading') {
+              <p class="ext-status">{{ t('music.lyrics.searching') }}</p>
+            }
+            @case ('error') {
+              <p class="ext-status ext-status-error">{{ t('music.lyrics.searchError') }}</p>
+            }
+            @case ('notFound') {
+              <p class="ext-status">{{ t('music.lyrics.searchEmpty') }}</p>
+            }
+            @case ('found') {
+              <div class="np-lyrics">{{ externalLyrics() }}</div>
+            }
+          }
+        </div>
       }
     </div>
     <div

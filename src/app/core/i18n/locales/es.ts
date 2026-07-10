@@ -1528,6 +1528,16 @@ export const es = {
   'music.tabs.playlists': 'Playlists',
   'music.modal.playlists.empty': 'Aún no tenés playlists. Creá una con +.',
   'music.waveform.aria': 'Línea de tiempo del track. Hacé click para saltar.',
+  'music.lyrics.toggle': 'Mostrar/ocultar letra',
+  'music.lyrics.searchOnline': 'Buscar letra online',
+  'music.lyrics.externalBadge': 'Letra no verificada · vía lyrics.ovh',
+  'music.lyrics.filenameHint': 'Archivo',
+  'music.lyrics.artistPlaceholder': 'Artista',
+  'music.lyrics.titlePlaceholder': 'Título',
+  'music.lyrics.search': 'Buscar',
+  'music.lyrics.searching': 'Buscando…',
+  'music.lyrics.searchError': 'No se pudo conectar con lyrics.ovh. Probá de nuevo.',
+  'music.lyrics.searchEmpty': 'No se encontró letra para ese artista/título. Probá ajustarlos.',
   'music.shortcuts.playPause': 'Reproducir / pausar',
   'music.shortcuts.newPlaylist': 'Nueva playlist',
   'music.shortcuts.focusSearch': 'Buscar en la biblioteca',
@@ -1659,6 +1669,9 @@ export const es = {
   'errors.mus.004.title': 'Falló la descarga',
   'errors.mus.004.message':
     'No se pudo descargar o convertir el video a MP3. Verificá el link y tu conexión, y reintentá.',
+  'errors.mus.005.title': 'No se pudo buscar la letra',
+  'errors.mus.005.message':
+    'No se pudo conectar con el servicio de letras online. Verificá tu conexión y reintentá.',
   'errors.ui.001.title': 'Nota creada',
   'errors.ui.001.message': 'Se guardó en la raíz de tus notas.',
 

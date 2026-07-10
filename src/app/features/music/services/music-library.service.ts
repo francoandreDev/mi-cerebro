@@ -13,6 +13,7 @@ import {
   MUSIC_DIR,
   MUSIC_LIBRARY_KIND,
   MUSIC_LIBRARY_SCHEMA_VERSION,
+  MUSIC_METADATA_PROBE_VERSION,
   TRACKS_DIR,
   TRACK_EXT,
   TRACK_MIME,
@@ -70,7 +71,9 @@ export class MusicLibraryService {
     root: NativeDirRef,
     tracks: readonly Track[],
   ): Promise<Track[] | null> {
-    const pending = tracks.filter((t) => !t.metadataProbedAt);
+    const pending = tracks.filter(
+      (t) => !t.metadataProbedAt || (t.metadataProbeVersion ?? 1) < MUSIC_METADATA_PROBE_VERSION,
+    );
     if (pending.length === 0) return null;
     const tracksDir = await this.fs.getOrCreateDir(root, TRACKS_DIR);
     const now = new Date().toISOString();
@@ -98,7 +101,12 @@ export class MusicLibraryService {
       const coverPath = id3?.picture
         ? await this.storeCover(id3.picture.blob, id3.picture.mime)
         : null;
-      return { ...track, ...trackFieldsFromId3(id3, coverPath), metadataProbedAt: now };
+      return {
+        ...track,
+        ...trackFieldsFromId3(id3, coverPath),
+        metadataProbedAt: now,
+        metadataProbeVersion: MUSIC_METADATA_PROBE_VERSION,
+      };
     } catch (cause) {
       console.warn('[music] backfill failed', track.id, cause);
       return null;
@@ -131,6 +139,7 @@ export class MusicLibraryService {
         durationMs,
         ...trackFieldsFromId3(id3, coverPath),
         metadataProbedAt: now,
+        metadataProbeVersion: MUSIC_METADATA_PROBE_VERSION,
       });
     }
     if (added.length === 0) return [];

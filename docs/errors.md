@@ -523,6 +523,14 @@ Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `P
 - **Cómo resolver:** verificar que el link abre en el navegador, reintentar (yt-dlp se actualiza seguido para nuevos cambios de YouTube), o revisar que la instalación de escritorio tenga los binarios `yt-dlp`/`ffmpeg` bundleados correctamente.
 - **Recuperable:** sí — no se escribe nada en la biblioteca hasta que la descarga completa OK.
 
+### MCB-MUS-005 — No se pudo buscar la letra online
+
+- **Severidad:** warning
+- **Cuándo:** `LyricsLookupService.lookup()` (fallback opt-in de letra en "Now playing") no puede conectar con `api.lyrics.ovh` o la respuesta no es 200/404.
+- **Causa típica:** sin conexión, DNS del proveedor caído (pasó con el candidato original, lrclib.org, que quedó en NXDOMAIN), o el servicio está temporalmente fuera de línea.
+- **Cómo resolver:** reintentar más tarde; no hay nada que arreglar del lado de la app — el 404 (letra no encontrada) se maneja aparte y no dispara este código.
+- **Recuperable:** sí — es una búsqueda opt-in, no bloquea la reproducción ni se persiste nada.
+
 ## UI — Validación / interacción / atajos
 
 ### MCB-UI-001 — Nota creada por captura rápida

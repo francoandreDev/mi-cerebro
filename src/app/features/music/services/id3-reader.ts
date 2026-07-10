@@ -20,6 +20,7 @@ export interface Id3Result {
   readonly trackNumber?: number;
   readonly discNumber?: number;
   readonly genre?: string;
+  readonly lyrics?: string;
   readonly picture?: { readonly blob: Blob; readonly mime: string };
 }
 
@@ -50,6 +51,7 @@ const toResult = (data: TagType): Id3Result => {
     ...numberField('year', parseYear(tags.year)),
     ...numberField('trackNumber', parseFirstInt(tags.track)),
     ...numberField('discNumber', parseFirstInt(readTextFrame(tags, 'TPOS') ?? undefined)),
+    ...stringField('lyrics', readLyricsFrame(tags) ?? undefined),
     ...(pictureToBlob(tags.picture) ? { picture: pictureToBlob(tags.picture)! } : {}),
   };
 };
@@ -77,6 +79,7 @@ export const trackFieldsFromId3 = (
     ...(id3?.trackNumber !== undefined ? { trackNumber: id3.trackNumber } : {}),
     ...(id3?.discNumber !== undefined ? { discNumber: id3.discNumber } : {}),
     ...(id3?.genre ? { genre: id3.genre } : {}),
+    ...(id3?.lyrics ? { lyrics: id3.lyrics } : {}),
     ...(coverPath ? { coverPath } : {}),
   };
 };
@@ -105,6 +108,19 @@ const readTextFrame = (tags: TagType['tags'], frameId: string): string | null =>
   if (data && typeof data === 'object' && 'text' in data) {
     const text = (data as { text?: unknown }).text;
     if (typeof text === 'string' && text.trim()) return text.trim();
+  }
+  return null;
+};
+
+// why: jsmediatags' shipped .d.ts types tags.lyrics as `string`, but the
+//      USLT frame reader actually resolves it to `{ language, descriptor,
+//      lyrics }` — the type declaration doesn't match the runtime shape.
+const readLyricsFrame = (tags: TagType['tags']): string | null => {
+  const frame = tags.lyrics as unknown;
+  if (typeof frame === 'string') return frame.trim() || null;
+  if (frame && typeof frame === 'object' && 'lyrics' in frame) {
+    const lyrics = (frame as { lyrics?: unknown }).lyrics;
+    if (typeof lyrics === 'string' && lyrics.trim()) return lyrics.trim();
   }
   return null;
 };

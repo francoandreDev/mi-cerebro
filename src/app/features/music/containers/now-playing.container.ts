@@ -14,9 +14,19 @@ import { PlayerService } from '@core/music/player.service';
 import { IconComponent } from '@shared/icon/icon.component';
 
 import { TrackWaveformComponent } from '../components/track-waveform.component';
+import { LyricsLookupService } from '../services/lyrics-lookup.service';
 import { MusicLibraryService } from '../services/music-library.service';
 import { PlaylistsService } from '../services/playlists.service';
 import { WaveformCacheService } from '../services/waveform-cache.service';
+
+type ExternalLyricsStatus = 'idle' | 'loading' | 'found' | 'notFound' | 'error';
+
+interface ExternalLyricsCacheEntry {
+  readonly artist: string;
+  readonly title: string;
+  readonly lyrics: string | null;
+  readonly status: ExternalLyricsStatus;
+}
 
 // why: this card focuses on the *visual* now-playing surface — cover, metadata,
 // waveform-as-seek. Transport controls (prev/play/next, shuffle, repeat, stop)
@@ -34,6 +44,7 @@ export class NowPlayingContainer {
   private readonly playlists = inject(PlaylistsService);
   private readonly library = inject(MusicLibraryService);
   private readonly waveformCache = inject(WaveformCacheService);
+  private readonly lyricsLookup = inject(LyricsLookupService);
   private readonly i18n = inject(I18nService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -55,6 +66,20 @@ export class NowPlayingContainer {
 
   protected readonly displayArtist = computed(() => this.currentTrack()?.artist?.trim() ?? null);
   protected readonly displayAlbum = computed(() => this.currentTrack()?.album?.trim() ?? null);
+  protected readonly displayLyrics = computed(() => this.currentTrack()?.lyrics?.trim() || null);
+
+  protected readonly showLyrics = signal(false);
+
+  // why: fallback search is opt-in and per-track — never fetched
+  // automatically (see [[feedback_ui_must_not_lie]]). Results are cached
+  // only in-memory for the session (this Map), never written to Track/disk,
+  // so an unverified/wrong match never gets persisted as real metadata.
+  private readonly externalCache = new Map<string, ExternalLyricsCacheEntry>();
+  protected readonly externalOpen = signal(false);
+  protected readonly externalArtist = signal('');
+  protected readonly externalTitle = signal('');
+  protected readonly externalStatus = signal<ExternalLyricsStatus>('idle');
+  protected readonly externalLyrics = signal<string | null>(null);
 
   private readonly coverUrl = signal<string | null>(null);
   protected readonly coverUrlRead = this.coverUrl.asReadonly();
@@ -98,6 +123,14 @@ export class NowPlayingContainer {
       if (id !== null) void this.waveformCache.ensure(id);
     });
 
+    // why: closing the lyrics panel on track change avoids showing the
+    // previous track's letra (or a stale empty state) while the new one loads.
+    effect(() => {
+      this.player.currentTrackId();
+      this.showLyrics.set(false);
+      this.externalOpen.set(false);
+    });
+
     this.destroyRef.onDestroy(() => {
       if (previous !== null) URL.revokeObjectURL(previous);
     });
@@ -105,6 +138,69 @@ export class NowPlayingContainer {
 
   protected t(key: TranslationKey): string {
     return this.i18n.t(key);
+  }
+
+  protected asInput(target: EventTarget | null): HTMLInputElement {
+    return target as HTMLInputElement;
+  }
+
+  protected onToggleLyrics(): void {
+    this.showLyrics.update((v) => !v);
+  }
+
+  protected onOpenExternalSearch(): void {
+    const track = this.currentTrack();
+    if (!track) return;
+    const cached = this.externalCache.get(track.id);
+    if (cached) {
+      this.externalArtist.set(cached.artist);
+      this.externalTitle.set(cached.title);
+      this.externalLyrics.set(cached.lyrics);
+      this.externalStatus.set(cached.status);
+    } else {
+      // why: never seed from originalName/displayTitle — filenames have no
+      // stable "Artist - Title" pattern (edits, YouTube ids, mix titles...),
+      // so a guessed split would silently feed lyrics.ovh garbage. Only
+      // trust real ID3 tags; otherwise leave blank and let the user type it
+      // from the filename shown as reference below the fields.
+      this.externalArtist.set(track.artist?.trim() ?? '');
+      this.externalTitle.set(track.title?.trim() ?? '');
+      this.externalLyrics.set(null);
+      this.externalStatus.set('idle');
+    }
+    this.externalOpen.set(true);
+  }
+
+  protected onCloseExternalSearch(): void {
+    this.externalOpen.set(false);
+  }
+
+  protected onExternalArtistInput(value: string): void {
+    this.externalArtist.set(value);
+  }
+
+  protected onExternalTitleInput(value: string): void {
+    this.externalTitle.set(value);
+  }
+
+  protected async onSearchExternal(): Promise<void> {
+    const track = this.currentTrack();
+    const artist = this.externalArtist().trim();
+    const title = this.externalTitle().trim();
+    if (!track || !artist || !title) return;
+    this.externalStatus.set('loading');
+    this.externalLyrics.set(null);
+    try {
+      const lyrics = await this.lyricsLookup.lookup(artist, title);
+      this.externalLyrics.set(lyrics);
+      const status = lyrics ? 'found' : 'notFound';
+      this.externalStatus.set(status);
+      this.externalCache.set(track.id, { artist, title, lyrics, status });
+    } catch (cause) {
+      console.warn('[now-playing] external lyrics lookup failed', cause);
+      this.externalStatus.set('error');
+      this.externalCache.set(track.id, { artist, title, lyrics: null, status: 'error' });
+    }
   }
 
   protected onSeek(value: number): void {

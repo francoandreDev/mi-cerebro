@@ -698,6 +698,7 @@ Los objetivos no compiten por atención con el resto: aparecen en momentos espec
 - Sección dedicada para gestionar playlists: subir MP3 (se copia a `music/tracks/`), crear playlist (definición en `music/playlists/*.json`), editar orden.
 - **Reproducción aleatoria en bucle** como modo principal.
 - Solo MP3 por ahora.
+- **Letra de la canción:** si el MP3 trae el frame ID3 `USLT` embebido, se muestra en un panel plegable en "Now playing". Si no lo trae, hay un fallback **opt-in explícito** (nunca automático) que consulta `api.lyrics.ovh` por artista+título tipeados a mano — el resultado no se persiste en `Track`/`_library.json` ni se usa para adivinar artista/título desde el nombre del archivo (no hay patrón estable), para no arriesgar mostrar una letra equivocada como si fuera un dato verificado.
 
 ---
 
