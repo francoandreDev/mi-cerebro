@@ -94,4 +94,12 @@ export class WorkspaceStub {
   root(): FsDirectoryHandle {
     return this.handle as FsDirectoryHandle;
   }
+  // why: real WorkspaceService.isReady is a computed signal, called as a
+  //      function — services that gate an effect on it (SettingsService,
+  //      WritingStatsService) need this stub to answer truthily so tests
+  //      that transitively construct those services (e.g. via BooksService)
+  //      don't crash on a missing method.
+  isReady(): boolean {
+    return true;
+  }
 }

@@ -1294,6 +1294,15 @@ export const es = {
   'editor.citation.authorPlaceholder': 'Autor',
   'editor.citation.yearPlaceholder': 'Año',
 
+  'stats.open': 'Estadísticas de escritura',
+  'stats.record': 'Récord',
+  'stats.today': 'Hoy',
+  'stats.average': 'Promedio',
+  'stats.words': '{n} palabras',
+  'stats.scope.chapter': 'Capítulo',
+  'stats.scope.book': 'Libro',
+  'stats.scope.global': 'Global',
+
   'calendar.title': 'Calendario',
   'calendar.view.month': 'Mes',
   'calendar.view.year': 'Año',

@@ -1,7 +1,9 @@
 import type { JSONContent } from '@tiptap/core';
 
-export const BOOK_SCHEMA_VERSION = 4;
-export const CHAPTER_SCHEMA_VERSION = 4;
+import type { WritingStats } from '@core/writing-stats/writing-stats.types';
+
+export const BOOK_SCHEMA_VERSION = 5;
+export const CHAPTER_SCHEMA_VERSION = 5;
 export const BOOK_KIND = 'book';
 export const BOOKS_DIR = 'books';
 export const BOOK_META_FILE = '_book.json';
@@ -32,6 +34,7 @@ export interface Book {
   // why: contenido editable del "reverso" (última página del libro).
   //      JSONContent para reusar el mismo editor TipTap que los capítulos.
   readonly backNote?: JSONContent;
+  readonly stats?: WritingStats;
   readonly [key: string]: unknown;
 }
 
@@ -51,6 +54,10 @@ export interface Chapter {
   //      cuando el capítulo nunca se abrió: cae a una estimación palabras/250.
   readonly pageCount?: number;
   readonly image?: ChapterImageRef;
+  // why: last persisted word count, so saveChapter can derive today's delta
+  //      without re-summing anything (see WritingStatsService).
+  readonly words?: number;
+  readonly stats?: WritingStats;
   readonly [key: string]: unknown;
 }
 

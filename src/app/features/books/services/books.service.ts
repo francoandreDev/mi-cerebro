@@ -1,4 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
+import type { JSONContent } from '@tiptap/core';
 
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
@@ -10,10 +11,14 @@ import { MigrationsService } from '@core/migrations/migrations.service';
 import { nextPositionAfter, seedMissingPositions } from '@core/ordering/seed-positions';
 import { positionSeedMigrationStep } from '@core/ordering/position.migration';
 import { SearchIndexService } from '@core/search/search-index.service';
+import { SettingsService } from '@core/settings/settings.service';
 import { blockIdMigrationStep } from '@core/tiptap/block-id/block-id.migration';
 import type { SearchDoc } from '@core/search/search.types';
 import { extractPlainText } from '@core/search/tiptap-text';
 import { TagsService } from '@core/tags/tags.service';
+import { applyWritingDelta, getDayKey } from '@core/writing-stats/writing-stats.utils';
+import { emptyWritingStats } from '@core/writing-stats/writing-stats.types';
+import { WritingStatsService } from '@core/writing-stats/writing-stats.service';
 import { toSlug, withSuffix } from '@shared/utils/slug';
 import { countWords } from '@shared/utils/word-count';
 
@@ -58,6 +63,8 @@ export class BooksService {
   private readonly migrations = inject(MigrationsService);
   private readonly search = inject(SearchIndexService);
   private readonly tags = inject(TagsService);
+  private readonly settings = inject(SettingsService);
+  private readonly writingStats = inject(WritingStatsService);
 
   private readonly idToLoc = new Map<string, BookLocation>();
   private readonly chapterCountById = new Map<string, number>();
@@ -78,6 +85,23 @@ export class BooksService {
         blockIdMigrationStep(1),
         positionSeedMigrationStep(2),
         { from: 3, to: 4, run: (d) => ({ ...d, schemaVersion: 4 }) },
+        // why: seeds `stats` on both Book and Chapter, and `words` on Chapter
+        //      only (detected via the `body` field, Book-only otherwise) —
+        //      seeding the real word count instead of 0 avoids the first
+        //      real save after migrating registering a false delta the size
+        //      of the whole chapter.
+        {
+          from: 4,
+          to: 5,
+          run: (d) => {
+            const withStats = { ...d, schemaVersion: 5, stats: emptyWritingStats() };
+            if ('body' in d) {
+              const body = (d as unknown as { body: JSONContent }).body;
+              return { ...withStats, words: countWords(extractPlainText(body)) };
+            }
+            return withStats;
+          },
+        },
       ],
     });
   }
@@ -358,10 +382,21 @@ export class BooksService {
   async saveChapter(chapter: Chapter): Promise<Chapter> {
     const chaptersDir = await this.chaptersDir(chapter.bookId);
     const filename = await this.findChapterFile(chapter.bookId, chaptersDir, chapter.id);
-    const updated: Chapter = { ...chapter, updatedAt: new Date().toISOString() };
+    const words = countWords(extractPlainText(chapter.body));
+    const delta = words - (chapter.words ?? 0);
+    const todayKey = getDayKey(new Date(), this.settings.timezone());
+    const chapterStats = applyWritingDelta(chapter.stats ?? emptyWritingStats(), delta, todayKey);
+    const updated: Chapter = {
+      ...chapter,
+      words,
+      stats: chapterStats,
+      updatedAt: new Date().toISOString(),
+    };
     await this.fs.writeFileAtomic(chaptersDir, filename, JSON.stringify(updated, null, 2));
     const book = await this.readBook(chapter.bookId);
-    await this.saveBook({ ...book, updatedAt: updated.updatedAt });
+    const bookStats = applyWritingDelta(book.stats ?? emptyWritingStats(), delta, todayKey);
+    await this.saveBook({ ...book, stats: bookStats, updatedAt: updated.updatedAt });
+    this.writingStats.recordDelta(delta);
     await this.search.upsert(this.toChapterSearchDoc(updated));
     return updated;
   }

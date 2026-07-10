@@ -15,17 +15,25 @@ import type { JSONContent } from '@tiptap/core';
 
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { emptyWritingStats, type WritingStats } from '@core/writing-stats/writing-stats.types';
 import { EditorComponent } from '@shared/editor/editor.component';
 import { IconComponent } from '@shared/icon/icon.component';
 import { toRoman } from '@shared/utils/roman';
+import { WritingStatsPopoverComponent } from '@shared/writing-stats-popover/writing-stats-popover.component';
 
 import type { Chapter } from '../models/book.types';
 import type { BookSaveStatus } from './book-meta-bar.component';
 
+export interface ChapterWritingStats {
+  readonly chapter: WritingStats;
+  readonly book: WritingStats;
+  readonly global: WritingStats;
+}
+
 @Component({
   selector: 'mc-chapter-editor-pane',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [EditorComponent, IconComponent],
+  imports: [EditorComponent, IconComponent, WritingStatsPopoverComponent],
   templateUrl: './chapter-editor-pane.component.html',
   styleUrl: './chapter-editor-pane.component.css',
   host: {
@@ -39,6 +47,11 @@ export class ChapterEditorPaneComponent {
   readonly focusMode = input<boolean>(false);
   readonly chapterIndex = input<number>(-1);
   readonly chapterTotal = input<number>(0);
+  readonly stats = input<ChapterWritingStats>({
+    chapter: emptyWritingStats(),
+    book: emptyWritingStats(),
+    global: emptyWritingStats(),
+  });
   readonly titleChange = output<string>();
   readonly bodyChange = output<JSONContent>();
   readonly toggleFocus = output<void>();
@@ -70,6 +83,7 @@ export class ChapterEditorPaneComponent {
   private readonly contentWidth = signal<number>(0);
   private readonly extraOffset = signal<number>(0);
   protected readonly turning = signal<'forward' | 'backward' | null>(null);
+  protected readonly statsOpen = signal<boolean>(false);
 
   protected readonly totalSpreads = computed<number>(() => {
     const bw = this.bandWidth();
@@ -276,6 +290,9 @@ export class ChapterEditorPaneComponent {
   }
   protected citationActive(): boolean {
     return this.editorRef()?.isCitationActive() ?? false;
+  }
+  protected toggleStats(): void {
+    this.statsOpen.update((v) => !v);
   }
 }
 

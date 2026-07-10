@@ -21,6 +21,8 @@ import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { EntityLockController } from '@core/locks/entity-lock.controller';
 import { entitySlugSegment, extractEntityId } from '@core/routing/entity-slug';
+import { emptyWritingStats } from '@core/writing-stats/writing-stats.types';
+import { WritingStatsService } from '@core/writing-stats/writing-stats.service';
 import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
 
 import { ChapterEditorPaneComponent } from '../components/chapter-editor-pane.component';
@@ -54,6 +56,7 @@ export class BookReaderContainer {
   private readonly errors = inject(ErrorService);
   private readonly i18n = inject(I18nService);
   private readonly globalFocusMode = inject(FocusModeService);
+  private readonly writingStats = inject(WritingStatsService);
 
   protected readonly book = signal<Book | null>(null);
   protected readonly chapters = signal<readonly ChapterSummary[]>([]);
@@ -67,6 +70,11 @@ export class BookReaderContainer {
     () => this.localFocusMode() || this.globalFocusMode.active(),
   );
   protected readonly indexOpen = signal<boolean>(false);
+  protected readonly stats = computed(() => ({
+    chapter: this.chapter()?.stats ?? emptyWritingStats(),
+    book: this.book()?.stats ?? emptyWritingStats(),
+    global: this.writingStats.global(),
+  }));
   protected readonly lock = new EntityLockController(BOOK_KIND, this.book);
   private readonly paneRef = viewChild(ChapterEditorPaneComponent);
 

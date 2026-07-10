@@ -1,0 +1,34 @@
+@if (open()) {
+  <div class="stats-panel" role="dialog" [attr.aria-label]="t('stats.open')">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col"></th>
+          <th scope="col">{{ t('stats.record') }}</th>
+          <th scope="col">{{ t('stats.today') }}</th>
+          <th scope="col">{{ t('stats.average') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th scope="row">{{ t('stats.scope.chapter') }}</th>
+          <td>{{ chapterStats().record }}</td>
+          <td>{{ chapterStats().actual }}</td>
+          <td>{{ round(chapterStats().average) }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{{ t('stats.scope.book') }}</th>
+          <td>{{ bookStats().record }}</td>
+          <td>{{ bookStats().actual }}</td>
+          <td>{{ round(bookStats().average) }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{{ t('stats.scope.global') }}</th>
+          <td>{{ globalStats().record }}</td>
+          <td>{{ globalStats().actual }}</td>
+          <td>{{ round(globalStats().average) }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+}

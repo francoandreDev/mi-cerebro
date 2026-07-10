@@ -14,6 +14,24 @@
     <header class="ui-bar">
       <span class="spacer"></span>
       <span class="status" [attr.data-status]="status()">{{ statusLabel() }}</span>
+      <button
+        type="button"
+        class="list-toggle"
+        [class.active]="statsOpen()"
+        [attr.aria-pressed]="statsOpen()"
+        [attr.aria-label]="t('stats.open')"
+        [title]="t('stats.open')"
+        (click)="toggleStats()"
+      >
+        <mc-icon name="chart-line" />
+      </button>
+      <mc-writing-stats-popover
+        [open]="statsOpen()"
+        [chapterStats]="stats().chapter"
+        [bookStats]="stats().book"
+        [globalStats]="stats().global"
+        (closed)="statsOpen.set(false)"
+      />
       @if (editable()) {
         <button
           type="button"

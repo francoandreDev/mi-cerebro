@@ -63,6 +63,7 @@
         [focusMode]="focusMode()"
         [chapterIndex]="activeIndex()"
         [chapterTotal]="chapters().length"
+        [stats]="stats()"
         (titleChange)="onChapterTitleChange($event)"
         (bodyChange)="onChapterBodyChange($event)"
         (pageCountChange)="onChapterPageCountChange($event)"

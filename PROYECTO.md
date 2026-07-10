@@ -509,6 +509,10 @@ Características:
 
 **TipTap** sobre ProseMirror. Integración Angular vía wrapper (`ngx-tiptap` o envoltorio propio). El highlighting personalizable se implementa como extensiones custom.
 
+### Estadísticas de escritura en vivo
+
+Contador simple, sin series temporales: por cada alcance (capítulo, libro, global — todos los libros) se guarda **récord** (mejor día histórico), **actual** (palabras netas escritas hoy) y **promedio** (ponderado, solo sobre días con actividad real). Todo se deriva del evento de guardado ya existente (autosave → `saveChapter`), no hay tracking en vivo mientras se tipea. El corte de día usa el timezone configurado en Ajustes. Persistencia: `stats` embebido en `_book.json`/capítulo para los alcances libro/capítulo; alcance global en `.mi-cerebro/writing-stats.json` (`core/writing-stats/`).
+
 ---
 
 ## 12. Versionado, variantes e historial
