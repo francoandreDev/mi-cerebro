@@ -120,7 +120,7 @@ interface DayLayers {
       padding: 0;
       margin: 0;
       display: grid;
-      grid-template-columns: repeat(7, 1fr);
+      grid-template-columns: repeat(7, minmax(0, 1fr));
       gap: 2px;
       color: var(--mc-fg-muted);
       font-size: var(--mc-font-size-xs);
@@ -131,7 +131,7 @@ interface DayLayers {
       padding: 0;
       margin: 0;
       display: grid;
-      grid-template-columns: repeat(7, 1fr);
+      grid-template-columns: repeat(7, minmax(0, 1fr));
       grid-auto-rows: 1fr;
       gap: 2px;
       flex: 1;
@@ -168,12 +168,25 @@ interface DayLayers {
       align-items: flex-start;
       width: 100%;
       height: 100%;
+      min-width: 0;
       padding: 4px 6px;
       background: transparent;
       border: 0;
       cursor: pointer;
       color: var(--mc-fg-primary);
       text-align: left;
+    }
+    @media (max-width: 480px) {
+      .light-table,
+      .glass {
+        padding: var(--mc-space-2);
+      }
+      .day {
+        padding: 2px 3px;
+      }
+      .num {
+        padding: 2px 4px;
+      }
     }
     .day:hover {
       background: var(--mc-bg-hover);

@@ -405,6 +405,11 @@
     grid-auto-flow: row;
   }
 }
+@media (max-width: 480px) {
+  .lever-row {
+    grid-template-columns: 1fr;
+  }
+}
 .pill {
   display: inline-block;
   padding: 2px var(--mc-space-2);

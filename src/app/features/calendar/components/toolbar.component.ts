@@ -87,6 +87,12 @@ const MAX_RESULTS = 8;
       min-width: 220px;
       max-width: 520px;
     }
+    @media (max-width: 480px) {
+      .search {
+        min-width: 0;
+        flex-basis: 100%;
+      }
+    }
     .search input {
       width: 100%;
       background: var(--mc-bg-surface);

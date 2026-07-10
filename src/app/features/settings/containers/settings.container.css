@@ -129,9 +129,11 @@
 .row {
   display: flex;
   gap: var(--mc-space-2);
+  flex-wrap: wrap;
 }
 .row input[type='text'] {
   flex: 1;
+  min-width: 120px;
 }
 .row .grow {
   flex: 1;

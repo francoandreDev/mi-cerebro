@@ -265,6 +265,11 @@
     overflow-x: visible;
   }
 }
+@media (max-width: 480px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
 .list {
   display: flex;
   flex-direction: column;

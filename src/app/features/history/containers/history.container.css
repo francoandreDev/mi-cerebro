@@ -2917,6 +2917,21 @@ aside.timeline {
   }
 }
 
+/* Red de seguridad de esta primera pasada: los tres modos con columnas
+ * fijas (360px / minmax(240-300px) / minmax(300-360px)) desbordan un
+ * viewport de celular directo. `zoom-detail-stack` no se toca porque ya
+ * es una sola columna (su propio diseño mobile-first). No replica el
+ * comportamiento fino de cada metáfora en mobile (rail de switcher en
+ * strata, aside angosto en panorama) — sólo evita el overflow duro;
+ * queda pendiente una pasada de diseño dedicada por modo. */
+@media (max-width: 480px) {
+  .split,
+  .split.zoom-strata,
+  .split.zoom-panorama {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Foco cálido de la lámpara del cuarto oscuro cayendo sobre la polaroid.
  * Va detrás porque la polaroid rotada tapa parte del disco. */
 .mesa-spotlight {
