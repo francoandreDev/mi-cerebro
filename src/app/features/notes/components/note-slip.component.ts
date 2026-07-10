@@ -187,6 +187,21 @@ import type { NoteSummary } from '../models/note.types';
     .delete:focus-visible {
       color: var(--mc-state-danger, #d04a4a);
     }
+    @media (max-width: 480px) {
+      .body {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--mc-space-2);
+      }
+      .meta {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .delete {
+        opacity: 1;
+      }
+    }
   `,
 })
 export class NoteSlipComponent {

@@ -1,5 +1,26 @@
 @if (isReady()) {
-  <aside class="rail" [attr.aria-label]="t('tree.type.all')">
+  @if (mobileMenuOpen()) {
+    <button
+      type="button"
+      class="rail-backdrop"
+      [attr.aria-label]="t('common.close')"
+      (click)="toggleMobileMenu()"
+      (keydown.escape)="toggleMobileMenu()"
+    ></button>
+  }
+  <div class="mobile-topbar">
+    <button
+      type="button"
+      class="mobile-toggle"
+      [attr.aria-expanded]="mobileMenuOpen()"
+      aria-controls="mc-rail-menu"
+      (click)="toggleMobileMenu()"
+    >
+      <mc-icon name="squares-four" />
+      <span class="mobile-toggle-label">{{ activeTitle() }}</span>
+    </button>
+  </div>
+  <aside id="mc-rail-menu" class="rail" [attr.aria-label]="t('tree.type.all')">
     <button
       type="button"
       class="rail-brand"
@@ -21,6 +42,7 @@
         (click)="goTo(item.key)"
       >
         <mc-icon [name]="item.icon" />
+        <span class="rail-label">{{ item.label }}</span>
       </button>
     }
     <div class="rail-spacer"></div>
@@ -33,6 +55,7 @@
       (click)="goTo('calendar')"
     >
       <mc-icon name="calendar-dots" />
+      <span class="rail-label">{{ t('calendar.title') }}</span>
     </button>
     <button
       type="button"
@@ -46,6 +69,7 @@
       @if (remindersOverdueCount() > 0) {
         <span class="rail-badge">{{ remindersOverdueCount() }}</span>
       }
+      <span class="rail-label">{{ t('reminders.title') }}</span>
     </button>
     <button
       type="button"
@@ -56,6 +80,7 @@
       (click)="goTo('music')"
     >
       <mc-icon name="music-notes" />
+      <span class="rail-label">{{ t('music.title') }}</span>
     </button>
     <button
       type="button"
@@ -66,6 +91,7 @@
       (click)="goTo('history')"
     >
       <mc-icon name="clock-counter-clockwise" />
+      <span class="rail-label">{{ t('versioning.history.title') }}</span>
     </button>
     <button
       type="button"
@@ -76,6 +102,7 @@
       (click)="goTo('variants')"
     >
       <mc-icon name="git-branch" />
+      <span class="rail-label">{{ t('variants.page.title') }}</span>
     </button>
     <button
       type="button"
@@ -86,6 +113,7 @@
       (click)="goTo('tags')"
     >
       <mc-icon name="tag" />
+      <span class="rail-label">{{ t('tags.page.title') }}</span>
     </button>
     <button
       type="button"
@@ -96,6 +124,7 @@
       (click)="goTo('trash')"
     >
       <mc-icon name="trash" />
+      <span class="rail-label">{{ t('trash.title') }}</span>
     </button>
     <button
       type="button"
@@ -106,6 +135,7 @@
       (click)="goTo('settings')"
     >
       <mc-icon name="gear" />
+      <span class="rail-label">{{ t('settings.title') }}</span>
     </button>
     <mc-remote-status-dot />
   </aside>

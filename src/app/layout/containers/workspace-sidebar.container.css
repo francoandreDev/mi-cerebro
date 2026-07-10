@@ -331,3 +331,130 @@
 .variant-menu-manage {
   color: var(--mc-fg-muted);
 }
+
+.mobile-topbar {
+  display: none;
+}
+.rail-backdrop {
+  display: none;
+}
+.rail-label {
+  display: none;
+}
+
+@media (max-width: 480px) {
+  /* why: 17 rail icons (brand + 8 entities + calendar/reminders/music/
+     history/variants/tags/trash/settings) never fit a phone-width bar,
+     even shrunk to minimum touch-target size (§19.21a) — a horizontal
+     scroll strip just moved the problem and still felt broken. Mobile
+     gets a single toggle button that opens the rail as a full-width
+     icon+label grid instead. */
+  :host {
+    flex-direction: column;
+    width: 100%;
+  }
+  :host(.no-pane) {
+    height: auto;
+  }
+
+  .mobile-topbar {
+    order: 2;
+    display: flex;
+    width: 100%;
+    height: 56px;
+    flex-shrink: 0;
+    border-top: 1px solid var(--mc-border-default);
+    background: var(--mc-bg-base);
+  }
+  .mobile-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--mc-space-2);
+    width: 100%;
+    background: transparent;
+    border: 0;
+    color: var(--mc-fg-primary);
+    font: inherit;
+    font-weight: 600;
+    font-size: var(--mc-font-size-md);
+    cursor: pointer;
+  }
+  .mobile-toggle-label {
+    max-width: 60vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .rail-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    padding: 0;
+    border: 0;
+    background: rgb(0 0 0 / 0.5);
+    z-index: 90;
+  }
+
+  .rail {
+    display: none;
+  }
+  :host(.rail-open) .rail {
+    order: 1;
+    display: grid;
+    /* why: plain `repeat(4, 1fr)` still lets a column's intrinsic
+       min-content (a long label like "Imágenes") stretch past its 1fr
+       share and blow out the row — minmax(0, 1fr) caps the automatic
+       minimum so columns actually respect the 4-up split. */
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--mc-space-2);
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 56px;
+    max-height: 65vh;
+    width: 100%;
+    padding: var(--mc-space-4);
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: var(--mc-bg-base);
+    border-top: 1px solid var(--mc-border-default);
+    border-right: none;
+    box-shadow: var(--mc-shadow-lg);
+    z-index: 95;
+  }
+  :host(.rail-open) .rail-spacer {
+    display: none;
+  }
+  :host(.rail-open) .rail-brand,
+  :host(.rail-open) .rail-btn {
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--mc-space-1);
+    width: 100%;
+    height: auto;
+    min-width: 0;
+    aspect-ratio: 1;
+    padding: var(--mc-space-2);
+    font-size: 1.3rem;
+    margin-bottom: 0;
+  }
+  :host(.rail-open) .rail-label {
+    display: block;
+    width: 100%;
+    overflow-wrap: break-word;
+    font-size: var(--mc-font-size-xs);
+    font-weight: 500;
+    white-space: normal;
+    line-height: 1.2;
+  }
+  :host(.rail-open) mc-remote-status-dot {
+    grid-column: 1 / -1;
+  }
+
+  .pane {
+    order: 3;
+    min-height: 0;
+  }
+}

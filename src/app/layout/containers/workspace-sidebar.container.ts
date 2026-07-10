@@ -95,7 +95,7 @@ interface RailItem {
   ],
   templateUrl: './workspace-sidebar.container.html',
   styleUrl: './workspace-sidebar.container.css',
-  host: { '[class.no-pane]': 'hidePane()' },
+  host: { '[class.no-pane]': 'hidePane()', '[class.rail-open]': 'mobileMenuOpen()' },
 })
 export class WorkspaceSidebarContainer {
   private readonly notesService = inject(NotesService);
@@ -154,6 +154,13 @@ export class WorkspaceSidebarContainer {
   protected readonly switchingState = this.switchVariantService.switching;
   private readonly variantMenuOpenSignal = signal(false);
   protected readonly variantMenuOpen = this.variantMenuOpenSignal.asReadonly();
+  // why: mobile rail collapses to a toggle + grid overlay (§19.21a) —
+  //      17 icons never fit a phone-width horizontal bar, even shrunk.
+  protected readonly mobileMenuOpen = signal(false);
+
+  protected toggleMobileMenu(): void {
+    this.mobileMenuOpen.update((v) => !v);
+  }
 
   protected toggleVariantMenu(event: Event): void {
     event.stopPropagation();
@@ -553,6 +560,7 @@ export class WorkspaceSidebarContainer {
   protected goTo(key: RailKey): void {
     this.query.set('');
     this.cursor.set(0);
+    this.mobileMenuOpen.set(false);
     if (key === 'home') {
       void this.router.navigateByUrl('/');
       return;

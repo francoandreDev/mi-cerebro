@@ -15,11 +15,13 @@ Orden final dentro de cada nivel de impacto: esfuerzo ascendente. No reemplaza a
 
 Órden actualizado 2026-07-09: dentro de "listo para tomar ya" el criterio sigue siendo esfuerzo ascendente. El árbol de carpetas huérfano bajó al final del grupo porque dejó de ser un ítem de esfuerzo estimable — su propia entrada en `deferred.md` dice "discutir antes de tocar código"; no hay Tier de esfuerzo que aplicar hasta que exista esa decisión de diseño.
 
-1. **Vista unificada cross-section por tag** (esfuerzo: alto, Tier 4 — componente "card universal" + servicio cross-kind nuevo) — el home promete "ver todo lo de un tema" y hoy no existe.
-2. **[BLOQUEADO — requiere decisión de diseño previa] Árbol de carpetas huérfano tras los rediseños de tarjetas** (esfuerzo: sin asignar) — backend y UI de árbol ya existen completos y tratan las 8 entidades por igual, pero el panel está oculto (`PANE_HIDDEN_PREFIXES`) en las 8 secciones desde que cada una migró a vista de tarjetas. No es un fix puntual: hace falta decidir primero cómo se ve/crea/mueve una carpeta dentro de la metáfora de tarjetas de cada sección, antes de poder estimar esfuerzo o tocar código. Ver `deferred.md` → "Árbol de carpetas huérfano tras los rediseños de tarjetas".
+1. **[BLOQUEADO — requiere decisión de diseño previa] Árbol de carpetas huérfano tras los rediseños de tarjetas** (esfuerzo: sin asignar) — backend y UI de árbol ya existen completos y tratan las 8 entidades por igual, pero el panel está oculto (`PANE_HIDDEN_PREFIXES`) en las 8 secciones desde que cada una migró a vista de tarjetas. No es un fix puntual: hace falta decidir primero cómo se ve/crea/mueve una carpeta dentro de la metáfora de tarjetas de cada sección, antes de poder estimar esfuerzo o tocar código. Ver `deferred.md` → "Árbol de carpetas huérfano tras los rediseños de tarjetas".
+
+**El grupo Impacto Alto queda sin ítems tomables ahora mismo** — el único que quedaba (árbol de carpetas huérfano) está bloqueado por una decisión de diseño transversal pendiente de discutir con el usuario. Próximo paso: bajar a Impacto Medio (ítem #6, snooze de fin de semana en reminders) o destrabar el árbol de carpetas discutiendo el diseño primero.
 
 Cerrado: ~~Auditar y arreglar las reglas `:global(...)` de `editor.component.css`~~ (esfuerzo: medio) — resuelto 2026-07-08, las 9 reglas afectadas se movieron a `src/styles/_editor-content.scss`.
 Cerrado: ~~Quick-capture global de nota desde cualquier sección~~ (esfuerzo: alto, Tier 4) — resuelto 2026-07-09, atajo `Alt+Shift+N` + overlay global que crea la nota sin salir de la sección actual, ver `deferred.md` para el detalle completo.
+Cerrado: ~~Vista unificada cross-section por tag~~ (esfuerzo: alto, Tier 4) — resuelto 2026-07-09, `TaggedItemsService` + ruta `/tags/:id` + acceso desde el palette con `tag:nombre`, ver `deferred.md` para el detalle completo (incluye el descubrimiento de arquitectura sobre `shared/entity-cards/`).
 
 ## Impacto Medio
 
@@ -38,56 +40,57 @@ Cerrado: ~~Quick-capture global de nota desde cualquier sección~~ (esfuerzo: al
 18. **Cover art y duración ID3 (`jsmediatags`)** (esfuerzo: alto, Tier 4 — nueva dependencia + migración de schema de `Track`) — música tuvo desarrollo activo reciente (sidecars de yt-dlp/ffmpeg); carátula real es la mejora visual más notoria pendiente en esa sección.
 19. **Referencias / links entre entidades desde el editor** (esfuerzo: alto, Tier 4 — sintaxis + picker + resolución ante borrado) — pieza grande de UX/datos, útil transversalmente pero no bloquea ningún flujo prometido hoy.
 20. **CORS proxy propio para push/fetch a GitHub** (esfuerzo: alto, Tier 4 — infraestructura externa, Cloudflare Worker) — el bug de `pushAll` (cerrado 2026-07-08) resultó no tener nada que ver con el proxy — era client-side puro. El proxy público sigue siendo un single point of failure operado por terceros, pero deja de ser sospechoso de nada concreto.
+21. **Responsive mobile — resto de pantallas sin `@media`** (esfuerzo: medio, Tier 3 — mecánico pero por página: tasks/goals/tags/files/variants/trash/images/bookshelf-reader necesitan su propio breakpoint, más re-verificar visualmente las que ya tienen alguno) — §21 (2026-07-10) cerró el shell (rail) + 2 páginas fáciles (home, notes) como fundación; el resto de las secciones de uso diario (tasks sobre todo — kanban de columnas horizontales que no colapsa) siguen rotas en viewport angosto. Impacto medio y no alto porque el bloqueador real de mobile sigue siendo File System Access API sin soporte en navegadores Android (ver §18c) — este trabajo importa hoy para ventana de escritorio angosta y para cuando exista un build Capacitor verificado, no para "usar la app desde el celular ya".
 
 ## Impacto Bajo
 
 Polish visual, casos de baja frecuencia, o ítems que el propio `deferred.md` marca como YAGNI/optimización prematura. Orden aproximado por esfuerzo ascendente, sin discriminar mucho dentro del grupo — la diferencia de impacto entre estos ítems es chica.
 
-21. Filtros por tipo de entidad (Tier 2) — bloqueado más por falta de otras entidades indexadas que por dificultad.
-22. Color picker custom para tag — ya resuelto, entrada obsoleta en `deferred.md` (podar).
-23. Lead-time por meta (Tier 1) — YAGNI explícito mientras un único lead-time alcance.
-24. Hora del deadline configurable (Tier 2) — 23:59 razonable para casi todo plazo.
-25. "Cargar más" en backlog / tasks (Tier 2) — aún no hay dolor de scroll real.
-26. Atajos directos a herramientas y colores (tiza) (Tier 2) — modo tiza es deliberadamente disruptivo, no se pide teclado.
-27. Pin/fijado de estantes (books) (Tier 3) — YAGNI hasta N>10 estantes.
-28. Multi-select de pasos (goals) (Tier 3) — el caso no apareció como necesidad real.
-29. Drag-to-reposition de estrellas (goals) (Tier 3) — la creación con click ya cubre el caso principal.
-30. Layout libre de la constelación (goals wall) (Tier 3) — el hash-based ya cubre sin nuevo estado.
-31. Granularidad por faceta en merge bundle (Tier 3) — decisión de producto ya tomada como "no ahora".
-32. Compactación manual sobre rango específico (Tier 3) — el background con buckets ya cubre el 95%.
-33. Tooltip por-día en la panorámica (`/history`) (Tier 3) — marcado "no crítico" desde Fase 3.
-34. Header del editor "n commits desde milestone" (Tier 3) — valor incremental marginal, dice el propio doc.
-35. Hilos entre items relacionados (`/files`) (Tier 3) — puro decorado, sin demanda real.
-36. Posición libre real (drag x/y) en `/files` (Tier 3) — el jitter determinista ya transmite el feeling.
-37. Typewriter focus línea-por-línea (editor) (Tier 3) — la máscara CSS ya cubre ~70%.
-38. Typewriter mode en `/writings` (Tier 3) — no bloquea la migración del section pane.
-39. Parser de fecha natural — alcance ampliado (Tier 3) — cobertura actual cubre los casos cotidianos.
-40. Animaciones orgánicas de DnD (tasks) (Tier 3) — polish puro, mecánica funcional ya está.
-41. Riego con cursor regadera (tasks) (Tier 3) — bajo riesgo de uso real hasta que el jardín se llene.
-42. Cesta de cosecha con salto en arco (tasks) (Tier 3) — falta sólo la animación FLIP.
-43. Textura realista de tiza (Tier 3) — polish, entra si las capas se sienten "planchadas".
-44. Export PNG/SVG de las capas (listas) (Tier 3) — conveniencia, no necesaria para no perder trabajo.
-45. Undo/redo dedicado para trazos (listas) (Tier 3) — panel de capas + historial git ya cubren.
-46. Estilo "pizarra de verdad" en todo el pane (Tier 3) — riesgo de romper modo lectura.
-47. Animaciones de snooze / gestos manuales (palomar) (Tier 3) — las animaciones críticas del scheduler ya están.
-48. Detalles bonitos: plumitas, plumaje, ronroneo (palomar) (Tier 3) — pulido visual de baja prioridad.
-49. Palomares temáticos por categoría (Tier 3) — los filtros del MVP ya resuelven la saturación.
-50. Drag-and-drop de tracks a playlist (música) (Tier 3) — el editor de playlist ya cubre la acción equivalente.
-51. Thumbs reales 2×2 para galerías en la papelera (Tier 3) — baja frecuencia, vista de papelera no crítica.
-52. Volumen real (`BookVolumeComponent`) en la papelera (Tier 3) — mismo razonamiento.
-53. Pulido visual general de `/history` (Tier 4) — agrupador sin límite claro, entra cuando haya uso real.
-54. Override de imágenes para portada/miniaturas (books) (Tier 4) — los faces procedurales ya dan identidad visual.
-55. Paginación real persistida fila por fila (books) (Tier 4) — se autocorrige apenas el usuario abre el capítulo.
-56. Subset + conversión a woff2 de Crimson Pro (Tier 4) — bloqueado por tooling, perf ya aceptable para PWA.
-57. Waveform pre-renderizado (música) (Tier 4) — costoso (decodificar todo el MP3), bonito pero no bloquea.
-58. Crypto-at-rest para PAT en `secrets.json` (Tier 4) — el threat model real (PAT no debe entrar a git push) ya está cubierto por `.gitignore`.
-59. Índice de búsqueda persistido por familia (`idx-main`) (Tier 4) — optimización prematura sin métricas reales, dice el propio doc.
-60. Índice de búsqueda global para comentarios (Tier 4) — mismo, además requiere walk de priming nuevo.
-61. Índice de búsqueda global para borradores (Tier 4) — mismo, conviene diseñar junto con el anterior.
-62. Estantería con forma creativa (books) (Tier 4) — visión a futuro, el shelf clásico aún no está pulido.
-63. Variantes sobre el fallback sin isomorphic-git (Tier 5) — sólo aplica si el fallback se activa; contingencia, no roadmap.
-64. `.git/` en OPFS (Tier 5) — aceptado explícitamente vivir con loading screens hasta que sea intolerable.
-65. Sala 3D real (three.js) para `/images` (Tier 5) — fase futura transversal a /images, /books, /lists.
+22. Filtros por tipo de entidad (Tier 2) — bloqueado más por falta de otras entidades indexadas que por dificultad.
+23. Color picker custom para tag — ya resuelto, entrada obsoleta en `deferred.md` (podar).
+24. Lead-time por meta (Tier 1) — YAGNI explícito mientras un único lead-time alcance.
+25. Hora del deadline configurable (Tier 2) — 23:59 razonable para casi todo plazo.
+26. "Cargar más" en backlog / tasks (Tier 2) — aún no hay dolor de scroll real.
+27. Atajos directos a herramientas y colores (tiza) (Tier 2) — modo tiza es deliberadamente disruptivo, no se pide teclado.
+28. Pin/fijado de estantes (books) (Tier 3) — YAGNI hasta N>10 estantes.
+29. Multi-select de pasos (goals) (Tier 3) — el caso no apareció como necesidad real.
+30. Drag-to-reposition de estrellas (goals) (Tier 3) — la creación con click ya cubre el caso principal.
+31. Layout libre de la constelación (goals wall) (Tier 3) — el hash-based ya cubre sin nuevo estado.
+32. Granularidad por faceta en merge bundle (Tier 3) — decisión de producto ya tomada como "no ahora".
+33. Compactación manual sobre rango específico (Tier 3) — el background con buckets ya cubre el 95%.
+34. Tooltip por-día en la panorámica (`/history`) (Tier 3) — marcado "no crítico" desde Fase 3.
+35. Header del editor "n commits desde milestone" (Tier 3) — valor incremental marginal, dice el propio doc.
+36. Hilos entre items relacionados (`/files`) (Tier 3) — puro decorado, sin demanda real.
+37. Posición libre real (drag x/y) en `/files` (Tier 3) — el jitter determinista ya transmite el feeling.
+38. Typewriter focus línea-por-línea (editor) (Tier 3) — la máscara CSS ya cubre ~70%.
+39. Typewriter mode en `/writings` (Tier 3) — no bloquea la migración del section pane.
+40. Parser de fecha natural — alcance ampliado (Tier 3) — cobertura actual cubre los casos cotidianos.
+41. Animaciones orgánicas de DnD (tasks) (Tier 3) — polish puro, mecánica funcional ya está.
+42. Riego con cursor regadera (tasks) (Tier 3) — bajo riesgo de uso real hasta que el jardín se llene.
+43. Cesta de cosecha con salto en arco (tasks) (Tier 3) — falta sólo la animación FLIP.
+44. Textura realista de tiza (Tier 3) — polish, entra si las capas se sienten "planchadas".
+45. Export PNG/SVG de las capas (listas) (Tier 3) — conveniencia, no necesaria para no perder trabajo.
+46. Undo/redo dedicado para trazos (listas) (Tier 3) — panel de capas + historial git ya cubren.
+47. Estilo "pizarra de verdad" en todo el pane (Tier 3) — riesgo de romper modo lectura.
+48. Animaciones de snooze / gestos manuales (palomar) (Tier 3) — las animaciones críticas del scheduler ya están.
+49. Detalles bonitos: plumitas, plumaje, ronroneo (palomar) (Tier 3) — pulido visual de baja prioridad.
+50. Palomares temáticos por categoría (Tier 3) — los filtros del MVP ya resuelven la saturación.
+51. Drag-and-drop de tracks a playlist (música) (Tier 3) — el editor de playlist ya cubre la acción equivalente.
+52. Thumbs reales 2×2 para galerías en la papelera (Tier 3) — baja frecuencia, vista de papelera no crítica.
+53. Volumen real (`BookVolumeComponent`) en la papelera (Tier 3) — mismo razonamiento.
+54. Pulido visual general de `/history` (Tier 4) — agrupador sin límite claro, entra cuando haya uso real.
+55. Override de imágenes para portada/miniaturas (books) (Tier 4) — los faces procedurales ya dan identidad visual.
+56. Paginación real persistida fila por fila (books) (Tier 4) — se autocorrige apenas el usuario abre el capítulo.
+57. Subset + conversión a woff2 de Crimson Pro (Tier 4) — bloqueado por tooling, perf ya aceptable para PWA.
+58. Waveform pre-renderizado (música) (Tier 4) — costoso (decodificar todo el MP3), bonito pero no bloquea.
+59. Crypto-at-rest para PAT en `secrets.json` (Tier 4) — el threat model real (PAT no debe entrar a git push) ya está cubierto por `.gitignore`.
+60. Índice de búsqueda persistido por familia (`idx-main`) (Tier 4) — optimización prematura sin métricas reales, dice el propio doc.
+61. Índice de búsqueda global para comentarios (Tier 4) — mismo, además requiere walk de priming nuevo.
+62. Índice de búsqueda global para borradores (Tier 4) — mismo, conviene diseñar junto con el anterior.
+63. Estantería con forma creativa (books) (Tier 4) — visión a futuro, el shelf clásico aún no está pulido.
+64. Variantes sobre el fallback sin isomorphic-git (Tier 5) — sólo aplica si el fallback se activa; contingencia, no roadmap.
+65. `.git/` en OPFS (Tier 5) — aceptado explícitamente vivir con loading screens hasta que sea intolerable.
+66. Sala 3D real (three.js) para `/images` (Tier 5) — fase futura transversal a /images, /books, /lists.
 
 ---
 
@@ -98,8 +101,10 @@ Polish visual, casos de baja frecuencia, o ítems que el propio `deferred.md` ma
 - Varios ítems de esfuerzo alto comparten infraestructura (los tres índices de búsqueda persistidos, por ejemplo) — conviene abordarlos juntos aunque compartan nivel de impacto.
 - Este documento es una foto (regenerado 2026-07-08); si `deferred.md` cierra o agrega ítems, este ranking debería regenerarse — no editarse a mano ítem por ítem.
 - Historial de cierres previos (pre-2026-07-08): ver `deferred.md` para el detalle — incluye reindexar manual, snippet con highlight, UI de tags, badge de vencidas, umbral de compactación configurable, dev panel de compactación, error code `MCB-MUS-001`, colapsar chips de kind, continuidad de última ruta, historial de búsquedas recientes, anchor `range` multi-bloque, widget de diff-marks insertion-only, y `fields.system` fuera del diff de historial.
+- 2026-07-09 (sesión 7): se cerró el ítem #1 de Impacto Alto ("Vista unificada cross-section por tag") — nuevo `TaggedItemsService` (`core/tags/`) fanea sobre las 8 entidades taggeables (mismo patrón que `CalendarEventsService`), ruta `/tags/:id` (`TagDetailContainer`) agrupa por kind con el card nativo de cada una, acceso desde `Ctrl+K` con `tag:nombre` → ítem "Ver todo lo de #tag". Descubrimiento a mitad de implementación: el plan original iba a reusar directo los componentes de cada feature, lo cual viola §4.2.10 (feature importando de otra feature) — se resolvió creando twins de solo lectura con inputs primitivos en `shared/entity-cards/` en vez de mover los originales tal cual. Música (`Track`/`Playlist`) quedó afuera por no tener campo `tags` — nueva entrada en `deferred.md`. Ver `deferred.md` para el detalle completo. La numeración no se recorrió hacia atrás (mismo criterio que sesiones previas) — el grupo Impacto Alto queda temporalmente sin ítems tomables, sólo el árbol de carpetas bloqueado.
 - 2026-07-08 (sesión 2): se cerró el ítem #1 de Impacto Alto ("Investigar por qué falla `pushAll`") — ver `deferred.md` para el detalle de los 4 bugs encontrados (clasificación de resultado exitoso como error, lookup de ref por nombre corto vs completo, branches de facet nunca creadas, y fetch roto por falta de `git.addRemote()`). La numeración de esta lista no se recorrió hacia atrás para compensar (mismo criterio que las sesiones previas) — tratar los números como referencias históricas y confirmar contra `deferred.md` antes de tomar el próximo ítem.
 - 2026-07-08 (sesión 3): se cerró el ítem #1 original de Impacto Alto ("Auditar y arreglar las reglas `:global(...)` de `editor.component.css`") — las 9 reglas afectadas se movieron a una hoja global nueva `src/styles/_editor-content.scss`, mismo patrón que `_editor-highlight.scss`/`_book-editor.scss`. Verificado en runtime con el navegador: `.ProseMirror` pasó de `min-height: 0px` a `180px`, `.mc-comment-cloud` matchea. Ver `deferred.md` para el detalle. Mismo criterio de numeración: no se recorrió la lista hacia atrás.
 - 2026-07-09 (sesión 6): se cerró el ítem #1 de Impacto Alto ("Quick-capture global de nota desde cualquier sección") — atajo `Alt+Shift+N` (no `Ctrl+Shift+N`, reservado por Chrome para incógnito) abre un overlay (`QuickCaptureDialogComponent`) sobre cualquier sección; primera línea del textarea = título, resto = párrafos del cuerpo; la nota cae en la raíz de `/notes` sin tags preseleccionados; confirmación vía toast informativo (`MCB-UI-001`) con acción "Abrir". Ver `deferred.md` para el detalle completo de la implementación. Verificado en runtime desde `/books`. La numeración no se recorrió hacia atrás (mismo criterio que sesiones previas).
 - 2026-07-09 (sesión 5): reordenado el grupo Impacto Alto a partir del diagnóstico de la sesión 4 — el árbol de carpetas huérfano pasó al final del grupo (marcado bloqueado, sin Tier de esfuerzo asignable) porque requiere una decisión de diseño transversal antes de poder tocar código; quick-capture global y vista cross-section por tag (ambos Tier 4, listos para tomar sin decisión previa pendiente) subieron al #1 y #2. El ítem de `editor.component.css` (cerrado 2026-07-08) se movió a una línea de "Cerrado" al pie del grupo en vez de ocupar el #1 numerado.
 - 2026-07-09 (sesión 4): investigado el ítem #2 original de Impacto Alto ("Carpetas / jerarquía real dentro de notas") — resultó ser un diagnóstico desactualizado. El backend y la UI de árbol/carpetas (`FoldersService`, `NotesService.moveToFolder`, `buildFolderTree`, context menu de `folder-actions.ts`) ya están completos y tratan `note` igual que las otras 7 entidades; no faltaba nada de código. El problema real, confirmado en runtime en el navegador: ese panel está oculto en las **8** secciones (`PANE_HIDDEN_PREFIXES` en `workspace-sidebar.container.ts` incluye hoy `/notes`, `/tasks`, `/goals`, `/lists`, `/writings`, `/books`, `/images`, `/files`), no sólo en notas — quedó huérfano a medida que cada sección se rediseñó a vista de tarjetas. También corrige de paso el ítem #9 de Impacto Medio ("Navegación por carpetas / DnD entre carpetas en `/files`"): la frase "la sidebar global ya cubre parcialmente" ya no es cierta para ninguna sección. Ver `deferred.md` → "Árbol de carpetas huérfano tras los rediseños de tarjetas" (nueva entrada consolidada, origen paso 6) para el detalle completo; esa entrada reemplaza tanto al ítem #2 de notas como a la mención de `/files`. Es una decisión de diseño transversal (cómo se ve la jerarquía dentro de la metáfora de tarjetas) — no se tocó código de producto esta sesión, sólo se corrigió la documentación. No se recorrió la numeración hacia atrás.
+- 2026-07-10 (sesión 8): agregado el ítem #21 de Impacto Medio ("Responsive mobile — resto de pantallas sin `@media`") — nueva entrada en `deferred.md` tras cerrar §19.21 (shell + home + notes). A diferencia de las sesiones previas, esta vez sí se recorrió numeración: el ítem se insertó al final de Impacto Medio (slot #21, antes vacío) y todo el grupo Impacto Bajo se corrió +1 (antes 21-65, ahora 22-66) para no romper el orden por impacto — ningún ítem de Impacto Bajo está referenciado por número en notas de sesiones anteriores, así que el corrimiento es seguro.

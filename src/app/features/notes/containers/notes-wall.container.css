@@ -85,6 +85,11 @@
 }
 @media (max-width: 600px) {
   .wall {
-    padding: var(--mc-space-2);
+    padding: var(--mc-space-3);
+  }
+}
+@media (max-width: 480px) {
+  .wall {
+    padding: var(--mc-space-5);
   }
 }

@@ -89,6 +89,19 @@ import { WorkspaceSidebarContainer } from './workspace-sidebar.container';
       min-width: 0;
       overflow: auto;
     }
+    @media (max-width: 480px) {
+      .shell {
+        flex-direction: column;
+      }
+      .content {
+        order: 1;
+        min-height: 0;
+      }
+      mc-workspace-sidebar {
+        order: 2;
+        flex: 0 0 auto;
+      }
+    }
   `,
 })
 export class AppShellContainer {

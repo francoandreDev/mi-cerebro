@@ -567,3 +567,11 @@ Formato por entrada:
 - **Qué**: `§20a` migró `bookDir`/`requireLoc` de `BooksService`/`GalleriesService`/`FilesService` (las 3 entidades directorio-por-entidad) de tirar `MCB-FS-003` a `MCB-FS-008` cuando un `id` no aparece ni tras re-caminar el filesystem. El mismo antipatrón sigue vivo en el `findPath()` interno de `NotesService`/`TasksService`/`GoalsService`/`ListsService`/`WritingsService` (entidades archivo-plano-con-sufijo, patrón preexistente que §20a tomó como referencia pero no tocó) y en `BooksService#findChapterFile` (resolución de capítulo dentro de un libro, walk-based igual que `findPath`, mismo throw final).
 - **Por qué se difirió**: `§20a` acotó su alcance explícitamente a los "dos usos indebidos" nombrados en el roadmap (`books.service.ts`, `bookDir`/`requireLoc`); generalizar a los otros 6 sitios es mecánico pero son call sites adicionales fuera de ese texto, y tocarlos ameritaba su propia revisión (ej. decidir si `findChapterFile` amerita un código distinto de `findLoc`/`findPath` al nivel de libro, dado que resuelve una sub-entidad).
 - **Target**: sin asignar.
+
+## Responsive mobile — pantallas pendientes (origen: §21, 2026-07-10)
+
+### Auditar y arreglar el resto de las features sin @media
+
+- **Qué**: §21 sólo cerró el shell (rail, §21a) + 2 páginas (home §21b, notes §21c). Quedan sin auditar/arreglar: tasks (kanban de columnas horizontales, no colapsa a viewport angosto), goals, tags, files, variants, trash, images, bookshelf/book-reader (parcial). Las que ya tienen algún `@media` (calendar, history, music, reminders, settings, sync, writings-shelf) tampoco se re-verificaron a 393px en esta sesión salvo calendar, que mostró overflow en la columna "Sábado" de la grilla mensual.
+- **Por qué se difirió**: alcance explícito de §21 era "sentar las bases" (shell + 2 páginas fáciles), no una pasada completa — cada página tiene su propio layout por diseño (§4.6.14b), así que cada una necesita su propio breakpoint y revisión visual, no hay fix global posible más allá del rail.
+- **Target**: §19.21d.

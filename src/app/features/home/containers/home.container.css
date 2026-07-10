@@ -273,3 +273,17 @@
   outline: 2px solid var(--mc-accent-primary);
   outline-offset: 2px;
 }
+
+@media (max-width: 480px) {
+  :host {
+    padding: var(--mc-space-5) var(--mc-space-5) var(--mc-space-6);
+  }
+  .workflows-list,
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .workflow,
+  .card {
+    padding: var(--mc-space-4);
+  }
+}
