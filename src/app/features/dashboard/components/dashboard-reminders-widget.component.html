@@ -1,0 +1,19 @@
+<header>
+  <mc-icon name="bell" class="icon" />
+  <span>{{ t('dashboard.reminders.title') }}</span>
+</header>
+@if (reminders().length === 0) {
+  <p class="empty">{{ t('dashboard.reminders.empty') }}</p>
+} @else {
+  <ul>
+    @for (reminder of reminders(); track reminder.id) {
+      <li class="row">
+        <span class="when">{{ reminder.nextPingAt | mcDate }}</span>
+        <span class="title">{{ reminder.title || t('dashboard.reminder.untitled') }}</span>
+      </li>
+    }
+  </ul>
+  <div class="footer">
+    <button type="button" (click)="viewAll.emit()">{{ t('dashboard.reminders.viewAll') }}</button>
+  </div>
+}

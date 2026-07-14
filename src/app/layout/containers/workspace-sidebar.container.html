@@ -48,6 +48,17 @@
     <div class="rail-spacer"></div>
     <button
       type="button"
+      class="rail-btn dashboard"
+      [class.active]="activeKey() === 'dashboard'"
+      [title]="t('dashboard.title')"
+      [attr.aria-label]="t('dashboard.title')"
+      (click)="goTo('dashboard')"
+    >
+      <mc-icon name="squares-four" />
+      <span class="rail-label">{{ t('dashboard.title') }}</span>
+    </button>
+    <button
+      type="button"
       class="rail-btn calendar"
       [class.active]="activeKey() === 'calendar'"
       [title]="t('calendar.title')"

@@ -1,0 +1,15 @@
+<div class="dashboard">
+  <header class="page-header">
+    <h1>{{ t('dashboard.title') }}</h1>
+    <p>{{ t('dashboard.subtitle') }}</p>
+  </header>
+  <div class="grid">
+    <mc-dashboard-tasks-widget [tasks]="todayTasks()" (open)="onOpenTask($event)" />
+    <mc-dashboard-goals-widget [goals]="activeGoals()" (open)="onOpenGoal($event)" />
+    <mc-dashboard-reminders-widget
+      [reminders]="upcomingReminders()"
+      (viewAll)="onViewAllReminders()"
+    />
+    <mc-dashboard-recent-widget [entries]="recentEntries()" (open)="onOpenEntry($event)" />
+  </div>
+</div>

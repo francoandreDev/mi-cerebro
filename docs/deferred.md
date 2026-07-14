@@ -587,3 +587,17 @@ Formato por entrada:
 - **Qué**: al colapsar `.zones` a 1 columna bajo 480px (sesión 11), no se auditaron los sub-componentes que viven dentro de cada zona (`album-library`, `now-playing`, `playlist-editor`, `queue-panel`, `resonant-surface`) — ninguno tiene su propio `@media`, así que podrían tener overflow interno propio aun con el contenedor ya apilado.
 - **Por qué se difirió**: fuera del alcance acotado de la sesión 11 (huecos en breakpoints de contenedor, no auditoría de cada sub-componente); sin verificación visual tampoco había forma de confirmar si hacía falta.
 - **Target**: sin asignar.
+
+## Dashboard combinado (origen: §19.22)
+
+### Verificación visual real en viewport mobile
+
+- **Qué**: `dashboard.container.css` tiene un `@media (max-width: 480px)` (grid a 1 columna, padding reducido) pero nunca se confirmó en un viewport angosto real ni en dispositivo — la sesión que cerró §19.22 sólo verificó desktop (1512px) con Chrome.
+- **Por qué se difirió**: fuera del alcance de la verificación funcional de esa sesión (typecheck/lint/tests + click-through en desktop); mismo patrón de breakpoint ya usado y probado en el resto de §21, riesgo bajo pero no confirmado.
+- **Target**: sin asignar — agrupable con la próxima pasada de verificación visual de §21 si el bridge de Chrome está sano.
+
+### Tags no se muestran en los widgets del dashboard
+
+- **Qué**: `TaskSummary`/`GoalSummary`/`NoteSummary`/`WritingSummary` ya traen `tags: readonly string[]`, pero ninguno de los 4 widgets de `/dashboard` los renderiza (sin chips de tag, a diferencia de `note-slip-card`/`kind-card` en otras vistas).
+- **Por qué se difirió**: decisión YAGNI de v1 — mostrar tags exige resolver `tagIds` contra `TagsService` (vía `core/tags`) e inyectarlo en cada widget o en el container, complejidad extra sin que el usuario la haya pedido todavía. Los datos ya están disponibles en los view-items de `core/dashboard/dashboard.types.ts` si hace falta sumarlos después.
+- **Target**: sin asignar.

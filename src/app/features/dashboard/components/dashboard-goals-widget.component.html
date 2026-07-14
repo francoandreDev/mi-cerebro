@@ -1,0 +1,22 @@
+<header>
+  <mc-icon name="target" class="icon" />
+  <span>{{ t('dashboard.goals.title') }}</span>
+</header>
+@if (goals().length === 0) {
+  <p class="empty">{{ t('dashboard.goals.empty') }}</p>
+} @else {
+  <ul>
+    @for (goal of goals(); track goal.id) {
+      <li>
+        <button type="button" (click)="open.emit(goal)">
+          <mc-icon name="dot-outline" class="bullet" />
+          @if (goal.deadline) {
+            <span class="when">{{ goal.deadline | mcDate }}</span>
+          }
+          <span class="title">{{ goal.title || t('dashboard.goal.untitled') }}</span>
+          <span class="progress">{{ goal.stepsDone }}/{{ goal.stepsTotal }}</span>
+        </button>
+      </li>
+    }
+  </ul>
+}

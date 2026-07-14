@@ -7,6 +7,11 @@ export const routes: Routes = [
     loadChildren: () => import('./features/home/home.routes').then((m) => m.homeRoutes),
   },
   {
+    path: 'dashboard',
+    loadChildren: () =>
+      import('./features/dashboard/dashboard.routes').then((m) => m.dashboardRoutes),
+  },
+  {
     path: 'notes',
     loadChildren: () => import('./features/notes/notes.routes').then((m) => m.notesRoutes),
   },

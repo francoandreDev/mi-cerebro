@@ -1,0 +1,19 @@
+<header>
+  <mc-icon name="pen-nib" class="icon" />
+  <span>{{ t('dashboard.recent.title') }}</span>
+</header>
+@if (entries().length === 0) {
+  <p class="empty">{{ t('dashboard.recent.empty') }}</p>
+} @else {
+  <ul>
+    @for (entry of entries(); track entry.id) {
+      <li>
+        <button type="button" (click)="open.emit(entry)">
+          <mc-icon [name]="entryIcon(entry)" class="bullet" />
+          <span class="title">{{ entry.title || t('dashboard.recent.untitled') }}</span>
+          <span class="when">{{ entry.updatedAt | mcDate: true }}</span>
+        </button>
+      </li>
+    }
+  </ul>
+}

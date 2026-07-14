@@ -1,0 +1,113 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  background: var(--mc-bg-surface);
+  border: 1px solid var(--mc-border-default);
+  border-radius: var(--mc-radius-md);
+  overflow: hidden;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+  padding: var(--mc-space-2);
+  border-bottom: 1px solid var(--mc-border-default);
+  font-weight: 600;
+  font-size: var(--mc-font-size-sm);
+}
+
+header .icon {
+  color: var(--mc-accent-primary);
+}
+
+.empty {
+  color: var(--mc-fg-muted);
+  margin: 0;
+  padding: var(--mc-space-2);
+  font-size: var(--mc-font-size-xs);
+}
+
+ul {
+  list-style: none;
+  padding: var(--mc-space-1);
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+li button {
+  width: 100%;
+  display: flex;
+  gap: var(--mc-space-2);
+  align-items: baseline;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  color: var(--mc-fg-primary);
+  padding: var(--mc-space-1) var(--mc-space-2);
+  cursor: pointer;
+  border-radius: var(--mc-radius-sm);
+  font-size: var(--mc-font-size-sm);
+}
+
+li button:hover {
+  background: var(--mc-bg-hover);
+}
+
+li.row {
+  display: flex;
+  gap: var(--mc-space-2);
+  align-items: baseline;
+  padding: var(--mc-space-1) var(--mc-space-2);
+  font-size: var(--mc-font-size-sm);
+}
+
+li.done button {
+  text-decoration: line-through;
+  color: var(--mc-fg-muted);
+}
+
+li.overdue .when {
+  color: var(--mc-danger, #d04a4a);
+}
+
+.when {
+  color: var(--mc-fg-muted);
+  font-size: var(--mc-font-size-xs);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.progress {
+  color: var(--mc-fg-muted);
+  font-size: var(--mc-font-size-xs);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.footer {
+  padding: var(--mc-space-1) var(--mc-space-2) var(--mc-space-2);
+}
+
+.footer button {
+  background: transparent;
+  border: 1px solid var(--mc-border-default);
+  color: var(--mc-fg-primary);
+  cursor: pointer;
+  padding: var(--mc-space-1) var(--mc-space-2);
+  border-radius: var(--mc-radius-sm);
+  font-size: var(--mc-font-size-xs);
+}
+
+.footer button:hover {
+  background: var(--mc-bg-hover);
+}

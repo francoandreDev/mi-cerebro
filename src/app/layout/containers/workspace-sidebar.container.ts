@@ -66,6 +66,7 @@ type EntityKind = 'note' | 'task' | 'goal' | 'list' | 'writing' | 'book' | 'imag
 type RailKey =
   | EntityKind
   | 'home'
+  | 'dashboard'
   | 'trash'
   | 'calendar'
   | 'reminders'
@@ -252,6 +253,7 @@ export class WorkspaceSidebarContainer {
   protected readonly activeKey = computed<RailKey | null>(() => {
     const url = this.currentUrl();
     if (url === '/' || url === '' || url.startsWith('/?')) return 'home';
+    if (url.startsWith('/dashboard')) return 'dashboard';
     if (url.startsWith('/trash')) return 'trash';
     if (url.startsWith('/calendar')) return 'calendar';
     if (url.startsWith('/reminders')) return 'reminders';
@@ -270,6 +272,7 @@ export class WorkspaceSidebarContainer {
     if (
       k === null ||
       k === 'home' ||
+      k === 'dashboard' ||
       k === 'trash' ||
       k === 'calendar' ||
       k === 'reminders' ||
@@ -288,6 +291,7 @@ export class WorkspaceSidebarContainer {
     const k = this.activeKey();
     if (k === null) return this.t('app.name');
     if (k === 'home') return this.t('home.title');
+    if (k === 'dashboard') return this.t('dashboard.title');
     if (k === 'trash') return this.t('trash.title');
     if (k === 'calendar') return this.t('calendar.title');
     if (k === 'reminders') return this.t('reminders.title');
@@ -565,6 +569,10 @@ export class WorkspaceSidebarContainer {
       void this.router.navigateByUrl('/');
       return;
     }
+    if (key === 'dashboard') {
+      void this.router.navigate(['/dashboard']);
+      return;
+    }
     if (key === 'trash') {
       void this.router.navigate(['/trash']);
       return;
@@ -788,6 +796,7 @@ export class WorkspaceSidebarContainer {
 }
 
 const PANE_HIDDEN_PREFIXES: readonly string[] = [
+  '/dashboard',
   '/history',
   '/variants',
   '/books',

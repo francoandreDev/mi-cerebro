@@ -1,0 +1,21 @@
+<header>
+  <mc-icon name="check-square" class="icon" />
+  <span>{{ t('dashboard.tasks.title') }}</span>
+</header>
+@if (tasks().length === 0) {
+  <p class="empty">{{ t('dashboard.tasks.empty') }}</p>
+} @else {
+  <ul>
+    @for (task of tasks(); track task.id) {
+      <li [class.overdue]="task.overdue">
+        <button type="button" (click)="open.emit(task)">
+          <mc-icon name="dot-outline" class="bullet" />
+          @if (task.dueDate) {
+            <span class="when">{{ task.dueDate | mcDate }}</span>
+          }
+          <span class="title">{{ task.title || t('dashboard.task.untitled') }}</span>
+        </button>
+      </li>
+    }
+  </ul>
+}
