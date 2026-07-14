@@ -166,6 +166,7 @@
   font-size: var(--mc-font-size-md);
   font-weight: 500;
   max-width: 40ch;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -256,4 +257,30 @@
   align-items: center;
   gap: 4px;
   padding: 4px 8px;
+}
+
+/* why: la grilla de 3 columnas (identity/hero/actions lado a lado) asume el
+   ancho de escritorio — bajo ~480px las columnas quedan tan angostas que el
+   nombre, los pills y los botones de acción se amontonan y desbordan. Apila
+   las 3 zonas y deja que hero/actions ocupen el ancho completo. */
+@media (max-width: 480px) {
+  .drawer {
+    grid-template-columns: 1fr;
+    gap: var(--mc-space-2);
+    padding: var(--mc-space-2) var(--mc-space-3);
+  }
+  .name {
+    max-width: 60vw;
+  }
+  .rename-input {
+    min-width: 0;
+    width: 100%;
+  }
+  .head-summary {
+    max-width: 100%;
+  }
+  .actions {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
 }

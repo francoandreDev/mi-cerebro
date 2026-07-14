@@ -6,7 +6,12 @@
   [class.card--bloom]="stage() === 'bloom'"
   [class.card--wilting]="wilting()"
   [class.card--done]="s.done"
+  [class.card--lifted]="lifted()"
+  [class.card--plop]="justSprouted()"
+  [class.card--watered]="watered()"
+  [class.card--emerging]="emerging()"
   [attr.aria-label]="ariaLabel()"
+  [attr.data-task-id]="s.id"
   tabindex="0"
   draggable="true"
   (click)="onClick()"
@@ -19,4 +24,14 @@
       <span class="tag" [style.color]="tag.color">#{{ tag.label }}</span>
     }
   </div>
+  @if (canWater()) {
+    <button
+      type="button"
+      class="water-btn"
+      [attr.aria-label]="waterAriaLabel()"
+      (click)="onWaterClick($event)"
+    >
+      💧
+    </button>
+  }
 </article>

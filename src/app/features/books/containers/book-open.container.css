@@ -143,76 +143,216 @@
   right: clamp(28px, 4.5vw, 56px);
 }
 
-/* COVER PAGE — mismo "papel" que el resto. El marco es serif + reglas */
-.cover-page {
-  flex: 1;
+/* CLOSED BOOK — estado inicial: tapa cerrada con color propio, flip 3D a la
+   contratapa, y click para abrir. Reemplaza a la vieja cover-page/back-page
+   como *páginas del spread*: ahora son las caras externas del libro. */
+.closed-wrap {
   display: flex;
-  align-items: stretch;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--mc-space-3);
+  padding: var(--mc-space-5) 0;
 }
-.cover-frame {
-  flex: 1;
-  border: 1px solid var(--mc-book-paper-border);
-  border-radius: 4px;
-  padding: clamp(28px, 5vh, 56px) clamp(24px, 4vw, 48px);
+.closed-book {
+  position: relative;
+  width: min(420px, 88vw);
+  height: min(64vh, 560px);
+  perspective: 2000px;
+  transition:
+    transform 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.45s ease;
+  filter: drop-shadow(0 24px 32px rgba(0, 0, 0, 0.4));
+}
+/* why: gesto de "abrir" — el libro se aleja rotando antes de conmutar al
+   spread interno (setTimeout de 450ms en el container, ver onOpenBook). */
+.closed-book.opening {
+  transform: scale(1.06) rotateY(-18deg);
+  opacity: 0;
+}
+.closed-flip {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.closed-flip.flipped {
+  transform: rotateY(180deg);
+}
+.closed-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border-radius: 6px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: var(--mc-space-3);
   text-align: center;
+  padding: clamp(28px, 5vh, 56px) clamp(24px, 4vw, 48px);
+  box-shadow:
+    inset -10px 0 20px -12px rgba(0, 0, 0, 0.45),
+    0 1px 1px rgba(0, 0, 0, 0.15);
 }
+.closed-face.front {
+  background: linear-gradient(
+      150deg,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0) 45%
+    ),
+    var(--mc-book-bg, #3a2c1c);
+  color: var(--mc-book-fg, #f4ece1);
+  border: none;
+  cursor: pointer;
+  font-family: var(--mc-font-serif);
+}
+/* why: la contratapa es la misma tela que la tapa (mismo color/material del
+   libro cerrado), no el papel interior — sólo pisamos las vars que el
+   back-title/mc-editor consumen, así el editor de reverso hereda la misma
+   paleta sin tocar nada global. */
+.closed-face.back {
+  background: linear-gradient(
+      150deg,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0) 45%
+    ),
+    var(--mc-book-bg, #3a2c1c);
+  color: var(--mc-book-fg, #f4ece1);
+  transform: rotateY(180deg);
+  align-items: stretch;
+  justify-content: flex-start;
+  --mc-book-paper-fg: var(--mc-book-fg, #f4ece1);
+  --mc-book-paper-muted: color-mix(in srgb, var(--mc-book-fg, #f4ece1) 65%, transparent);
+  --mc-book-paper-border: color-mix(in srgb, var(--mc-book-fg, #f4ece1) 28%, transparent);
+  --mc-bg-elevated: color-mix(in srgb, var(--mc-book-bg, #3a2c1c) 82%, #000 18%);
+  --mc-fg-primary: var(--mc-book-fg, #f4ece1);
+  --mc-border-default: color-mix(in srgb, var(--mc-book-fg, #f4ece1) 25%, transparent);
+}
+.open-hint {
+  margin-top: auto;
+  font-family: var(--mc-font-serif);
+  font-variant: small-caps;
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.closed-face.front:hover .open-hint,
+.closed-face.front:focus-visible .open-hint {
+  opacity: 0.75;
+}
+
+.flip-btn {
+  background: transparent;
+  border: 1px solid var(--mc-border-default);
+  color: var(--mc-fg-muted);
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+.flip-btn:hover {
+  background: var(--mc-bg-elevated);
+  color: var(--mc-fg-primary);
+}
+
+/* RIBBON — marcador manual: cinta que asoma del canto derecho del libro
+   cerrado, a la altura proporcional del capítulo marcado. */
+.bookmark-ribbon {
+  position: absolute;
+  right: -6px;
+  transform: translateY(-50%);
+  width: 26px;
+  height: 34px;
+  background: var(--mc-accent-primary);
+  color: var(--mc-accent-fg, var(--mc-bg-base));
+  border: none;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.35);
+}
+
+/* Herencia para las caras cerradas: mismo look serif de portada que ya
+   tenía la vieja .cover-page. */
 .cover-stripe {
   display: block;
   width: 60px;
   height: 1px;
-  background: var(--mc-book-paper-muted);
-  opacity: 0.5;
+  background: currentColor;
+  opacity: 0.4;
 }
 .cover-eyebrow {
   font-family: var(--mc-font-serif);
   font-variant: small-caps;
   font-size: 11px;
   letter-spacing: 0.3em;
-  color: var(--mc-book-paper-muted);
+  opacity: 0.85;
 }
-.cover-title {
+.cover-title-input {
   margin: 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed transparent;
   font-family: var(--mc-font-serif);
   font-size: clamp(1.6rem, 3vw, 2.2rem);
   font-weight: 700;
   line-height: 1.15;
   letter-spacing: -0.01em;
-  color: var(--mc-book-paper-fg);
+  color: inherit;
+  text-align: center;
+  width: 100%;
+}
+.cover-title-input::placeholder {
+  color: inherit;
+  opacity: 0.6;
+}
+.cover-title-input:hover {
+  border-bottom-color: currentColor;
+}
+.cover-title-input:focus {
+  outline: none;
+  border-bottom-color: currentColor;
 }
 .cover-subtitle {
   background: transparent;
   border: none;
-  border-bottom: 1px dashed var(--mc-book-paper-border);
+  border-bottom: 1px dashed transparent;
   font-family: var(--mc-font-serif);
   font-style: italic;
   font-size: 15px;
-  color: var(--mc-book-paper-fg);
+  color: inherit;
   text-align: center;
   padding: var(--mc-space-1) var(--mc-space-2);
   width: min(80%, 320px);
+  opacity: 0.9;
 }
 .cover-subtitle::placeholder {
-  color: var(--mc-book-paper-muted);
+  color: inherit;
+  opacity: 0.7;
 }
 .cover-subtitle:hover {
-  border-bottom-color: var(--mc-book-paper-muted);
+  border-bottom-color: currentColor;
 }
 .cover-subtitle:focus {
   outline: none;
-  border-bottom-color: var(--mc-accent-primary);
-  background: var(--mc-book-paper-accent);
+  border-bottom-color: currentColor;
+  opacity: 1;
 }
 .cover-meta {
   margin-top: auto;
   font-family: var(--mc-font-serif);
   font-variant: small-caps;
   font-size: 12px;
-  color: var(--mc-book-paper-muted);
+  opacity: 0.8;
   letter-spacing: 0.18em;
 }
 
@@ -256,29 +396,60 @@
   min-height: 0;
 }
 
-/* BACK PAGE — mismo papel + título serif. El mc-editor adentro adopta
-   el .book-editor (mismo flow que en chapter-editor-pane). */
-.back-page {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: var(--mc-space-2);
-  min-height: 0;
+/* CONTRATAPA — sinopsis + bio de autor, misma tela que la tapa (ver
+   .closed-face.back más arriba). */
+.back-section {
+  width: 100%;
+  text-align: left;
 }
-.back-title {
-  margin: 0 0 var(--mc-space-2);
+.back-section h4 {
+  margin: 0 0 var(--mc-space-1);
   font-family: var(--mc-font-serif);
   font-variant: small-caps;
-  font-size: 1.4rem;
-  letter-spacing: 0.06em;
-  color: var(--mc-book-paper-fg);
-  border-bottom: 1px solid var(--mc-book-paper-border);
-  padding-bottom: var(--mc-space-1);
+  font-size: 0.85rem;
+  letter-spacing: 0.14em;
+  opacity: 0.75;
 }
-.back-editor {
-  display: block;
-  flex: 1;
-  min-height: 0;
+.back-synopsis {
+  width: 100%;
+  min-height: 90px;
+  resize: vertical;
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed transparent;
+  font-family: var(--mc-font-serif);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: inherit;
+}
+.back-synopsis::placeholder {
+  color: inherit;
+  opacity: 0.6;
+}
+.back-synopsis:hover {
+  border-bottom-color: currentColor;
+}
+.back-synopsis:focus {
+  outline: none;
+  border-bottom-color: currentColor;
+}
+.back-author-bio {
+  margin: 0;
+  font-family: var(--mc-font-serif);
+  font-style: italic;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  opacity: 0.9;
+}
+.back-author-empty {
+  font-family: var(--mc-font-serif);
+  font-size: 0.85rem;
+  color: inherit;
+  opacity: 0.75;
+  text-decoration: underline;
+}
+.back-author-empty:hover {
+  opacity: 1;
 }
 
 .blank-page {
@@ -339,4 +510,42 @@
 }
 .sk-w-50 {
   width: 50%;
+}
+
+/* why: la vista de libro abierto es intrínsecamente ancha (2 páginas lado a
+   lado + spine + 2 flechas de navegación) — bajo ~700px las columnas quedan
+   ilegibles antes de romper por overflow. Fix: apilar left/right en una sola
+   columna con scroll natural de la página (misma pareja de páginas del
+   spread actual, ya no lado a lado). */
+@media (max-width: 700px) {
+  .pane {
+    padding: var(--mc-space-3);
+  }
+  .open-book {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: var(--mc-space-2);
+  }
+  .page-nav {
+    width: 28px;
+    height: 52px;
+    font-size: 1.4rem;
+  }
+  .spread {
+    height: auto;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .spine {
+    display: none;
+  }
+  .page {
+    padding: clamp(24px, 6vw, 36px) clamp(20px, 6vw, 32px);
+    min-height: 200px;
+  }
+  .page.left {
+    padding-right: clamp(20px, 6vw, 32px);
+    border-bottom: 1px solid var(--mc-book-paper-border);
+  }
+  .page.right {
+    padding-left: clamp(20px, 6vw, 32px);
+  }
 }

@@ -158,6 +158,50 @@ mc-editor .editor-host .mc-draft-insert > *:first-child {
 mc-editor .editor-host .mc-draft-insert > *:last-child {
   margin-bottom: 0;
 }
+// why: marcador de párrafo (bookmark) — un widget de ProseMirror
+// (bookmark-pin.ext.ts) posicionado en el margen izquierdo del bloque que
+// marca. `position: relative` en el bloque lo convierte en su contenedor de
+// posicionamiento, así que el widget hereda gratis la posición correcta sin
+// importar transforms/columnas ancestros (la paginación de libro traslada
+// .pages con transform, ver _book-editor.scss).
+mc-editor .editor-host [data-block-id] {
+  position: relative;
+}
+mc-editor .editor-host .mc-para-pin {
+  position: absolute;
+  left: -15px;
+  top: 0;
+  height: 1.7em;
+  width: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: var(--mc-fg-muted);
+  cursor: pointer;
+  opacity: 0.7;
+  border-radius: var(--mc-radius-sm);
+}
+mc-editor .editor-host .mc-para-pin:hover {
+  opacity: 1;
+  color: var(--mc-accent-primary);
+}
+mc-editor .editor-host .mc-para-pin.active {
+  opacity: 1;
+  color: var(--mc-accent-primary);
+}
+// why: lectura en voz alta (TtsService) resalta el bloque que se está
+// leyendo — la clase la aplica ChapterEditorPaneComponent directo sobre el
+// DOM vía highlightSegment(), no hay estado de Angular/ProseMirror
+// involucrado, así que esta regla vive acá igual que el resto de estilos de
+// contenido inyectado por fuera del template compiler.
+mc-editor .editor-host [data-block-id].mc-tts-active {
+  background: color-mix(in srgb, var(--mc-accent-primary) 14%, transparent);
+  border-radius: var(--mc-radius-sm);
+  transition: background 0.15s ease;
+}
 mc-editor .editor-host .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   color: var(--mc-fg-muted);

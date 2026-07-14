@@ -10,7 +10,7 @@ import { hashColor } from '@shared/utils/hash-color';
   selector: 'mc-book-volume',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="volume" [attr.data-tallness]="tallness()">
+    <div class="volume" [attr.data-tallness]="tallness()" [attr.data-density]="density()">
       <div class="cover-face front">
         <span class="cover-stripe top"></span>
         <span class="cover-stripe bottom"></span>
@@ -53,8 +53,10 @@ export class BookVolumeComponent {
   readonly accent = input<string | null>(null);
   // why: density 'compact' reduce dimensiones a ~65% para vistas densas
   //      (estantería compacta). El lomo sigue legible porque el font escala
-  //      proporcionalmente con `thickness`.
-  readonly density = input<'normal' | 'compact'>('normal');
+  //      proporcionalmente con `thickness`. 'micro' es para íconos chiquitos
+  //      (ej. bullet de la vista de lista) — ahí el lomo no necesita texto
+  //      legible, así que se oculta (ver book-volume.component.css).
+  readonly density = input<'normal' | 'compact' | 'micro'>('normal');
 
   protected readonly palette = computed(() => {
     const a = this.accent();
@@ -62,7 +64,12 @@ export class BookVolumeComponent {
     return hashColor(this.bookId());
   });
   protected readonly displayTitle = computed(() => this.title() || this.untitledLabel());
-  private readonly densityScale = computed(() => (this.density() === 'compact' ? 0.65 : 1));
+  private readonly densityScale = computed(() => {
+    const d = this.density();
+    if (d === 'micro') return 0.22;
+    if (d === 'compact') return 0.65;
+    return 1;
+  });
   protected readonly height = computed(() => {
     const base = this.tallness() === 'short' ? 250 : this.tallness() === 'tall' ? 320 : 285;
     return Math.round(base * this.densityScale());

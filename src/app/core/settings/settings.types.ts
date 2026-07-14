@@ -6,6 +6,9 @@ export type ThemeOverride = 'auto' | 'light' | 'dark';
 export interface Settings {
   readonly schemaVersion: number;
   readonly timezone: string;
+  // why: bio de autor global — se escribe una vez en Ajustes y se reusa en
+  //      la contratapa de todos los libros (no es un campo por libro).
+  readonly authorBio: string;
   readonly versioning: {
     readonly autocommitMinutes: number;
     readonly pushAfterAutocommit: boolean;
@@ -40,6 +43,7 @@ export type BgSatLevel = 'low' | 'mid' | 'high';
 export const DEFAULT_SETTINGS: Settings = {
   schemaVersion: SETTINGS_SCHEMA_VERSION,
   timezone: 'America/Lima',
+  authorBio: '',
   versioning: {
     autocommitMinutes: 5,
     pushAfterAutocommit: false,

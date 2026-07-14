@@ -17,15 +17,6 @@
     />
   }
 </div>
-<input
-  type="text"
-  class="title-input"
-  [value]="book().title"
-  [placeholder]="t('books.placeholderTitle')"
-  [attr.aria-label]="t('books.placeholderTitle')"
-  [readOnly]="!editable()"
-  (input)="onTitleInput($event)"
-/>
 <div class="bottom">
   <mc-tag-picker
     class="tags"

@@ -24,19 +24,6 @@
   color: var(--mc-fg-primary);
   background: var(--mc-bg-elevated);
 }
-.title-input {
-  font-size: var(--mc-font-size-xl, 1.4rem);
-  font-weight: 600;
-  background: transparent;
-  border: none;
-  color: var(--mc-fg-primary);
-  padding: var(--mc-space-1) 0;
-  width: 100%;
-}
-.title-input:focus {
-  outline: none;
-  border-bottom: 1px solid var(--mc-accent-primary);
-}
 .bottom {
   display: flex;
   align-items: center;

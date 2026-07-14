@@ -27,7 +27,6 @@ export class BookMetaBarComponent {
   readonly editable = input<boolean>(true);
   readonly chaptersCount = input<number>(0);
   readonly totalWords = input<number>(0);
-  readonly titleChange = output<string>();
   readonly removeBook = output<void>();
   readonly addTag = output<string>();
   readonly removeTag = output<string>();
@@ -62,10 +61,6 @@ export class BookMetaBarComponent {
   }
   protected onMenuChoose(key: string): void {
     if (key === 'delete') this.removeBook.emit();
-  }
-  protected onTitleInput(event: Event): void {
-    const target = event.target as HTMLInputElement | null;
-    if (target) this.titleChange.emit(target.value);
   }
 }
 

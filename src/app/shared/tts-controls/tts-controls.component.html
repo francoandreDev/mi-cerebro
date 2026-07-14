@@ -1,0 +1,60 @@
+@if (state().supported) {
+  <button
+    type="button"
+    class="list-toggle"
+    [class.active]="state().speaking && !state().paused"
+    [attr.aria-pressed]="state().speaking && !state().paused"
+    [attr.aria-label]="toggleLabel()"
+    [title]="toggleLabel()"
+    (click)="onToggle()"
+  >
+    <mc-icon [name]="state().speaking && !state().paused ? 'pause' : 'play'" />
+  </button>
+  @if (state().speaking) {
+    <button
+      type="button"
+      class="list-toggle"
+      [attr.aria-label]="t('books.tts.stop')"
+      [title]="t('books.tts.stop')"
+      (click)="onStop()"
+    >
+      <mc-icon name="x" />
+    </button>
+  }
+  <button
+    type="button"
+    class="list-toggle"
+    [class.active]="settingsOpen()"
+    [attr.aria-pressed]="settingsOpen()"
+    [attr.aria-label]="t('books.tts.settings')"
+    [title]="t('books.tts.settings')"
+    (click)="toggleSettings()"
+  >
+    <mc-icon name="faders-horizontal" />
+  </button>
+  @if (settingsOpen()) {
+    <div class="tts-panel" role="dialog" [attr.aria-label]="t('books.tts.settings')">
+      <label class="tts-row">
+        <span>{{ t('books.tts.rate') }}</span>
+        <select (change)="onRateChange(+$any($event.target).value)">
+          @for (step of rateSteps; track step) {
+            <option [value]="step" [selected]="step === state().prefs.rate">{{ step }}×</option>
+          }
+        </select>
+      </label>
+      <label class="tts-row">
+        <span>{{ t('books.tts.voice') }}</span>
+        <select (change)="onVoiceChange($event)">
+          <option value="" [selected]="!state().prefs.voiceURI">
+            {{ t('books.tts.voiceDefault') }}
+          </option>
+          @for (voice of state().voices; track voice.uri) {
+            <option [value]="voice.uri" [selected]="voice.uri === state().prefs.voiceURI">
+              {{ voice.label }}
+            </option>
+          }
+        </select>
+      </label>
+    </div>
+  }
+}

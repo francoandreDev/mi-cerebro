@@ -560,3 +560,31 @@
   60% { opacity: 0.75; }
   100% { opacity: 0; }
 }
+
+/* why: a 2 columnas fijas, por debajo de ~700px cada columna queda tan
+   angosta que el texto se parte palabra por palabra (ilegible). Mobile
+   pasa a 1 columna — cada "página" ocupa el ancho completo del spread y
+   el flip pasa a ser de página completa en vez de media hoja. La
+   generalización de colW en updateMetrics() (chapter-editor-pane.component.ts)
+   ya no asume 2 columnas, así que el flip sigue midiendo bien con n=1. */
+@media (max-width: 700px) {
+  .book-frame {
+    padding: 0 var(--mc-space-1);
+  }
+  .page-nav {
+    width: 28px;
+    height: 52px;
+    font-size: 1.4rem;
+  }
+  .pages {
+    column-count: 1;
+    column-gap: 0;
+    padding: clamp(24px, 6vw, 36px) clamp(20px, 6vw, 32px);
+  }
+  /* why: sin 2 columnas no hay gutter central que marcar — el lomo y su
+     sombra de "página levantándose" dejan de tener sentido visual. */
+  .spine,
+  .spread::after {
+    display: none;
+  }
+}

@@ -394,7 +394,13 @@
     padding: 0;
     border: 0;
     background: rgb(0 0 0 / 0.5);
-    z-index: 90;
+    /* why: el menú mobile es modal — tiene que taparse a sí mismo por
+       encima de cualquier overlay fijo de una feature (ej. el drawer de
+       variante seleccionada, z-index:100 en variants.container.css), si
+       no queda enterrado bajo contenido de la página con el que no tiene
+       ninguna relación. Por debajo de los modales de página (§ legend-pop
+       190+, confirm modals 200+), que sí deben ganarle al menú de nav. */
+    z-index: 150;
   }
 
   .rail {
@@ -422,7 +428,7 @@
     border-top: 1px solid var(--mc-border-default);
     border-right: none;
     box-shadow: var(--mc-shadow-lg);
-    z-index: 95;
+    z-index: 151;
   }
   :host(.rail-open) .rail-spacer {
     display: none;

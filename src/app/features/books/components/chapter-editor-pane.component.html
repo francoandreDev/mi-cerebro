@@ -32,6 +32,17 @@
         [globalStats]="stats().global"
         (closed)="statsOpen.set(false)"
       />
+      @if (editable() && hasImageGalleries()) {
+        <button
+          type="button"
+          class="list-toggle"
+          [attr.aria-label]="t('editor.insertImage')"
+          [title]="t('editor.insertImage')"
+          (click)="openImagePicker()"
+        >
+          <mc-icon name="image" />
+        </button>
+      }
       @if (editable()) {
         <button
           type="button"
@@ -131,6 +142,7 @@
           <mc-icon name="minus" />
         </button>
       }
+      <mc-tts-controls [state]="ttsState()" (action)="ttsAction.emit($event)" />
       <button
         type="button"
         class="focus-toggle"
@@ -189,7 +201,11 @@
           [editable]="editable()"
           [entityId]="chapter().id"
           [entityTitle]="chapter().title"
+          [bookmarkable]="editable()"
+          [bookmarkedBlockId]="bookmarkBlockId()"
+          [ttsHighlightBlockId]="ttsHighlightBlockId()"
           (valueChange)="onBodyChange($event)"
+          (bookmarkToggle)="toggleBookmark.emit($event)"
         />
       </div>
     </div>

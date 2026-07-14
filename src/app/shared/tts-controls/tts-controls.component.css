@@ -1,0 +1,68 @@
+/* why: inline-flex (not display:contents) so this host is both a normal
+   flex item inside the pane's ui-bar AND the positioning context for
+   .tts-panel below — same trick as mc-writing-stats-popover. */
+:host {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+}
+
+/* why: mirrors .list-toggle in chapter-editor-pane.component.css — Angular's
+   emulated encapsulation scopes CSS per component, so a class defined there
+   doesn't reach this component's own template even though it renders inside
+   the pane's ui-bar. */
+.list-toggle {
+  background: transparent;
+  border: 1px solid var(--mc-border-default);
+  color: var(--mc-fg-muted);
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  font-size: 1rem;
+  border-radius: var(--mc-radius-md);
+  cursor: pointer;
+  line-height: 1;
+}
+.list-toggle:hover {
+  color: var(--mc-fg-primary);
+  border-color: var(--mc-accent-primary);
+}
+.list-toggle.active {
+  color: var(--mc-accent-fg, var(--mc-bg-base));
+  background: var(--mc-accent-primary);
+  border-color: var(--mc-accent-primary);
+}
+
+.tts-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-2);
+  padding: var(--mc-space-2) var(--mc-space-3);
+  background: var(--mc-bg-elevated);
+  border: 1px solid var(--mc-border-default);
+  border-radius: var(--mc-radius-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  font-size: var(--mc-font-size-sm);
+  white-space: nowrap;
+}
+.tts-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mc-space-2);
+  color: var(--mc-fg-muted);
+}
+.tts-row select {
+  background: var(--mc-bg-base);
+  color: var(--mc-fg-primary);
+  border: 1px solid var(--mc-border-default);
+  border-radius: var(--mc-radius-sm);
+  padding: 2px var(--mc-space-1);
+  max-width: 160px;
+}

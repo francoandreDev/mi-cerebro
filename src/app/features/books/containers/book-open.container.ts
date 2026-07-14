@@ -7,9 +7,7 @@ import {
   input,
   signal,
 } from '@angular/core';
-import { Router } from '@angular/router';
-
-import type { JSONContent } from '@tiptap/core';
+import { Router, RouterLink } from '@angular/router';
 
 import { AutosaveService } from '@core/autosave/autosave.service';
 import { ErrorService } from '@core/errors/error.service';
@@ -19,18 +17,20 @@ import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { EntityLockController } from '@core/locks/entity-lock.controller';
 import { entitySlugSegment, extractEntityId } from '@core/routing/entity-slug';
+import { SettingsService } from '@core/settings/settings.service';
 import { TagsService } from '@core/tags/tags.service';
 import {
   ConfirmDialogComponent,
   type ConfirmRequest,
 } from '@shared/confirm-dialog/confirm-dialog.component';
-import { EditorComponent } from '@shared/editor/editor.component';
 import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
+import { IconComponent } from '@shared/icon/icon.component';
+import { hashColor } from '@shared/utils/hash-color';
 import { reorderById } from '@shared/utils/reorder';
 
 import { BookMetaBarComponent, type BookSaveStatus } from '../components/book-meta-bar.component';
 import { ChapterIndexCardComponent } from '../components/chapter-index-card.component';
-import { BOOK_KIND, emptyBackNoteDoc, type Book, type ChapterSummary } from '../models/book.types';
+import { BOOK_KIND, type Book, type ChapterSummary } from '../models/book.types';
 import { BooksService } from '../services/books.service';
 
 interface IndexPage {
@@ -38,13 +38,7 @@ interface IndexPage {
   readonly chapters: readonly ChapterSummary[];
   readonly pageNumber: number;
 }
-interface CoverPage {
-  readonly kind: 'cover';
-}
-interface BackPage {
-  readonly kind: 'back';
-}
-type Page = CoverPage | IndexPage | BackPage;
+type Page = IndexPage;
 
 interface Spread {
   readonly left: Page | null;
@@ -61,7 +55,8 @@ const CHAPTERS_PER_INDEX_PAGE = 4;
     ChapterIndexCardComponent,
     LockBannerComponent,
     ConfirmDialogComponent,
-    EditorComponent,
+    IconComponent,
+    RouterLink,
   ],
   templateUrl: './book-open.container.html',
   styleUrl: './book-open.container.css',
@@ -76,8 +71,10 @@ export class BookOpenContainer {
   private readonly router = inject(Router);
   private readonly errors = inject(ErrorService);
   private readonly i18n = inject(I18nService);
+  private readonly settings = inject(SettingsService);
 
   protected readonly tags = this.tagsService.tags;
+  protected readonly authorBio = this.settings.authorBio;
   protected readonly active = signal<Book | null>(null);
   protected readonly chapters = signal<readonly ChapterSummary[]>([]);
   protected readonly bookStatus = signal<BookSaveStatus>('saved');
@@ -85,6 +82,11 @@ export class BookOpenContainer {
   protected readonly confirmRequest = signal<ConfirmRequest | null>(null);
   private confirmHandler: (() => void | Promise<void>) | null = null;
   protected readonly currentSpread = signal<number>(0);
+  // why: el libro arranca siempre cerrado — como agarrar un libro real —
+  //      sin importar si la última vez que lo visitaste quedó abierto.
+  protected readonly isOpen = signal<boolean>(false);
+  protected readonly facing = signal<'front' | 'back'>('front');
+  protected readonly opening = signal<boolean>(false);
   protected readonly totalWords = computed(() =>
     this.chapters().reduce((acc, c) => acc + c.words, 0),
   );
@@ -110,7 +112,7 @@ export class BookOpenContainer {
   });
 
   protected readonly spreads = computed<readonly Spread[]>(() => {
-    const slots: Page[] = [{ kind: 'cover' }, ...this.indexPages(), { kind: 'back' }];
+    const slots: Page[] = [...this.indexPages()];
     const out: Spread[] = [];
     for (let i = 0; i < slots.length; i += 2) {
       out.push({ left: slots[i] ?? null, right: slots[i + 1] ?? null });
@@ -123,6 +125,24 @@ export class BookOpenContainer {
   protected readonly current = computed<Spread>(
     () => this.spreads()[this.currentSpread()] ?? { left: null, right: null },
   );
+
+  protected readonly coverPalette = computed(() => {
+    const book = this.active();
+    if (!book) return { bg: '#3a2c1c', fg: '#f4ece1' };
+    if (book.accent) return { bg: book.accent, fg: '#f4ece1' };
+    return hashColor(book.id);
+  });
+  // why: posición de la cinta del marcador manual a lo largo del canto —
+  //      proporcional a dónde cae el capítulo marcado en el orden del libro.
+  protected readonly bookmarkRibbonTop = computed<number | null>(() => {
+    const book = this.active();
+    const chapters = this.chapters();
+    const chapterId = book?.bookmark?.chapterId;
+    if (!chapterId || chapters.length === 0) return null;
+    const idx = chapters.findIndex((c) => c.id === chapterId);
+    if (idx < 0) return null;
+    return Math.round(((idx + 0.5) / chapters.length) * 100);
+  });
 
   constructor() {
     effect(() => {
@@ -147,17 +167,15 @@ export class BookOpenContainer {
   protected t(key: TranslationKey, params?: Record<string, string | number>): string {
     return this.i18n.t(key, params);
   }
-  protected isCover(p: Page | null): p is CoverPage {
-    return p !== null && p.kind === 'cover';
-  }
   protected isIndex(p: Page | null): p is IndexPage {
     return p !== null && p.kind === 'index';
   }
-  protected isBack(p: Page | null): p is BackPage {
-    return p !== null && p.kind === 'back';
-  }
 
   protected prevSpread(): void {
+    if (this.atFirst()) {
+      this.onCloseBook();
+      return;
+    }
     this.currentSpread.update((v) => Math.max(0, v - 1));
   }
   protected nextSpread(): void {
@@ -165,6 +183,39 @@ export class BookOpenContainer {
     this.currentSpread.update((v) => Math.min(max, v + 1));
   }
 
+  protected onOpenBook(event?: Event): void {
+    // why: título/subtítulo son inputs editables sobre la misma cara donde
+    //      se escucha el click de apertura — sin este guard, clickear para
+    //      escribir el título abre el libro en vez de dejarte tipear.
+    const target = event?.target as HTMLElement | null;
+    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
+    if (this.facing() !== 'front' || this.opening()) return;
+    this.opening.set(true);
+    // why: la animación de apertura dura ~450ms (ver .closed-book.opening
+    //      en CSS) — recién ahí conmutamos al spread interno.
+    window.setTimeout(() => {
+      this.isOpen.set(true);
+      this.currentSpread.set(0);
+      this.opening.set(false);
+    }, 450);
+  }
+  protected onCloseBook(): void {
+    this.isOpen.set(false);
+    this.facing.set('front');
+  }
+  protected onFlip(): void {
+    this.facing.update((f) => (f === 'front' ? 'back' : 'front'));
+  }
+  protected onGoToBookmark(): void {
+    const chapterId = this.active()?.bookmark?.chapterId;
+    if (!chapterId) return;
+    this.onOpenChapter(chapterId);
+  }
+
+  protected onTitleInput(event: Event): void {
+    const target = event.target as HTMLInputElement | null;
+    if (target) this.onTitleChange(target.value);
+  }
   protected onTitleChange(title: string): void {
     const current = this.active();
     if (!current || !this.lock.guardWrite()) return;
@@ -183,13 +234,12 @@ export class BookOpenContainer {
     this.scheduleBookSave(next);
   }
 
-  protected backNote(): JSONContent {
-    return this.active()?.backNote ?? emptyBackNoteDoc();
-  }
-  protected onBackNoteChange(body: JSONContent): void {
+  protected onSynopsisInput(event: Event): void {
     const current = this.active();
     if (!current || !this.lock.guardWrite()) return;
-    const next = { ...current, backNote: body };
+    const target = event.target as HTMLTextAreaElement | null;
+    if (!target) return;
+    const next = { ...current, synopsis: target.value };
     this.active.set(next);
     this.scheduleBookSave(next);
   }
@@ -344,6 +394,8 @@ export class BookOpenContainer {
       this.bookStatus.set('saved');
       this.chapters.set(await this.booksService.listChapters(id));
       this.currentSpread.set(0);
+      this.isOpen.set(false);
+      this.facing.set('front');
     } catch (e) {
       this.errors.report(e);
       this.active.set(null);

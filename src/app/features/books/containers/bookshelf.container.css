@@ -608,11 +608,9 @@
   width: 50px;
   height: 70px;
   display: inline-flex;
-  align-items: stretch;
-}
-.bullet mc-book-volume {
-  transform: scale(0.45);
-  transform-origin: left center;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 .row-title {
   font-weight: 600;

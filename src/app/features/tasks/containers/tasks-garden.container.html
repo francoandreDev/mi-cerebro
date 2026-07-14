@@ -1,4 +1,4 @@
-<section class="garden" [class.garden--night]="night()">
+<section class="garden" [class.garden--night]="night()" [class.garden--watering]="watering()">
   <header class="head">
     <h1 class="title">{{ t('tasks.garden.headerTitle') }}</h1>
     <form class="compose" (submit)="onComposeSubmit($event)">
@@ -81,6 +81,8 @@
           [availableTags]="tags()"
           [untitledLabel]="untitledLabel()"
           [wiltDays]="wiltDaysFor(entry.summary)"
+          [lifted]="dnd.draggingId() === entry.summary.id"
+          [justSprouted]="justSproutedId() === entry.summary.id"
           (open)="onOpen(entry.summary.id, entry.summary.title)"
           (transplant)="onTransplant($event)"
           (harvest)="onHarvest($event)"
@@ -114,10 +116,15 @@
           stage="sprout"
           [availableTags]="tags()"
           [untitledLabel]="untitledLabel()"
+          [wateringMode]="watering()"
+          [watered]="wateredId() === entry.summary.id"
+          [lifted]="dnd.draggingId() === entry.summary.id"
+          [justSprouted]="justSproutedId() === entry.summary.id"
           (open)="onOpen(entry.summary.id, entry.summary.title)"
           (transplant)="onTransplant($event)"
           (harvest)="onHarvest($event)"
           (remove)="onDelete($event)"
+          (water)="onWater($event, 'week')"
           (dragstart)="dnd.onDragStart($event, entry.summary.id)"
           (dragend)="dnd.onDragEnd()"
         />
@@ -135,19 +142,30 @@
       (dragLeaveBucket)="dnd.onDragLeave($event)"
       (dropOn)="onDrop($event)"
     >
-      @for (entry of pending().backlog; track entry.summary.id) {
+      @for (entry of visibleBacklog(); track entry.summary.id; let i = $index) {
         <mc-plant-card
           [entry]="entry"
           stage="seed"
           [availableTags]="tags()"
           [untitledLabel]="untitledLabel()"
+          [wateringMode]="watering()"
+          [watered]="wateredId() === entry.summary.id"
+          [lifted]="dnd.draggingId() === entry.summary.id"
+          [justSprouted]="justSproutedId() === entry.summary.id"
+          [emerging]="i >= emergingFrom()"
           (open)="onOpen(entry.summary.id, entry.summary.title)"
           (transplant)="onTransplant($event)"
           (harvest)="onHarvest($event)"
           (remove)="onDelete($event)"
+          (water)="onWater($event, 'backlog')"
           (dragstart)="dnd.onDragStart($event, entry.summary.id)"
           (dragend)="dnd.onDragEnd()"
         />
+      }
+      @if (hiddenBacklogCount() > 0) {
+        <button type="button" class="load-more" (click)="onLoadMoreBacklog()">
+          {{ t('tasks.garden.loadMore') }} · {{ loadMoreLabel() }}
+        </button>
       }
     </mc-planter>
   </div>

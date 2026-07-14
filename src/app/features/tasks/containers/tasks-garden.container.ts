@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
   computed,
   inject,
   isDevMode,
@@ -14,6 +15,7 @@ import { withReauthIfNeeded } from '@core/errors/with-reauth';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { between } from '@core/ordering/fractional-position';
 import { entitySlugSegment } from '@core/routing/entity-slug';
 import { TagsService } from '@core/tags/tags.service';
 import { createDndController } from '@shared/utils/dnd-controller';
@@ -35,6 +37,7 @@ const STAGE_BY_BUCKET: Record<Bucket, PlantStage> = {
 const WILT_THRESHOLD_DAYS = 3;
 const NIGHT_KEY = 'mc.tasks.garden.night';
 const WATERING_KEY = 'mc.tasks.garden.watering';
+const BACKLOG_PAGE_SIZE = 24;
 
 @Component({
   selector: 'mc-tasks-garden',
@@ -51,6 +54,7 @@ export class TasksGardenContainer {
   private readonly router = inject(Router);
   private readonly errors = inject(ErrorService);
   private readonly i18n = inject(I18nService);
+  private readonly host = inject(ElementRef<HTMLElement>);
 
   protected readonly STAGE_BY_BUCKET = STAGE_BY_BUCKET;
   protected readonly tags = this.tagsService.tags;
@@ -61,6 +65,10 @@ export class TasksGardenContainer {
   protected readonly watering = signal<boolean>(readBool(WATERING_KEY));
   protected readonly dnd = createDndController<Bucket>();
   protected readonly announce = signal<string>('');
+  protected readonly wateredId = signal<string | null>(null);
+  protected readonly justSproutedId = signal<string | null>(null);
+  protected readonly visibleBacklogCount = signal<number>(BACKLOG_PAGE_SIZE);
+  protected readonly emergingFrom = signal<number>(BACKLOG_PAGE_SIZE);
 
   protected readonly untitledLabel = computed(() => this.t('tasks.untitledTitle'));
 
@@ -77,6 +85,18 @@ export class TasksGardenContainer {
     week: this.buckets().week.filter((e) => !e.summary.done),
     backlog: this.buckets().backlog.filter((e) => !e.summary.done),
   }));
+
+  protected readonly visibleBacklog = computed(() =>
+    this.pending().backlog.slice(0, this.visibleBacklogCount()),
+  );
+
+  protected readonly hiddenBacklogCount = computed(() =>
+    Math.max(0, this.pending().backlog.length - this.visibleBacklogCount()),
+  );
+
+  protected readonly loadMoreLabel = computed(() =>
+    this.t('tasks.garden.loadMoreCount').replace('{n}', String(this.hiddenBacklogCount())),
+  );
 
   protected readonly harvested = computed<readonly TaskSummary[]>(() => {
     return this.buckets()
@@ -107,10 +127,23 @@ export class TasksGardenContainer {
   protected onQueryInput(event: Event): void {
     const target = event.target as HTMLInputElement | null;
     if (target) this.query.set(target.value);
+    this.visibleBacklogCount.set(BACKLOG_PAGE_SIZE);
+    this.emergingFrom.set(BACKLOG_PAGE_SIZE);
   }
 
   protected onClearQuery(): void {
     this.query.set('');
+    this.visibleBacklogCount.set(BACKLOG_PAGE_SIZE);
+    this.emergingFrom.set(BACKLOG_PAGE_SIZE);
+  }
+
+  protected onLoadMoreBacklog(): void {
+    const from = this.visibleBacklogCount();
+    this.emergingFrom.set(from);
+    this.visibleBacklogCount.set(from + BACKLOG_PAGE_SIZE);
+    setTimeout(() => {
+      if (this.emergingFrom() === from) this.emergingFrom.set(this.visibleBacklogCount());
+    }, 500);
   }
 
   protected onToggleNight(): void {
@@ -196,18 +229,71 @@ export class TasksGardenContainer {
           .replace('{title}', title)
           .replace('{stage}', stage),
       );
+      this.justSproutedId.set(id);
+      setTimeout(() => {
+        if (this.justSproutedId() === id) this.justSproutedId.set(null);
+      }, 450);
     } catch (e) {
       this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize()));
     }
   }
 
   protected async onHarvest(id: string): Promise<void> {
+    if (!prefersReducedMotion()) this.flyToBasket(id);
     try {
       await this.workspace.ensureWritable();
       await this.tasksService.harvest(id);
       const summary = this.summaries().find((s) => s.id === id);
       const title = summary?.title || this.untitledLabel();
       this.announce.set(this.t('tasks.garden.aria.harvested').replace('{title}', title));
+    } catch (e) {
+      this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize()));
+    }
+  }
+
+  // why: la cesta de cosecha es un badge chico en el rincón del cantero HOY,
+  //      no un lugar natural donde "aterrice" una card angular vía transición
+  //      de layout normal (la card desaparece de un array y listo). Un clon
+  //      DOM absoluto que vuela en arco hasta ahí y se auto-destruye da la
+  //      sensación de cosecha sin inventar estado de animación por-tarea.
+  private flyToBasket(id: string): void {
+    const root = this.host.nativeElement;
+    const cardEl = root.querySelector(`[data-task-id="${id}"]`) as HTMLElement | null;
+    const basketEl = root.querySelector('.basket-stack .basket') as HTMLElement | null;
+    if (!cardEl || !basketEl) return;
+    const cardRect = cardEl.getBoundingClientRect();
+    const basketRect = basketEl.getBoundingClientRect();
+    const clone = cardEl.cloneNode(true) as HTMLElement;
+    clone.classList.add('plant-flying');
+    clone.style.left = `${cardRect.left}px`;
+    clone.style.top = `${cardRect.top}px`;
+    clone.style.width = `${cardRect.width}px`;
+    const dx = basketRect.left + basketRect.width / 2 - (cardRect.left + cardRect.width / 2);
+    const dy = basketRect.top + basketRect.height / 2 - (cardRect.top + cardRect.height / 2);
+    clone.style.setProperty('--fly-dx', `${dx}px`);
+    clone.style.setProperty('--fly-dy', `${dy}px`);
+    document.body.appendChild(clone);
+    clone.addEventListener('animationend', () => clone.remove(), { once: true });
+    setTimeout(() => clone.remove(), 700);
+  }
+
+  protected async onWater(id: string, bucket: 'week' | 'backlog'): Promise<void> {
+    const list = this.pending()[bucket];
+    const idx = list.findIndex((e) => e.summary.id === id);
+    if (idx <= 0) return;
+    const above = list[idx - 1]!.summary.position;
+    const aboveAbove = idx >= 2 ? list[idx - 2]!.summary.position : null;
+    const newPosition = between(aboveAbove, above);
+    try {
+      await this.workspace.ensureWritable();
+      await this.tasksService.setPosition(id, newPosition);
+      const summary = this.summaries().find((s) => s.id === id);
+      const title = summary?.title || this.untitledLabel();
+      this.announce.set(this.t('tasks.garden.aria.watered').replace('{title}', title));
+      this.wateredId.set(id);
+      setTimeout(() => {
+        if (this.wateredId() === id) this.wateredId.set(null);
+      }, 480);
     } catch (e) {
       this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize()));
     }
@@ -227,6 +313,13 @@ export class TasksGardenContainer {
 }
 
 const cap = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
+const prefersReducedMotion = (): boolean => {
+  try {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  } catch {
+    return false;
+  }
+};
 const readBool = (key: string): boolean => {
   try {
     return localStorage.getItem(key) === '1';

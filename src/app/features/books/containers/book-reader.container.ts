@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
   effect,
   inject,
@@ -21,6 +22,8 @@ import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { EntityLockController } from '@core/locks/entity-lock.controller';
 import { entitySlugSegment, extractEntityId } from '@core/routing/entity-slug';
+import { TtsService } from '@core/tts/tts.service';
+import type { TtsAction, TtsPaneState } from '@core/tts/tts.types';
 import { emptyWritingStats } from '@core/writing-stats/writing-stats.types';
 import { WritingStatsService } from '@core/writing-stats/writing-stats.service';
 import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
@@ -57,6 +60,8 @@ export class BookReaderContainer {
   private readonly i18n = inject(I18nService);
   private readonly globalFocusMode = inject(FocusModeService);
   private readonly writingStats = inject(WritingStatsService);
+  private readonly tts = inject(TtsService);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly book = signal<Book | null>(null);
   protected readonly chapters = signal<readonly ChapterSummary[]>([]);
@@ -70,6 +75,7 @@ export class BookReaderContainer {
     () => this.localFocusMode() || this.globalFocusMode.active(),
   );
   protected readonly indexOpen = signal<boolean>(false);
+  private lastScrolledChapterId: string | null = null;
   protected readonly stats = computed(() => ({
     chapter: this.chapter()?.stats ?? emptyWritingStats(),
     book: this.book()?.stats ?? emptyWritingStats(),
@@ -77,6 +83,13 @@ export class BookReaderContainer {
   }));
   protected readonly lock = new EntityLockController(BOOK_KIND, this.book);
   private readonly paneRef = viewChild(ChapterEditorPaneComponent);
+  protected readonly ttsState = computed<TtsPaneState>(() => ({
+    supported: this.tts.supported,
+    speaking: this.tts.speaking(),
+    paused: this.tts.paused(),
+    voices: this.tts.voices(),
+    prefs: this.tts.prefs(),
+  }));
 
   protected readonly activeIndex = computed(() => {
     const ch = this.chapter();
@@ -101,6 +114,18 @@ export class BookReaderContainer {
       nextPage: () => this.paneRef()?.nextSpread(),
       toggleFocus: () => this.localFocusMode.update((v) => !v),
       toggleIndex: () => this.indexOpen.update((v) => !v),
+      toggleTts: () => this.onTtsAction({ kind: 'toggle' }),
+    });
+    this.destroyRef.onDestroy(() => this.tts.stop());
+    effect(() => {
+      // why: la lectura en voz alta lee el DOM del capítulo actual — al
+      //      cambiar de capítulo ese DOM deja de existir, así que hay que
+      //      cortar antes de que la próxima utterance intente hablar sobre
+      //      un bloque que ya no está. Atado sólo al id (no a this.chapter()
+      //      entero) por el mismo motivo que chapterId en
+      //      ChapterEditorPaneComponent: el body cambia en cada tecla.
+      void this.chapter()?.id;
+      this.tts.stop();
     });
     effect(() => {
       const raw = this.id();
@@ -123,6 +148,19 @@ export class BookReaderContainer {
       }
       if (this.chapter()?.id === wantedCh) return;
       void this.loadChapter(b.id, wantedCh);
+    });
+    // why: si dejaste el marcador puesto en este capítulo, abrirlo cae
+    //      directo en ese párrafo — como un separador físico real. Se
+    //      dispara una sola vez por transición de capítulo (no en cada
+    //      tecla mientras escribís), guardando el último id ya saltado.
+    effect(() => {
+      const book = this.book();
+      const ch = this.chapter();
+      const bookmark = book?.bookmark;
+      if (!ch || !bookmark || bookmark.chapterId !== ch.id) return;
+      if (this.lastScrolledChapterId === ch.id) return;
+      this.lastScrolledChapterId = ch.id;
+      queueMicrotask(() => this.paneRef()?.scrollToBlock(bookmark.blockId));
     });
   }
 
@@ -160,6 +198,25 @@ export class BookReaderContainer {
   protected onToggleIndex(): void {
     this.indexOpen.update((v) => !v);
   }
+  protected onTtsAction(action: TtsAction): void {
+    if (action.kind === 'prefs') {
+      this.tts.setPrefs(action.prefs);
+      return;
+    }
+    if (action.kind === 'stop') {
+      this.tts.stop();
+      this.paneRef()?.highlightSegment(null);
+      return;
+    }
+    // toggle
+    if (this.tts.speaking()) {
+      if (this.tts.paused()) this.tts.resume();
+      else this.tts.pause();
+      return;
+    }
+    const segments = this.paneRef()?.getReadableSegments() ?? [];
+    this.tts.speakSegments(segments, (id) => this.paneRef()?.highlightSegment(id));
+  }
   private gotoSibling(dir: 'prev' | 'next'): void {
     const target = dir === 'prev' ? this.prev() : this.next();
     if (target) this.onJumpTo(target.id);
@@ -178,6 +235,16 @@ export class BookReaderContainer {
     const next = { ...current, body };
     this.chapter.set(next);
     this.scheduleChapterSave(next);
+  }
+
+  protected onToggleBookmarkChapter(blockId: string): void {
+    const book = this.book();
+    const ch = this.chapter();
+    if (!book || !ch || !this.lock.guardWrite()) return;
+    const isSame = book.bookmark?.blockId === blockId;
+    const next = { ...book, bookmark: isSame ? undefined : { chapterId: ch.id, blockId } };
+    this.book.set(next);
+    this.scheduleBookSave(next);
   }
 
   protected onChapterPageCountChange(pageCount: number): void {
@@ -229,6 +296,25 @@ export class BookReaderContainer {
     } finally {
       this.chapterLoading.set(false);
     }
+  }
+
+  private scheduleBookSave(book: Book): void {
+    this.autosave.schedule<Book>(book.id, BOOK_KIND, () => book, {
+      onFlush: async (payload) => {
+        try {
+          await this.booksService.saveBook(payload);
+          await this.autosave.clear(payload.id);
+        } catch (e) {
+          this.errors.report(
+            withReauthIfNeeded(
+              e,
+              () => this.workspace.reauthorize(),
+              () => this.scheduleBookSave(payload),
+            ),
+          );
+        }
+      },
+    });
   }
 
   private scheduleChapterSave(chapter: Chapter): void {

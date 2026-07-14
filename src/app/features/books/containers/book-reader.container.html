@@ -64,10 +64,14 @@
         [chapterIndex]="activeIndex()"
         [chapterTotal]="chapters().length"
         [stats]="stats()"
+        [bookmarkBlockId]="book()?.bookmark?.chapterId === ch.id ? book()!.bookmark!.blockId : null"
+        [ttsState]="ttsState()"
         (titleChange)="onChapterTitleChange($event)"
         (bodyChange)="onChapterBodyChange($event)"
         (pageCountChange)="onChapterPageCountChange($event)"
         (toggleFocus)="onToggleFocus()"
+        (toggleBookmark)="onToggleBookmarkChapter($event)"
+        (ttsAction)="onTtsAction($event)"
       />
     } @else if (chapterLoading()) {
       <div class="chapter-skeleton" aria-busy="true" [attr.aria-label]="t('app.loading')">

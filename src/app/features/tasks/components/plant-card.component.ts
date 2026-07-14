@@ -20,6 +20,11 @@ export class PlantCardComponent {
   readonly availableTags = input.required<readonly Tag[]>();
   readonly untitledLabel = input.required<string>();
   readonly wiltDays = input<number>(0);
+  readonly wateringMode = input<boolean>(false);
+  readonly watered = input<boolean>(false);
+  readonly lifted = input<boolean>(false);
+  readonly justSprouted = input<boolean>(false);
+  readonly emerging = input<boolean>(false);
 
   readonly open = output<string>();
   readonly transplant = output<{ id: string; bucket: Bucket }>();
@@ -42,6 +47,12 @@ export class PlantCardComponent {
   });
 
   protected readonly wilting = computed(() => this.stage() === 'bloom' && this.wiltDays() >= 1);
+
+  protected readonly canWater = computed(() => this.wateringMode() && this.stage() !== 'bloom');
+
+  protected readonly waterAriaLabel = computed(() =>
+    this.t('tasks.garden.aria.water').replace('{title}', this.displayTitle()),
+  );
 
   protected readonly glyph = computed<SafeHtml>(() => {
     const key = this.wilting() ? 'wilted' : this.stage();

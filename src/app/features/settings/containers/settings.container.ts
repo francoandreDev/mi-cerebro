@@ -92,6 +92,7 @@ export class SettingsContainer {
     { id: 'export', labelKey: 'settings.export.section.title', icon: 'archive' },
     { id: 'reminders', labelKey: 'settings.section.reminders', icon: 'bell' },
     { id: 'goals', labelKey: 'settings.section.goals', icon: 'target' },
+    { id: 'author', labelKey: 'settings.section.author', icon: 'pen-nib' },
   ];
   protected readonly activeSection = signal<SectionId>(readStoredSection());
 
@@ -120,6 +121,7 @@ export class SettingsContainer {
   protected readonly dormantDraft = signal(0);
   protected readonly autocommitDraft = signal(0);
   protected readonly compactionThresholdDraft = signal(0);
+  protected readonly authorBioDraft = signal('');
   protected readonly leadPresets = LEAD_PRESETS;
   protected readonly currentLead = computed(() => this.state().reminders.leadMinutes);
 
@@ -140,6 +142,7 @@ export class SettingsContainer {
     effect(() =>
       this.compactionThresholdDraft.set(this.state().versioning.compactionThresholdCommits),
     );
+    effect(() => this.authorBioDraft.set(this.state().authorBio));
   }
 
   protected selectLeadPreset(minutes: number): void {
@@ -173,6 +176,16 @@ export class SettingsContainer {
       return;
     }
     this.settings.setCompactionThresholdCommits(this.compactionThresholdDraft());
+  }
+
+  protected onAuthorBioInput(event: Event): void {
+    this.authorBioDraft.set((event.target as HTMLTextAreaElement).value);
+  }
+
+  protected applyAuthorBio(event?: Event): void {
+    event?.preventDefault();
+    if (this.authorBioDraft() === this.state().authorBio) return;
+    this.settings.setAuthorBio(this.authorBioDraft());
   }
 
   protected onDormantInput(event: Event): void {
@@ -335,7 +348,8 @@ type SectionId =
   | 'variants'
   | 'export'
   | 'reminders'
-  | 'goals';
+  | 'goals'
+  | 'author';
 
 const SECTION_STORAGE_KEY = 'mc.settings.section';
 const VALID_SECTIONS: ReadonlySet<SectionId> = new Set<SectionId>([
@@ -347,6 +361,7 @@ const VALID_SECTIONS: ReadonlySet<SectionId> = new Set<SectionId>([
   'export',
   'reminders',
   'goals',
+  'author',
 ]);
 
 const readStoredSection = (): SectionId => {

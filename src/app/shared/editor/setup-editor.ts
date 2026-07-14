@@ -11,6 +11,7 @@ import StarterKit from '@tiptap/starter-kit';
 
 import type { ImageReaderService } from '@core/images/image-reader.service';
 import { createBlockIdExtension } from '@core/tiptap/block-id/block-id.ext';
+import { createBookmarkPinExtension } from '@core/tiptap/bookmark-pin/bookmark-pin.ext';
 import {
   Citation,
   createCitationAttribution,
@@ -24,6 +25,7 @@ import {
 import { createDraftDecorationsExtension } from '@core/tiptap/draft-decorations/draft-decorations.ext';
 import { createHighlightExtension } from '@core/tiptap/highlight/highlight.ext';
 import { createImageRefNode } from '@core/tiptap/image-ref/image-ref.node';
+import { createTtsHighlightExtension } from '@core/tiptap/tts-highlight/tts-highlight.ext';
 import type { Comment } from '@core/versioning/comments.types';
 
 // why: StarterKit's bullet/ordered list nodes ship a hardcoded
@@ -66,6 +68,10 @@ export interface SetupEditorContext {
   readonly onSelectionUpdate: (editor: Editor) => void;
   readonly getComments: () => readonly Comment[];
   readonly onRangesMapped: (updates: readonly CommentRangeUpdate[]) => void;
+  readonly isBookmarkable: () => boolean;
+  readonly onBookmarkToggle: (blockId: string) => void;
+  readonly bookmarkPinAriaLabel: () => string;
+  readonly bookmarkMarkerAriaLabel: () => string;
 }
 
 export const createEditorInstance = (ctx: SetupEditorContext): Editor =>
@@ -87,6 +93,7 @@ export const createEditorInstance = (ctx: SetupEditorContext): Editor =>
       createCitationAttribution(ctx.citationAttributionPlaceholders),
       createHighlightExtension(),
       createBlockIdExtension(),
+      createTtsHighlightExtension(),
       createImageRefNode(ctx.reader),
       createDraftDecorationsExtension({
         onClick: ctx.onDraftInsertClick,
@@ -99,6 +106,12 @@ export const createEditorInstance = (ctx: SetupEditorContext): Editor =>
       createCommentRangeMappingExtension({
         getComments: ctx.getComments,
         onRangesMapped: ctx.onRangesMapped,
+      }),
+      createBookmarkPinExtension({
+        isBookmarkable: ctx.isBookmarkable,
+        onToggle: ctx.onBookmarkToggle,
+        pinAriaLabel: ctx.bookmarkPinAriaLabel,
+        markerAriaLabel: ctx.bookmarkMarkerAriaLabel,
       }),
     ],
     content: ctx.initialContent,

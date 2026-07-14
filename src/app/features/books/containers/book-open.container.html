@@ -31,191 +31,237 @@
       [editable]="lock.editable()"
       [chaptersCount]="chapters().length"
       [totalWords]="totalWords()"
-      (titleChange)="onTitleChange($event)"
       (removeBook)="onDeleteBook()"
       (addTag)="onAddTag($event)"
       (removeTag)="onRemoveTag($event)"
     />
 
-    <section class="open-book" [attr.aria-label]="t('books.open.indexLabel')">
-      <button
-        type="button"
-        class="page-nav prev"
-        [disabled]="atFirst()"
-        [attr.aria-label]="t('books.open.prevSpread')"
-        [title]="t('books.open.prevSpread')"
-        (click)="prevSpread()"
-      >
-        ‹
-      </button>
-
-      <div class="spread" [class.has-cover]="isCover(current().left)">
-        <div class="spine" aria-hidden="true"></div>
-
-        <div class="page left">
-          @if (isCover(current().left)) {
-            <div class="cover-page" [attr.aria-label]="t('books.open.coverLabel')">
-              <div class="cover-frame">
-                <span class="cover-stripe top" aria-hidden="true"></span>
-                <span class="cover-eyebrow">{{ t('books.title') }}</span>
-                <h2 class="cover-title">
-                  {{ book.title || t('books.untitledTitle') }}
-                </h2>
-                <input
-                  type="text"
-                  class="cover-subtitle"
-                  [value]="book.subtitle ?? ''"
-                  [placeholder]="t('books.open.subtitlePlaceholder')"
-                  [attr.aria-label]="t('books.open.subtitlePlaceholder')"
+    @if (!isOpen()) {
+      <section class="closed-wrap" [attr.aria-label]="t('books.open.coverLabel')">
+        <div
+          class="closed-book"
+          [class.opening]="opening()"
+          [style.--mc-book-bg]="coverPalette().bg"
+          [style.--mc-book-fg]="coverPalette().fg"
+        >
+          <div class="closed-flip" [class.flipped]="facing() === 'back'">
+            <button
+              type="button"
+              class="closed-face front"
+              [attr.aria-label]="t('books.open.openBook')"
+              [title]="t('books.open.openBook')"
+              (click)="onOpenBook($event)"
+            >
+              <span class="cover-stripe top" aria-hidden="true"></span>
+              <span class="cover-eyebrow">{{ t('books.title') }}</span>
+              <input
+                type="text"
+                class="cover-title-input"
+                [value]="book.title"
+                [placeholder]="t('books.placeholderTitle')"
+                [attr.aria-label]="t('books.placeholderTitle')"
+                [readOnly]="!lock.editable()"
+                (click)="$event.stopPropagation()"
+                (input)="onTitleInput($event)"
+              />
+              <input
+                type="text"
+                class="cover-subtitle"
+                [value]="book.subtitle ?? ''"
+                [placeholder]="t('books.open.subtitlePlaceholder')"
+                [attr.aria-label]="t('books.open.subtitlePlaceholder')"
+                [readOnly]="!lock.editable()"
+                (click)="$event.stopPropagation()"
+                (input)="onSubtitleInput($event)"
+              />
+              <span class="cover-meta">
+                @if (chapters().length === 1) {
+                  {{ t('books.chapters.countOne') }}
+                } @else {
+                  {{ t('books.chapters.countMany', { count: chapters().length }) }}
+                }
+                · {{ totalPages() }} p.
+              </span>
+              <span class="cover-stripe bottom" aria-hidden="true"></span>
+              <span class="open-hint">{{ t('books.open.openBook') }}</span>
+            </button>
+            <div class="closed-face back">
+              <section class="back-section">
+                <h4>{{ t('books.open.synopsisLabel') }}</h4>
+                <textarea
+                  class="back-synopsis"
+                  [value]="book.synopsis ?? ''"
+                  [placeholder]="t('books.open.synopsisPlaceholder')"
+                  [attr.aria-label]="t('books.open.synopsisLabel')"
                   [readOnly]="!lock.editable()"
-                  (input)="onSubtitleInput($event)"
-                />
-                <span class="cover-meta">
-                  @if (chapters().length === 1) {
-                    {{ t('books.chapters.countOne') }}
-                  } @else {
-                    {{ t('books.chapters.countMany', { count: chapters().length }) }}
-                  }
-                  · {{ totalPages() }} p.
-                </span>
-                <span class="cover-stripe bottom" aria-hidden="true"></span>
-              </div>
-            </div>
-          } @else if (isIndex(current().left)) {
-            <div class="index-page">
-              <header class="index-head">
-                <h3>{{ t('books.index.title') }}</h3>
-                @if (lock.editable()) {
-                  <button type="button" class="primary tiny" (click)="onAddChapter()">
-                    + {{ t('books.chapters.new') }}
-                  </button>
+                  (click)="$event.stopPropagation()"
+                  (input)="onSynopsisInput($event)"
+                ></textarea>
+              </section>
+              <section class="back-section">
+                <h4>{{ t('books.open.authorLabel') }}</h4>
+                @if (authorBio(); as bio) {
+                  <p class="back-author-bio">{{ bio }}</p>
+                } @else {
+                  <a
+                    class="back-author-empty"
+                    routerLink="/settings"
+                    (click)="$event.stopPropagation()"
+                  >
+                    {{ t('books.open.authorEmptyHint') }}
+                  </a>
                 }
-              </header>
-              @if (current().left; as p) {
-                @if (isIndex(p)) {
-                  <ul class="index-list">
-                    @for (ch of p.chapters; track ch.id) {
-                      <li>
-                        <mc-chapter-index-card
-                          [chapter]="ch"
-                          [index]="$index + (p.pageNumber - 1) * 4"
-                          [total]="chapters().length"
-                          [editable]="lock.editable()"
-                          (open)="onOpenChapter(ch.id)"
-                          (moveUp)="onMoveUp(ch.id)"
-                          (moveDown)="onMoveDown(ch.id)"
-                          (remove)="onRemoveChapter(ch.id)"
-                        />
-                      </li>
+              </section>
+            </div>
+          </div>
+
+          @if (bookmarkRibbonTop(); as top) {
+            <button
+              type="button"
+              class="bookmark-ribbon"
+              [style.top.%]="top"
+              [attr.aria-label]="t('books.open.goToBookmark')"
+              [title]="t('books.open.goToBookmark')"
+              (click)="onGoToBookmark()"
+            >
+              <mc-icon name="bookmark" />
+            </button>
+          }
+        </div>
+
+        <button
+          type="button"
+          class="flip-btn"
+          [attr.aria-label]="
+            facing() === 'front' ? t('books.open.flipToBack') : t('books.open.flipToFront')
+          "
+          [title]="facing() === 'front' ? t('books.open.flipToBack') : t('books.open.flipToFront')"
+          (click)="onFlip()"
+        >
+          <mc-icon name="arrows-clockwise" />
+        </button>
+      </section>
+    } @else {
+      <section class="open-book" [attr.aria-label]="t('books.open.indexLabel')">
+        <button
+          type="button"
+          class="page-nav prev"
+          [attr.aria-label]="atFirst() ? t('books.open.closeBook') : t('books.open.prevSpread')"
+          [title]="atFirst() ? t('books.open.closeBook') : t('books.open.prevSpread')"
+          (click)="prevSpread()"
+        >
+          ‹
+        </button>
+
+        <div class="spread">
+          <div class="spine" aria-hidden="true"></div>
+
+          <div class="page left">
+            @if (isIndex(current().left)) {
+              <div class="index-page">
+                <header class="index-head">
+                  <h3>{{ t('books.index.title') }}</h3>
+                  @if (lock.editable()) {
+                    <button type="button" class="primary tiny" (click)="onAddChapter()">
+                      + {{ t('books.chapters.new') }}
+                    </button>
+                  }
+                </header>
+                @if (current().left; as p) {
+                  @if (isIndex(p)) {
+                    @if (p.chapters.length === 0) {
+                      <p class="index-empty">{{ t('books.index.empty') }}</p>
+                    } @else {
+                      <ul class="index-list">
+                        @for (ch of p.chapters; track ch.id) {
+                          <li>
+                            <mc-chapter-index-card
+                              [chapter]="ch"
+                              [index]="$index + (p.pageNumber - 1) * 4"
+                              [total]="chapters().length"
+                              [editable]="lock.editable()"
+                              (open)="onOpenChapter(ch.id)"
+                              (moveUp)="onMoveUp(ch.id)"
+                              (moveDown)="onMoveDown(ch.id)"
+                              (remove)="onRemoveChapter(ch.id)"
+                            />
+                          </li>
+                        }
+                      </ul>
                     }
-                  </ul>
-                }
-              }
-            </div>
-          } @else if (isBack(current().left)) {
-            <div class="back-page book-editor">
-              <h3 class="back-title">{{ t('books.open.backTitle') }}</h3>
-              <mc-editor
-                class="back-editor"
-                [value]="backNote()"
-                [placeholder]="t('books.open.backPlaceholder')"
-                [editable]="lock.editable()"
-                [entityId]="book.id"
-                [entityTitle]="book.title"
-                (valueChange)="onBackNoteChange($event)"
-              />
-            </div>
-          } @else {
-            <div class="blank-page" aria-hidden="true"></div>
-          }
-          <span class="page-folio left">{{ currentSpread() * 2 }}</span>
-        </div>
-
-        <div class="page right">
-          @if (isCover(current().right)) {
-            <div class="cover-page" [attr.aria-label]="t('books.open.coverLabel')">
-              <div class="cover-frame">
-                <span class="cover-stripe top" aria-hidden="true"></span>
-                <span class="cover-eyebrow">{{ t('books.title') }}</span>
-                <h2 class="cover-title">{{ book.title || t('books.untitledTitle') }}</h2>
-                <span class="cover-stripe bottom" aria-hidden="true"></span>
-              </div>
-            </div>
-          } @else if (isIndex(current().right)) {
-            <div class="index-page">
-              <header class="index-head">
-                <h3>{{ t('books.index.title') }}</h3>
-                @if (lock.editable()) {
-                  <button type="button" class="primary tiny" (click)="onAddChapter()">
-                    + {{ t('books.chapters.new') }}
-                  </button>
-                }
-              </header>
-              @if (current().right; as p) {
-                @if (isIndex(p)) {
-                  @if (p.chapters.length === 0) {
-                    <p class="index-empty">{{ t('books.index.empty') }}</p>
-                  } @else {
-                    <ul class="index-list">
-                      @for (ch of p.chapters; track ch.id) {
-                        <li>
-                          <mc-chapter-index-card
-                            [chapter]="ch"
-                            [index]="$index + (p.pageNumber - 1) * 4"
-                            [total]="chapters().length"
-                            [editable]="lock.editable()"
-                            (open)="onOpenChapter(ch.id)"
-                            (moveUp)="onMoveUp(ch.id)"
-                            (moveDown)="onMoveDown(ch.id)"
-                            (remove)="onRemoveChapter(ch.id)"
-                          />
-                        </li>
-                      }
-                    </ul>
                   }
                 }
-              }
-            </div>
-          } @else if (isBack(current().right)) {
-            <div class="back-page book-editor">
-              <h3 class="back-title">{{ t('books.open.backTitle') }}</h3>
-              <mc-editor
-                class="back-editor"
-                [value]="backNote()"
-                [placeholder]="t('books.open.backPlaceholder')"
-                [editable]="lock.editable()"
-                [entityId]="book.id"
-                [entityTitle]="book.title"
-                (valueChange)="onBackNoteChange($event)"
-              />
-            </div>
-          } @else {
-            <div class="blank-page" aria-hidden="true"></div>
-          }
-          <span class="page-folio right">{{ currentSpread() * 2 + 1 }}</span>
+              </div>
+            } @else {
+              <div class="blank-page" aria-hidden="true"></div>
+            }
+            <span class="page-folio left">{{ currentSpread() * 2 }}</span>
+          </div>
+
+          <div class="page right">
+            @if (isIndex(current().right)) {
+              <div class="index-page">
+                <header class="index-head">
+                  <h3>{{ t('books.index.title') }}</h3>
+                  @if (lock.editable()) {
+                    <button type="button" class="primary tiny" (click)="onAddChapter()">
+                      + {{ t('books.chapters.new') }}
+                    </button>
+                  }
+                </header>
+                @if (current().right; as p) {
+                  @if (isIndex(p)) {
+                    @if (p.chapters.length === 0) {
+                      <p class="index-empty">{{ t('books.index.empty') }}</p>
+                    } @else {
+                      <ul class="index-list">
+                        @for (ch of p.chapters; track ch.id) {
+                          <li>
+                            <mc-chapter-index-card
+                              [chapter]="ch"
+                              [index]="$index + (p.pageNumber - 1) * 4"
+                              [total]="chapters().length"
+                              [editable]="lock.editable()"
+                              (open)="onOpenChapter(ch.id)"
+                              (moveUp)="onMoveUp(ch.id)"
+                              (moveDown)="onMoveDown(ch.id)"
+                              (remove)="onRemoveChapter(ch.id)"
+                            />
+                          </li>
+                        }
+                      </ul>
+                    }
+                  }
+                }
+              </div>
+            } @else {
+              <div class="blank-page" aria-hidden="true"></div>
+            }
+            <span class="page-folio right">{{ currentSpread() * 2 + 1 }}</span>
+          </div>
         </div>
-      </div>
 
-      <button
-        type="button"
-        class="page-nav next"
-        [disabled]="atLast()"
-        [attr.aria-label]="t('books.open.nextSpread')"
-        [title]="t('books.open.nextSpread')"
-        (click)="nextSpread()"
-      >
-        ›
-      </button>
-    </section>
+        <button
+          type="button"
+          class="page-nav next"
+          [disabled]="atLast()"
+          [attr.aria-label]="t('books.open.nextSpread')"
+          [title]="t('books.open.nextSpread')"
+          (click)="nextSpread()"
+        >
+          ›
+        </button>
+      </section>
 
-    <footer class="spread-foot">
-      <span>{{
-        t('books.open.spreadOf', {
-          current: currentSpread() + 1,
-          total: spreads().length,
-        })
-      }}</span>
-    </footer>
+      <footer class="spread-foot">
+        <span>{{
+          t('books.open.spreadOf', {
+            current: currentSpread() + 1,
+            total: spreads().length,
+          })
+        }}</span>
+      </footer>
+    }
   } @else if (bookLoading()) {
     <div class="book-skeleton" aria-busy="true" [attr.aria-label]="t('app.loading')">
       <div class="sk-line sk-title sk-w-60"></div>

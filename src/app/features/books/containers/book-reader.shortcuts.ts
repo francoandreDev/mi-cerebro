@@ -10,6 +10,7 @@ export interface ReaderShortcutHandlers {
   readonly nextPage: () => void;
   readonly toggleFocus: () => void;
   readonly toggleIndex: () => void;
+  readonly toggleTts: () => void;
 }
 
 export const registerReaderShortcuts = (handlers: ReaderShortcutHandlers): void => {
@@ -51,6 +52,12 @@ export const registerReaderShortcuts = (handlers: ReaderShortcutHandlers): void 
       labelKey: 'books.shortcuts.toggleIndex',
       scope: 'global',
       handler: handlers.toggleIndex,
+    },
+    {
+      combo: 'Ctrl+Alt+R',
+      labelKey: 'books.shortcuts.toggleTts',
+      scope: 'global',
+      handler: handlers.toggleTts,
     },
   ];
   const unsubs = bindings.map((b) => shortcuts.register(b));

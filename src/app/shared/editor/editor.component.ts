@@ -17,10 +17,12 @@ import {
 import type { Editor, JSONContent } from '@tiptap/core';
 
 import { ImageReaderService } from '@core/images/image-reader.service';
+import { BOOKMARK_PIN_META_KEY } from '@core/tiptap/bookmark-pin/bookmark-pin.ext';
 import { COMMENT_CLOUDS_META_KEY } from '@core/tiptap/comment-clouds/comment-clouds.ext';
 import { COMMENT_RANGE_MAPPING_META_KEY } from '@core/tiptap/comment-range-mapping/comment-range-mapping.ext';
 import { DRAFT_DECORATIONS_META_KEY } from '@core/tiptap/draft-decorations/draft-decorations.ext';
 import { IMAGE_REF_NAME } from '@core/tiptap/image-ref/image-ref.node';
+import { TTS_HIGHLIGHT_META_KEY } from '@core/tiptap/tts-highlight/tts-highlight.ext';
 import { CommentsService } from '@core/versioning/comments.service';
 import type { Comment } from '@core/versioning/comments.types';
 import { DraftsService } from '@core/versioning/drafts.service';
@@ -64,8 +66,18 @@ export class EditorComponent {
   readonly editable = input<boolean>(true);
   readonly entityId = input<string>('');
   readonly entityTitle = input<string>('');
+  // why: marcador de párrafo — opt-in porque el resto de entidades que usan
+  //      mc-editor (notas, tareas, etc.) no lo necesitan. Ver book-reader/
+  //      chapter-editor-pane, únicos consumidores hoy.
+  readonly bookmarkable = input<boolean>(false);
+  readonly bookmarkedBlockId = input<string | null>(null);
+  // why: id del bloque que está leyendo TtsService — null cuando no hay
+  //      lectura en curso. Ver tts-highlight.ext.ts para el porqué de la
+  //      decoration en vez de una clase puesta a mano.
+  readonly ttsHighlightBlockId = input<string | null>(null);
   readonly valueChange = output<JSONContent>();
   readonly draftSaved = output<number>();
+  readonly bookmarkToggle = output<string>();
 
   private readonly host = viewChild.required<ElementRef<HTMLElement>>('host');
   private readonly destroyRef = inject(DestroyRef);
@@ -311,6 +323,17 @@ export class EditorComponent {
     return this.citationActive();
   }
 
+  // why: books' chapter-editor-pane hides the in-shell toolbar entirely
+  //      (mismo motivo que toggleBulletList/etc arriba) y necesita disparar
+  //      el picker de imágenes desde su propio ui-bar.
+  openImagePicker(): void {
+    this.pickerOpen.set(true);
+  }
+
+  hasImageGalleries(): boolean {
+    return this.hasGalleries();
+  }
+
   private refreshListActiveState(ed: Editor): void {
     this.bulletListActive.set(ed.isActive('bulletList'));
     this.orderedListActive.set(ed.isActive('orderedList'));
@@ -371,6 +394,22 @@ export class EditorComponent {
     this.valueChange.emit(json);
   }
 
+  // why: el marcador de párrafo es un plugin real de ProseMirror
+  //      (bookmark-pin.ext.ts) — igual que los comment clouds, cualquier
+  //      DOM inyectado a mano por fuera del modelo de ProseMirror
+  //      desaparece en la próxima transacción (el reconciliador reescribe
+  //      el subárbol del nodo). Este método sólo empuja el blockId actual
+  //      como metadata; el plugin decide la decoración.
+  private pushBookmarkPin(): void {
+    const view = this.editor?.view;
+    view?.dispatch(view.state.tr.setMeta(BOOKMARK_PIN_META_KEY, this.bookmarkedBlockId()));
+  }
+
+  private pushTtsHighlight(): void {
+    const view = this.editor?.view;
+    view?.dispatch(view.state.tr.setMeta(TTS_HIGHLIGHT_META_KEY, this.ttsHighlightBlockId()));
+  }
+
   private onEditorSelectionUpdate(ed: Editor): void {
     this.refreshListActiveState(ed);
     const { from, to } = ed.state.selection;
@@ -406,6 +445,10 @@ export class EditorComponent {
       onSelectionUpdate: (ed) => this.onEditorSelectionUpdate(ed),
       getComments: () => this.commentsCoord.list(),
       onRangesMapped: (updates) => this.commentsCoord.applyRangeUpdates(updates),
+      isBookmarkable: () => this.bookmarkable(),
+      onBookmarkToggle: (blockId) => this.bookmarkToggle.emit(blockId),
+      bookmarkPinAriaLabel: () => this.i18n.t('editor.bookmark.set'),
+      bookmarkMarkerAriaLabel: () => this.i18n.t('editor.bookmark.unset'),
     });
     this.suppressEmit = false;
 
@@ -425,6 +468,14 @@ export class EditorComponent {
     effect(() => this.pushCommentClouds(combined() ? this.commentsCoord.list() : []), opts);
     effect(() => this.pushCommentRangeMapping(this.commentsCoord.list()), opts);
     effect(() => this.pushDraftDecorations(combined() ? this.draftMarks() : []), opts);
+    effect(() => {
+      this.bookmarkedBlockId();
+      this.pushBookmarkPin();
+    }, opts);
+    effect(() => {
+      this.ttsHighlightBlockId();
+      this.pushTtsHighlight();
+    }, opts);
 
     this.destroyRef.onDestroy(() => {
       void this.draftSession.flushPending();

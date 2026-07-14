@@ -28,6 +28,7 @@ export class SettingsService {
   private readonly stateSignal = signal<Settings>(this.loadFromLocalStorage());
   readonly state = this.stateSignal.asReadonly();
   readonly timezone = computed(() => this.state().timezone);
+  readonly authorBio = computed(() => this.state().authorBio);
 
   // why: once the file has been read or seeded for this workspace, skip
   //      the effect-driven sync — further writes are pushed through `set*`.
@@ -45,6 +46,10 @@ export class SettingsService {
   setTimezone(tz: string): void {
     if (!isValidTimezone(tz)) return;
     this.update((s) => ({ ...s, timezone: tz }));
+  }
+
+  setAuthorBio(bio: string): void {
+    this.update((s) => ({ ...s, authorBio: bio }));
   }
 
   setAutocommitMinutes(minutes: number): void {
@@ -249,6 +254,7 @@ const mergeWithDefaults = (partial: Partial<Settings>): Settings => ({
     typeof partial.timezone === 'string' && isValidTimezone(partial.timezone)
       ? partial.timezone
       : DEFAULT_SETTINGS.timezone,
+  authorBio: typeof partial.authorBio === 'string' ? partial.authorBio : DEFAULT_SETTINGS.authorBio,
   versioning: { ...DEFAULT_SETTINGS.versioning, ...(partial.versioning ?? {}) },
   variants: { ...DEFAULT_SETTINGS.variants, ...(partial.variants ?? {}) },
   goals: mergeGoals(partial.goals),

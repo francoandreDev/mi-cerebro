@@ -6,9 +6,8 @@ leer nada práctico de ellos hoy. Cada zoom debe aportar un valor **distinto**:
 cordillera = navegación de rangos anuales; estratos = comparación de bloques
 temporales con estructura por faceta; cordel = navegación de commit individual.
 
-Complementa `docs/redesign.md §/history v2`. Este archivo captura el gap entre
-implementación actual y objetivo real para que cualquier sesión posterior pueda
-retomar sin perder contexto.
+Este archivo captura el gap entre implementación actual y objetivo real para
+que cualquier sesión posterior pueda retomar sin perder contexto.
 
 ---
 
@@ -287,6 +286,6 @@ class="ficha-yacimiento">` con: cabecera (nombre del rango + total
 - §4.4: 200 warn / 300 err líneas por archivo. Los archivos históricos ya
   están por encima; toda extracción a subcomponentes ayuda a bajarlos.
 - §4.11.25: cambio arquitectónico → actualizar `PROYECTO.md` en el mismo
-  commit. En esta rediseño, las decisiones nuevas ya se registran en
-  `docs/redesign.md`; este handoff funciona como bitácora operativa,
-  no como norma arquitectónica.
+  commit. Este handoff funciona como bitácora operativa, no como norma
+  arquitectónica; los pendientes reales que quedan (ítems 8 y 9 arriba)
+  están además catalogados en `docs/deferred.md`.

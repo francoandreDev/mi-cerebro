@@ -13,10 +13,12 @@
           [class.active]="activeSection() === s.id"
           [attr.aria-selected]="activeSection() === s.id"
           [attr.aria-controls]="'sect-' + s.id"
+          [attr.aria-label]="t(s.labelKey)"
+          [title]="t(s.labelKey)"
           (click)="selectSection(s.id)"
         >
           <mc-icon class="nav-icon" [name]="s.icon" />
-          <span>{{ t(s.labelKey) }}</span>
+          <span class="nav-label">{{ t(s.labelKey) }}</span>
         </button>
       }
     </nav>
@@ -301,6 +303,26 @@
             {{ t('settings.goals.dormant') }}:
             <strong>{{ state().goals.dormantThresholdDays }}</strong>
           </p>
+        </section>
+      }
+
+      @if (activeSection() === 'author') {
+        <section class="group" id="sect-author" role="tabpanel">
+          <h3>{{ t('settings.section.author') }}</h3>
+
+          <label class="field">
+            <span class="label">{{ t('settings.authorBio.label') }}</span>
+            <textarea
+              class="grow"
+              rows="5"
+              [value]="authorBioDraft()"
+              (input)="onAuthorBioInput($event)"
+            ></textarea>
+            <span class="hint">{{ t('settings.authorBio.hint') }}</span>
+          </label>
+          <button type="button" class="primary" (click)="applyAuthorBio($event)">
+            {{ t('settings.authorBio.apply') }}
+          </button>
         </section>
       }
 

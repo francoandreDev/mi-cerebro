@@ -275,6 +275,17 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
+/* MICRO — íconos chiquitos (ej. bullet de la lista): sin texto, solo la
+   franja de color del lomo con sus bandas decorativas. A ese tamaño el
+   título no es legible y el hover-lift tampoco aporta nada. */
+.volume[data-density='micro'] .spine-title {
+  display: none;
+}
+:host(:hover) .volume[data-density='micro'],
+:host(:focus-within) .volume[data-density='micro'] {
+  transform: none;
+}
+
 /* Tallness tweaks */
 .volume[data-tallness='short'] .cover-title {
   font-size: 17px;

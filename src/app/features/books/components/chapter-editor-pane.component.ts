@@ -15,14 +15,24 @@ import type { JSONContent } from '@tiptap/core';
 
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import type { TtsAction, TtsPaneState, TtsSegment } from '@core/tts/tts.types';
 import { emptyWritingStats, type WritingStats } from '@core/writing-stats/writing-stats.types';
 import { EditorComponent } from '@shared/editor/editor.component';
 import { IconComponent } from '@shared/icon/icon.component';
+import { TtsControlsComponent } from '@shared/tts-controls/tts-controls.component';
 import { toRoman } from '@shared/utils/roman';
 import { WritingStatsPopoverComponent } from '@shared/writing-stats-popover/writing-stats-popover.component';
 
 import type { Chapter } from '../models/book.types';
 import type { BookSaveStatus } from './book-meta-bar.component';
+
+const DEFAULT_TTS_STATE: TtsPaneState = {
+  supported: false,
+  speaking: false,
+  paused: false,
+  voices: [],
+  prefs: { rate: 1, voiceURI: null },
+};
 
 export interface ChapterWritingStats {
   readonly chapter: WritingStats;
@@ -33,7 +43,7 @@ export interface ChapterWritingStats {
 @Component({
   selector: 'mc-chapter-editor-pane',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [EditorComponent, IconComponent, WritingStatsPopoverComponent],
+  imports: [EditorComponent, IconComponent, TtsControlsComponent, WritingStatsPopoverComponent],
   templateUrl: './chapter-editor-pane.component.html',
   styleUrl: './chapter-editor-pane.component.css',
   host: {
@@ -52,9 +62,13 @@ export class ChapterEditorPaneComponent {
     book: emptyWritingStats(),
     global: emptyWritingStats(),
   });
+  readonly bookmarkBlockId = input<string | null>(null);
+  readonly ttsState = input<TtsPaneState>(DEFAULT_TTS_STATE);
   readonly titleChange = output<string>();
   readonly bodyChange = output<JSONContent>();
   readonly toggleFocus = output<void>();
+  readonly toggleBookmark = output<string>();
+  readonly ttsAction = output<TtsAction>();
   // why: persistimos páginas (totalSpreads * 2) en el archivo del capítulo
   //      para que el índice pueda mostrar el rango "X–Y" sin abrir cada
   //      capítulo. Se emite cada vez que el cálculo cambia.
@@ -69,6 +83,7 @@ export class ChapterEditorPaneComponent {
   //      component's public toggle methods.
   private readonly editorRef = viewChild(EditorComponent);
   private readonly destroyRef = inject(DestroyRef);
+  protected readonly ttsHighlightBlockId = signal<string | null>(null);
 
   protected readonly currentSpread = signal<number>(0);
   // why: el ancho real de un spread en término de columnas es
@@ -210,6 +225,36 @@ export class ChapterEditorPaneComponent {
     this.titleRef()?.nativeElement.focus();
   }
 
+  // why: la paginación es multi-columna con transform (ver bandWidth), no
+  //      scroll real — "ir al párrafo marcado" significa saltar al spread
+  //      donde cae ese bloque, no hacer scrollIntoView.
+  scrollToBlock(blockId: string): void {
+    const pagesEl = this.pagesRef()?.nativeElement;
+    const bw = this.bandWidth();
+    if (!pagesEl || bw <= 0) return;
+    const el = pagesEl.querySelector<HTMLElement>(`[data-block-id="${blockId}"]`);
+    if (!el) return;
+    this.currentSpread.set(Math.max(0, Math.floor(el.offsetLeft / bw)));
+  }
+
+  // why: TTS reads the rendered DOM instead of re-walking the chapter's
+  //      JSONContent — blocks already carry a stable `data-block-id` (same
+  //      attribute scrollToBlock uses), so segment order matches what's on
+  //      the page exactly, including any live edits.
+  getReadableSegments(): readonly TtsSegment[] {
+    const pagesEl = this.pagesRef()?.nativeElement;
+    if (!pagesEl) return [];
+    const blocks = Array.from(pagesEl.querySelectorAll<HTMLElement>('[data-block-id]'));
+    return blocks
+      .map((el) => ({ id: el.dataset['blockId'] ?? '', text: (el.textContent ?? '').trim() }))
+      .filter((seg) => seg.id.length > 0 && seg.text.length > 0);
+  }
+
+  highlightSegment(id: string | null): void {
+    this.ttsHighlightBlockId.set(id);
+    if (id) this.scrollToBlock(id);
+  }
+
   private updateMetrics(): void {
     const pagesEl = this.pagesRef()?.nativeElement;
     const spreadEl = this.spreadRef()?.nativeElement;
@@ -218,9 +263,15 @@ export class ChapterEditorPaneComponent {
     const padL = parseFloat(cs.paddingLeft) || 0;
     const padR = parseFloat(cs.paddingRight) || 0;
     const colGap = parseFloat(cs.columnGap) || 0;
+    // why: mobile breakpoint pisa column-count a 1 (ver @media en el CSS)
+    //      para que el texto no se aplaste en 2 columnas ilegibles. colW
+    //      generalizado a N columnas en vez de hardcodear /2, si no el
+    //      cálculo de pageWidth queda desalineado con el layout real y el
+    //      flip de página anima con el ancho equivocado.
+    const n = Math.max(1, Number.parseInt(cs.columnCount, 10) || 2);
     const spreadW = spreadEl.clientWidth;
     const innerW = Math.max(0, spreadW - padL - padR);
-    const colW = Math.max(0, (innerW - colGap) / 2);
+    const colW = Math.max(0, (innerW - (n - 1) * colGap) / n);
     this.bandWidth.set(Math.max(1, spreadW - padL - padR + colGap));
     this.pageWidth.set(Math.max(1, padL + colW));
     this.contentWidth.set(pagesEl.scrollWidth);
@@ -278,6 +329,12 @@ export class ChapterEditorPaneComponent {
   }
   protected insertSceneBreak(): void {
     this.editorRef()?.insertSceneBreak();
+  }
+  protected openImagePicker(): void {
+    this.editorRef()?.openImagePicker();
+  }
+  protected hasImageGalleries(): boolean {
+    return this.editorRef()?.hasImageGalleries() ?? false;
   }
   protected setHeadingLevel(level: 2 | 3 | 4): void {
     this.editorRef()?.setHeadingLevel(level);

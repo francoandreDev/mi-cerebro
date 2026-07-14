@@ -11,6 +11,7 @@
   border: 1px solid var(--mc-border-default);
   border-radius: var(--mc-radius-md);
   cursor: grab;
+  position: relative;
   transition:
     transform 160ms ease,
     box-shadow 160ms ease,
@@ -100,6 +101,132 @@
   font-family: var(--mc-font-mono);
 }
 
+/* riego: botón de gota + destello al subir prioridad */
+.water-btn {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  background: var(--mc-bg-elevated);
+  border: 1px solid var(--mc-border-default);
+  border-radius: var(--mc-radius-pill);
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.water-btn:hover {
+  transform: scale(1.1);
+}
+
+.card--watered {
+  animation: plant-splash 480ms ease-out;
+}
+
+@keyframes plant-splash {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--mc-accent-primary) 55%, transparent);
+  }
+  60% {
+    box-shadow: 0 0 0 10px color-mix(in srgb, var(--mc-accent-primary) 0%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+/* DnD orgánico: raíces colgando mientras se arrastra */
+.card--lifted {
+  opacity: 0.5;
+}
+
+.card--lifted::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -9px;
+  width: 2px;
+  height: 9px;
+  background: var(--mc-garden-stem);
+  opacity: 0.6;
+  transform-origin: top center;
+  animation: roots-sway 900ms ease-in-out infinite;
+}
+
+@keyframes roots-sway {
+  0%,
+  100% {
+    transform: translateX(-50%) rotate(-5deg);
+  }
+  50% {
+    transform: translateX(-50%) rotate(5deg);
+  }
+}
+
+/* DnD orgánico: "plop" al aterrizar en un cantero nuevo */
+.card--plop {
+  animation: plant-plop 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes plant-plop {
+  0% {
+    transform: scale(0.55) rotate(-6deg);
+  }
+  55% {
+    transform: scale(1.12) rotate(3deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+/* cosecha: clon volador con salto en arco hasta la cesta (ver
+   TasksGardenContainer.flyToBasket — clona el nodo, así que hereda este
+   scoping de estilos aunque termine fuera del árbol del componente) */
+.plant-flying {
+  position: fixed;
+  margin: 0;
+  z-index: 2000;
+  pointer-events: none;
+  animation: plant-arc 480ms cubic-bezier(0.3, 0, 0.4, 1) forwards;
+}
+
+@keyframes plant-arc {
+  0% {
+    transform: translate(0, 0) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  55% {
+    transform: translate(calc(var(--fly-dx) * 0.55), calc(var(--fly-dy) * 0.5 - 46px))
+      scale(0.75) rotate(12deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--fly-dx), var(--fly-dy)) scale(0.15) rotate(28deg);
+    opacity: 0;
+  }
+}
+
+/* backlog: semillas que emergen al "cargar más" */
+.card--emerging {
+  animation: seed-emerge 420ms ease-out;
+}
+
+@keyframes seed-emerge {
+  0% {
+    transform: translateY(10px) scale(0.6);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .card {
     transition: none;
@@ -109,5 +236,15 @@
   }
   .card--wilting .glyph {
     transform: none;
+  }
+  .card--watered,
+  .card--lifted::after,
+  .card--plop,
+  .card--emerging {
+    animation: none;
+  }
+  .plant-flying {
+    animation: none;
+    display: none;
   }
 }

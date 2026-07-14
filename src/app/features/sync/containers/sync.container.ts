@@ -1,5 +1,5 @@
 // /sync page: Push todo / Fetch todo for every variant × 3 facets,
-// rendered as a pneumatic-tube console (see docs/redesign.md `/sync`).
+// rendered as a pneumatic-tube console.
 // Errors bubble through ErrorService so the modal/toast renders the
 // NET-004/005 code; the console reads `lastPushOutcomes` /
 // `lastFetchOutcomes` after the call, so partial failures are still

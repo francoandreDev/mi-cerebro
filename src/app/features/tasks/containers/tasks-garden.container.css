@@ -22,6 +22,15 @@
   color: var(--mc-garden-petal-default);
 }
 
+/* riego: cursor de regadera flotante sobre todo el jardín mientras el modo
+   está activo — la caña apunta cerca del punto de click (hotspot 4,4). */
+.garden--watering {
+  cursor:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><text y='24' font-size='26'>🚿</text></svg>")
+      4 4,
+    auto;
+}
+
 .head {
   display: grid;
   grid-template-columns: auto 1fr auto;
@@ -167,6 +176,23 @@
   cursor: pointer;
   padding: 2px 4px;
   text-decoration: underline;
+}
+
+.load-more {
+  background: transparent;
+  border: 1px dashed var(--mc-garden-planter-wood-fg);
+  border-radius: var(--mc-radius-sm);
+  color: var(--mc-garden-planter-wood-fg);
+  font-family: var(--mc-font-mono);
+  font-size: var(--mc-font-size-xs);
+  padding: 4px var(--mc-space-2);
+  cursor: pointer;
+  opacity: 0.75;
+  align-self: center;
+}
+
+.load-more:hover {
+  opacity: 1;
 }
 
 .sr-live {

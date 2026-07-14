@@ -264,4 +264,16 @@
     max-width: none;
     width: 100%;
   }
+
+  /* why: bajo 480px workspace-sidebar deja de ser un rail izquierdo y pasa
+     a ser una barra inferior de 56px (ver workspace-sidebar.container.css)
+     — el offset left:56px/bottom:0 de escritorio ya no aplica: dejaba un
+     hueco vacío a la izquierda y tapaba la barra de navegación entera. */
+  .drawer {
+    left: 0;
+    bottom: 56px;
+  }
+  .canvas.has-drawer {
+    padding-bottom: calc(56px + 96px);
+  }
 }

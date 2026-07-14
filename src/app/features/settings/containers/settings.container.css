@@ -66,6 +66,20 @@
     white-space: nowrap;
   }
 }
+/* why: en vertical el ancho es el recurso escaso (a diferencia de un
+   tablet/desktop angosto en horizontal, que sigue teniendo lugar para las
+   etiquetas) — con 8 secciones, mostrar ícono+texto fuerza scroll
+   horizontal y corta el texto a la mitad (reportado por el usuario).
+   Sólo ícono evita el scroll: 8 botones cuadrados entran en una fila. */
+@media (max-width: 720px) and (orientation: portrait) {
+  .nav-item {
+    padding: var(--mc-space-2);
+    justify-content: center;
+  }
+  .nav-label {
+    display: none;
+  }
+}
 .head h2 {
   margin: 0;
   font-size: var(--mc-font-size-xl);

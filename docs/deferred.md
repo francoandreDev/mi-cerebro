@@ -129,6 +129,30 @@ Formato por entrada:
 - **Por qué se difirió**: estructura y funcionalidad están; el polish entra cuando 13a-d estén cerrados y tengamos uso real para saber qué duele.
 - **Target**: §19.16f.
 
+### Iconito de entidad principal en cada polaroid revelada
+
+- **Qué**: cada polaroid del zoom cordel muestra el diff ya renderizado (entidades tocadas en la leyenda al pie), pero no un ícono de la entidad principal del commit sobre la propia foto — pendiente desde el plan original de `docs/history-v2-handoff.md`.
+- **Por qué se difirió**: usa `entities` del diff, que ya está disponible una vez que `HistoryDiffService.loadForCommit` resuelve; quedó anotado como pulido visual menor, no bloqueante para el gate de la Fase 4.
+- **Target**: §19.16f.
+
+### Refactor de `/history` a subcomponentes por zoom
+
+- **Qué**: `history.container.ts` (~946 líneas) y `history.container.html`/`.css` (`.css` con 1900+ líneas) concentran todo el estado de zoom, prefetch y revelado en un solo archivo, por encima del límite de 200 warn / 300 err de §4.4. El plan es partir en `<mc-history-panorama>`, `<mc-history-strata>`, `<mc-history-cordel>`.
+- **Por qué se difirió**: el rediseño priorizó cerrar las 5 fases funcionales antes de la extracción estructural; el refactor no cambia comportamiento, sólo baja el tamaño de archivo.
+- **Target**: §19.16f.
+
+### Preview inline del diff en hover sobre la polaroid (zoom detalle)
+
+- **Qué**: en la vista cordel (§rediseño /history v2 Fase 4), mostrar un preview del diff al hacer hover sostenido sobre una polaroid sin necesidad de seleccionarla y esperar a que la mesa de revelado la muestre abajo.
+- **Por qué se difirió**: pulido visual evaluado como posible upgrade después de cerrar Fase 4; no se abordó porque click+mesa de revelado ya cubre el flujo principal sin estado adicional de hover.
+- **Target**: §19.16f.
+
+### Vista secundaria de constelaciones ("mapa de patrones de trabajo")
+
+- **Qué**: vista alternativa tipo cielo estrellado que revele patrones de trabajo emergentes (ritmo, picos, gaps) en vez de commits individuales navegables. Se descartó como vista principal del rediseño de `/history` v2 porque encontrar un commit específico en un layout 2D estrellado es peor que en la cordillera/estratos/cordel, pero quedó anotada como posible vista secundaria.
+- **Por qué se difirió**: opcional, muy posterior — sólo si el rediseño principal (cordillera/estratos/cordel) deja "hambre" de ese eje analítico distinto (patrones en vez de hechos puntuales).
+- **Target**: sin asignar.
+
 ### Header del editor: "n commits desde {milestone}"
 
 - **Qué**: 13a-bis grabó milestones como git tags anotados pero no expone "estás a n commits desde el milestone más cercano" en el header del editor de cada entidad. El roadmap lo describe como "contexto leve".
@@ -153,6 +177,12 @@ Formato por entrada:
 - **Por qué se difirió**: los tres índices (main, comments, draft) convergen sobre la misma pieza de infraestructura (walk per-faceta + cache por familia en IndexedDB). Diseñarlos juntos evita reinventar el priming tres veces y permite decidir si los tres comparten un `idx-<family>-bundle` o quedan separados. Sin métricas reales de tamaño/latencia, mejor uno solo bien hecho.
 - **Target**: §19.16d (pulido de búsqueda) — junto con los índices de `main` y `comments`.
 
+### Índice de búsqueda de commits (full-text sobre mensajes + entidades tocadas)
+
+- **Qué**: un índice MiniSearch sobre el log de commits (mensaje + entidades tocadas) integrado al palette global, para poder buscar "¿cuándo toqué X?" sin abrir `/history` y escanear estratos a mano.
+- **Por qué se difirió**: misma familia de problema que los índices de `main`/`comments`/`draft` diferidos arriba — requiere decidir priming al boot y si comparte infraestructura con esos índices. Se agrupa con ellos para diseñarse una sola vez.
+- **Target**: §19.16d (pulido de búsqueda) — junto con los índices por familia ya diferidos.
+
 ### ~~Umbral de compactación configurable en settings~~ (resuelto 2026-07-04)
 
 - **Qué**: §12 "Compactación del historial" fijaba el umbral de disparo en 500 commits por rama sin exponerlo en settings.
@@ -167,6 +197,12 @@ Formato por entrada:
 
 - **Qué**: además de la pasada background automática, una acción "Compactar este rango" desde `/history` que permita al usuario seleccionar un span de commits y forzar la fusión, respetando las barreras (tags, `before-restore`, `Merge-Group`).
 - **Por qué se difirió**: la compactación background con buckets por edad cubre el caso 95%. Compactación manual es una herramienta avanzada que se justifica si el usuario quiere "limpiar" un período específico sin esperar al auto. Sin uso real no hay forma de saber si vale la UI.
+- **Target**: sin asignar.
+
+### Banner accionable de "compactar ahora" en el lecho de roca de `/history`
+
+- **Qué**: el `.bedrock` al pie de la vista de estratos ya muestra el conteo real de commits compactables pendientes (`CompactionSchedulerService.shouldSuggestEnableCompaction`), pero es informativo — no tiene un botón que dispare la compactación desde ahí mismo. Hoy esa acción sólo existe en `/dev` (`DevContainer`, no linkeado desde el rail).
+- **Por qué se difirió**: se dejó para cuando el flujo de compactación tenga UI dedicada más allá del panel de dev/QA — traer la acción al lecho de roca implica exponerla a un flujo de usuario final, no sólo debug.
 - **Target**: sin asignar.
 
 ### `.git/` en OPFS para acelerar operaciones git
@@ -426,29 +462,29 @@ Formato por entrada:
 
 ## Tareas (origen: rediseño /tasks — jardín de tres canteros)
 
-### Animaciones orgánicas de DnD (raíces colgando, terrones cayendo, plop)
+### ~~Animaciones orgánicas de DnD (raíces colgando, terrones cayendo, plop)~~ (resuelto 2026-07-14)
 
 - **Qué**: al arrastrar una card aparecen 3-4 hilitos de raíces colgando, microspans de tierra cayendo, y al soltar un "plop" + morfismo del glyph (⋄ → ╿ → ❀) con 260 ms ease-out.
-- **Por qué se difirió**: la mecánica funcional (DnD HTML5 nativo entre canteros + cambio de stage al soltar) ya está; la coreografía requiere un drag-image custom, partículas y morfismo SVG. Es polish puro, no bloquea uso.
-- **Target**: sin asignar — abrir si el jardín se siente "duro" en uso real.
+- **Estado**: cerrado, con alcance acotado respecto al original. `card--lifted` (source, mientras `dnd.draggingId()` matchea) baja opacidad y agrega una raíz colgante con balanceo (`::after` + `roots-sway`, CSS puro). `planter--over .soil` (target bajo drag) anima brillo pulsante (`soil-crumble`) y un `::after` de puntos de tierra cayendo (`clods-fall`). Al aterrizar (mismo u otro cantero), `applyTransplant` setea `justSproutedId` por 450ms → clase `card--plop` (bounce squash&stretch). El morfismo de glyph SVG entre etapas (⋄→╿→❀) se descartó: el nodo se destruye/recrea al cambiar de cantero (arrays distintos en el `@for`), así que un cross-fade real requeriría trackear el mark fuera del array — el "plop" ya comunica el cambio de etapa sin ese costo. Todo respeta `prefers-reduced-motion`. Verificado en runtime con Chrome: dispatch manual de `dragstart`/`dragenter` + inspección de `getComputedStyle` confirmó las 3 animaciones aplicadas; `onTransplant` disparado por script confirmó `card--plop` en el DOM.
+- **Implementación**: `plant-card.component.css` (keyframes `roots-sway`, `plant-plop`), `planter.component.css` (`soil-crumble`, `clods-fall`), `tasks-garden.container.ts` (`justSproutedId` signal + `[lifted]`/`[justSprouted]` inputs en las 3 planteras).
 
-### Riego con cursor regadera + click para subir prioridad
+### ~~Riego con cursor regadera + click para subir prioridad~~ (resuelto 2026-07-14)
 
 - **Qué**: con el toggle 🚿 activo, mostrar cursor regadera flotante; click sobre una task de semana/backlog dispara micro-chorro y la mueve una posición arriba en su cantero.
-- **Por qué se difirió**: el toggle ya persiste su estado, pero la interacción concreta requiere capturar mouse global, animación SVG, y operación de reorden de `position` (existe `setPosition` en `TasksService` pero hay que decidir cuánto saltar). Bajo riesgo de uso real hasta que el jardín se llene.
-- **Target**: sin asignar.
+- **Estado**: cerrado. Cursor regadera vía `cursor: url(data:image/svg+xml...)` sobre `.garden--watering` (SVG inline con el emoji 🚿, sin tracking de mouse por JS — más barato que un div flotante y logra el mismo efecto). Botón 💧 aparece en `mc-plant-card` sólo cuando `wateringMode() && stage() !== 'bloom'` (no en HOY). Al click, `onWater(id, bucket)` calcula la nueva posición con `between(posDosArriba, posUnaArriba)` de `core/ordering/fractional-position` (ya existía, sin tocar) y llama a `TasksService.setPosition` (ya existía, estaba sin uso desde la UI). Destello CSS (`plant-splash`) marca la card regada. El output `water` y el método `onWaterClick` en `PlantCardComponent` ya estaban armados sin usar de una sesión anterior — sólo faltaba el input `wateringMode`, el template del botón, y el wiring en el container. Verificado en runtime: activar el toggle mostró el cursor y los botones 💧 sólo en semana/backlog, y un click real movió "tarea semana dos" por encima de "tarea semana uno" en la lista.
+- **Implementación**: `plant-card.component.ts/html/css` (`wateringMode`/`watered` inputs, botón, `plant-splash`), `tasks-garden.container.ts` (`onWater`, `wateredId` signal), `tasks-garden.container.css` (cursor `.garden--watering`).
 
-### Cesta de cosecha con salto en arco
+### ~~Cesta de cosecha con salto en arco~~ (resuelto 2026-07-14)
 
 - **Qué**: al marcar done, la card vuela en arco hasta la cesta del borde inferior del cantero HOY. Hoy se mueve por re-render sin animación.
-- **Por qué se difirió**: la pieza visual (cestita) está implementada, lo que falta es FLIP/animación de salida. Similar al ítem de animaciones orgánicas — polish.
-- **Target**: sin asignar.
+- **Estado**: cerrado. `TasksGardenContainer.flyToBasket` clona el nodo DOM de la card (`cloneNode(true)`, conserva el atributo de scoping de Angular así que el CSS del componente sigue aplicando aunque el clon termine en `document.body`), lo posiciona `fixed` sobre su rect original y lo anima con `plant-arc` (keyframes con offset negativo en Y a mitad de camino, simulando el arco) hasta el centro de `.basket-stack .basket`, encogiéndose y desvaneciéndose; se autodestruye en `animationend` (+ `setTimeout` de seguridad). Respeta `prefers-reduced-motion` (se salta el clon entero). Verificado en runtime: conteo de la cesta subió correctamente tras cosechar, cero nodos `.plant-flying` huérfanos post-animación, sin errores de consola.
+- **Implementación**: `tasks-garden.container.ts` (`flyToBasket`, `data-task-id` en las cards para el query), `plant-card.component.css` (`.plant-flying`, `@keyframes plant-arc`).
 
-### "Cargar más" en backlog (semillas que emergen)
+### ~~"Cargar más" en backlog (semillas que emergen)~~ (resuelto 2026-07-14)
 
 - **Qué**: paginar el cantero de backlog cuando supera N elementos; mostrar contador de "sumergidas" + botón "cargar más" con animación de emerger.
-- **Por qué se difirió**: aún no hay dolor de scroll en backlog. La lista completa cabe en el cantero con overflow-y. Cuando aparezca la fricción, se decide N de cutoff.
-- **Target**: sin asignar.
+- **Estado**: cerrado. `visibleBacklogCount` signal (default 24, `BACKLOG_PAGE_SIZE`) recorta `pending().backlog` en `visibleBacklog()`; botón "cargar más · N semillas sumergidas" (reusa la key `tasks.garden.loadMore`, que ya existía en `es.ts` sin usar, de una sesión anterior) suma otra página. Los ítems recién revelados (índice ≥ `emergingFrom()`) entran con `card--emerging` (translateY + scale, se desactiva sola a los 500ms). La paginación se resetea al buscar/limpiar el filtro. Verificado en runtime creando 27 tareas de prueba: el botón mostró "3 semillas sumergidas" al llegar a 24 visibles, y el click reveló el resto correctamente sin dejar el botón residual.
+- **Implementación**: `tasks-garden.container.ts` (`visibleBacklogCount`, `emergingFrom`, `onLoadMoreBacklog`), `tasks-garden.container.html` (backlog `@for` sobre `visibleBacklog()` + botón), `plant-card.component.css` (`card--emerging`, `@keyframes seed-emerge`).
 
 ## Listas — Tiza sobre pizarra (origen: schema v4, 2026-06-25)
 
@@ -530,6 +566,14 @@ Formato por entrada:
 
 - **Qué**: poder linkear entidades entre sí desde dentro del editor (una nota que referencie una imagen, un escrito que linkee otra nota, etc.) tipo `[[wiki-link]]` o picker de "insertar referencia". Hoy las imágenes se referencian visualmente desde notas/escritos (renderización), pero no hay un sistema de links navegables entre entidades arbitrarias.
 - **Por qué se difirió**: implica decidir sintaxis del link, picker de UI, resolución (qué pasa si la entidad target se borra), y cómo se ve el link en el renderizado vs el editor. Pieza grande de UX/datos.
+- **Target**: sin asignar.
+
+## Sync — UI (origen: rediseño /sync — tubos neumáticos, 2026-07-11)
+
+### Detalles bonitos opcionales (silbido, sombra de cápsula, contador diario)
+
+- **Qué**: silbido suave al despachar una cápsula (respetando el mute global), sombra de la cápsula proyectada sobre el tubo, contador acumulado discreto ("N envíos hoy") sólo si sale barato de derivar del histórico de `lastBulkAt`.
+- **Por qué se difirió**: pulido visual/sonoro de baja prioridad explícitamente fuera del MVP del rediseño de `/sync`. El latón/madera del cuadro de mandos y la animación honesta de la cápsula en vuelo (sin barra de progreso falsa) ya se cerraron.
 - **Target**: sin asignar.
 
 ## Sync — Push a remoto no funciona (origen: uso manual, 2026-07-01)
