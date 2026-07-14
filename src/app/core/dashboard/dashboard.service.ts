@@ -43,6 +43,7 @@ export class DashboardService {
         title: t.title,
         dueDate,
         overdue: dueDate !== null && dueDate.slice(0, 10) < today,
+        tags: t.tags,
       };
     });
   });
@@ -54,6 +55,7 @@ export class DashboardService {
       deadline: g.deadline,
       stepsDone: g.stepsDone,
       stepsTotal: g.stepsTotal,
+      tags: g.tags,
     })),
   );
 

@@ -9,11 +9,20 @@
     @for (task of tasks(); track task.id) {
       <li [class.overdue]="task.overdue">
         <button type="button" (click)="open.emit(task)">
-          <mc-icon name="dot-outline" class="bullet" />
-          @if (task.dueDate) {
-            <span class="when">{{ task.dueDate | mcDate }}</span>
+          <div class="row-main">
+            <mc-icon name="dot-outline" class="bullet" />
+            @if (task.dueDate) {
+              <span class="when">{{ task.dueDate | mcDate }}</span>
+            }
+            <span class="title">{{ task.title || t('dashboard.task.untitled') }}</span>
+          </div>
+          @if (resolvedTags(task).length) {
+            <div class="tags">
+              @for (tag of resolvedTags(task); track tag.id) {
+                <mc-tag-chip [tag]="tag" size="small" [compact]="true" />
+              }
+            </div>
           }
-          <span class="title">{{ task.title || t('dashboard.task.untitled') }}</span>
         </button>
       </li>
     }

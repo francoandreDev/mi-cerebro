@@ -9,12 +9,21 @@
     @for (goal of goals(); track goal.id) {
       <li>
         <button type="button" (click)="open.emit(goal)">
-          <mc-icon name="dot-outline" class="bullet" />
-          @if (goal.deadline) {
-            <span class="when">{{ goal.deadline | mcDate }}</span>
+          <div class="row-main">
+            <mc-icon name="dot-outline" class="bullet" />
+            @if (goal.deadline) {
+              <span class="when">{{ goal.deadline | mcDate }}</span>
+            }
+            <span class="title">{{ goal.title || t('dashboard.goal.untitled') }}</span>
+            <span class="progress">{{ goal.stepsDone }}/{{ goal.stepsTotal }}</span>
+          </div>
+          @if (resolvedTags(goal).length) {
+            <div class="tags">
+              @for (tag of resolvedTags(goal); track tag.id) {
+                <mc-tag-chip [tag]="tag" size="small" [compact]="true" />
+              }
+            </div>
           }
-          <span class="title">{{ goal.title || t('dashboard.goal.untitled') }}</span>
-          <span class="progress">{{ goal.stepsDone }}/{{ goal.stepsTotal }}</span>
         </button>
       </li>
     }

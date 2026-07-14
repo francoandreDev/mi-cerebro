@@ -40,8 +40,9 @@ ul {
 li button {
   width: 100%;
   display: flex;
-  gap: var(--mc-space-2);
-  align-items: baseline;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
   text-align: left;
   background: transparent;
   border: 0;
@@ -50,6 +51,19 @@ li button {
   cursor: pointer;
   border-radius: var(--mc-radius-sm);
   font-size: var(--mc-font-size-sm);
+}
+
+.row-main {
+  display: flex;
+  gap: var(--mc-space-2);
+  align-items: baseline;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding-left: calc(1em + var(--mc-space-2));
 }
 
 li button:hover {

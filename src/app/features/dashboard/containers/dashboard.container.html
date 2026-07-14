@@ -4,12 +4,24 @@
     <p>{{ t('dashboard.subtitle') }}</p>
   </header>
   <div class="grid">
-    <mc-dashboard-tasks-widget [tasks]="todayTasks()" (open)="onOpenTask($event)" />
-    <mc-dashboard-goals-widget [goals]="activeGoals()" (open)="onOpenGoal($event)" />
+    <mc-dashboard-tasks-widget
+      [tasks]="todayTasks()"
+      [availableTags]="availableTags()"
+      (open)="onOpenTask($event)"
+    />
+    <mc-dashboard-goals-widget
+      [goals]="activeGoals()"
+      [availableTags]="availableTags()"
+      (open)="onOpenGoal($event)"
+    />
     <mc-dashboard-reminders-widget
       [reminders]="upcomingReminders()"
       (viewAll)="onViewAllReminders()"
     />
-    <mc-dashboard-recent-widget [entries]="recentEntries()" (open)="onOpenEntry($event)" />
+    <mc-dashboard-recent-widget
+      [entries]="recentEntries()"
+      [availableTags]="availableTags()"
+      (open)="onOpenEntry($event)"
+    />
   </div>
 </div>

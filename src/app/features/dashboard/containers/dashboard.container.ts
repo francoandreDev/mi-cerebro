@@ -11,6 +11,7 @@ import {
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { entitySlugSegment } from '@core/routing/entity-slug';
+import { TagsService } from '@core/tags/tags.service';
 
 import { DashboardGoalsWidgetComponent } from '../components/dashboard-goals-widget.component';
 import { DashboardRecentWidgetComponent } from '../components/dashboard-recent-widget.component';
@@ -33,11 +34,13 @@ export class DashboardContainer {
   private readonly dashboard = inject(DashboardService);
   private readonly router = inject(Router);
   private readonly i18n = inject(I18nService);
+  private readonly tagsService = inject(TagsService);
 
   protected readonly todayTasks = this.dashboard.todayTasks;
   protected readonly activeGoals = this.dashboard.activeGoals;
   protected readonly upcomingReminders = this.dashboard.upcomingReminders;
   protected readonly recentEntries = this.dashboard.recentEntries;
+  protected readonly availableTags = this.tagsService.tags;
 
   protected t(key: TranslationKey): string {
     return this.i18n.t(key);

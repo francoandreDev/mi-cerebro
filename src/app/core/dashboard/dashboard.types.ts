@@ -10,6 +10,7 @@ export interface DashboardTaskItem {
   readonly title: string;
   readonly dueDate: string | null;
   readonly overdue: boolean;
+  readonly tags: readonly string[];
 }
 
 export interface DashboardGoalItem {
@@ -18,6 +19,7 @@ export interface DashboardGoalItem {
   readonly deadline: string | null;
   readonly stepsDone: number;
   readonly stepsTotal: number;
+  readonly tags: readonly string[];
 }
 
 export interface DashboardReminderItem {

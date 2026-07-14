@@ -640,8 +640,7 @@ Formato por entrada:
 - **Por qué se difirió**: fuera del alcance de la verificación funcional de esa sesión (typecheck/lint/tests + click-through en desktop); mismo patrón de breakpoint ya usado y probado en el resto de §21, riesgo bajo pero no confirmado.
 - **Target**: sin asignar — agrupable con la próxima pasada de verificación visual de §21 si el bridge de Chrome está sano.
 
-### Tags no se muestran en los widgets del dashboard
+### ~~Tags no se muestran en los widgets del dashboard~~ (resuelto 2026-07-14)
 
 - **Qué**: `TaskSummary`/`GoalSummary`/`NoteSummary`/`WritingSummary` ya traen `tags: readonly string[]`, pero ninguno de los 4 widgets de `/dashboard` los renderiza (sin chips de tag, a diferencia de `note-slip-card`/`kind-card` en otras vistas).
-- **Por qué se difirió**: decisión YAGNI de v1 — mostrar tags exige resolver `tagIds` contra `TagsService` (vía `core/tags`) e inyectarlo en cada widget o en el container, complejidad extra sin que el usuario la haya pedido todavía. Los datos ya están disponibles en los view-items de `core/dashboard/dashboard.types.ts` si hace falta sumarlos después.
-- **Target**: sin asignar.
+- **Estado**: cerrado (widget de reminders no aplica: `ReminderSummary` no tiene `tags`). `DashboardTaskItem`/`DashboardGoalItem` suman campo `tags` en `dashboard.types.ts`, poblado en `DashboardService` desde los summaries reales. `DashboardRecentEntry` ya traía `tags` sin usar. Los 3 widgets (`tasks`, `goals`, `recent`) reciben `[availableTags]` (signal `TagsService.tags` inyectado en `DashboardContainer`) y resuelven `tagIds → Tag` con el mismo patrón que `note-slip-card`/`tagged-generic-card`, renderizando `<mc-tag-chip>` en una segunda fila bajo el título (`.row-main` + `.tags` en `dashboard-widget.component.css`). Sin dependencias nuevas ni cambios de schema — solo se expuso un dato ya calculado.

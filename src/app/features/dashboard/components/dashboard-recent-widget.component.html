@@ -9,9 +9,18 @@
     @for (entry of entries(); track entry.id) {
       <li>
         <button type="button" (click)="open.emit(entry)">
-          <mc-icon [name]="entryIcon(entry)" class="bullet" />
-          <span class="title">{{ entry.title || t('dashboard.recent.untitled') }}</span>
-          <span class="when">{{ entry.updatedAt | mcDate: true }}</span>
+          <div class="row-main">
+            <mc-icon [name]="entryIcon(entry)" class="bullet" />
+            <span class="title">{{ entry.title || t('dashboard.recent.untitled') }}</span>
+            <span class="when">{{ entry.updatedAt | mcDate: true }}</span>
+          </div>
+          @if (resolvedTags(entry).length) {
+            <div class="tags">
+              @for (tag of resolvedTags(entry); track tag.id) {
+                <mc-tag-chip [tag]="tag" size="small" [compact]="true" />
+              }
+            </div>
+          }
         </button>
       </li>
     }
