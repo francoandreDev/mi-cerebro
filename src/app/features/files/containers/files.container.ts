@@ -9,17 +9,21 @@ import {
   input,
   signal,
 } from '@angular/core';
-import { Router } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { AutosaveService } from '@core/autosave/autosave.service';
 import { ErrorService } from '@core/errors/error.service';
 import { withReauthIfNeeded } from '@core/errors/with-reauth';
+import { handleCreateFolder, handleFolderAction } from '@core/folders/folder-crud';
+import { FoldersService } from '@core/folders/folders.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { EntityLockController } from '@core/locks/entity-lock.controller';
 import { entitySlugSegment, extractEntityId } from '@core/routing/entity-slug';
 import { TagsService } from '@core/tags/tags.service';
+import { FolderBreadcrumbComponent } from '@shared/folder-breadcrumb/folder-breadcrumb.component';
 import { IconComponent } from '@shared/icon/icon.component';
 import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
 import { reorderById } from '@shared/utils/reorder';
@@ -48,6 +52,7 @@ import { FilesService } from '../services/files.service';
     IconComponent,
     LockBannerComponent,
     NgTemplateOutlet,
+    FolderBreadcrumbComponent,
   ],
   templateUrl: './files.container.html',
   styleUrl: './files.container.css',
@@ -59,13 +64,25 @@ export class FilesContainer {
   private readonly autosave = inject(AutosaveService);
   private readonly workspace = inject(WorkspaceService);
   private readonly tagsService = inject(TagsService);
+  private readonly foldersService = inject(FoldersService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly errors = inject(ErrorService);
   private readonly i18n = inject(I18nService);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly tags = this.tagsService.tags;
   protected readonly active = signal<FileCollection | null>(null);
+
+  private readonly params = toSignal(this.route.queryParamMap, {
+    initialValue: this.route.snapshot.queryParamMap,
+  });
+  protected readonly currentFolder = computed(() => this.params().get('folder') ?? '');
+  protected readonly allFolders = this.filesService.folders;
+
+  protected readonly visibleCollections = computed(() =>
+    this.filesService.summaries().filter((s) => s.folder === this.currentFolder()),
+  );
   protected readonly status = signal<FileCollectionSaveStatus>('saved');
   protected readonly inlineMode = computed(() => {
     const c = this.active();
@@ -166,7 +183,7 @@ export class FilesContainer {
   protected async onCreateCollection(): Promise<void> {
     try {
       await this.workspace.ensureWritable();
-      const created = await this.filesService.createCollection('');
+      const created = await this.filesService.createCollection('', this.currentFolder());
       await this.router.navigate([
         '/files',
         entitySlugSegment(created.title, created.id, 'coleccion'),
@@ -335,6 +352,22 @@ export class FilesContainer {
 
   private withReauthIfNeeded(error: unknown, retry?: () => void): unknown {
     return withReauthIfNeeded(error, () => this.workspace.reauthorize(), retry);
+  }
+
+  protected onFolderNavigate(path: string): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { folder: path || null },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  protected async onCreateSubfolder(): Promise<void> {
+    await handleCreateFolder('file', this.foldersService, this.i18n, this.currentFolder());
+  }
+
+  protected async onManageFolder(path: string): Promise<void> {
+    await handleFolderAction(`file:${path}`, this.foldersService, this.i18n);
   }
 }
 

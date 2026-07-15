@@ -1,14 +1,18 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { ErrorService } from '@core/errors/error.service';
 import { withReauthIfNeeded } from '@core/errors/with-reauth';
+import { handleCreateFolder, handleFolderAction } from '@core/folders/folder-crud';
+import { FoldersService } from '@core/folders/folders.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { entitySlugSegment } from '@core/routing/entity-slug';
 import type { Tag } from '@core/tags/tag.types';
 import { TagsService } from '@core/tags/tags.service';
+import { FolderBreadcrumbComponent } from '@shared/folder-breadcrumb/folder-breadcrumb.component';
 import { IconComponent } from '@shared/icon/icon.component';
 import { TagChipComponent } from '@shared/tags/tag-chip.component';
 
@@ -52,7 +56,7 @@ const SIZE_BY_PRIORITY: Record<GoalPriority, number> = { low: 14, med: 20, high:
 @Component({
   selector: 'mc-goals-wall',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent, TagChipComponent, GoalPeekOverlayComponent],
+  imports: [IconComponent, TagChipComponent, GoalPeekOverlayComponent, FolderBreadcrumbComponent],
   templateUrl: './goals-wall.container.html',
   styleUrl: './goals-wall.container.css',
 })
@@ -60,13 +64,25 @@ export class GoalsWallContainer {
   private readonly goalsService = inject(GoalsService);
   private readonly tagsService = inject(TagsService);
   private readonly workspace = inject(WorkspaceService);
+  private readonly foldersService = inject(FoldersService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly errors = inject(ErrorService);
   private readonly i18n = inject(I18nService);
 
   protected readonly tags = this.tagsService.tags;
   protected readonly summaries = this.goalsService.summaries;
   protected readonly query = signal<string>('');
+
+  private readonly params = toSignal(this.route.queryParamMap, {
+    initialValue: this.route.snapshot.queryParamMap,
+  });
+  protected readonly currentFolder = computed(() => this.params().get('folder') ?? '');
+  protected readonly allFolders = this.goalsService.folders;
+
+  private readonly inCurrentFolder = computed<readonly GoalSummary[]>(() =>
+    this.summaries().filter((s) => s.folder === this.currentFolder()),
+  );
   protected readonly activeTagIds = signal<ReadonlySet<string>>(new Set());
   protected readonly hideCompleted = signal<boolean>(false);
   protected readonly creating = signal<boolean>(false);
@@ -122,7 +138,7 @@ export class GoalsWallContainer {
     return this.tags().filter((t) => used.has(t.id));
   });
 
-  protected readonly empty = computed(() => this.summaries().length === 0);
+  protected readonly empty = computed(() => this.inCurrentFolder().length === 0);
 
   protected readonly hasFilter = computed(
     () => this.query().trim() !== '' || this.activeTagIds().size > 0 || this.hideCompleted(),
@@ -134,7 +150,7 @@ export class GoalsWallContainer {
     const hideDone = this.hideCompleted();
     const today = this.today();
     const out: StarVm[] = [];
-    for (const goal of this.summaries()) {
+    for (const goal of this.inCurrentFolder()) {
       const matchesQuery = !q || normTitle(goal.title).includes(q);
       const matchesTags = tagSet.size === 0 || goal.tags.some((id) => tagSet.has(id));
       const matchesDone = !hideDone || !goal.completed;
@@ -426,7 +442,7 @@ export class GoalsWallContainer {
     this.creating.set(true);
     try {
       await this.workspace.ensureWritable();
-      const goal = await this.goalsService.create(title);
+      const goal = await this.goalsService.create(title, this.currentFolder());
       this.newTitle.set('');
       await this.router.navigate(['/goals', entitySlugSegment(goal.title, goal.id)]);
     } catch (e) {
@@ -443,5 +459,21 @@ export class GoalsWallContainer {
       ? 'goals.wall.toggleStepUndone'
       : 'goals.wall.toggleStepDone';
     return this.t(key).replace('{step}', star.title).replace('{goal}', star.goalTitle);
+  }
+
+  protected onFolderNavigate(path: string): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { folder: path || null },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  protected async onCreateSubfolder(): Promise<void> {
+    await handleCreateFolder('goal', this.foldersService, this.i18n, this.currentFolder());
+  }
+
+  protected async onManageFolder(path: string): Promise<void> {
+    await handleFolderAction(`goal:${path}`, this.foldersService, this.i18n);
   }
 }

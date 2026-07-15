@@ -1,16 +1,20 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { AutosaveService } from '@core/autosave/autosave.service';
 import { ErrorService } from '@core/errors/error.service';
 import { withReauthIfNeeded } from '@core/errors/with-reauth';
+import { handleCreateFolder, handleFolderAction } from '@core/folders/folder-crud';
+import { FoldersService } from '@core/folders/folders.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { entitySlugSegment } from '@core/routing/entity-slug';
 import type { Tag } from '@core/tags/tag.types';
 import { TagsService } from '@core/tags/tags.service';
+import { FolderBreadcrumbComponent } from '@shared/folder-breadcrumb/folder-breadcrumb.component';
 import { IconComponent } from '@shared/icon/icon.component';
 import { TagChipComponent } from '@shared/tags/tag-chip.component';
 
@@ -57,6 +61,7 @@ const norm = (s: string): string => s.toLowerCase().normalize('NFD').replace(/[Ì
     ContinueReadingCardComponent,
     WritingRowComponent,
     WritingSpineComponent,
+    FolderBreadcrumbComponent,
   ],
   templateUrl: './writings-shelf.container.html',
   styleUrl: './writings-shelf.container.css',
@@ -66,13 +71,25 @@ export class WritingsShelfContainer {
   private readonly tagsService = inject(TagsService);
   private readonly autosave = inject(AutosaveService);
   private readonly workspace = inject(WorkspaceService);
+  private readonly foldersService = inject(FoldersService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly errors = inject(ErrorService);
   private readonly i18n = inject(I18nService);
 
   protected readonly tags = this.tagsService.tags;
   protected readonly summaries = this.writingsService.summaries;
   protected readonly query = signal<string>('');
+
+  private readonly params = toSignal(this.route.queryParamMap, {
+    initialValue: this.route.snapshot.queryParamMap,
+  });
+  protected readonly currentFolder = computed(() => this.params().get('folder') ?? '');
+  protected readonly allFolders = this.writingsService.folders;
+
+  private readonly inCurrentFolder = computed<readonly WritingSummary[]>(() =>
+    this.summaries().filter((s) => s.folder === this.currentFolder()),
+  );
   protected readonly activeTagIds = signal<ReadonlySet<string>>(new Set());
   protected readonly sortKey = signal<SortKey>('updated');
   protected readonly creating = signal<boolean>(false);
@@ -101,8 +118,7 @@ export class WritingsShelfContainer {
   });
   protected readonly restAll = computed<readonly WritingSummary[]>(() => {
     const cr = this.continueReading();
-    if (!cr) return [];
-    return this.summaries().filter((s) => s.id !== cr.summary.id);
+    return this.inCurrentFolder().filter((s) => !cr || s.id !== cr.summary.id);
   });
   protected readonly restView = computed<readonly WritingCardView[]>(() => {
     const q = norm(this.query().trim());
@@ -145,7 +161,7 @@ export class WritingsShelfContainer {
     });
     return groups;
   });
-  protected readonly empty = computed(() => this.summaries().length === 0);
+  protected readonly empty = computed(() => this.inCurrentFolder().length === 0);
   protected readonly noMatch = computed(
     () => this.hasFilter() && this.restView().length === 0 && this.restAll().length > 0,
   );
@@ -238,7 +254,7 @@ export class WritingsShelfContainer {
     this.creating.set(true);
     try {
       await this.workspace.ensureWritable();
-      const writing = await this.writingsService.create(title);
+      const writing = await this.writingsService.create(title, this.currentFolder());
       await this.router.navigate(['/writings', entitySlugSegment(writing.title, writing.id)]);
     } catch (e) {
       this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize()));
@@ -257,6 +273,22 @@ export class WritingsShelfContainer {
     } catch (e) {
       this.errors.report(e);
     }
+  }
+
+  protected onFolderNavigate(path: string): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { folder: path || null },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  protected async onCreateSubfolder(): Promise<void> {
+    await handleCreateFolder('writing', this.foldersService, this.i18n, this.currentFolder());
+  }
+
+  protected async onManageFolder(path: string): Promise<void> {
+    await handleFolderAction(`writing:${path}`, this.foldersService, this.i18n);
   }
 }
 

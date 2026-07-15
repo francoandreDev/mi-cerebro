@@ -72,6 +72,14 @@
     </div>
   </header>
 
+  <mc-folder-breadcrumb
+    [currentPath]="currentFolder()"
+    [allFolders]="allFolders()"
+    (navigate)="onFolderNavigate($event)"
+    (createSubfolder)="onCreateSubfolder()"
+    (manageFolder)="onManageFolder($event)"
+  />
+
   @if (availableTags().length) {
     <div class="tags" role="group" [attr.aria-label]="t('goals.wall.tagsLabel')">
       @for (tag of availableTags(); track tag.id) {

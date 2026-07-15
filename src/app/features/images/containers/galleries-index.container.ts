@@ -8,15 +8,19 @@ import {
   signal,
   untracked,
 } from '@angular/core';
-import { Router } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { ErrorService } from '@core/errors/error.service';
 import { withReauthIfNeeded } from '@core/errors/with-reauth';
+import { handleCreateFolder, handleFolderAction } from '@core/folders/folder-crud';
+import { FoldersService } from '@core/folders/folders.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { entitySlugSegment } from '@core/routing/entity-slug';
 import { TagsService } from '@core/tags/tags.service';
+import { FolderBreadcrumbComponent } from '@shared/folder-breadcrumb/folder-breadcrumb.component';
 import { IconComponent } from '@shared/icon/icon.component';
 import { hashColor } from '@shared/utils/hash-color';
 import { ROOM_SIZE, orderItems } from '@shared/utils/museum-asymmetry';
@@ -41,7 +45,7 @@ interface PlantCell {
 @Component({
   selector: 'mc-galleries-index',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent, MuseumRoomComponent],
+  imports: [IconComponent, MuseumRoomComponent, FolderBreadcrumbComponent],
   templateUrl: './galleries-index.container.html',
   styleUrl: './galleries-index.container.css',
 })
@@ -49,7 +53,9 @@ export class GalleriesIndexContainer {
   private readonly galleriesService = inject(GalleriesService);
   private readonly workspace = inject(WorkspaceService);
   private readonly tagsService = inject(TagsService);
+  private readonly foldersService = inject(FoldersService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly errors = inject(ErrorService);
   private readonly i18n = inject(I18nService);
   private readonly destroyRef = inject(DestroyRef);
@@ -63,11 +69,21 @@ export class GalleriesIndexContainer {
   protected readonly activeGallery = signal<Gallery | null>(null);
   protected readonly previewUrls = signal<Record<string, string>>({});
 
+  private readonly params = toSignal(this.route.queryParamMap, {
+    initialValue: this.route.snapshot.queryParamMap,
+  });
+  protected readonly currentFolder = computed(() => this.params().get('folder') ?? '');
+  protected readonly allFolders = this.galleriesService.folders;
+
+  private readonly inCurrentFolder = computed<readonly GallerySummary[]>(() =>
+    this.summaries().filter((s) => s.folder === this.currentFolder()),
+  );
+
   protected readonly filteredSummaries = computed<readonly GallerySummary[]>(() => {
     const q = this.query().trim().toLowerCase();
     const filterTag = this.tagFilter();
     const sort = this.sortKey();
-    const list = this.summaries().filter((s) => {
+    const list = this.inCurrentFolder().filter((s) => {
       if (filterTag !== '' && !s.tags.includes(filterTag)) return false;
       if (q === '') return true;
       const title = (s.title || '').toLowerCase();
@@ -197,7 +213,7 @@ export class GalleriesIndexContainer {
   protected async createGallery(): Promise<void> {
     try {
       await this.workspace.ensureWritable();
-      const gallery = await this.galleriesService.createGallery('');
+      const gallery = await this.galleriesService.createGallery('', this.currentFolder());
       await this.router.navigate([
         '/images',
         entitySlugSegment(gallery.title, gallery.id, 'galeria'),
@@ -252,5 +268,21 @@ export class GalleriesIndexContainer {
     if (Object.keys(urls).length === 0) return;
     for (const url of Object.values(urls)) URL.revokeObjectURL(url);
     this.previewUrls.set({});
+  }
+
+  protected onFolderNavigate(path: string): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { folder: path || null },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  protected async onCreateSubfolder(): Promise<void> {
+    await handleCreateFolder('image', this.foldersService, this.i18n, this.currentFolder());
+  }
+
+  protected async onManageFolder(path: string): Promise<void> {
+    await handleFolderAction(`image:${path}`, this.foldersService, this.i18n);
   }
 }

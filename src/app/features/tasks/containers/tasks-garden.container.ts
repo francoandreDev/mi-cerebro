@@ -7,17 +7,21 @@ import {
   isDevMode,
   signal,
 } from '@angular/core';
-import { Router } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { AutosaveService } from '@core/autosave/autosave.service';
 import { ErrorService } from '@core/errors/error.service';
 import { withReauthIfNeeded } from '@core/errors/with-reauth';
+import { handleCreateFolder, handleFolderAction } from '@core/folders/folder-crud';
+import { FoldersService } from '@core/folders/folders.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { between } from '@core/ordering/fractional-position';
 import { entitySlugSegment } from '@core/routing/entity-slug';
 import { TagsService } from '@core/tags/tags.service';
+import { FolderBreadcrumbComponent } from '@shared/folder-breadcrumb/folder-breadcrumb.component';
 import { createDndController } from '@shared/utils/dnd-controller';
 
 import { HarvestBasketComponent } from '../components/harvest-basket.component';
@@ -42,7 +46,12 @@ const BACKLOG_PAGE_SIZE = 24;
 @Component({
   selector: 'mc-tasks-garden',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [PlanterComponent, PlantCardComponent, HarvestBasketComponent],
+  imports: [
+    PlanterComponent,
+    PlantCardComponent,
+    HarvestBasketComponent,
+    FolderBreadcrumbComponent,
+  ],
   templateUrl: './tasks-garden.container.html',
   styleUrl: './tasks-garden.container.css',
 })
@@ -51,7 +60,9 @@ export class TasksGardenContainer {
   private readonly tagsService = inject(TagsService);
   private readonly autosave = inject(AutosaveService);
   private readonly workspace = inject(WorkspaceService);
+  private readonly foldersService = inject(FoldersService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly errors = inject(ErrorService);
   private readonly i18n = inject(I18nService);
   private readonly host = inject(ElementRef<HTMLElement>);
@@ -70,12 +81,22 @@ export class TasksGardenContainer {
   protected readonly visibleBacklogCount = signal<number>(BACKLOG_PAGE_SIZE);
   protected readonly emergingFrom = signal<number>(BACKLOG_PAGE_SIZE);
 
+  private readonly params = toSignal(this.route.queryParamMap, {
+    initialValue: this.route.snapshot.queryParamMap,
+  });
+  protected readonly currentFolder = computed(() => this.params().get('folder') ?? '');
+  protected readonly allFolders = this.tasksService.folders;
+
   protected readonly untitledLabel = computed(() => this.t('tasks.untitledTitle'));
+
+  private readonly inCurrentFolder = computed<readonly TaskSummary[]>(() =>
+    this.summaries().filter((s) => s.folder === this.currentFolder()),
+  );
 
   protected readonly filtered = computed<readonly TaskSummary[]>(() => {
     const q = norm(this.query().trim());
-    if (!q) return this.summaries();
-    return this.summaries().filter((s) => norm(s.title).includes(q));
+    if (!q) return this.inCurrentFolder();
+    return this.inCurrentFolder().filter((s) => norm(s.title).includes(q));
   });
 
   protected readonly buckets = computed(() => bucketTasks(this.filtered(), new Date()));
@@ -196,7 +217,7 @@ export class TasksGardenContainer {
     this.creating.set(true);
     try {
       await this.workspace.ensureWritable();
-      const task = await this.tasksService.create(title);
+      const task = await this.tasksService.create(title, this.currentFolder());
       // why: por default, lo nuevo cae a SEMANA — no obstruye el cantero de HOY
       //      con cosas no priorizadas todavía.
       await this.tasksService.transplant(task.id, 'week');
@@ -309,6 +330,22 @@ export class TasksGardenContainer {
     } catch (e) {
       this.errors.report(e);
     }
+  }
+
+  protected onFolderNavigate(path: string): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { folder: path || null },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  protected async onCreateSubfolder(): Promise<void> {
+    await handleCreateFolder('task', this.foldersService, this.i18n, this.currentFolder());
+  }
+
+  protected async onManageFolder(path: string): Promise<void> {
+    await handleFolderAction(`task:${path}`, this.foldersService, this.i18n);
   }
 }
 

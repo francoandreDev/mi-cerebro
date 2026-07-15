@@ -7,14 +7,22 @@
     </button>
   </header>
 
+  <mc-folder-breadcrumb
+    [currentPath]="currentFolder()"
+    [allFolders]="allFolders()"
+    (navigate)="onFolderNavigate($event)"
+    (createSubfolder)="onCreateSubfolder()"
+    (manageFolder)="onManageFolder($event)"
+  />
+
   <div class="wall-board">
-    @if (filesService.summaries().length === 0) {
+    @if (visibleCollections().length === 0) {
       <div class="wall-empty">
         <p>{{ t('files.wall.empty') }}</p>
       </div>
     } @else {
       <ul class="wall-grid">
-        @for (summary of filesService.summaries(); track summary.id; let i = $index) {
+        @for (summary of visibleCollections(); track summary.id; let i = $index) {
           <li class="wall-slot">
             <mc-file-locker
               [summary]="summary"

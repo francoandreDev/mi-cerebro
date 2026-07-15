@@ -6,6 +6,14 @@
     </h1>
   </header>
 
+  <mc-folder-breadcrumb
+    [currentPath]="currentFolder()"
+    [allFolders]="allFolders()"
+    (navigate)="onFolderNavigate($event)"
+    (createSubfolder)="onCreateSubfolder()"
+    (manageFolder)="onManageFolder($event)"
+  />
+
   <ng-template #itemsTpl let-items>
     @switch (viewMode()) {
       @case ('shelf') {

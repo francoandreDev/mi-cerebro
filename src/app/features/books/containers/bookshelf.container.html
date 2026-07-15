@@ -57,6 +57,17 @@
     </button>
   </div>
 </header>
+
+<mc-folder-breadcrumb
+  [currentPath]="currentFolder()"
+  [allFolders]="allFolders()"
+  (navigate)="onFolderNavigate($event)"
+  (createSubfolder)="onCreateSubfolder()"
+  (manageFolder)="onManageFolder($event)"
+  (childDragOver)="onDragOverChildFolder($event)"
+  (childDrop)="onDropOnChildFolder($event)"
+/>
+
 @if (summaries().length === 0) {
   <div class="empty">
     <mc-icon name="books" class="empty-icon mc-anim-float" />
@@ -109,122 +120,59 @@
           <span class="plank-edge" aria-hidden="true"></span>
         </div>
       </div>
-      @for (shelf of shelves(); track shelf.folder) {
-        <div class="shelf" [class.collapsed]="isCollapsed(shelf.folder)">
-          <div class="shelf-head">
-            @if (renamingFolder() === shelf.folder) {
-              <input
-                type="text"
-                class="shelf-label-input"
-                [value]="renameDraft()"
-                [placeholder]="t('books.shelf.renamePlaceholder')"
-                [attr.aria-label]="t('books.shelf.renameLabel')"
-                (input)="onRenameInput($event)"
-                (keydown.enter)="submitRename(shelf.folder, $event)"
-                (keydown.escape)="cancelRename($event)"
-                (blur)="submitRename(shelf.folder)"
+      <div class="shelf">
+        <div class="shelf-head">
+          <span class="shelf-label shelf-label-root">{{ shelfLabel(currentFolder()) }}</span>
+          <span class="shelf-count">{{ currentShelfBooks().length }}</span>
+        </div>
+        <div class="bookend left" aria-hidden="true"></div>
+        <div
+          class="row"
+          [class.drag-over]="dragOverCurrent() && draggingId() !== null"
+          (dragover)="onDragOverCurrentShelf($event)"
+          (dragleave)="onDragLeaveCurrentShelf()"
+          (drop)="onDropOnCurrentShelf($event)"
+        >
+          @if (currentShelfBooks().length === 0) {
+            <div class="shelf-empty">{{ t('books.shelf.emptyShelfHint') }}</div>
+          }
+          @for (v of currentShelfBooks(); track v.summary.id) {
+            <button
+              type="button"
+              class="slot"
+              [class.opening]="opening() === v.summary.id"
+              [class.dimmed]="opening() !== null && opening() !== v.summary.id"
+              [class.dragging]="draggingId() === v.summary.id"
+              [attr.aria-label]="v.summary.title || t('books.untitledTitle')"
+              draggable="true"
+              (click)="openBook(v.summary.id, v.summary.title)"
+              (dragstart)="onDragStart(v.summary.id, $event)"
+              (dragend)="onDragEnd()"
+              (drop)="onDropOnSlot(v.summary.id, $event)"
+            >
+              <mc-book-volume
+                [bookId]="v.summary.id"
+                [title]="v.summary.title"
+                [subtitle]="v.summary.subtitle"
+                [untitledLabel]="t('books.untitledTitle')"
+                [tallness]="v.tallness"
+                [chapterCount]="v.summary.chapterCount"
+                [accent]="v.summary.accent"
+                [density]="density()"
               />
-            } @else {
-              <button
-                type="button"
-                class="shelf-chevron"
-                [attr.aria-expanded]="!isCollapsed(shelf.folder)"
-                [attr.aria-label]="
-                  isCollapsed(shelf.folder) ? t('books.shelf.expand') : t('books.shelf.collapse')
-                "
-                [title]="
-                  isCollapsed(shelf.folder) ? t('books.shelf.expand') : t('books.shelf.collapse')
-                "
-                (click)="toggleCollapse(shelf.folder)"
-              >
-                <mc-icon [name]="isCollapsed(shelf.folder) ? 'caret-right' : 'caret-down'" />
-              </button>
-              @if (shelf.folder === '') {
-                <span class="shelf-label shelf-label-root">{{ shelfLabel(shelf.folder) }}</span>
-              } @else {
-                <button
-                  type="button"
-                  class="shelf-label shelf-label-btn"
-                  [attr.aria-label]="t('books.shelf.renameLabel')"
-                  [title]="t('books.shelf.renameLabel')"
-                  (click)="startRename(shelf.folder)"
-                >
-                  {{ shelfLabel(shelf.folder) }}
-                </button>
-              }
-              <span class="shelf-count">{{ shelf.books.length }}</span>
-            }
-          </div>
-          <div class="bookend left" aria-hidden="true"></div>
-          <div
-            class="row"
-            [class.drag-over]="dragOverShelf() === shelf.folder && draggingId() !== null"
-            (dragover)="onDragOverShelf(shelf.folder, $event)"
-            (dragleave)="onDragLeaveShelf(shelf.folder)"
-            (drop)="onDropOnShelf(shelf.folder, $event)"
-          >
-            @if (shelf.books.length === 0) {
-              <div class="shelf-empty">{{ t('books.shelf.emptyShelfHint') }}</div>
-            }
-            @for (v of shelf.books; track v.summary.id) {
-              <button
-                type="button"
-                class="slot"
-                [class.opening]="opening() === v.summary.id"
-                [class.dimmed]="opening() !== null && opening() !== v.summary.id"
-                [class.dragging]="draggingId() === v.summary.id"
-                [attr.aria-label]="v.summary.title || t('books.untitledTitle')"
-                draggable="true"
-                (click)="openBook(v.summary.id, v.summary.title)"
-                (dragstart)="onDragStart(v.summary.id, $event)"
-                (dragend)="onDragEnd()"
-                (drop)="onDropOnSlot(v.summary.id, $event)"
-              >
-                <mc-book-volume
-                  [bookId]="v.summary.id"
-                  [title]="v.summary.title"
-                  [subtitle]="v.summary.subtitle"
-                  [untitledLabel]="t('books.untitledTitle')"
-                  [tallness]="v.tallness"
-                  [chapterCount]="v.summary.chapterCount"
-                  [accent]="v.summary.accent"
-                  [density]="density()"
-                />
-                <span class="caption" aria-hidden="true">
-                  <span class="caption-title">{{
-                    v.summary.title || t('books.untitledTitle')
-                  }}</span>
-                  <span class="caption-meta">{{ v.tooltip }}</span>
-                </span>
-              </button>
-            }
-          </div>
-          <div class="bookend right" aria-hidden="true"></div>
-          <div class="plank">
-            <span class="plank-grain" aria-hidden="true"></span>
-            <span class="plank-edge" aria-hidden="true"></span>
-          </div>
+              <span class="caption" aria-hidden="true">
+                <span class="caption-title">{{ v.summary.title || t('books.untitledTitle') }}</span>
+                <span class="caption-meta">{{ v.tooltip }}</span>
+              </span>
+            </button>
+          }
         </div>
-      }
-      @if (creatingShelf()) {
-        <div class="create-shelf">
-          <input
-            type="text"
-            class="shelf-label-input"
-            [value]="createDraft()"
-            [placeholder]="t('books.shelf.renamePlaceholder')"
-            [attr.aria-label]="t('books.shelf.createShelfCta')"
-            (input)="onCreateInput($event)"
-            (keydown.enter)="submitCreateShelf($event)"
-            (keydown.escape)="cancelCreateShelf($event)"
-            (blur)="submitCreateShelf()"
-          />
+        <div class="bookend right" aria-hidden="true"></div>
+        <div class="plank">
+          <span class="plank-grain" aria-hidden="true"></span>
+          <span class="plank-edge" aria-hidden="true"></span>
         </div>
-      } @else {
-        <button type="button" class="create-shelf-btn" (click)="startCreateShelf()">
-          {{ t('books.shelf.createShelfCta') }}
-        </button>
-      }
+      </div>
     </div>
     <div class="bookcase-bottom" aria-hidden="true"></div>
   </div>
@@ -238,7 +186,7 @@
   />
 } @else if (mode() === 'list') {
   <ul class="list">
-    @for (v of views(); track v.summary.id) {
+    @for (v of currentShelfBooks(); track v.summary.id) {
       <li>
         <button type="button" class="row-btn" (click)="openBook(v.summary.id, v.summary.title)">
           <span class="bullet">

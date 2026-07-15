@@ -15,6 +15,14 @@
     />
   </header>
 
+  <mc-folder-breadcrumb
+    [currentPath]="currentFolder()"
+    [allFolders]="allFolders()"
+    (navigate)="onFolderNavigate($event)"
+    (createSubfolder)="onCreateSubfolder()"
+    (manageFolder)="onManageFolder($event)"
+  />
+
   <mc-note-compose [busy]="creating()" (create)="onCreate($event)" />
 
   <div class="roll" [attr.aria-label]="t('notes.wall.tickerLabel')" role="list">

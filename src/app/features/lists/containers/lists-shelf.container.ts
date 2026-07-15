@@ -7,16 +7,20 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { Router } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { AutosaveService } from '@core/autosave/autosave.service';
 import { ErrorService } from '@core/errors/error.service';
 import { withReauthIfNeeded } from '@core/errors/with-reauth';
+import { handleCreateFolder, handleFolderAction } from '@core/folders/folder-crud';
+import { FoldersService } from '@core/folders/folders.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { entitySlugSegment } from '@core/routing/entity-slug';
 import { TagsService } from '@core/tags/tags.service';
+import { FolderBreadcrumbComponent } from '@shared/folder-breadcrumb/folder-breadcrumb.component';
 import { IconComponent } from '@shared/icon/icon.component';
 
 import { ChalkEntryComponent } from '../components/chalk-entry.component';
@@ -51,7 +55,13 @@ const firstLetter = (title: string): string => {
 @Component({
   selector: 'mc-lists-shelf',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent, ChalkEntryComponent, ChalkNewEntryComponent, ChalkRailComponent],
+  imports: [
+    IconComponent,
+    ChalkEntryComponent,
+    ChalkNewEntryComponent,
+    ChalkRailComponent,
+    FolderBreadcrumbComponent,
+  ],
   templateUrl: './lists-shelf.container.html',
   styleUrl: './lists-shelf.container.css',
 })
@@ -60,7 +70,9 @@ export class ListsShelfContainer {
   private readonly tagsService = inject(TagsService);
   private readonly autosave = inject(AutosaveService);
   private readonly workspace = inject(WorkspaceService);
+  private readonly foldersService = inject(FoldersService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly errors = inject(ErrorService);
   private readonly i18n = inject(I18nService);
 
@@ -73,6 +85,16 @@ export class ListsShelfContainer {
 
   protected readonly flowRef = viewChild<ElementRef<HTMLElement>>('flow');
 
+  private readonly params = toSignal(this.route.queryParamMap, {
+    initialValue: this.route.snapshot.queryParamMap,
+  });
+  protected readonly currentFolder = computed(() => this.params().get('folder') ?? '');
+  protected readonly allFolders = this.listsService.folders;
+
+  private readonly inCurrentFolder = computed<readonly ListSummary[]>(() =>
+    this.summaries().filter((s) => s.folder === this.currentFolder()),
+  );
+
   protected readonly untitledLabel = computed(() => this.t('lists.untitledTitle'));
 
   protected readonly sections = computed<readonly Section[]>(() => {
@@ -81,7 +103,7 @@ export class ListsShelfContainer {
 
   private readonly alphaSections = computed<readonly Section[]>(() => {
     const buckets = new Map<string, ListSummary[]>();
-    for (const s of this.summaries()) {
+    for (const s of this.inCurrentFolder()) {
       const k = firstLetter(s.title);
       const arr = buckets.get(k) ?? [];
       arr.push(s);
@@ -98,7 +120,7 @@ export class ListsShelfContainer {
   private readonly tagSections = computed<readonly Section[]>(() => {
     const byTag = new Map<string, ListSummary[]>();
     const untagged: ListSummary[] = [];
-    for (const s of this.summaries()) {
+    for (const s of this.inCurrentFolder()) {
       if (s.tags.length === 0) {
         untagged.push(s);
         continue;
@@ -138,13 +160,13 @@ export class ListsShelfContainer {
   });
 
   protected readonly empty = computed(
-    () => this.summaries().length === 0 && this.query().trim() === '',
+    () => this.inCurrentFolder().length === 0 && this.query().trim() === '',
   );
   protected readonly hasQuery = computed(() => this.query().trim() !== '');
   protected readonly anyMatch = computed(() => {
     const q = stripDiacritics(this.query().trim().toLowerCase());
     if (!q) return true;
-    return this.summaries().some((l) => {
+    return this.inCurrentFolder().some((l) => {
       const hay = stripDiacritics(`${l.title} ${l.previewItems.join(' ')}`.toLowerCase());
       return hay.includes(q);
     });
@@ -203,7 +225,7 @@ export class ListsShelfContainer {
     this.creating.set(true);
     try {
       await this.workspace.ensureWritable();
-      const list = await this.listsService.create(title);
+      const list = await this.listsService.create(title, this.currentFolder());
       await this.router.navigate(['/lists', entitySlugSegment(list.title, list.id)]);
     } catch (e) {
       this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize()));
@@ -222,6 +244,22 @@ export class ListsShelfContainer {
     } catch (e) {
       this.errors.report(e);
     }
+  }
+
+  protected onFolderNavigate(path: string): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { folder: path || null },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  protected async onCreateSubfolder(): Promise<void> {
+    await handleCreateFolder('list', this.foldersService, this.i18n, this.currentFolder());
+  }
+
+  protected async onManageFolder(path: string): Promise<void> {
+    await handleFolderAction(`list:${path}`, this.foldersService, this.i18n);
   }
 }
 
