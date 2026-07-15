@@ -43,7 +43,7 @@ export class DashboardService {
   private readonly settings = inject(SettingsService);
 
   // why: en memoria, no persistido — se resetea en cada carga de la app.
-  //      Persistencia entre sesiones queda en docs/deferred.md.
+  //      Persistencia entre sesiones queda en docs/deferred/index.md.
   private readonly resurfaceExcluded = signal<ReadonlySet<string>>(new Set());
 
   readonly todayTasks = computed<readonly DashboardTaskItem[]>(() => {

@@ -1,6 +1,6 @@
 # Migraciones de schema
 
-Cada entidad persistida lleva un `schemaVersion`. Cuando aumentamos esa versión, registramos una migración pura `vN -> vN+1` en `src/app/core/migrations/`. La política completa vive en `PROYECTO.md` §4.15.
+Cada entidad persistida lleva un `schemaVersion`. Cuando aumentamos esa versión, registramos una migración pura `vN -> vN+1` en `src/app/core/migrations/`. La política completa vive en `docs/proyecto/reglas.md` §4.15.
 
 ## Cómo agregar una migración
 

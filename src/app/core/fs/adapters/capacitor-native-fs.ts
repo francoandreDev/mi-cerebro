@@ -12,7 +12,7 @@ import { classifyFsError } from './native-fs-errors';
 // why: no folder picker on mobile (user's scope decision) — the workspace
 //      always lives under this fixed, app-managed subfolder of the user's
 //      Documents directory. Documents (not Data) so the files stay visible/
-//      exportable to the user, matching PROYECTO.md §4.14 ("el usuario es
+//      exportable to the user, matching docs/proyecto/reglas.md §4.14 ("el usuario es
 //      dueño de sus datos") instead of an app-private sandbox lost on
 //      uninstall without the user ever seeing it.
 const WORKSPACE_ROOT = 'mi-cerebro';

@@ -5,7 +5,7 @@
 // flow runs under FsLockService so it cannot race with autocommit or
 // any autosave drain in flight.
 //
-// Steps (PROYECTO.md §19 13b-ii):
+// Steps (docs/proyecto/roadmap-13-versionado.md §19 13b-ii):
 //   (a) AutosaveService.flushAll        — no pending drafts on disk
 //   (b) VersioningService.commitAll      — capture dirty as pre-switch
 //   (c) git.checkout(target.refs.main)  — actually swap HEAD + workdir

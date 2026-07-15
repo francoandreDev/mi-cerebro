@@ -7,7 +7,7 @@ import { TagChipComponent } from '@shared/tags/tag-chip.component';
 // why: read-only twin of features/writings/components/writing-card.component.ts
 //      for the cross-tag view (features/tags/tag-detail) — same typographic
 //      card visual, primitive inputs instead of WritingSummary so shared/
-//      stays free of @features imports (PROYECTO.md §4.2.10), no delete
+//      stays free of @features imports (docs/proyecto/reglas.md §4.2.10), no delete
 //      affordance since this view never mutates.
 @Component({
   selector: 'mc-writing-card-preview',

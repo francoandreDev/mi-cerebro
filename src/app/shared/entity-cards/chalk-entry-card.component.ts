@@ -5,7 +5,7 @@ import type { Tag } from '@core/tags/tag.types';
 // why: read-only twin of features/lists/components/chalk-entry.component.ts
 //      for the cross-tag view (features/tags/tag-detail) — same chalkboard
 //      visual, primitive inputs instead of ListSummary so shared/ stays
-//      free of @features imports (PROYECTO.md §4.2.10). Drops the
+//      free of @features imports (docs/proyecto/reglas.md §4.2.10). Drops the
 //      query/highlight and delete affordances — this view never mutates
 //      and has no search box of its own.
 @Component({

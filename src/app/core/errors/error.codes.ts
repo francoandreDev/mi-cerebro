@@ -1,7 +1,7 @@
 // Catalog of error codes. Every entry MUST also exist in docs/errors.md
 // with its diagnosis and recovery (rule 26).
 //
-// Format: MCB-<area>-<###>. Areas in PROYECTO.md §6.
+// Format: MCB-<area>-<###>. Areas in docs/proyecto/infraestructura.md §6.
 
 import type { TranslationKey } from '@core/i18n/i18n.types';
 

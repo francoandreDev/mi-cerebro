@@ -1,6 +1,6 @@
 # Catálogo de errores
 
-Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `PROYECTO.md` §6). Esta es la referencia completa: qué significa, por qué pasa, cómo salir. **Toda entrada nueva acá también va en `src/app/core/errors/error.codes.ts` y en `src/app/core/i18n/locales/es.ts`, en el mismo commit (regla 26).**
+Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `docs/proyecto/infraestructura.md` §6). Esta es la referencia completa: qué significa, por qué pasa, cómo salir. **Toda entrada nueva acá también va en `src/app/core/errors/error.codes.ts` y en `src/app/core/i18n/locales/es.ts`, en el mismo commit (regla 26).**
 
 ## Plantilla
 

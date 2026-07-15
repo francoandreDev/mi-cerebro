@@ -32,7 +32,7 @@ import type { Comment } from '@core/versioning/comments.types';
 //      wrappingInputRule that turns "- "/"* "/"+ "/"1. " typed at the start
 //      of a line into a list, with no config flag to opt out (only `false`,
 //      which also drops the toggle command and keyboard shortcut). Per
-//      "cero fricción de sintaxis" (PROYECTO.md §1) list creation should be
+//      "cero fricción de sintaxis" (docs/proyecto/index.md §1) list creation should be
 //      an explicit action (toolbar/shortcut), not an ambush on the user's
 //      literal "-"/"*"/"+" — so the two nodes are re-added with their
 //      addInputRules stripped, keeping commands and Mod-Shift-8/7 intact.

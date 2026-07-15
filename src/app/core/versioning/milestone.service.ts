@@ -1,4 +1,4 @@
-// Named milestones over git annotated tags (PROYECTO.md §19 paso 13a-bis).
+// Named milestones over git annotated tags (docs/proyecto/roadmap-13-versionado.md §19 paso 13a-bis).
 // Lets the user mark a commit ("antes de refactor X") as a persistent
 // reference separate from the commit log itself. Implemented as
 // isomorphic-git annotated tags so the name + user-supplied description

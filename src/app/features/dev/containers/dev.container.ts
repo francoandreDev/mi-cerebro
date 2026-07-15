@@ -8,7 +8,7 @@ import { IconComponent } from '@shared/icon/icon.component';
 
 // why: internal QA-only page (not linked from the rail/nav). Exposes
 //      CompactionSchedulerService.runOnce() as a button instead of the
-//      browser devtools console — see docs/deferred.md "Dev panel para
+//      browser devtools console — see docs/deferred/index.md "Dev panel para
 //      la compactación".
 @Component({
   selector: 'mc-dev',

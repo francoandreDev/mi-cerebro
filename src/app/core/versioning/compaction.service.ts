@@ -1,4 +1,4 @@
-// PROYECTO.md §12 "Compactación del historial" — wiring layer over the
+// docs/proyecto/features.md §12 "Compactación del historial" — wiring layer over the
 // pure planner. Walks a single ref's full log, snapshots refs+plan to
 // `.mi-cerebro/pre-compaction/<date>/<branch>/`, then rewrites the ref
 // in place via isomorphic-git plumbing (writeCommit + writeRef) without

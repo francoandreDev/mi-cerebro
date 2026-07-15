@@ -5,7 +5,7 @@ import { colorForId, type Tag } from '@core/tags/tag.types';
 // why: read-only twin of features/files/components/file-locker.component.ts
 //      for the cross-tag view (features/tags/tag-detail) — same locker
 //      visual, primitive inputs instead of FileCollectionSummary so
-//      shared/ stays free of @features imports (PROYECTO.md §4.2.10). No
+//      shared/ stays free of @features imports (docs/proyecto/reglas.md §4.2.10). No
 //      `isOpen`/inline expand — this view always navigates away on click.
 @Component({
   selector: 'mc-file-locker-card',

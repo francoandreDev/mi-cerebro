@@ -8,7 +8,7 @@ import { TagChipComponent } from '@shared/tags/tag-chip.component';
 // why: fallback card for kinds whose own visual component is too coupled to
 //      page-specific state to reuse (tasks: plant-card needs a garden
 //      bucket/growth-stage; images: a real cover thumbnail needs async blob
-//      URL loading, see PROYECTO.md §4.1.3b incident). Used by the cross-tag
+//      URL loading, see docs/proyecto/reglas.md §4.1.3b incident). Used by the cross-tag
 //      view (features/tags/containers/tag-detail.container) for those two
 //      kinds only — every other kind reuses its own native card.
 @Component({

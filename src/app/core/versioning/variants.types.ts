@@ -1,4 +1,4 @@
-// Variant model (PROYECTO.md §19 13b). A variant is a "family" of three
+// Variant model (docs/proyecto/roadmap-13-versionado.md §19 13b). A variant is a "family" of three
 // git branches: main / draft / comments. The Principal family is special:
 // its main lives on the real `main` ref; other variants live under
 // `variant/<slug>/{main,draft,comments}`.

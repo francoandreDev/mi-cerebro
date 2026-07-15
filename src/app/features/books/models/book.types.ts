@@ -13,7 +13,7 @@ export const CHAPTER_FILE_SUFFIX = '.json';
 // why: por defecto portada/reverso son procedurales (gradiente derivado del
 //      hash del id + título). En el futuro el usuario podrá subir imágenes
 //      propias (kind: 'image' con ref al blob en disco); el override está en
-//      docs/deferred.md.
+//      docs/deferred/index.md.
 export type BookFaceRef =
   | { readonly kind: 'auto' }
   | { readonly kind: 'image'; readonly file: string };

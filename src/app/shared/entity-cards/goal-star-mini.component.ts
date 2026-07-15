@@ -17,7 +17,7 @@ const daysUntil = (deadline: string | null, todayIso: string): number | null => 
 //      adapted from the single-star markup in goals-wall.container.html,
 //      dropped the constellation positioning/drag (no shared canvas here).
 //      Takes primitive inputs instead of GoalSummary so shared/ stays free
-//      of @features imports (PROYECTO.md §4.2.10). State thresholds mirror
+//      of @features imports (docs/proyecto/reglas.md §4.2.10). State thresholds mirror
 //      goals-wall.container.ts:143-151 exactly so a goal reads the same way
 //      in both places; daysUntil is a duplicate of
 //      features/goals/containers/goal-wall-layout.utils.ts for the same

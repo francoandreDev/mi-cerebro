@@ -7,8 +7,9 @@ import { TagChipComponent } from '@shared/tags/tag-chip.component';
 // why: read-only twin of features/notes/components/note-slip.component.ts
 //      for the cross-tag view (features/tags/tag-detail) — same visual
 //      (sticky note with pin holes), primitive inputs instead of
-//      NoteSummary so shared/ stays free of @features imports (PROYECTO.md
-//      §4.2.10), no delete affordance since this view never mutates.
+//      NoteSummary so shared/ stays free of @features imports
+//      (docs/proyecto/reglas.md §4.2.10), no delete affordance since this
+//      view never mutates.
 @Component({
   selector: 'mc-note-slip-card',
   changeDetection: ChangeDetectionStrategy.OnPush,

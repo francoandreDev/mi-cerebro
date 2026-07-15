@@ -1,4 +1,4 @@
-// Two related UI states tied to variant switching (PROYECTO.md §19 13b-ii):
+// Two related UI states tied to variant switching (docs/proyecto/roadmap-13-versionado.md §19 13b-ii):
 //   (1) Full-screen loading overlay while THIS tab is performing a
 //       switch (SwitchVariantService.switching is set). Blocks input so
 //       the user can't trigger another action mid-flow.

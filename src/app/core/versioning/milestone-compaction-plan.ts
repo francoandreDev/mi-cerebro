@@ -1,4 +1,4 @@
-// PROYECTO.md §12 "Disparo por milestone" — pure planner para la variante
+// docs/proyecto/features.md §12 "Disparo por milestone" — pure planner para la variante
 // disparada por el usuario al marcar un hito. A diferencia del planner por
 // edad, esta pasada:
 //   - opera sobre un rango acotado [milestone previo (o root) .. milestoneOid],

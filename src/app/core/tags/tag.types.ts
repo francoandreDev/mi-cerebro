@@ -18,7 +18,7 @@ export interface TagsFile {
 }
 
 // why: deterministic palette so a tag id consistently maps to the same hue.
-//      User-customizable colors are deferred (see docs/deferred.md).
+//      User-customizable colors are deferred (see docs/deferred/index.md).
 export const TAG_PALETTE: readonly string[] = [
   '#e57373',
   '#f06292',

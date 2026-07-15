@@ -1,0 +1,158 @@
+# Diferidos — Versionado y variantes
+
+Registro de cosas que se sacaron del scope de una fase y deben tratarse después. Cuando la fase target cierra incorporando un ítem, ese ítem se borra de acá.
+
+Formato por entrada:
+
+- **Qué**: una línea describiendo el ítem.
+- **Por qué se difirió**: la razón concreta (no hay infra todavía, fuera del alcance del paso, decisión de UX, etc.).
+- **Target**: paso del roadmap (§19) o "sin asignar" si todavía no hay decisión.
+- **Origen**: paso donde se decidió postergar.
+
+Índice completo: [`docs/deferred/index.md`](./index.md).
+
+---
+
+## Versionado y variantes (origen: paso 13)
+
+### ~~Anchor `range` multi-bloque (selección que cruza párrafos)~~ (resuelto en §19.16e-iii)
+
+- **Qué**: hoy `range` queda confinado al bloque donde está `$from`. Selecciones que cruzan dos o más bloques caen al anchor `block` del primero (sin range). Comentar a través de párrafos no se soporta.
+- **Estado**: cerrado. Nuevo `CommentAnchorType` `'range'` + `Comment.span: { startBlockId, startOffset, endBlockId, endOffset }` (par de endpoints, no lista — más simple de mapear/orphanar). Orphan handling en `comments-orphans.ts`: sólo se marca huérfano si `startBlockId` o `endBlockId` desaparecen; un bloque borrado _entre_ medio no orphana (el span simplemente cubre menos contenido). `comment-range-mapping.ext.ts` trackea ambos endpoints como posiciones absolutas (igual que el `range` de un solo bloque — `tr.mapping` no distingue bloques) y los re-resuelve a bloque/offset en cada `view.update` vía lookup inverso posición→bloque. `comment-clouds.ext.ts` dibuja la nube al final del último bloque del span y una única decoración inline que cruza los nodos intermedios sin clamping (ProseMirror lo permite nativamente). Creación: `blockSpanAtSelection` en `editor-selection.utils.ts` detecta selección cross-block comparando el blockId en `$from` vs `$to`.
+
+### ~~Widget render para diff-marks de tipo "insertion-only"~~ (resuelto en §19.16e-iv)
+
+- **Qué**: los diff-marks que insertan bloques enteros sin anchor en `main` no tenían punto de inserción inline natural y quedaban listados sólo en el popover de pendientes.
+- **Estado**: cerrado. Nuevo mini-renderer JSON→DOM puro (`core/tiptap/draft-decorations/diff-mark-preview.ts`) cubre el subset de nodos/marcas que produce el editor (paragraph/heading/blockquote/lists/codeBlock/horizontalRule + bold/italic/strike/code/highlight), con fallback a `div` para cualquier tipo de nodo inesperado. `draft-decorations.ext.ts` lo usa para pintar cada mark `insert` (anchorType `block`) como un widget decoration (`Decoration.widget`) al final del doc — mismo punto donde `applyMarkToDoc` los aplica al aceptar — en vez de dejarlos sin renderizar como antes. El widget (`.mc-draft-insert`) es no editable (`contenteditable="false"`), clickeable, y delega el click a `EditorComponent.onDraftInsertClick`, que abre el popover de borradores con ese mark pre-seleccionado (nuevo input `focusId` en `DraftsPanelContainer`). Los marks `insert` con `anchorType: 'doc'` siguen sin renderizado inline (son el fallback raro de todo-el-documento); el popover sigue siendo la única vía para esos y para accept/reject de cualquier mark.
+
+### Granularidad por faceta dentro del bundle de merge
+
+- **Qué**: en 13b–d el merge ofrece elegir por entidad el bundle entero (main + draft + comments de la variante origen). Una versión avanzada permitiría tomar `main` de la variante origen pero quedarse con el `draft` o los `comments` de la variante destino.
+- **Por qué**: cubre un caso raro y agrega 3× botones por delta en la UI de merge. Decisión explícita de "simple gana".
+- **Target**: sin asignar (se agrega si aparece demanda real).
+
+### Variantes sobre el fallback sin isomorphic-git
+
+- **Qué**: si el adapter de isomorphic-git resulta inviable en 13a y se cae al fallback de snapshots en `.mi-cerebro/history/`, las variantes (13b en adelante) no son soportables. La app degrada a una sola "Principal" implícita.
+- **Por qué**: implementar variantes sin git significaría reinventar branching + merge desde cero. No vale la pena hasta confirmar que isomorphic-git no funciona.
+- **Target**: sin asignar (sólo se aborda si el fallback se activa en 13a).
+
+### ~~Colapsar chips de kind en la timeline cuando hay más de N~~ (resuelto 2026-07-04)
+
+- **Qué**: hoy cada commit de la timeline muestra todos los chips de kind tocado (`note`, `task`, `goal`, `image`, `book`, `file`, `list`, `track`, `tag`, `writing`). Cuando el commit toca 8-10 kinds los chips envuelven a dos líneas y desbalancean visualmente la fila.
+- **Estado**: cerrado. `HistoryContainer.visibleKinds()`/`hiddenKindsCount()` cortan en `MAX_VISIBLE_KIND_CHIPS = 4`; el resto colapsa en un chip `+N más` (`.chip-more`).
+
+### Toggle "ver sólo cambios" en diffs largos
+
+- **Qué**: el diff de cuerpo (TipTap → prosa + jsdiff) muestra todo el contenido, no sólo los chunks `add`/`remove`. En notas largas las líneas de contexto opacitadas dominan visualmente. Sería útil un toggle que oculte los `context` y deje sólo los chunks modificados con un separador `…`.
+- **Por qué se difirió**: nice-to-have. Con contexto reducido (~3 líneas alrededor de cada cambio) la legibilidad puede mejorar sin esconder nada — esa es una alternativa más conservadora que también queda en este ítem.
+- **Target**: §19.16f.
+
+### Tooltip por-día en la panorámica (hover sobre la ladera)
+
+- **Qué**: al pasar el mouse sobre la silueta de la cordillera (`.panorama-svg`), mostrar un tooltip flotante con `{fecha} · N hallazgos · mix de facetas`. Actualmente el hit-rect ya tiene `<title>` accesible (nativo del navegador), pero el hover no revela el pico exacto en el eje horizontal — el título aparece con retardo del OS y no muestra el mix de facetas.
+- **Por qué se difirió**: Fase 3 lo dejó marcado como "no crítico, pulido posterior". Cerramos Fase 5 sin abordarlo porque la navegación real (doble-click en columna, click en fósil, mini-mapa desde estratos) ya cubre el flujo principal y agregar un tooltip HTML propio implica un componente flotante posicionado sobre SVG con manejo de escape/scroll.
+- **Target**: §19.16f (pulido del historial) — junto con el resto del polish visual del rediseño.
+
+### Pulido visual general de `/history`
+
+- **Qué**: cuando cerramos 13a el usuario confirmó que la información está completa y legible pero "mucha info, poco visual". Queda como ítem único agrupador para futuras iteraciones de tipografía, densidad, jerarquía y micro-interacciones del historial (anchos de columna, separadores entre buckets, hover states, animación del cambio de selección, etc.).
+- **Por qué se difirió**: estructura y funcionalidad están; el polish entra cuando 13a-d estén cerrados y tengamos uso real para saber qué duele.
+- **Target**: §19.16f.
+
+### Iconito de entidad principal en cada polaroid revelada
+
+- **Qué**: cada polaroid del zoom cordel muestra el diff ya renderizado (entidades tocadas en la leyenda al pie), pero no un ícono de la entidad principal del commit sobre la propia foto — pendiente desde el plan original de `docs/history-v2-handoff.md`.
+- **Por qué se difirió**: usa `entities` del diff, que ya está disponible una vez que `HistoryDiffService.loadForCommit` resuelve; quedó anotado como pulido visual menor, no bloqueante para el gate de la Fase 4.
+- **Target**: §19.16f.
+
+### Refactor de `/history` a subcomponentes por zoom
+
+- **Qué**: `history.container.ts` (~946 líneas) y `history.container.html`/`.css` (`.css` con 1900+ líneas) concentran todo el estado de zoom, prefetch y revelado en un solo archivo, por encima del límite de 200 warn / 300 err de §4.4. El plan es partir en `<mc-history-panorama>`, `<mc-history-strata>`, `<mc-history-cordel>`.
+- **Por qué se difirió**: el rediseño priorizó cerrar las 5 fases funcionales antes de la extracción estructural; el refactor no cambia comportamiento, sólo baja el tamaño de archivo.
+- **Target**: §19.16f.
+
+### Preview inline del diff en hover sobre la polaroid (zoom detalle)
+
+- **Qué**: en la vista cordel (§rediseño /history v2 Fase 4), mostrar un preview del diff al hacer hover sostenido sobre una polaroid sin necesidad de seleccionarla y esperar a que la mesa de revelado la muestre abajo.
+- **Por qué se difirió**: pulido visual evaluado como posible upgrade después de cerrar Fase 4; no se abordó porque click+mesa de revelado ya cubre el flujo principal sin estado adicional de hover.
+- **Target**: §19.16f.
+
+### Vista secundaria de constelaciones ("mapa de patrones de trabajo")
+
+- **Qué**: vista alternativa tipo cielo estrellado que revele patrones de trabajo emergentes (ritmo, picos, gaps) en vez de commits individuales navegables. Se descartó como vista principal del rediseño de `/history` v2 porque encontrar un commit específico en un layout 2D estrellado es peor que en la cordillera/estratos/cordel, pero quedó anotada como posible vista secundaria.
+- **Por qué se difirió**: opcional, muy posterior — sólo si el rediseño principal (cordillera/estratos/cordel) deja "hambre" de ese eje analítico distinto (patrones en vez de hechos puntuales).
+- **Target**: sin asignar.
+
+### Header del editor: "n commits desde {milestone}"
+
+- **Qué**: 13a-bis grabó milestones como git tags anotados pero no expone "estás a n commits desde el milestone más cercano" en el header del editor de cada entidad. El roadmap lo describe como "contexto leve".
+- **Por qué se difirió**: requiere walk del log desde HEAD hasta el primer commit con tag (por entidad o global), un computed que reacciona a cada autocommit, y un slot visual en el header del editor que hoy ya está cargado de chips (autosave, lock, tags). Sumado a que `/history` ya muestra los milestones inline, el valor incremental es marginal hasta tener varios milestones reales en uso.
+- **Target**: §19.16f (pulido del historial).
+
+### Índice de búsqueda persistido por familia (`idx-<family>-main`)
+
+- **Qué**: §12 13b-ii describe un índice MiniSearch por familia cacheado en IndexedDB, así el switch sólo paga rebuild la primera vez. En la implementación inicial elegimos rebuild-from-disk en cada switch porque (a) la latencia es del orden de la del primer boot, (b) introducir N índices ramifica la API de `SearchIndexService` y triplica el costo cuando lleguen 13c (comments) y 13d (draft), y (c) hasta no tener uso real con workspaces grandes no sabemos si la diferencia se siente.
+- **Por qué se difirió**: optimización prematura sin métricas reales. La parte crítica del switch (commit + checkout + index swap atómicos bajo FsLockService) sí entra en 13b-ii; lo cacheable se mete después si el usuario lo nota.
+- **Target**: §19.16f o sin asignar (sólo si el switch resulta lento en uso real con muchas entidades).
+
+### Índice de búsqueda global para comentarios (`idx-<family>-comments`)
+
+- **Qué**: §12 y §19.13c-iv listan un índice MiniSearch persistido por familia para comentarios, integrado al palette global. La infraestructura técnica del índice por familia ya se diferió arriba para `main`; agregar comments multiplica el costo (un MiniSearch por faceta) sin tener todavía métricas reales. En 13c-iv elegimos cerrar position tracking + merge bundle + history chips, dejando la indexación global de comentarios para cuando exista un walk explícito de la rama comments al boot/family-switch (necesario para "primear" el índice sin abrir cada entidad a mano).
+- **Por qué se difirió**: integrar `SearchIndexService` con kind nuevo `'comment'` sin un walk de priming hace que la búsqueda sólo encuentre comentarios de entidades que el usuario tocó en la sesión actual — una UX "fantasma" peor que no tenerla. Hacer el walk requiere recorrer cada `comments/*.json` de la rama activa, lo que toca el mismo plumbing que el priming por familia y conviene diseñar junto.
+- **Target**: §19.16d (pulido de búsqueda) — o un sub-paso 13c-iv-bis si surge dolor concreto antes.
+
+### Índice de búsqueda global para borradores (`idx-<family>-draft`)
+
+- **Qué**: §12 y §19.13d-iv listan un índice MiniSearch persistido por familia para diff-marks de borrador, integrado al palette global. Mismo razonamiento que el índice de comentarios diferido arriba: integrarlo sin un walk de priming de la rama `draft` al boot/family-switch dejaría la búsqueda mostrando sólo marks de entidades tocadas en la sesión actual — UX "fantasma". Hacer el walk requiere recorrer cada `drafts/*.json` de la rama activa, lo que toca el mismo plumbing que el priming por familia para `main` y `comments`.
+- **Por qué se difirió**: los tres índices (main, comments, draft) convergen sobre la misma pieza de infraestructura (walk per-faceta + cache por familia en IndexedDB). Diseñarlos juntos evita reinventar el priming tres veces y permite decidir si los tres comparten un `idx-<family>-bundle` o quedan separados. Sin métricas reales de tamaño/latencia, mejor uno solo bien hecho.
+- **Target**: §19.16d (pulido de búsqueda) — junto con los índices de `main` y `comments`.
+
+### Índice de búsqueda de commits (full-text sobre mensajes + entidades tocadas)
+
+- **Qué**: un índice MiniSearch sobre el log de commits (mensaje + entidades tocadas) integrado al palette global, para poder buscar "¿cuándo toqué X?" sin abrir `/history` y escanear estratos a mano.
+- **Por qué se difirió**: misma familia de problema que los índices de `main`/`comments`/`draft` diferidos arriba — requiere decidir priming al boot y si comparte infraestructura con esos índices. Se agrupa con ellos para diseñarse una sola vez.
+- **Target**: §19.16d (pulido de búsqueda) — junto con los índices por familia ya diferidos.
+
+### ~~Umbral de compactación configurable en settings~~ (resuelto 2026-07-04)
+
+- **Qué**: §12 "Compactación del historial" fijaba el umbral de disparo en 500 commits por rama sin exponerlo en settings.
+- **Estado**: cerrado. `Settings.versioning.compactionThresholdCommits` (default 500, clamp 50–10000) en `settings.types.ts`/`settings.service.ts`; `CompactionSchedulerService.threshold` pasó a computed leyendo ese valor. Campo numérico con draft/apply en `/settings` → Versionado, junto al de autocommit.
+
+### ~~Dev panel para la compactación~~ (resuelto 2026-07-04)
+
+- **Qué**: una pantalla `/dev` que exponga `CompactionSchedulerService.runOnce({ ignoreThreshold })` como botón para QA, en vez de depender de la consola del navegador.
+- **Estado**: cerrado. Ruta `/dev` (no linkeada desde el rail) con `DevContainer` — muestra rama más pesada vista + umbral actual y un botón "Compactar ahora" con estado busy/done. Los demás toggles de dev-perf (`DevPerfService`, `dev-variants-switch-tests`) siguen sin UI propia; se suman a este panel si aparece necesidad real.
+
+### Compactación manual sobre rango específico
+
+- **Qué**: además de la pasada background automática, una acción "Compactar este rango" desde `/history` que permita al usuario seleccionar un span de commits y forzar la fusión, respetando las barreras (tags, `before-restore`, `Merge-Group`).
+- **Por qué se difirió**: la compactación background con buckets por edad cubre el caso 95%. Compactación manual es una herramienta avanzada que se justifica si el usuario quiere "limpiar" un período específico sin esperar al auto. Sin uso real no hay forma de saber si vale la UI.
+- **Target**: sin asignar.
+
+### Banner accionable de "compactar ahora" en el lecho de roca de `/history`
+
+- **Qué**: el `.bedrock` al pie de la vista de estratos ya muestra el conteo real de commits compactables pendientes (`CompactionSchedulerService.shouldSuggestEnableCompaction`), pero es informativo — no tiene un botón que dispare la compactación desde ahí mismo. Hoy esa acción sólo existe en `/dev` (`DevContainer`, no linkeado desde el rail).
+- **Por qué se difirió**: se dejó para cuando el flujo de compactación tenga UI dedicada más allá del panel de dev/QA — traer la acción al lecho de roca implica exponerla a un flujo de usuario final, no sólo debug.
+- **Target**: sin asignar.
+
+### `.git/` en OPFS para acelerar operaciones git
+
+- **Qué**: mover `.git/` (loose objects + refs + index) al Origin Private File System del browser, dejando sólo el workdir visible en la carpeta del usuario via FS Access. isomorphic-git acepta nativamente `dir` (workdir) y `gitdir` separados. La ganancia esperada es 10-100×: cada syscall sobre OPFS cuesta ~5-10 ms vs ~100-200 ms sobre FS Access. Eso bajaría el commit base de ~3 s a ~200 ms.
+- **Por qué se difirió**: las mediciones del validador en 13a (`DevPerfService`) confirmaron el piso de 3 s/commit, pero la decisión de producto fue aceptar pantallas de carga contextuales para las operaciones git disparadas por el usuario (switch de variante, merge, accept de diff-mark, crear/borrar variante) en vez de invertir 2-3 horas y duplicar el modelo de FS clients. Patrón estándar de clientes git; se entiende como aceptable hasta que el uso real demuestre lo contrario.
+- **Implicaciones si se aborda**: el export ZIP (paso 14) tiene que leer también OPFS. Si el usuario limpia datos del sitio, pierde el historial git (pero conserva sus notas y puede recuperar el historial desde GitHub si tenía push configurado en 13e). Riesgo nuevo: races entre main thread (autosave) y posibles workers de git — habría que serializar accesos.
+- **Target**: sin asignar (sólo si la UX con loading screens resulta intolerable en uso real, especialmente en 13b switches frecuentes o 13d accept-spam).
+
+### Crypto-at-rest para PAT en `secrets.json`
+
+- **Qué**: 13e-i persiste el GitHub PAT en plano dentro de `.mi-cerebro/secrets.json` (path agregado a `.gitignore` por default, nunca entra al árbol git). El plan original incluía pasphrase-based crypto (PBKDF2 + AES-GCM) sobre el campo `remote.token` para protegerlo si la carpeta del workspace se respalda/copia a otro lado sin filtros.
+- **Por qué se difirió**: el threat model real al cerrar 13e era "PAT no debe entrar a git push", no "PAT debe sobrevivir leak del filesystem". El gitignore + path bajo `.mi-cerebro/` cubre el primero. Pedir passphrase en cada boot rompe el flujo "abrir la app y editar" que es lo que el usuario hace 99% de las veces; cachear la passphrase en memoria entre boots requiere otro mecanismo (Web Crypto + non-extractable key + IndexedDB) que multiplica la complejidad por 3 sin métricas reales de leak.
+- **Target**: §19.16f.
+
+### CORS proxy propio para push/fetch a GitHub
+
+- **Qué**: 13e-i usa `https://cors.isomorphic-git.org` (proxy público mantenido por la lib) para sortear CORS de GitHub HTTPS. Funciona pero es un single point of failure operado por terceros; el plan a largo plazo es un proxy propio (Cloudflare Worker o similar) que el usuario apunta desde `/settings`.
+- **Por qué se difirió**: levantar y mantener un proxy propio requiere infra externa al repo. Para el smoke push inicial y uso single-user el proxy público sirve; el usuario está advertido en la UI.
+- **Target**: §19.16f.
+
+---

@@ -1,4 +1,4 @@
-// PROYECTO.md §12 "Compactación del historial" — pure planner.
+// docs/proyecto/features.md §12 "Compactación del historial" — pure planner.
 //
 // Takes a chronological commit log of a single branch + the set of oids
 // that have tags pointing to them, and returns the groups of commits to
