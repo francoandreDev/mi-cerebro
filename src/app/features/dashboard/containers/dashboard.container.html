@@ -23,5 +23,11 @@
       [availableTags]="availableTags()"
       (open)="onOpenEntry($event)"
     />
+    <mc-dashboard-resurface-widget
+      [entries]="resurfaceEntries()"
+      [availableTags]="availableTags()"
+      (open)="onOpenEntry($event)"
+      (shuffle)="onShuffleResurface()"
+    />
   </div>
 </div>

@@ -38,6 +38,7 @@ import {
   type GoalSummary,
 } from '../models/goal.types';
 import { goalPriorityProgressMigrationStep } from './priority-progress.migration';
+import { goalProgressActivityMigrationStep } from './progress-activity.migration';
 import { goalReminderConfigMigrationStep } from './reminder-config.migration';
 import { goalStepPositionsMigrationStep } from './step-positions.migration';
 import { goalStepsMigrationStep } from './steps.migration';
@@ -71,6 +72,7 @@ export class GoalsService {
         goalReminderConfigMigrationStep(4),
         goalStepsMigrationStep(5),
         goalStepPositionsMigrationStep(6),
+        goalProgressActivityMigrationStep(7),
       ],
     });
   }
@@ -130,6 +132,7 @@ export class GoalsService {
       progress: 0,
       reminder: DEFAULT_GOAL_REMINDER,
       steps: [],
+      lastProgressAt: now,
       createdAt: now,
       updatedAt: now,
       schemaVersion: GOAL_SCHEMA_VERSION,
@@ -174,13 +177,20 @@ export class GoalsService {
       goal.completed || goal.deadline === null
         ? { enabled: false }
         : (goal.reminder ?? DEFAULT_GOAL_REMINDER);
+    const now = new Date().toISOString();
+    const previous = this.summariesSignal().find((s) => s.id === goal.id);
+    const progressTouched =
+      !previous || previous.progress !== progress || previous.completed !== goal.completed
+        ? true
+        : stepsProgressSignature(previous.steps) !== stepsProgressSignature(steps);
     const updated: Goal = {
       ...goal,
       tags: cleanTags,
       steps,
       progress,
       reminder,
-      updatedAt: new Date().toISOString(),
+      lastProgressAt: progressTouched ? now : (previous?.lastProgressAt ?? now),
+      updatedAt: now,
     };
     const { folder, filename } = splitRelativePath(await this.findPath(dir, goal.id));
     const subdir = await getDirByPath(this.fs, dir, folder);
@@ -339,6 +349,7 @@ export class GoalsService {
       priority: goal.priority,
       progress: goal.progress,
       reminder: goal.reminder ?? DEFAULT_GOAL_REMINDER,
+      lastProgressAt: goal.lastProgressAt,
       updatedAt: goal.updatedAt,
       tags: goal.tags,
       folder,
@@ -371,6 +382,12 @@ export class GoalsService {
     return tagIds.filter((id) => this.tags.byId(id) !== undefined);
   }
 }
+
+// why: compact done-state fingerprint so save() can detect step-progress
+//      changes without a deep-equal — order-sensitive on purpose (steps
+//      list order is meaningful, see GoalStep positions).
+const stepsProgressSignature = (steps: readonly GoalStep[]): string =>
+  steps.map((s) => `${s.id}:${s.done ? 1 : 0}`).join(',');
 
 const sanitizeSteps = (steps: readonly GoalStep[] | undefined): readonly GoalStep[] => {
   if (!steps || steps.length === 0) return [];

@@ -134,6 +134,7 @@
                 [class.overdue]="star.state === 'overdue'"
                 [class.soon]="star.state === 'soon'"
                 [class.pulsing]="star.pulsing"
+                [class.dormant]="star.dormant"
                 [class.done]="star.done"
                 [class.step]="star.stepId !== null"
                 [style.--star-size.px]="star.size"
@@ -183,20 +184,20 @@
             </li>
           }
         </ul>
-        @if (peekSummary(); as peek) {
+        @if (peek.summary(); as summary) {
           @if (peekAnchor(); as anchor) {
             <mc-goal-peek-overlay
-              [summary]="peek"
+              [summary]="summary"
               [anchorX]="anchor.x"
               [anchorY]="anchor.y"
               [today]="today()"
-              (titleChange)="onPeekTitleChange($event)"
-              (completedChange)="onPeekCompletedChange($event)"
-              (deadlineChange)="onPeekDeadlineChange($event)"
-              (priorityChange)="onPeekPriorityChange($event)"
-              (removeGoal)="onPeekRemove()"
-              (openMap)="onPeekOpenMap()"
-              (closed)="onPeekClose()"
+              (titleChange)="peek.onTitleChange($event)"
+              (completedChange)="peek.onCompletedChange($event)"
+              (deadlineChange)="peek.onDeadlineChange($event)"
+              (priorityChange)="peek.onPriorityChange($event)"
+              (removeGoal)="peek.remove()"
+              (openMap)="peek.openMap()"
+              (closed)="peek.close()"
             />
           }
         }

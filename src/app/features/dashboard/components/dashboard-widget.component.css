@@ -108,11 +108,20 @@ li.overdue .when {
   white-space: nowrap;
 }
 
+.dormant-icon {
+  color: var(--mc-fg-muted);
+  width: 0.9em;
+  height: 0.9em;
+}
+
 .footer {
   padding: var(--mc-space-1) var(--mc-space-2) var(--mc-space-2);
 }
 
 .footer button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mc-space-1);
   background: transparent;
   border: 1px solid var(--mc-border-default);
   color: var(--mc-fg-primary);
@@ -120,6 +129,18 @@ li.overdue .when {
   padding: var(--mc-space-1) var(--mc-space-2);
   border-radius: var(--mc-radius-sm);
   font-size: var(--mc-font-size-xs);
+}
+
+.preview {
+  margin: 0;
+  padding-left: calc(1em + var(--mc-space-2));
+  color: var(--mc-fg-muted);
+  font-size: var(--mc-font-size-xs);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .footer button:hover {

@@ -28,7 +28,7 @@ describe('GoalsService', () => {
     const goal = await svc.create('Aprender ruso');
     expect(goal.completed).toBe(false);
     expect(goal.deadline).toBeNull();
-    expect(goal.schemaVersion).toBe(7);
+    expect(goal.schemaVersion).toBe(8);
     expect(goal.steps).toEqual([]);
     expect(goal.priority).toBe('med');
     expect(goal.progress).toBe(0);
@@ -133,5 +133,30 @@ describe('GoalsService', () => {
     const s = list.find((x) => x.id === goal.id)!;
     expect(s.stepsTotal).toBe(2);
     expect(s.stepsDone).toBe(1);
+  });
+
+  it('bumps lastProgressAt when progress changes, not on title-only edits', async () => {
+    const goal = await svc.create('X');
+    const original = goal.lastProgressAt;
+    await new Promise((r) => setTimeout(r, 5));
+    const retitled = await svc.save({ ...goal, title: 'Y' });
+    expect(retitled.lastProgressAt).toBe(original);
+    const progressed = await svc.save({ ...retitled, progress: 40 });
+    expect(progressed.lastProgressAt > original).toBe(true);
+  });
+
+  it('bumps lastProgressAt when a step toggles, not when only its title changes', async () => {
+    const goal = await svc.create('X');
+    const step = newGoalStep('a');
+    const withStep = await svc.save({ ...goal, steps: [step] });
+    const original = withStep.lastProgressAt;
+    await new Promise((r) => setTimeout(r, 5));
+    const retitledStep = await svc.save({
+      ...withStep,
+      steps: [{ ...step, title: 'renamed' }],
+    });
+    expect(retitledStep.lastProgressAt).toBe(original);
+    const toggled = await svc.toggleStep(goal.id, step.id);
+    expect(toggled.lastProgressAt > original).toBe(true);
   });
 });

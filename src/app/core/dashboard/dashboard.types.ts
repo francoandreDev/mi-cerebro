@@ -20,6 +20,7 @@ export interface DashboardGoalItem {
   readonly stepsDone: number;
   readonly stepsTotal: number;
   readonly tags: readonly string[];
+  readonly dormant: boolean;
 }
 
 export interface DashboardReminderItem {
@@ -28,7 +29,7 @@ export interface DashboardReminderItem {
   readonly nextPingAt: string;
 }
 
-export type DashboardEntryKind = 'note' | 'writing';
+export type DashboardEntryKind = 'note' | 'writing' | 'list';
 
 export interface DashboardRecentEntry {
   readonly id: string;
@@ -39,7 +40,13 @@ export interface DashboardRecentEntry {
   readonly tags: readonly string[];
 }
 
-export const dashboardEntryRoute = (entry: DashboardRecentEntry): readonly string[] => {
-  const base = entry.kind === 'note' ? '/notes' : '/writings';
-  return [base, entitySlugSegment(entry.title, entry.id)];
+const ENTRY_ROUTE_BASE: Record<DashboardEntryKind, string> = {
+  note: '/notes',
+  writing: '/writings',
+  list: '/lists',
 };
+
+export const dashboardEntryRoute = (entry: DashboardRecentEntry): readonly string[] => [
+  ENTRY_ROUTE_BASE[entry.kind],
+  entitySlugSegment(entry.title, entry.id),
+];

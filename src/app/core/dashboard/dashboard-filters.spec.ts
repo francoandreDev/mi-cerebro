@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { GoalSummary } from '@features/goals/models/goal.types';
+import type { ListSummary } from '@features/lists/models/list.types';
 import type { NoteSummary } from '@features/notes/models/note.types';
 import type { ReminderSummary } from '@features/reminders/models/reminder.types';
 import type { TaskSummary } from '@features/tasks/models/task.types';
@@ -8,7 +9,9 @@ import type { WritingSummary } from '@features/writings/models/writing.types';
 
 import {
   mergeRecentEntries,
+  mergeResurfacePool,
   selectActiveGoals,
+  selectResurfaceEntries,
   selectTodayTasks,
   selectUpcomingReminders,
 } from './dashboard-filters';
@@ -35,6 +38,7 @@ const goal = (overrides: Partial<GoalSummary>): GoalSummary => ({
   priority: 'med',
   progress: 0,
   reminder: { enabled: false },
+  lastProgressAt: '2026-07-01T00:00:00.000Z',
   updatedAt: '2026-07-01T00:00:00.000Z',
   tags: [],
   folder: '',
@@ -80,6 +84,18 @@ const writing = (overrides: Partial<WritingSummary>): WritingSummary => ({
   position: '0',
   preview: '',
   wordCount: 0,
+  ...overrides,
+});
+
+const list = (overrides: Partial<ListSummary>): ListSummary => ({
+  id: 'l1',
+  title: 'List',
+  updatedAt: '2026-07-01T00:00:00.000Z',
+  tags: [],
+  folder: '',
+  position: '0',
+  previewItems: [],
+  itemCount: 0,
   ...overrides,
 });
 
@@ -153,5 +169,61 @@ describe('mergeRecentEntries', () => {
     );
     const result = mergeRecentEntries(notes, []);
     expect(result).toHaveLength(8);
+  });
+});
+
+describe('mergeResurfacePool', () => {
+  it('merges notes, writings and lists uncapped and unsorted, tagged by kind', () => {
+    const n = note({ id: 'n1' });
+    const w = writing({ id: 'w1' });
+    const l = list({ id: 'l1', previewItems: ['comprar leche', 'llamar a mamá'] });
+    const result = mergeResurfacePool([n], [w], [l]);
+    expect(result).toEqual([
+      expect.objectContaining({ id: 'n1', kind: 'note' }),
+      expect.objectContaining({ id: 'w1', kind: 'writing' }),
+      expect.objectContaining({ id: 'l1', kind: 'list', preview: 'comprar leche · llamar a mamá' }),
+    ]);
+  });
+});
+
+describe('selectResurfaceEntries', () => {
+  const NOW_MS = NOW.getTime();
+  const daysAgoIso = (days: number): string => new Date(NOW_MS - days * 86400000).toISOString();
+
+  it('excludes entries updated within the stale threshold', () => {
+    const fresh = note({ id: 'fresh', updatedAt: daysAgoIso(2) });
+    const stale = note({ id: 'stale', updatedAt: daysAgoIso(30) });
+    const pool = mergeResurfacePool([fresh, stale], [], []);
+    const result = selectResurfaceEntries(pool, new Set(), NOW);
+    expect(result.map((e) => e.id)).toEqual(['stale']);
+  });
+
+  it('never repeats an id within a single pick', () => {
+    const pool = mergeResurfacePool(
+      Array.from({ length: 5 }, (_, i) => note({ id: `n${i}`, updatedAt: daysAgoIso(20 + i) })),
+      [],
+      [],
+    );
+    const result = selectResurfaceEntries(pool, new Set(), NOW, () => 0.999);
+    expect(new Set(result.map((e) => e.id)).size).toBe(result.length);
+  });
+
+  it('falls back to the full stale pool once exclusions exhaust it', () => {
+    const a = note({ id: 'a', updatedAt: daysAgoIso(20) });
+    const b = note({ id: 'b', updatedAt: daysAgoIso(21) });
+    const pool = mergeResurfacePool([a, b], [], []);
+    const result = selectResurfaceEntries(pool, new Set(['a', 'b']), NOW, () => 0);
+    expect(result.map((e) => e.id).sort()).toEqual(['a', 'b']);
+  });
+
+  it('weights the pick towards older entries', () => {
+    const veryOld = note({ id: 'old', updatedAt: daysAgoIso(200) });
+    const barelyStale = note({ id: 'young', updatedAt: daysAgoIso(15) });
+    const pool = mergeResurfacePool([veryOld, barelyStale], [], []);
+    // why: random() picks the second candidate only if its cumulative
+    //      weight share is reached — with `old` so much heavier, a roll
+    //      just past its own weight share still lands on it, not `young`.
+    const result = selectResurfaceEntries(pool, new Set(), NOW, () => 0.5);
+    expect(result[0]?.id).toBe('old');
   });
 });

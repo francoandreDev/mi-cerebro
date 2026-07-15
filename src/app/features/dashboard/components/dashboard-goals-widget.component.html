@@ -15,6 +15,13 @@
               <span class="when">{{ goal.deadline | mcDate }}</span>
             }
             <span class="title">{{ goal.title || t('dashboard.goal.untitled') }}</span>
+            @if (goal.dormant) {
+              <mc-icon
+                name="moon"
+                class="dormant-icon"
+                [attr.aria-label]="t('dashboard.goal.dormant')"
+              />
+            }
             <span class="progress">{{ goal.stepsDone }}/{{ goal.stepsTotal }}</span>
           </div>
           @if (resolvedTags(goal).length) {

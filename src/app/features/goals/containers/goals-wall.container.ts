@@ -10,6 +10,7 @@ import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { entitySlugSegment } from '@core/routing/entity-slug';
+import { SettingsService } from '@core/settings/settings.service';
 import type { Tag } from '@core/tags/tag.types';
 import { TagsService } from '@core/tags/tags.service';
 import { FolderBreadcrumbComponent } from '@shared/folder-breadcrumb/folder-breadcrumb.component';
@@ -17,41 +18,15 @@ import { IconComponent } from '@shared/icon/icon.component';
 import { TagChipComponent } from '@shared/tags/tag-chip.component';
 
 import { GoalPeekOverlayComponent } from '../components/goal-peek-overlay.component';
-import type { GoalPriority, GoalSummary } from '../models/goal.types';
+import type { GoalSummary } from '../models/goal.types';
 import { GoalsService } from '../services/goals.service';
-import { constellationCenter, daysUntil, normTitle, stepOffset } from './goal-wall-layout.utils';
-
-export type StarState = 'completed' | 'overdue' | 'soon' | 'active';
-
-export interface StarVm {
-  readonly key: string;
-  readonly goalId: string;
-  readonly stepId: string | null;
-  readonly x: number;
-  readonly y: number;
-  readonly size: number;
-  readonly opacity: number;
-  readonly glow: number;
-  readonly done: boolean;
-  readonly dim: boolean;
-  readonly pulsing: boolean;
-  readonly state: StarState;
-  readonly title: string;
-  readonly goalTitle: string;
-}
-
-export interface LinkVm {
-  readonly goalId: string;
-  readonly a: string;
-  readonly b: string;
-  readonly x1: number;
-  readonly y1: number;
-  readonly x2: number;
-  readonly y2: number;
-  readonly dim: boolean;
-}
-
-const SIZE_BY_PRIORITY: Record<GoalPriority, number> = { low: 14, med: 20, high: 30 };
+import { GoalPeekController } from './goal-peek.controller';
+import {
+  buildConstellationLinks,
+  buildStars,
+  constellationCenter,
+  type StarVm,
+} from './goal-wall-layout.utils';
 
 @Component({
   selector: 'mc-goals-wall',
@@ -69,6 +44,7 @@ export class GoalsWallContainer {
   private readonly route = inject(ActivatedRoute);
   private readonly errors = inject(ErrorService);
   private readonly i18n = inject(I18nService);
+  private readonly settings = inject(SettingsService);
 
   protected readonly tags = this.tagsService.tags;
   protected readonly summaries = this.goalsService.summaries;
@@ -94,7 +70,12 @@ export class GoalsWallContainer {
   //      la meta y abre un peek con título/plazo/progreso/prioridad editables.
   //      Sólo cuando la meta ya está enfocada, un 2do click hace el toggle
   //      del step (o navega si es solitaria). Click fuera/Esc cierra el peek.
-  protected readonly peekGoalId = signal<string | null>(null);
+  //      Extraído a GoalPeekController (§4.4 límite duro de 300 líneas).
+  protected readonly peek = new GoalPeekController(this.goalsService.summaries, (title) =>
+    confirm(
+      this.t('goals.deleteConfirm').replace('{title}', title || this.t('goals.untitledTitle')),
+    ),
+  );
   // why: drag de constelación entera en el wall. dragCenter es el centro
   //      en vivo durante el arrastre; se persiste en `goal.wallCenter` al soltar.
   protected readonly dragCenter = signal<{ goalId: string; x: number; y: number } | null>(null);
@@ -119,12 +100,8 @@ export class GoalsWallContainer {
     return constellationCenter(s.id);
   }
 
-  protected readonly peekSummary = computed<GoalSummary | null>(() => {
-    const id = this.peekGoalId();
-    return id ? (this.summaries().find((s) => s.id === id) ?? null) : null;
-  });
   protected readonly peekAnchor = computed<{ x: number; y: number } | null>(() => {
-    const s = this.peekSummary();
+    const s = this.peek.summary();
     if (!s) return null;
     const { cx, cy } = this.centerOf(s);
     return { x: cx, y: cy };
@@ -144,126 +121,19 @@ export class GoalsWallContainer {
     () => this.query().trim() !== '' || this.activeTagIds().size > 0 || this.hideCompleted(),
   );
 
-  protected readonly stars = computed<readonly StarVm[]>(() => {
-    const q = normTitle(this.query().trim());
-    const tagSet = this.activeTagIds();
-    const hideDone = this.hideCompleted();
-    const today = this.today();
-    const out: StarVm[] = [];
-    for (const goal of this.inCurrentFolder()) {
-      const matchesQuery = !q || normTitle(goal.title).includes(q);
-      const matchesTags = tagSet.size === 0 || goal.tags.some((id) => tagSet.has(id));
-      const matchesDone = !hideDone || !goal.completed;
-      const dim = !(matchesQuery && matchesTags && matchesDone);
-      const days = daysUntil(goal.deadline, today);
-      const overdue = !goal.completed && days !== null && days < 0;
-      const soon = !goal.completed && days !== null && days >= 0 && days <= 7;
-      const state: StarState = goal.completed
-        ? 'completed'
-        : overdue
-          ? 'overdue'
-          : soon
-            ? 'soon'
-            : 'active';
-      const base = SIZE_BY_PRIORITY[goal.priority];
-      const { cx, cy } = this.centerOf(goal);
-      const steps = goal.steps;
-      const goalTitle = goal.title || this.untitledLabel();
-      if (steps.length === 0) {
-        out.push({
-          key: `g:${goal.id}`,
-          goalId: goal.id,
-          stepId: null,
-          x: cx,
-          y: cy,
-          size: base,
-          opacity: goal.completed ? 0.5 : 0.95,
-          glow: base * 1.2,
-          done: goal.completed,
-          dim,
-          pulsing: soon || overdue,
-          state,
-          title: goalTitle,
-          goalTitle,
-        });
-        continue;
-      }
-      const stepSize = Math.round(base * 0.72);
-      for (const step of steps) {
-        // why: el editor guarda x/y absolutos (0-100) del lienzo de la meta;
-        //      en el wall el centro de cada constelación es (cx, cy), así que
-        //      mapeamos (x-50, y-50) y lo escalamos a la sub-región típica
-        //      (~±12 de stepOffset) para que el orden relativo del editor se
-        //      refleje en el wall. Sin x/y → fallback hash determinístico.
-        const hasPos = typeof step.x === 'number' && typeof step.y === 'number';
-        const dx = hasPos ? (step.x! - 50) * 0.25 : stepOffset(step.id, steps.length).dx;
-        const dy = hasPos ? (step.y! - 50) * 0.25 : stepOffset(step.id, steps.length).dy;
-        const done = goal.completed || step.done;
-        out.push({
-          key: `s:${goal.id}:${step.id}`,
-          goalId: goal.id,
-          stepId: step.id,
-          x: cx + dx,
-          y: cy + dy,
-          size: done ? Math.round(stepSize * 0.85) : stepSize,
-          opacity: done ? 0.42 : 0.95,
-          glow: stepSize * (done ? 0.8 : 1.3),
-          done,
-          dim,
-          pulsing: !done && (soon || overdue),
-          state,
-          title: step.title || this.t('goals.steps.placeholder'),
-          goalTitle,
-        });
-      }
-    }
-    return out;
-  });
+  protected readonly stars = computed<readonly StarVm[]>(() =>
+    buildStars(
+      this.inCurrentFolder(),
+      { query: this.query(), tagIds: this.activeTagIds(), hideCompleted: this.hideCompleted() },
+      this.today(),
+      (goal) => this.centerOf(goal),
+      { untitled: this.untitledLabel(), stepPlaceholder: this.t('goals.steps.placeholder') },
+      this.settings.state().goals.dormantThresholdDays,
+      Date.now(),
+    ),
+  );
 
-  // why: MST por goal sobre sus steps → dibuja la "forma" de la constelación.
-  protected readonly links = computed<readonly LinkVm[]>(() => {
-    const byGoal = new Map<string, StarVm[]>();
-    for (const star of this.stars()) {
-      if (star.stepId === null) continue;
-      let arr = byGoal.get(star.goalId);
-      if (!arr) {
-        arr = [];
-        byGoal.set(star.goalId, arr);
-      }
-      arr.push(star);
-    }
-    const out: LinkVm[] = [];
-    for (const [goalId, members] of byGoal) {
-      if (members.length < 2) continue;
-      const inTree = new Set<string>([members[0]!.stepId!]);
-      while (inTree.size < members.length) {
-        let best: { a: StarVm; b: StarVm; d: number } | null = null;
-        for (const a of members) {
-          if (!inTree.has(a.stepId!)) continue;
-          for (const b of members) {
-            if (inTree.has(b.stepId!)) continue;
-            const dx = a.x - b.x,
-              dy = a.y - b.y,
-              d = dx * dx + dy * dy;
-            if (!best || d < best.d) best = { a, b, d };
-          }
-        }
-        if (!best) break;
-        inTree.add(best.b.stepId!);
-        out.push({
-          goalId,
-          a: best.a.stepId!,
-          b: best.b.stepId!,
-          x1: best.a.x,
-          y1: best.a.y,
-          x2: best.b.x,
-          y2: best.b.y,
-          dim: best.a.dim || best.b.dim,
-        });
-      }
-    }
-    return out;
-  });
+  protected readonly links = computed(() => buildConstellationLinks(this.stars()));
 
   protected readonly allDim = computed(
     () => this.stars().length > 0 && this.stars().every((s) => s.dim),
@@ -324,19 +194,19 @@ export class GoalsWallContainer {
   }
   private async onStarTap(star: StarVm, ev: PointerEvent): Promise<void> {
     if (ev.shiftKey) {
-      this.peekGoalId.set(null);
+      this.peek.close();
       await this.router.navigate([
         '/goals',
         entitySlugSegment(this.goalTitle(star.goalId), star.goalId),
       ]);
       return;
     }
-    if (this.peekGoalId() !== star.goalId) {
-      this.peekGoalId.set(star.goalId);
+    if (this.peek.goalId() !== star.goalId) {
+      this.peek.open(star.goalId);
       return;
     }
     if (star.stepId === null) {
-      this.peekGoalId.set(null);
+      this.peek.close();
       await this.router.navigate([
         '/goals',
         entitySlugSegment(this.goalTitle(star.goalId), star.goalId),
@@ -351,58 +221,8 @@ export class GoalsWallContainer {
     }
   }
 
-  protected onPeekTitleChange(title: string): void {
-    void this.patchPeek({ title });
-  }
-  protected onPeekCompletedChange(completed: boolean): void {
-    void this.patchPeek({ completed });
-  }
-  protected onPeekDeadlineChange(deadline: string | null): void {
-    void this.patchPeek({ deadline });
-  }
-  protected onPeekPriorityChange(priority: GoalPriority): void {
-    void this.patchPeek({ priority });
-  }
-  protected onPeekClose(): void {
-    this.peekGoalId.set(null);
-  }
-  protected async onPeekOpenMap(): Promise<void> {
-    const id = this.peekGoalId();
-    if (!id) return;
-    this.peekGoalId.set(null);
-    await this.router.navigate(['/goals', entitySlugSegment(this.goalTitle(id), id)]);
-  }
-
   private goalTitle(id: string): string {
     return this.summaries().find((s) => s.id === id)?.title ?? '';
-  }
-  protected async onPeekRemove(): Promise<void> {
-    const id = this.peekGoalId();
-    if (!id) return;
-    const label = this.summaries().find((s) => s.id === id)?.title || this.t('goals.untitledTitle');
-    if (!confirm(this.t('goals.deleteConfirm').replace('{title}', label))) return;
-    try {
-      await this.workspace.ensureWritable();
-      await this.goalsService.deleteToTrash(id);
-      this.peekGoalId.set(null);
-    } catch (e) {
-      this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize()));
-    }
-  }
-  private async patchPeek(partial: {
-    title?: string;
-    completed?: boolean;
-    deadline?: string | null;
-    priority?: GoalPriority;
-  }): Promise<void> {
-    const id = this.peekGoalId();
-    if (!id) return;
-    try {
-      await this.workspace.ensureWritable();
-      await this.goalsService.patch(id, partial);
-    } catch (e) {
-      this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize()));
-    }
   }
 
   protected onQueryInput(event: Event): void {
@@ -453,12 +273,15 @@ export class GoalsWallContainer {
   }
 
   protected ariaLabelFor(star: StarVm): string {
+    const dormantSuffix = star.dormant ? ` · ${this.t('goals.wall.dormantBadge')}` : '';
     if (star.stepId === null)
-      return this.t('goals.wall.openAria').replace('{title}', star.goalTitle);
+      return this.t('goals.wall.openAria').replace('{title}', star.goalTitle) + dormantSuffix;
     const key: TranslationKey = star.done
       ? 'goals.wall.toggleStepUndone'
       : 'goals.wall.toggleStepDone';
-    return this.t(key).replace('{step}', star.title).replace('{goal}', star.goalTitle);
+    return (
+      this.t(key).replace('{step}', star.title).replace('{goal}', star.goalTitle) + dormantSuffix
+    );
   }
 
   protected onFolderNavigate(path: string): void {

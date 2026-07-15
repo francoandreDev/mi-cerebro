@@ -16,6 +16,7 @@ import { TagsService } from '@core/tags/tags.service';
 import { DashboardGoalsWidgetComponent } from '../components/dashboard-goals-widget.component';
 import { DashboardRecentWidgetComponent } from '../components/dashboard-recent-widget.component';
 import { DashboardRemindersWidgetComponent } from '../components/dashboard-reminders-widget.component';
+import { DashboardResurfaceWidgetComponent } from '../components/dashboard-resurface-widget.component';
 import { DashboardTasksWidgetComponent } from '../components/dashboard-tasks-widget.component';
 
 @Component({
@@ -26,6 +27,7 @@ import { DashboardTasksWidgetComponent } from '../components/dashboard-tasks-wid
     DashboardGoalsWidgetComponent,
     DashboardRemindersWidgetComponent,
     DashboardRecentWidgetComponent,
+    DashboardResurfaceWidgetComponent,
   ],
   templateUrl: './dashboard.container.html',
   styleUrl: './dashboard.container.css',
@@ -40,6 +42,7 @@ export class DashboardContainer {
   protected readonly activeGoals = this.dashboard.activeGoals;
   protected readonly upcomingReminders = this.dashboard.upcomingReminders;
   protected readonly recentEntries = this.dashboard.recentEntries;
+  protected readonly resurfaceEntries = this.dashboard.resurfaceEntries;
   protected readonly availableTags = this.tagsService.tags;
 
   protected t(key: TranslationKey): string {
@@ -60,5 +63,9 @@ export class DashboardContainer {
 
   protected onOpenEntry(entry: DashboardRecentEntry): void {
     void this.router.navigate(dashboardEntryRoute(entry));
+  }
+
+  protected onShuffleResurface(): void {
+    this.dashboard.reshuffleResurface();
   }
 }

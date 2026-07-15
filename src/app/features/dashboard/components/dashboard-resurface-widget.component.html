@@ -1,0 +1,37 @@
+<header>
+  <mc-icon name="sparkle" class="icon" />
+  <span>{{ t('dashboard.resurface.title') }}</span>
+</header>
+@if (entries().length === 0) {
+  <p class="empty">{{ t('dashboard.resurface.empty') }}</p>
+} @else {
+  <ul>
+    @for (entry of entries(); track entry.id) {
+      <li>
+        <button type="button" (click)="open.emit(entry)">
+          <div class="row-main">
+            <mc-icon [name]="entryIcon(entry)" class="bullet" />
+            <span class="title">{{ entry.title || t('dashboard.recent.untitled') }}</span>
+            <span class="when">{{ entry.updatedAt | mcDate: true }}</span>
+          </div>
+          @if (entry.preview) {
+            <p class="preview">{{ entry.preview }}</p>
+          }
+          @if (resolvedTags(entry).length) {
+            <div class="tags">
+              @for (tag of resolvedTags(entry); track tag.id) {
+                <mc-tag-chip [tag]="tag" size="small" [compact]="true" />
+              }
+            </div>
+          }
+        </button>
+      </li>
+    }
+  </ul>
+  <div class="footer">
+    <button type="button" (click)="shuffle.emit()">
+      <mc-icon name="shuffle" />
+      {{ t('dashboard.resurface.shuffle') }}
+    </button>
+  </div>
+}

@@ -1,6 +1,6 @@
 import type { JSONContent } from '@tiptap/core';
 
-export const GOAL_SCHEMA_VERSION = 7;
+export const GOAL_SCHEMA_VERSION = 8;
 export const GOAL_KIND = 'goal';
 export const GOALS_DIR = 'goals';
 export const GOAL_FILE_SUFFIX = '.json';
@@ -35,6 +35,13 @@ export interface Goal {
   // why: §13 — centro de la constelación en el wall si el usuario la arrastró;
   //      ausente cae al hash determinístico de `constellationCenter(goal.id)`.
   readonly wallCenter?: { readonly x: number; readonly y: number };
+  // why: docs/evolution.md idea 3 — "acompañamiento adaptativo". Distinto de
+  //      `updatedAt` (que cualquier edición toca, incluso título/tags):
+  //      sólo se mueve cuando `progress`, `completed` o el done-state de los
+  //      `steps` cambian. `updatedAt` mide "cuándo se tocó la meta";
+  //      `lastProgressAt` mide "cuándo avanzó de verdad" — es la señal de
+  //      dormancia, no la de edición.
+  readonly lastProgressAt: string;
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly schemaVersion: number;
@@ -79,6 +86,7 @@ export interface GoalSummary {
   readonly priority: GoalPriority;
   readonly progress: number;
   readonly reminder: GoalReminderConfig;
+  readonly lastProgressAt: string;
   readonly updatedAt: string;
   readonly tags: readonly string[];
   readonly folder: string;
@@ -102,6 +110,20 @@ export const clampProgress = (n: number): number => {
 
 export const isGoalPriority = (v: unknown): v is GoalPriority =>
   v === 'low' || v === 'med' || v === 'high';
+
+// why: docs/evolution.md idea 3. `completed` goals are exempt — dormancy
+//      is about goals dying quietly, not about goals that already finished.
+export const isGoalDormant = (
+  completed: boolean,
+  lastProgressAt: string,
+  thresholdDays: number,
+  nowMs: number,
+): boolean => {
+  if (completed) return false;
+  const activityMs = Date.parse(lastProgressAt);
+  if (Number.isNaN(activityMs)) return false;
+  return nowMs - activityMs > thresholdDays * 86_400_000;
+};
 
 export const emptyDoc = (): JSONContent => ({
   type: 'doc',

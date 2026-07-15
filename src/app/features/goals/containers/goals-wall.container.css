@@ -355,6 +355,20 @@
   --star-color: #ffd9a0;
   --star-glow-color: rgba(255, 190, 110, 0.55);
 }
+/* why: dormancia (§evolution.md idea 3) es una señal aparte de urgencia por
+        plazo — desatura y apaga el titileo en vez de sumar otro color en
+        competencia con overdue/soon, para no mentir "esto es urgente"
+        cuando en realidad es "esto lleva quieto". */
+.star.dormant:not(.completed) {
+  --star-color: #9096ac;
+  --star-glow-color: rgba(140, 145, 170, 0.28);
+}
+.star.dormant:not(.completed) .star-svg {
+  opacity: calc(var(--star-opacity, 1) * 0.55);
+}
+.star.dormant:not(.completed) .star-spike-diag {
+  animation: none;
+}
 .star-svg {
   display: block;
   width: calc(var(--star-size, 16px) * 2.4);
