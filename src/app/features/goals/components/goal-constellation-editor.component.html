@@ -112,6 +112,18 @@
     (click)="onCanvasClick($event)"
     (keydown.enter)="onCanvasKey($event)"
   >
+    <defs>
+      <radialGradient id="mc-goal-star-glow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" style="stop-color: #ffffff; stop-opacity: 0.9" />
+        <stop offset="35%" style="stop-color: var(--tone-glow); stop-opacity: 0.8" />
+        <stop offset="100%" style="stop-color: var(--tone-glow); stop-opacity: 0" />
+      </radialGradient>
+      <radialGradient id="mc-goal-star-glow-done" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" style="stop-color: #fff5cc; stop-opacity: 0.9" />
+        <stop offset="35%" style="stop-color: rgba(255, 230, 170, 0.8); stop-opacity: 1" />
+        <stop offset="100%" style="stop-color: rgba(255, 230, 170, 0); stop-opacity: 0" />
+      </radialGradient>
+    </defs>
     @for (link of links(); track link.a + '|' + link.x2 + '|' + link.y2) {
       <line
         class="link"
@@ -122,6 +134,11 @@
       />
     }
     @for (star of stars(); track star.id) {
+      <!-- why: onStarDown ya hace stopPropagation del pointerdown, pero el
+           navegador sintetiza un "click" aparte tras pointerup que sigue
+           burbujeando al (click) del <svg> — sin cortarlo acá, cada click
+           en una estrella también disparaba onCanvasClick y creaba un paso
+           nuevo (o cerraba el popover recién abierto por shift+click). -->
       <g
         class="star"
         [class.done]="star.done"
@@ -135,8 +152,13 @@
         (pointermove)="onStarMove($event)"
         (pointerup)="onStarUp(star, $event)"
         (contextmenu)="onStarContextMenu(star.id, $event)"
+        (click)="$event.stopPropagation()"
       >
-        <circle class="halo" r="5.2" />
+        <circle
+          class="halo"
+          r="6.5"
+          [style.fill]="'url(#mc-goal-star-glow' + (star.done ? '-done' : '') + ')'"
+        />
         <circle class="halo-mid" r="2.4" />
         <ellipse class="spike" rx="4.4" ry="0.18" />
         <ellipse class="spike" rx="0.18" ry="4.4" />

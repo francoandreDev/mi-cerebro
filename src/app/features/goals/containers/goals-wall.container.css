@@ -383,16 +383,23 @@
   transform-origin: 50% 50%;
 }
 /* why: dos halos circulares concéntricos dan el bloom redondo
-        tipo cuerpo celeste; los spikes quedan como detalle fino. */
+        tipo cuerpo celeste; los spikes quedan como detalle fino.
+        Caída de brillo con mask-image (radial-gradient CSS) en vez de blur
+        plano — así el borde lee como luz real, no una mancha, y al ser una
+        máscara (no un <radialGradient> SVG con url()) cada estrella sigue
+        resolviendo su propio --star-color/--star-glow-color por CSS normal,
+        sin necesitar defs/ids duplicados por estrella repetida en el @for. */
 .star-halo {
   fill: var(--star-glow-color);
-  filter: blur(7px);
   opacity: 0.55;
+  -webkit-mask-image: radial-gradient(circle, #fff 0%, #fff 30%, transparent 100%);
+  mask-image: radial-gradient(circle, #fff 0%, #fff 30%, transparent 100%);
 }
 .star-halo-mid {
   fill: var(--star-color);
-  filter: blur(3.5px);
   opacity: 0.5;
+  -webkit-mask-image: radial-gradient(circle, #fff 0%, #fff 40%, transparent 100%);
+  mask-image: radial-gradient(circle, #fff 0%, #fff 40%, transparent 100%);
 }
 .star-spike {
   fill: var(--star-color);

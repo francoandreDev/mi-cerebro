@@ -17,6 +17,20 @@
 .canvas-wrap[data-tone='soon'] { box-shadow: inset 0 0 60px rgba(255, 190, 110, 0.18); }
 .canvas-wrap[data-tone='overdue'] { box-shadow: inset 0 0 80px rgba(255, 110, 110, 0.22); }
 .canvas-wrap[data-tone='completed'] { box-shadow: inset 0 0 60px rgba(130, 170, 255, 0.16); }
+/* why: pulso de urgencia — misma fase para todas las estrellas de la
+        constelación (no titileo random por estrella, que no escala bien
+        visualmente con muchos pasos). Velocidad atada a skyTone/plazo real,
+        no decorativa: calm = ambiente lento, soon/overdue = más inquieto. */
+.canvas-wrap:not([data-tone='completed']) .halo { animation: mc-urgency-pulse 6.5s ease-in-out infinite; }
+.canvas-wrap[data-tone='soon'] .halo { animation-duration: 3.4s; }
+.canvas-wrap[data-tone='overdue'] .halo { animation-duration: 2s; }
+@keyframes mc-urgency-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.75; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .canvas-wrap .halo { animation: none; }
+}
 .canvas { display: block; width: 100%; height: 100%; overflow: visible; }
 .link {
   stroke: var(--tone-stroke); stroke-width: 0.25; stroke-linecap: round;
@@ -28,14 +42,29 @@
 .star:focus-visible .core { fill: #ffe9a3; }
 .star.dragging { cursor: grabbing; transition: none; }
 .star.dragging .core { fill: #ffd9a0; }
-.halo { fill: var(--tone-glow); filter: blur(2.5px); opacity: 0.55; }
+/* why: fill viene del radialGradient inline (mc-goal-star-glow[-done]) en el
+        template — un blur fuerte encima lo aplanaría de vuelta a mancha. */
+.halo { filter: blur(0.5px); opacity: 0.55; }
 .halo-mid { fill: rgba(235, 245, 255, 0.9); filter: blur(1.2px); opacity: 0.55; }
 .spike { fill: rgba(235, 245, 255, 0.95); filter: blur(0.18px); opacity: 0.85; }
 .spike.diag { opacity: 0.35; }
-.core { fill: #ffffff; }
-.star.done .halo { fill: rgba(255, 220, 150, 0.5); }
+/* why: bloom en capas (en vez de un blur plano) para que el núcleo lea como
+        una fuente de luz real con caída de brillo, no una mancha difusa. */
+.core {
+  fill: #ffffff;
+  filter:
+    drop-shadow(0 0 0.5px rgba(255, 255, 255, 0.95))
+    drop-shadow(0 0 1.4px var(--tone-glow))
+    drop-shadow(0 0 3px var(--tone-glow));
+}
 .star.done .halo-mid { fill: rgba(255, 230, 170, 0.85); }
-.star.done .core { fill: #fff5cc; }
+.star.done .core {
+  fill: #fff5cc;
+  filter:
+    drop-shadow(0 0 0.5px rgba(255, 245, 204, 0.95))
+    drop-shadow(0 0 1.4px rgba(255, 230, 170, 0.55))
+    drop-shadow(0 0 3px rgba(255, 230, 170, 0.3));
+}
 .star.done .spike { fill: rgba(255, 230, 170, 0.95); }
 .star.popover-open .halo { filter: blur(1.5px); opacity: 0.9; }
 
