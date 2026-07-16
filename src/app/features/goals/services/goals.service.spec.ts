@@ -28,11 +28,11 @@ describe('GoalsService', () => {
     const goal = await svc.create('Aprender ruso');
     expect(goal.completed).toBe(false);
     expect(goal.deadline).toBeNull();
-    expect(goal.schemaVersion).toBe(8);
+    expect(goal.schemaVersion).toBe(9);
     expect(goal.steps).toEqual([]);
     expect(goal.priority).toBe('med');
     expect(goal.progress).toBe(0);
-    expect(goal.reminder).toEqual({ enabled: false });
+    expect(goal.reminder).toEqual({ enabled: false, notifyOnDormant: false });
     expect(goal.position).toBeTypeOf('string');
     const goals = fs.root.dirs.get('goals')!;
     expect(goals.files.has('aprender-ruso.json')).toBe(true);

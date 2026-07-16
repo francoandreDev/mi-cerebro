@@ -46,7 +46,7 @@ export class GoalRemindersSyncService {
   async disableForGoal(goalId: string): Promise<void> {
     const current = await this.goals.read(goalId);
     if (!current.reminder.enabled) return;
-    await this.goals.save({ ...current, reminder: { enabled: false } });
+    await this.goals.save({ ...current, reminder: { ...current.reminder, enabled: false } });
   }
 
   private schedule(run: () => Promise<void>): Promise<void> {

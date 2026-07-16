@@ -36,6 +36,7 @@ export class GoalEditorPaneComponent {
   readonly removeTag = output<string>();
   readonly priorityChange = output<GoalPriority>();
   readonly reminderEnabledChange = output<boolean>();
+  readonly notifyOnDormantChange = output<boolean>();
   readonly stepsChange = output<readonly GoalStep[]>();
 
   private readonly i18n = inject(I18nService);
@@ -45,5 +46,8 @@ export class GoalEditorPaneComponent {
   }
   protected onReminderToggle(event: Event): void {
     this.reminderEnabledChange.emit((event.target as HTMLInputElement).checked);
+  }
+  protected onNotifyOnDormantToggle(event: Event): void {
+    this.notifyOnDormantChange.emit((event.target as HTMLInputElement).checked);
   }
 }

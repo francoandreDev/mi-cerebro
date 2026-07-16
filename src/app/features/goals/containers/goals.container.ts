@@ -111,7 +111,11 @@ export class GoalsContainer {
   }
 
   protected onReminderEnabledChange(enabled: boolean): void {
-    this.patch((current) => ({ ...current, reminder: { enabled } }));
+    this.patch((current) => ({ ...current, reminder: { ...current.reminder, enabled } }));
+  }
+
+  protected onNotifyOnDormantChange(notifyOnDormant: boolean): void {
+    this.patch((current) => ({ ...current, reminder: { ...current.reminder, notifyOnDormant } }));
   }
 
   protected onStepsChange(steps: readonly GoalStep[]): void {

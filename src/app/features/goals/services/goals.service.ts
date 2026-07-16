@@ -37,6 +37,7 @@ import {
   type GoalStep,
   type GoalSummary,
 } from '../models/goal.types';
+import { goalDormantNotifyMigrationStep } from './dormant-notify.migration';
 import { goalPriorityProgressMigrationStep } from './priority-progress.migration';
 import { goalProgressActivityMigrationStep } from './progress-activity.migration';
 import { goalReminderConfigMigrationStep } from './reminder-config.migration';
@@ -73,6 +74,7 @@ export class GoalsService {
         goalStepsMigrationStep(5),
         goalStepPositionsMigrationStep(6),
         goalProgressActivityMigrationStep(7),
+        goalDormantNotifyMigrationStep(8),
       ],
     });
   }
@@ -175,7 +177,7 @@ export class GoalsService {
     //      callers (and the sync service) don't have to repeat the check.
     const reminder =
       goal.completed || goal.deadline === null
-        ? { enabled: false }
+        ? { ...(goal.reminder ?? DEFAULT_GOAL_REMINDER), enabled: false }
         : (goal.reminder ?? DEFAULT_GOAL_REMINDER);
     const now = new Date().toISOString();
     const previous = this.summariesSignal().find((s) => s.id === goal.id);

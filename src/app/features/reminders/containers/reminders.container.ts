@@ -17,6 +17,7 @@ import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { CreationIntentService } from '@core/intents/creation-intent.service';
+import { GoalDormantRemindersSyncService } from '@core/reminders/goal-dormant-reminders-sync.service';
 import { GoalRemindersSyncService } from '@core/reminders/goal-reminders-sync.service';
 import { ShortcutsService } from '@core/shortcuts/shortcuts.service';
 import { IconComponent } from '@shared/icon/icon.component';
@@ -82,6 +83,7 @@ export class RemindersContainer {
   private readonly i18n = inject(I18nService);
   private readonly creationIntent = inject(CreationIntentService);
   private readonly goalSync = inject(GoalRemindersSyncService);
+  private readonly goalDormantSync = inject(GoalDormantRemindersSyncService);
   private readonly shortcuts = inject(ShortcutsService);
   private readonly destroyRef = inject(DestroyRef);
   private lastCreationAt = 0;
@@ -365,6 +367,23 @@ export class RemindersContainer {
       }
       return;
     }
+    if (summary.sourceKind === 'goal-dormant' && summary.sourceId !== null) {
+      const ok = confirm(
+        this.t('reminders.deleteGoalDormantConfirm').replace(
+          '{title}',
+          summary.title || this.t('reminders.untitled'),
+        ),
+      );
+      if (!ok) return;
+      try {
+        await this.workspace.ensureWritable();
+        await this.goalDormantSync.disableForGoal(summary.sourceId);
+        this.onCloseDetail();
+      } catch (e) {
+        this.errors.report(this.withReauth(e));
+      }
+      return;
+    }
     try {
       const current = await this.reminders.read(summary.id);
       await this.reminders.deleteToTrash(summary.id);
@@ -471,7 +490,7 @@ const toPaloma = (r: ReminderSummary): Paloma => {
     bucket: b,
     door: r.paused ? 0 : DOOR_BY_BUCKET[b],
     ringColor,
-    fromGoal: r.sourceKind === 'goal',
+    fromGoal: r.sourceKind === 'goal' || r.sourceKind === 'goal-dormant',
   };
 };
 

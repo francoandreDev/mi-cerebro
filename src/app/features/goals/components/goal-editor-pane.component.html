@@ -30,6 +30,22 @@
     }
   </section>
 
+  <section class="meta reminder">
+    <mc-icon name="moon" class="meta-icon" />
+    <label class="reminder-toggle">
+      <input
+        type="checkbox"
+        [checked]="goal().reminder.notifyOnDormant"
+        [disabled]="!editable() || goal().completed"
+        (change)="onNotifyOnDormantToggle($event)"
+      />
+      <span>{{ t('goals.reminder.notifyOnDormantLabel') }}</span>
+    </label>
+    @if (goal().reminder.notifyOnDormant) {
+      <span class="reminder-hint">{{ t('goals.reminder.notifyOnDormantHint') }}</span>
+    }
+  </section>
+
   <mc-tag-picker
     [availableTags]="availableTags()"
     [selectedIds]="goal().tags"

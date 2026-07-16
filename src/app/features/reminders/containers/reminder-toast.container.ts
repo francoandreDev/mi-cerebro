@@ -105,17 +105,19 @@ export class ReminderToastContainer {
   }
 
   protected iconFor(r: ReminderSummary): IconName {
-    return r.sourceKind === 'goal' ? 'target' : 'bell';
+    if (r.sourceKind === 'goal') return 'target';
+    if (r.sourceKind === 'goal-dormant') return 'moon';
+    return 'bell';
   }
 
   protected titleFor(r: ReminderSummary): string {
-    return r.sourceKind === 'goal'
-      ? this.t('reminders.toast.goalTitle')
-      : this.t('reminders.toast.title');
+    if (r.sourceKind === 'goal') return this.t('reminders.toast.goalTitle');
+    if (r.sourceKind === 'goal-dormant') return this.t('reminders.toast.goalDormantTitle');
+    return this.t('reminders.toast.title');
   }
 
   protected open(r: ReminderSummary): void {
-    if (r.sourceKind === 'goal' && r.sourceId) {
+    if ((r.sourceKind === 'goal' || r.sourceKind === 'goal-dormant') && r.sourceId) {
       void this.router.navigate(['/goals', entitySlugSegment(r.title, r.sourceId)]);
     } else {
       void this.router.navigate(['/reminders']);

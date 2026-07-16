@@ -6,6 +6,7 @@ import { ErrorService } from '@core/errors/error.service';
 import { FocusModeService } from '@core/focus-mode/focus-mode.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { QuickCaptureService } from '@core/intents/quick-capture.service';
+import { GoalDormantRemindersSyncService } from '@core/reminders/goal-dormant-reminders-sync.service';
 import { GoalRemindersSyncService } from '@core/reminders/goal-reminders-sync.service';
 import { SettingsService } from '@core/settings/settings.service';
 import { KeyboardHelpDialogComponent } from '@core/shortcuts/keyboard-help-dialog.component';
@@ -127,12 +128,16 @@ export class AppShellContainer {
   // why: instantiate eagerly so its effect on goals/reminders summaries
   //      starts watching at boot; otherwise no consumer would pull it in.
   private readonly goalRemindersSync = inject(GoalRemindersSyncService);
+  // why: same reasoning — eager instantiation so the dormancy-edge effect
+  //      watches from boot.
+  private readonly goalDormantRemindersSync = inject(GoalDormantRemindersSyncService);
 
   constructor() {
     this.continuity.start();
     this.autoPush.start();
     this.compactionScheduler.start();
     void this.goalRemindersSync;
+    void this.goalDormantRemindersSync;
     this.workspace
       .bootstrap()
       .then(async () => {

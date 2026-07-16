@@ -14,7 +14,7 @@ const goal = (overrides: Partial<GoalSummary>): GoalSummary => ({
   completed: false,
   priority: 'med',
   progress: 0,
-  reminder: { enabled: false },
+  reminder: { enabled: false, notifyOnDormant: false },
   lastProgressAt: daysAgoIso(0),
   updatedAt: daysAgoIso(0),
   tags: [],

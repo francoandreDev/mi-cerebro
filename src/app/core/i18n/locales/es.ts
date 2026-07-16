@@ -773,6 +773,9 @@ export const es = {
   'goals.reminder.toggleHint':
     'Crea un recordatorio automático que se acerca a vos a medida que se acerca el plazo.',
   'goals.reminder.requiresDeadline': 'Definí un plazo para activar el recordatorio.',
+  'goals.reminder.notifyOnDormantLabel': 'Avisarme si esta meta se duerme',
+  'goals.reminder.notifyOnDormantHint':
+    'Crea un recordatorio puntual apenas la meta cruce el umbral de dormancia. Se borra solo si retomás el progreso.',
   'goals.wall.searchPlaceholder': 'Buscar metas...',
   'goals.wall.searchAria': 'Buscar metas',
   'goals.wall.searchClear': 'Limpiar búsqueda',
@@ -1390,10 +1393,13 @@ export const es = {
   'reminders.deleteConfirm': '¿Borrar "{title}"?',
   'reminders.toast.title': 'Recordatorio',
   'reminders.toast.goalTitle': 'Recordatorio de meta',
+  'reminders.toast.goalDormantTitle': 'Meta dormida',
   'reminders.toast.open': 'Ver',
   'reminders.sourceGoalBadge': 'Meta',
   'reminders.deleteGoalConfirm':
     'Esto va a desactivar el recordatorio automático de la meta "{title}". ¿Continuar?',
+  'reminders.deleteGoalDormantConfirm':
+    'Esto va a desactivar el aviso de dormancia de la meta "{title}". ¿Continuar?',
   'reminders.searchPlaceholder': 'Buscar recordatorios…',
   'reminders.quickAddPlaceholder':
     'Nuevo recordatorio… (usá @ para fecha, ej. "Llamar mamá @mañana 9")',
