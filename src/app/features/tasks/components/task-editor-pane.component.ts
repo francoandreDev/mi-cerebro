@@ -32,6 +32,7 @@ export class TaskEditorPaneComponent {
   readonly doneChange = output<boolean>();
   readonly addDueDate = output<string>();
   readonly removeDueDate = output<string>();
+  readonly reminderEnabledChange = output<boolean>();
   readonly removeTask = output<void>();
   readonly addTag = output<string>();
   readonly removeTag = output<string>();
@@ -56,5 +57,8 @@ export class TaskEditorPaneComponent {
   }
   protected onDoneToggle(event: Event): void {
     this.doneChange.emit((event.target as HTMLInputElement).checked);
+  }
+  protected onReminderToggle(event: Event): void {
+    this.reminderEnabledChange.emit((event.target as HTMLInputElement).checked);
   }
 }

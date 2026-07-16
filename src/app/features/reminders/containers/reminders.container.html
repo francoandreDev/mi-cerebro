@@ -59,7 +59,7 @@
               [attr.data-paloma-id]="p.summary.id"
               [class.is-paused]="p.summary.paused"
               [class.is-selected]="selectedId() === p.summary.id"
-              [class.is-goal]="p.fromGoal"
+              [class.is-sourced]="p.fromSource"
               [attr.data-bucket]="p.bucket"
               [attr.data-door]="p.door"
               (click)="onSelectPaloma(p)"
@@ -80,7 +80,7 @@
                   }
                   <rect class="paper" x="46" y="24" width="11" height="5" rx="1.2" />
                   <ellipse class="ring" cx="28" cy="50" rx="7" ry="2" />
-                  @if (p.fromGoal) {
+                  @if (p.fromSource) {
                     <circle class="badge" cx="20" cy="30" r="2.4" />
                   }
                 </svg>
@@ -184,7 +184,7 @@
             />
           </label>
           @if (e.readOnlyTitle) {
-            <p class="field-hint">{{ t('reminders.sourceGoalBadge') }}</p>
+            <p class="field-hint">{{ sourceBadgeLabel(e.sourceKind) }}</p>
           }
           <label class="field">
             <span>{{ t('reminders.dueAtLabel') }}</span>

@@ -24,6 +24,7 @@ import { TagsService } from '@core/tags/tags.service';
 import { toSlug, withSuffix } from '@shared/utils/slug';
 
 import {
+  DEFAULT_WRITING_REMINDER,
   WRITING_FILE_SUFFIX,
   WRITING_KIND,
   WRITING_SCHEMA_VERSION,
@@ -33,6 +34,7 @@ import {
   type WritingSummary,
 } from '../models/writing.types';
 import { buildWritingPreview } from './writing-preview';
+import { writingDeadlineMigrationStep } from './writing-deadline.migration';
 
 const TRASH_DIR = '.mi-cerebro';
 const TRASH_SUBDIR = 'trash';
@@ -56,7 +58,11 @@ export class WritingsService {
     this.migrations.register({
       kind: WRITING_KIND,
       latest: WRITING_SCHEMA_VERSION,
-      steps: [blockIdMigrationStep(1), positionSeedMigrationStep(2)],
+      steps: [
+        blockIdMigrationStep(1),
+        positionSeedMigrationStep(2),
+        writingDeadlineMigrationStep(3),
+      ],
     });
   }
 
@@ -109,6 +115,8 @@ export class WritingsService {
       title,
       body: emptyDoc(),
       tags: [],
+      deadline: null,
+      reminder: DEFAULT_WRITING_REMINDER,
       createdAt: now,
       updatedAt: now,
       schemaVersion: WRITING_SCHEMA_VERSION,
@@ -276,6 +284,8 @@ export class WritingsService {
     return {
       id: writing.id,
       title: writing.title,
+      deadline: writing.deadline,
+      reminder: writing.reminder,
       updatedAt: writing.updatedAt,
       tags: writing.tags,
       folder,

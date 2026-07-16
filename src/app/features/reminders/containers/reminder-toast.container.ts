@@ -28,7 +28,7 @@ import { launchPaloma } from '../utils/paloma-flight';
           <button type="button" class="link" (click)="open(r)">
             {{ t('reminders.toast.open') }}
           </button>
-          @if (r.sourceKind === 'goal' || r.sourceKind === 'goal-dormant') {
+          @if (r.sourceKind !== null && r.sourceKind !== undefined) {
             <button type="button" class="link" (click)="scheduler.snoozeGoalReminder(r)">
               {{ t('reminders.toast.snooze') }}
             </button>
@@ -112,18 +112,26 @@ export class ReminderToastContainer {
   protected iconFor(r: ReminderSummary): IconName {
     if (r.sourceKind === 'goal') return 'target';
     if (r.sourceKind === 'goal-dormant') return 'moon';
+    if (r.sourceKind === 'task') return 'check-square';
+    if (r.sourceKind === 'writing') return 'pen-nib';
     return 'bell';
   }
 
   protected titleFor(r: ReminderSummary): string {
     if (r.sourceKind === 'goal') return this.t('reminders.toast.goalTitle');
     if (r.sourceKind === 'goal-dormant') return this.t('reminders.toast.goalDormantTitle');
+    if (r.sourceKind === 'task') return this.t('reminders.toast.taskTitle');
+    if (r.sourceKind === 'writing') return this.t('reminders.toast.writingTitle');
     return this.t('reminders.toast.title');
   }
 
   protected open(r: ReminderSummary): void {
     if ((r.sourceKind === 'goal' || r.sourceKind === 'goal-dormant') && r.sourceId) {
       void this.router.navigate(['/goals', entitySlugSegment(r.title, r.sourceId)]);
+    } else if (r.sourceKind === 'task' && r.sourceId) {
+      void this.router.navigate(['/tasks', entitySlugSegment(r.title, r.sourceId)]);
+    } else if (r.sourceKind === 'writing' && r.sourceId) {
+      void this.router.navigate(['/writings', entitySlugSegment(r.title, r.sourceId)]);
     } else {
       void this.router.navigate(['/reminders']);
     }

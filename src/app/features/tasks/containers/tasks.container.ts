@@ -89,6 +89,10 @@ export class TasksContainer {
     }));
   }
 
+  protected onReminderEnabledChange(enabled: boolean): void {
+    this.patch((current) => ({ ...current, reminder: { ...current.reminder, enabled } }));
+  }
+
   protected async onAddTag(label: string): Promise<void> {
     const current = this.active();
     if (!current || !this.lock.guardWrite()) return;

@@ -8,6 +8,8 @@ import { WorkspaceService } from '@core/fs/workspace.service';
 import { QuickCaptureService } from '@core/intents/quick-capture.service';
 import { GoalDormantRemindersSyncService } from '@core/reminders/goal-dormant-reminders-sync.service';
 import { GoalRemindersSyncService } from '@core/reminders/goal-reminders-sync.service';
+import { TaskRemindersSyncService } from '@core/reminders/task-reminders-sync.service';
+import { WritingRemindersSyncService } from '@core/reminders/writing-reminders-sync.service';
 import { SettingsService } from '@core/settings/settings.service';
 import { KeyboardHelpDialogComponent } from '@core/shortcuts/keyboard-help-dialog.component';
 import { ThemeService } from '@core/theme/theme.service';
@@ -131,6 +133,10 @@ export class AppShellContainer {
   // why: same reasoning — eager instantiation so the dormancy-edge effect
   //      watches from boot.
   private readonly goalDormantRemindersSync = inject(GoalDormantRemindersSyncService);
+  // why: §14 extension — same eager-instantiation reasoning, now for tasks
+  //      and writings with a deadline.
+  private readonly taskRemindersSync = inject(TaskRemindersSyncService);
+  private readonly writingRemindersSync = inject(WritingRemindersSyncService);
 
   constructor() {
     this.continuity.start();
@@ -138,6 +144,8 @@ export class AppShellContainer {
     this.compactionScheduler.start();
     void this.goalRemindersSync;
     void this.goalDormantRemindersSync;
+    void this.taskRemindersSync;
+    void this.writingRemindersSync;
     this.workspace
       .bootstrap()
       .then(async () => {

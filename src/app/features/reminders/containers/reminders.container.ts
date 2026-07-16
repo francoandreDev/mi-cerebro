@@ -19,6 +19,8 @@ import type { TranslationKey } from '@core/i18n/i18n.types';
 import { CreationIntentService } from '@core/intents/creation-intent.service';
 import { GoalDormantRemindersSyncService } from '@core/reminders/goal-dormant-reminders-sync.service';
 import { GoalRemindersSyncService } from '@core/reminders/goal-reminders-sync.service';
+import { TaskRemindersSyncService } from '@core/reminders/task-reminders-sync.service';
+import { WritingRemindersSyncService } from '@core/reminders/writing-reminders-sync.service';
 import { ShortcutsService } from '@core/shortcuts/shortcuts.service';
 import { IconComponent } from '@shared/icon/icon.component';
 import { McDatePipe } from '@shared/pipes/mc-date.pipe';
@@ -42,7 +44,10 @@ interface Paloma {
   readonly bucket: BucketKey;
   readonly door: 0 | 1 | 2 | 3; // cage door openness (0 = closed, 3 = wide open at fire time)
   readonly ringColor: string; // CSS color for recurrence ring (or transparent)
-  readonly fromGoal: boolean;
+  // why: true for any auto-derived reminder (goal, goal-dormant, task,
+  //      writing) — title is synced from the source entity, so it's
+  //      read-only in the detail editor and gets a badge dot in the wall.
+  readonly fromSource: boolean;
 }
 
 interface PendingUndo {
@@ -84,6 +89,8 @@ export class RemindersContainer {
   private readonly creationIntent = inject(CreationIntentService);
   private readonly goalSync = inject(GoalRemindersSyncService);
   private readonly goalDormantSync = inject(GoalDormantRemindersSyncService);
+  private readonly taskSync = inject(TaskRemindersSyncService);
+  private readonly writingSync = inject(WritingRemindersSyncService);
   private readonly shortcuts = inject(ShortcutsService);
   private readonly destroyRef = inject(DestroyRef);
   private lastCreationAt = 0;
@@ -160,6 +167,49 @@ export class RemindersContainer {
     return this.i18n.t(key);
   }
 
+  // why: "delete" on a source-derived reminder really means "turn off the
+  //      toggle on the source entity" — the sync service is what actually
+  //      deletes the Reminder, on its next tick. One table instead of one
+  //      near-identical `if` branch per sourceKind avoids the copy-paste
+  //      drift that was pushing `onDelete` past the complexity/line budget.
+  private sourceDisableConfig(
+    sourceKind: ReminderSummary['sourceKind'],
+  ): { confirmKey: TranslationKey; disable: (id: string) => Promise<void> } | null {
+    if (sourceKind === 'goal') {
+      return {
+        confirmKey: 'reminders.deleteGoalConfirm',
+        disable: (id) => this.goalSync.disableForGoal(id),
+      };
+    }
+    if (sourceKind === 'goal-dormant') {
+      return {
+        confirmKey: 'reminders.deleteGoalDormantConfirm',
+        disable: (id) => this.goalDormantSync.disableForGoal(id),
+      };
+    }
+    if (sourceKind === 'task') {
+      return {
+        confirmKey: 'reminders.deleteTaskConfirm',
+        disable: (id) => this.taskSync.disableForTask(id),
+      };
+    }
+    if (sourceKind === 'writing') {
+      return {
+        confirmKey: 'reminders.deleteWritingConfirm',
+        disable: (id) => this.writingSync.disableForWriting(id),
+      };
+    }
+    return null;
+  }
+
+  protected sourceBadgeLabel(sourceKind: ReminderSummary['sourceKind']): string {
+    if (sourceKind === 'goal' || sourceKind === 'goal-dormant')
+      return this.t('reminders.sourceGoalBadge');
+    if (sourceKind === 'task') return this.t('reminders.sourceTaskBadge');
+    if (sourceKind === 'writing') return this.t('reminders.sourceWritingBadge');
+    return '';
+  }
+
   protected onSearch(value: string): void {
     this.query.set(value);
   }
@@ -207,7 +257,8 @@ export class RemindersContainer {
       recurrence: presetOf(p.summary.recurrence),
       every: p.summary.recurrence?.every ?? 1,
       paused: p.summary.paused,
-      readOnlyTitle: p.fromGoal,
+      readOnlyTitle: p.fromSource,
+      sourceKind: p.summary.sourceKind,
     });
   }
 
@@ -350,34 +401,15 @@ export class RemindersContainer {
 
   protected async onDelete(summary: ReminderSummary): Promise<void> {
     this.overflowOpenId.set(null);
-    if (summary.sourceKind === 'goal' && summary.sourceId !== null) {
+    const source = summary.sourceId === null ? null : this.sourceDisableConfig(summary.sourceKind);
+    if (source !== null && summary.sourceId !== null) {
       const ok = confirm(
-        this.t('reminders.deleteGoalConfirm').replace(
-          '{title}',
-          summary.title || this.t('reminders.untitled'),
-        ),
+        this.t(source.confirmKey).replace('{title}', summary.title || this.t('reminders.untitled')),
       );
       if (!ok) return;
       try {
         await this.workspace.ensureWritable();
-        await this.goalSync.disableForGoal(summary.sourceId);
-        this.onCloseDetail();
-      } catch (e) {
-        this.errors.report(this.withReauth(e));
-      }
-      return;
-    }
-    if (summary.sourceKind === 'goal-dormant' && summary.sourceId !== null) {
-      const ok = confirm(
-        this.t('reminders.deleteGoalDormantConfirm').replace(
-          '{title}',
-          summary.title || this.t('reminders.untitled'),
-        ),
-      );
-      if (!ok) return;
-      try {
-        await this.workspace.ensureWritable();
-        await this.goalDormantSync.disableForGoal(summary.sourceId);
+        await source.disable(summary.sourceId);
         this.onCloseDetail();
       } catch (e) {
         this.errors.report(this.withReauth(e));
@@ -480,6 +512,7 @@ interface EditingState {
   readonly every: number;
   readonly paused: boolean;
   readonly readOnlyTitle: boolean;
+  readonly sourceKind: ReminderSummary['sourceKind'];
 }
 
 const toPaloma = (r: ReminderSummary): Paloma => {
@@ -490,7 +523,7 @@ const toPaloma = (r: ReminderSummary): Paloma => {
     bucket: b,
     door: r.paused ? 0 : DOOR_BY_BUCKET[b],
     ringColor,
-    fromGoal: r.sourceKind === 'goal' || r.sourceKind === 'goal-dormant',
+    fromSource: r.sourceKind != null,
   };
 };
 

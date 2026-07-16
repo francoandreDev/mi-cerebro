@@ -44,6 +44,23 @@
       (remove)="removeDueDate.emit($event)"
     />
   </section>
+  <section class="meta reminder">
+    <mc-icon name="bell" class="meta-icon" />
+    <label class="reminder-toggle">
+      <input
+        type="checkbox"
+        [checked]="task().reminder.enabled"
+        [disabled]="!editable() || task().done || task().dueDates.length === 0"
+        (change)="onReminderToggle($event)"
+      />
+      <span>{{ t('tasks.reminder.toggleLabel') }}</span>
+    </label>
+    @if (task().dueDates.length === 0) {
+      <span class="reminder-hint">{{ t('tasks.reminder.requiresDueDate') }}</span>
+    } @else if (task().reminder.enabled) {
+      <span class="reminder-hint">{{ t('tasks.reminder.toggleHint') }}</span>
+    }
+  </section>
   <mc-tag-picker
     [availableTags]="availableTags()"
     [selectedIds]="task().tags"

@@ -19,12 +19,14 @@ import { positionSeedMigrationStep } from '@core/ordering/position.migration';
 import { SearchIndexService } from '@core/search/search-index.service';
 import { blockIdMigrationStep } from '@core/tiptap/block-id/block-id.migration';
 import { enteredHoyAtMigrationStep } from './entered-hoy-at.migration';
+import { taskReminderConfigMigrationStep } from './task-reminder-config.migration';
 import type { SearchDoc } from '@core/search/search.types';
 import { extractPlainText } from '@core/search/tiptap-text';
 import { TagsService } from '@core/tags/tags.service';
 import { toSlug, withSuffix } from '@shared/utils/slug';
 
 import {
+  DEFAULT_TASK_REMINDER,
   TASK_FILE_SUFFIX,
   TASK_KIND,
   TASK_SCHEMA_VERSION,
@@ -58,7 +60,12 @@ export class TasksService {
     this.migrations.register({
       kind: TASK_KIND,
       latest: TASK_SCHEMA_VERSION,
-      steps: [blockIdMigrationStep(1), positionSeedMigrationStep(2), enteredHoyAtMigrationStep(3)],
+      steps: [
+        blockIdMigrationStep(1),
+        positionSeedMigrationStep(2),
+        enteredHoyAtMigrationStep(3),
+        taskReminderConfigMigrationStep(4),
+      ],
     });
   }
 
@@ -113,6 +120,7 @@ export class TasksService {
       tags: [],
       done: false,
       dueDates: [],
+      reminder: DEFAULT_TASK_REMINDER,
       createdAt: now,
       updatedAt: now,
       schemaVersion: TASK_SCHEMA_VERSION,
@@ -316,6 +324,7 @@ export class TasksService {
       title: task.title,
       done: task.done,
       dueDates: task.dueDates,
+      reminder: task.reminder,
       updatedAt: task.updatedAt,
       tags: task.tags,
       folder,

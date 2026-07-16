@@ -38,6 +38,8 @@
         [editable]="lock.editable()"
         (titleChange)="onTitleChange($event)"
         (bodyChange)="onBodyChange($event)"
+        (deadlineChange)="onDeadlineChange($event)"
+        (reminderEnabledChange)="onReminderEnabledChange($event)"
         (removeWriting)="onDelete()"
         (addTag)="onAddTag($event)"
         (removeTag)="onRemoveTag($event)"

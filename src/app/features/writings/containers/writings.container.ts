@@ -90,6 +90,26 @@ export class WritingsContainer {
     this.scheduleSave(next);
   }
 
+  protected onDeadlineChange(deadline: string | null): void {
+    const current = this.active();
+    if (!current || !this.lock.guardWrite()) return;
+    const reminder =
+      deadline === null && current.reminder.enabled
+        ? { ...current.reminder, enabled: false }
+        : current.reminder;
+    const next = { ...current, deadline, reminder };
+    this.active.set(next);
+    this.scheduleSave(next);
+  }
+
+  protected onReminderEnabledChange(enabled: boolean): void {
+    const current = this.active();
+    if (!current || !this.lock.guardWrite()) return;
+    const next = { ...current, reminder: { ...current.reminder, enabled } };
+    this.active.set(next);
+    this.scheduleSave(next);
+  }
+
   protected async onAddTag(label: string): Promise<void> {
     const current = this.active();
     if (!current || !this.lock.guardWrite()) return;

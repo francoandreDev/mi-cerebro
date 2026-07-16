@@ -1,0 +1,83 @@
+@if (!focusMode.active()) {
+  <header class="bar">
+    <mc-icon name="pen-nib" class="title-icon" />
+    <input
+      type="text"
+      class="title-input"
+      [value]="writing().title"
+      [placeholder]="t('writings.placeholderTitle')"
+      [attr.aria-label]="t('writings.placeholderTitle')"
+      [readOnly]="!editable()"
+      (input)="onTitleInput($event)"
+    />
+    <span class="status" [attr.data-status]="status()">
+      <mc-icon
+        [name]="statusIcon()"
+        [class.mc-anim-spin]="status() === 'saving'"
+        [class.mc-anim-pulse]="status() === 'unsaved'"
+      />
+      <span>{{ statusLabel() }}</span>
+    </span>
+    @if (editable()) {
+      <button type="button" class="danger mc-hover-wiggle" (click)="removeWriting.emit()">
+        <mc-icon name="trash" />
+        <span>{{ t('writings.delete') }}</span>
+      </button>
+    }
+  </header>
+  <section class="meta">
+    <mc-icon name="calendar-dots" class="meta-icon" />
+    <span class="label">{{ t('writings.deadline.label') }}:</span>
+    <input
+      type="date"
+      class="deadline-input"
+      [value]="writing().deadline ?? ''"
+      [disabled]="!editable()"
+      (change)="onDeadlineInput($event)"
+    />
+    @if (writing().deadline) {
+      <button
+        type="button"
+        class="deadline-clear"
+        [disabled]="!editable()"
+        (click)="deadlineChange.emit(null)"
+        [attr.aria-label]="t('writings.deadline.remove')"
+      >
+        <mc-icon name="x" />
+      </button>
+    }
+  </section>
+  <section class="meta reminder">
+    <mc-icon name="bell" class="meta-icon" />
+    <label class="reminder-toggle">
+      <input
+        type="checkbox"
+        [checked]="writing().reminder.enabled"
+        [disabled]="!editable() || writing().deadline === null"
+        (change)="onReminderToggle($event)"
+      />
+      <span>{{ t('writings.reminder.toggleLabel') }}</span>
+    </label>
+    @if (writing().deadline === null) {
+      <span class="reminder-hint">{{ t('writings.reminder.requiresDeadline') }}</span>
+    } @else if (writing().reminder.enabled) {
+      <span class="reminder-hint">{{ t('writings.reminder.toggleHint') }}</span>
+    }
+  </section>
+  <mc-tag-picker
+    [availableTags]="availableTags()"
+    [selectedIds]="writing().tags"
+    [editable]="editable()"
+    (addTag)="addTag.emit($event)"
+    (removeTag)="removeTag.emit($event)"
+  />
+}
+<mc-editor
+  class="editor"
+  [value]="writing().body"
+  [placeholder]="t('writings.placeholderBody')"
+  [editable]="editable()"
+  [entityId]="writing().id"
+  [entityTitle]="writing().title"
+  (valueChange)="bodyChange.emit($event)"
+/>

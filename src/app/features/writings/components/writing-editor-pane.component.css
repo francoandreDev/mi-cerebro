@@ -11,17 +11,13 @@
   align-items: center;
   gap: var(--mc-space-3);
 }
-.done {
+.title-icon {
+  color: var(--mc-accent-primary);
+}
+.danger {
   display: inline-flex;
   align-items: center;
-}
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
+  gap: 6px;
 }
 .title-input {
   flex: 1;
@@ -31,10 +27,6 @@
   color: var(--mc-fg-primary);
   padding: var(--mc-space-1) 0;
 }
-.title-input.done {
-  text-decoration: line-through;
-  color: var(--mc-fg-muted);
-}
 .title-input:focus {
   outline: none;
   border-bottom: 1px solid var(--mc-accent-primary);
@@ -42,7 +34,7 @@
 .status {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   font-size: var(--mc-font-size-sm);
   color: var(--mc-fg-muted);
 }
@@ -52,29 +44,16 @@
 .status[data-status='unsaved'] {
   color: var(--mc-fg-warning, #d97706);
 }
-.status[data-status='saved'] mc-icon {
-  color: var(--mc-success, #4caf7a);
-}
 .danger {
   background: transparent;
   color: var(--mc-fg-muted);
   border: 1px solid var(--mc-border-default);
   padding: var(--mc-space-1) var(--mc-space-3);
   border-radius: var(--mc-radius-md);
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
 }
 .danger:hover {
-  color: var(--mc-danger, #d04a4a);
-  border-color: var(--mc-danger, #d04a4a);
-}
-.danger:hover mc-icon {
-  color: var(--mc-danger, #d04a4a);
-}
-.meta-icon {
-  color: var(--mc-fg-muted);
+  color: var(--mc-fg-primary);
+  border-color: var(--mc-accent-primary);
 }
 .meta {
   display: flex;
@@ -82,9 +61,31 @@
   gap: var(--mc-space-2);
   flex-wrap: wrap;
 }
+.meta-icon {
+  color: var(--mc-fg-muted);
+}
 .label {
   font-size: var(--mc-font-size-sm);
   color: var(--mc-fg-muted);
+}
+.deadline-input {
+  background: transparent;
+  border: 1px solid var(--mc-border-default);
+  border-radius: var(--mc-radius-sm);
+  color: var(--mc-fg-primary);
+  padding: var(--mc-space-1) var(--mc-space-2);
+  font-size: var(--mc-font-size-sm);
+}
+.deadline-clear {
+  display: inline-flex;
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: var(--mc-fg-muted);
+  cursor: pointer;
+}
+.deadline-clear:hover {
+  color: var(--mc-fg-primary);
 }
 .reminder-toggle {
   display: inline-flex;

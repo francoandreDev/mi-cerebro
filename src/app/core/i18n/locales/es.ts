@@ -642,6 +642,10 @@ export const es = {
   'tasks.due.overdue': 'Vencida',
   'tasks.due.today': 'Hoy',
   'tasks.due.tomorrow': 'Mañana',
+  'tasks.reminder.toggleLabel': 'Recordarme esta tarea',
+  'tasks.reminder.toggleHint':
+    'Crea un recordatorio automático que se acerca a vos a medida que se acerca la fecha.',
+  'tasks.reminder.requiresDueDate': 'Agregá una fecha para activar el recordatorio.',
   'tasks.lock.foreign.title': 'Esta tarea está abierta en otra pestaña',
   'tasks.lock.foreign.message':
     'Para evitar pisar cambios, esta tarea está en modo lectura. Podés tomar control para empezar a editar acá.',
@@ -895,6 +899,12 @@ export const es = {
   'writings.empty': 'Sin escritos todavía. Empezá con "Nuevo escrito".',
   'writings.placeholderTitle': 'Título...',
   'writings.placeholderBody': 'Escribí lo que tengas en mente...',
+  'writings.deadline.label': 'Plazo',
+  'writings.deadline.remove': 'Quitar plazo',
+  'writings.reminder.toggleLabel': 'Recordarme este escrito',
+  'writings.reminder.toggleHint':
+    'Crea un recordatorio automático que se acerca a vos a medida que se acerca el plazo.',
+  'writings.reminder.requiresDeadline': 'Definí un plazo para activar el recordatorio.',
   'writings.deleteConfirm': '¿Mover "{title}" a la papelera?',
   'writings.delete': 'Eliminar',
   'writings.status.saved': 'Guardado',
@@ -1396,13 +1406,21 @@ export const es = {
   'reminders.toast.title': 'Recordatorio',
   'reminders.toast.goalTitle': 'Recordatorio de meta',
   'reminders.toast.goalDormantTitle': 'Meta dormida',
+  'reminders.toast.taskTitle': 'Recordatorio de tarea',
+  'reminders.toast.writingTitle': 'Recordatorio de escrito',
   'reminders.toast.open': 'Ver',
   'reminders.toast.snooze': 'Posponer',
   'reminders.sourceGoalBadge': 'Meta',
+  'reminders.sourceTaskBadge': 'Tarea',
+  'reminders.sourceWritingBadge': 'Escrito',
   'reminders.deleteGoalConfirm':
     'Esto va a desactivar el recordatorio automático de la meta "{title}". ¿Continuar?',
   'reminders.deleteGoalDormantConfirm':
     'Esto va a desactivar el aviso de dormancia de la meta "{title}". ¿Continuar?',
+  'reminders.deleteTaskConfirm':
+    'Esto va a desactivar el recordatorio automático de la tarea "{title}". ¿Continuar?',
+  'reminders.deleteWritingConfirm':
+    'Esto va a desactivar el recordatorio automático del escrito "{title}". ¿Continuar?',
   'reminders.searchPlaceholder': 'Buscar recordatorios…',
   'reminders.quickAddPlaceholder':
     'Nuevo recordatorio… (usá @ para fecha, ej. "Llamar mamá @mañana 9")',

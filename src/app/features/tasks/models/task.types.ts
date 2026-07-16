@@ -1,6 +1,6 @@
 import type { JSONContent } from '@tiptap/core';
 
-export const TASK_SCHEMA_VERSION = 4;
+export const TASK_SCHEMA_VERSION = 5;
 export const TASK_KIND = 'task';
 export const TASKS_DIR = 'tasks';
 export const TASK_FILE_SUFFIX = '.json';
@@ -15,6 +15,10 @@ export interface Task {
   //      a single task may have multiple deadlines/check-ins. Stored as ISO
   //      strings, kept sorted ascending so the next-due is always at [0].
   readonly dueDates: readonly string[];
+  // why: §14 extension — auto-generates a Reminder from dueDates[0] (the
+  //      next-due date), same lifecycle pattern as GoalRemindersSyncService.
+  //      Opt-in, off by default: tasks never had automatic reminders before.
+  readonly reminder: TaskReminderConfig;
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly schemaVersion: number;
@@ -26,11 +30,18 @@ export interface Task {
   readonly [key: string]: unknown;
 }
 
+export interface TaskReminderConfig {
+  readonly enabled: boolean;
+}
+
+export const DEFAULT_TASK_REMINDER: TaskReminderConfig = { enabled: false };
+
 export interface TaskSummary {
   readonly id: string;
   readonly title: string;
   readonly done: boolean;
   readonly dueDates: readonly string[];
+  readonly reminder: TaskReminderConfig;
   readonly updatedAt: string;
   readonly tags: readonly string[];
   readonly folder: string;

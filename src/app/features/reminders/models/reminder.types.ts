@@ -4,12 +4,12 @@ export const REMINDERS_DIR = 'reminders';
 export const REMINDER_FILE_SUFFIX = '.json';
 
 // why: §14 unification — reminders may be created by the user (no source)
-//      or auto-derived from another entity (currently only goals, plus
-//      goal dormancy — docs/evolution.md idea 3). The source link is what
-//      lets the toast open the right detail page and what lets "delete"
-//      disable the toggle on the goal instead of being re-created next
-//      sync tick.
-export type ReminderSourceKind = 'goal' | 'goal-dormant';
+//      or auto-derived from another entity (goals, goal dormancy —
+//      docs/evolution.md idea 3 — plus tasks and writings with a deadline,
+//      §14 extension). The source link is what lets the toast open the
+//      right detail page and what lets "delete" disable the toggle on the
+//      source entity instead of being re-created next sync tick.
+export type ReminderSourceKind = 'goal' | 'goal-dormant' | 'task' | 'writing';
 
 export type RecurrenceUnit = 'day' | 'week' | 'month' | 'year';
 

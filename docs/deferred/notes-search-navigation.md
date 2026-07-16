@@ -15,11 +15,9 @@ Formato por entrada:
 
 ## Notas (origen: paso 5)
 
-### Vista de papelera
+### ~~Vista de papelera~~ (resuelto)
 
-- **Qué**: UI para listar, restaurar y vaciar lo borrado con soft-delete. Hoy las notas se mueven a `.mi-cerebro/trash/YYYY/MM/DD/` y no hay forma de recuperarlas sin tocar disco a mano.
-- **Por qué**: el soft-delete era para no perder datos. La UI de papelera es una pieza transversal a todas las entidades, no de notas.
-- **Target**: §19.9bis (papelera + carpetas).
+- **Estado**: cerrado. `/trash` (`src/app/features/trash/`) lista, restaura y borra permanentemente entradas soft-deleted de las 8 entidades, con cards por kind, countdown y filtros — ver `deferred/trash-books.md` para los pulidos pendientes (thumbs de galerías, volumen real de libros).
 
 ### ~~Carpetas / jerarquía real dentro de notas~~ (resuelto en §19.23a)
 
