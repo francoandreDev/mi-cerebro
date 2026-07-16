@@ -65,6 +65,14 @@ export class ReminderSchedulerService {
     this.toastSignal.set(null);
   }
 
+  // why: "posponer" en el toast de un reminder goal-sourced — salta el
+  //      próximo slot de la serie sin desactivar el toggle ni tocar el
+  //      deadline. Ver RemindersCadenceService.skipNextSlot.
+  snoozeGoalReminder(reminder: ReminderSummary): void {
+    void this.cadence.skipNextSlot(reminder.id);
+    this.dismiss();
+  }
+
   private fire(reminder: ReminderSummary): void {
     this.firedAt.set(reminder.id, reminder.nextPingAt);
     this.toastSignal.set(reminder);

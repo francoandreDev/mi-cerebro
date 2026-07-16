@@ -69,7 +69,7 @@ Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `d
 - **Causa típica:** el usuario movió o renombró la carpeta del workspace por fuera de la app.
 - **Cómo resolver:** elegir de nuevo la carpeta raíz en la pantalla que aparece; si fue movida, navegar a su nueva ubicación.
 - **Recuperable:** sí — los borradores en IndexedDB se ofrecen al reabrir.
-- **Nota de alcance (§20a):** este código está reservado para cuando la **carpeta raíz del workspace** realmente no está (`WorkspaceService.requireRoot()`). `BooksService`/`GalleriesService`/`FilesService` migraron su uso indebido de "id no encontrado ni tras re-caminar el filesystem" a `MCB-FS-008`. **Deuda conocida, sin cerrar todavía:** `NotesService`/`TasksService`/`GoalsService`/`ListsService`/`WritingsService` (su `findPath()` interno) y `BooksService#findChapterFile` siguen tirando `MCB-FS-003` para ese mismo caso de "no encontrado tras el walk" — comparten el antipatrón pero quedaron fuera del alcance explícito de 20a (que se limitó a `bookDir`/`requireLoc` de las 3 entidades directorio-por-entidad). Migrarlos a `MCB-FS-008` queda sin fase asignada.
+- **Nota de alcance (§20a, cerrada 2026-07-16):** este código está reservado para cuando la **carpeta raíz del workspace** realmente no está (`WorkspaceService.requireRoot()`). `BooksService`/`GalleriesService`/`FilesService` migraron su uso indebido de "id no encontrado ni tras re-caminar el filesystem" a `MCB-FS-008`; `NotesService`/`TasksService`/`GoalsService`/`ListsService`/`WritingsService` (su `findPath()` interno) y `BooksService#findChapterFile` migraron el mismo antipatrón en una pasada posterior — ya no queda ningún sitio tirando `MCB-FS-003` para ese caso.
 
 ### MCB-FS-004 — Permisos revocados
 

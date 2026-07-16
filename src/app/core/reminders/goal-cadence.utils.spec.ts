@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { LEAD_PRESETS, nextLeadupSlot, nextSlotFor } from './goal-cadence.utils';
+import { LEAD_PRESETS, nextLeadupSlot, nextSlotFor, parseTarget } from './goal-cadence.utils';
 
 const at = (y: number, mo: number, d: number, h = 9, mi = 0): number =>
   new Date(y, mo - 1, d, h, mi, 0, 0).getTime();
@@ -47,6 +47,17 @@ describe('nextLeadupSlot', () => {
     expect(LEAD_PRESETS[0]!.minutes).toBeGreaterThan(
       LEAD_PRESETS[LEAD_PRESETS.length - 1]!.minutes,
     );
+  });
+
+  it('parseTarget round-trips a nextPingAt-formatted slot (used by "skip next slot" snooze)', () => {
+    // reproduces RemindersCadenceService.skipNextSlot: parse the current
+    // nextPingAt back into ms and feed it as `fromMs` so nextSlotFor skips
+    // exactly the upcoming slot instead of every slot from "now".
+    const currentNextPingAt = '2026-07-10T22:59'; // 1h-before-deadline slot
+    const fromMs = parseTarget(currentNextPingAt);
+    expect(fromMs).toBe(at(2026, 7, 10, 22, 59));
+    const skipped = nextSlotFor('2026-07-10', fromMs!, 1440);
+    expect(skipped).toBe('2026-07-10T23:29'); // next denser slot (30m before)
   });
 
   it('handles full datetime targets (user-created reminders)', () => {

@@ -1736,6 +1736,32 @@ aside.timeline {
   border-top: 1px solid var(--mc-border-subtle, rgba(0, 0, 0, 0.05));
 }
 
+.diff-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.diff-section-head-text {
+  justify-content: flex-end;
+  padding: 8px 12px 0;
+}
+
+.compact-diff-toggle {
+  border: none;
+  background: none;
+  padding: 2px 6px;
+  font-size: 11px;
+  color: var(--mc-fg-muted, rgba(127, 127, 127, 0.9));
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.compact-diff-toggle:hover {
+  color: var(--mc-fg-primary);
+}
+
 .diff-section h4 {
   margin: 0 0 6px;
   font-size: 11px;

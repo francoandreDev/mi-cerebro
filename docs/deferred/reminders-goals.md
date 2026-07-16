@@ -27,10 +27,10 @@ Formato por entrada:
 - **Por qué se difirió**: el modelo `Goal.deadline` es date-only y agregarle hora implica migración + UI en `DeadlinePickerComponent`. 23:59 es razonable para casi todo plazo "fin del día".
 - **Target**: sin asignar.
 
-### Snooze inteligente del goal-reminder
+### ~~Snooze inteligente del goal-reminder~~ (resuelto 2026-07-16)
 
-- **Qué**: hoy el goal-reminder dispara su toast y se re-arma al siguiente slot. "Snooze" en el toast saltaría el próximo slot completo (o N días) sin desactivar el toggle. Hoy snooze solo existe para reminders user-created (`+1h`).
-- **Por qué se difirió**: requiere distinguir snooze (skip-one) de snooze (delay-fixed) y elegir UX. Mientras el toast tenga botón "abrir meta" + "cerrar", el caso "no me molestes hoy" se resuelve dejando que el siguiente slot se cumpla naturalmente.
+- **Qué**: el goal-reminder disparaba su toast y se re-armaba al siguiente slot sin ninguna acción de posponer — sólo "Ver" y cerrar. Hacía falta decidir entre snooze skip-one (saltar el próximo slot de la serie) y snooze delay-fixed (empujar N horas/días), y resolver que para reminders goal-sourced el `dueAt` está bloqueado por `GoalRemindersSyncService` (lo pisa de vuelta al deadline de la meta en el siguiente tick), así que el patrón delay-fixed que ya usan los reminders manuales (mover `dueAt`) no aplica acá.
+- **Estado**: cerrado. Se implementó skip-one: `RemindersCadenceService.skipNextSlot()` recalcula `nextSlotFor(dueAt, fromMs, lead)` usando el `nextPingAt` actual como `fromMs` en vez de "ahora" — misma matemática que un fire normal, pero saltando exactamente el próximo slot sin tocar `dueAt` ni el toggle. Botón "Posponer" en el toast (`ReminderToastContainer`), visible sólo para `sourceKind` `goal`/`goal-dormant` — los reminders manuales ya tienen su propio snooze (fixed-hours/día/lunes/fin-de-semana) en el footer de detalle de `/reminders`.
 - **Target**: sin asignar.
 
 ### Recordatorios automáticos para tareas / escritos con deadline
@@ -87,12 +87,10 @@ Formato por entrada:
 
 ## Recordatorios — Mejoras UI (origen: rediseño 2026-06-19)
 
-### Snooze próximo lunes / fin de semana / menú overflow `⋯`
+### ~~Snooze próximo lunes / fin de semana / menú overflow `⋯`~~ (resuelto 2026-07-06)
 
 - **Qué**: presets adicionales de posponer (próximo lunes, fin de semana) y un menú overflow `⋯` que agrupe las acciones del footer de detalle en lugar de chips sueltos.
-- **Estado parcial (resuelto 2026-07-04)**: "Posponer 1 día" y "Duplicar" ya están — botones planos en el footer de `/reminders`, junto a "Posponer 1 h". Quedan pendientes los presets de lunes/fin-de-semana y el agrupamiento en menú overflow.
-- **Por qué se difirió lo pendiente**: los presets de día-de-semana necesitan resolver ambigüedad de UX (¿"próximo lunes" cuenta hoy si es lunes?) y el menú overflow es un patrón nuevo (no existe overflow menu en ningún otro footer de detalle de la app todavía) — con 4 botones planos la fila no se satura aún.
-- **Target**: sin asignar.
+- **Estado**: cerrado en `1508ac9`. `snooze-presets.ts` resuelve la ambigüedad "¿hoy cuenta si ya es el día target?" con `nextWeekdayAfter()` (si la hora preset del día ya pasó, salta a la semana siguiente — mismo criterio que usaría una persona). Acciones (posponer 1h/1 día/lunes/fin de semana, duplicar, borrar) movidas a un menú overflow `⋯` por reminder en `RemindersContainer`, que cierra con click afuera o Escape.
 
 ### Atajos de navegación de fila (J/K, Space, E, Del)
 

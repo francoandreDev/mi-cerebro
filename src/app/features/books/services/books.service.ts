@@ -443,7 +443,7 @@ export class BooksService {
         /* skip corrupt */
       }
     }
-    throw new AppError(ERROR_CODES.FS_003, { severity: 'error', context: { chapterId } });
+    throw new AppError(ERROR_CODES.FS_008, { severity: 'error', context: { chapterId } });
   }
 
   private async walkBooks(

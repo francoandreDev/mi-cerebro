@@ -740,10 +740,25 @@
               }
               @if (d.view.body !== null && d.view.body.length > 0) {
                 <section class="diff-section">
-                  <h4>{{ i18n.t('versioning.history.field.body') }}</h4>
+                  <div class="diff-section-head">
+                    <h4>{{ i18n.t('versioning.history.field.body') }}</h4>
+                    @if (chunksHaveContext(d.view.body)) {
+                      <button
+                        type="button"
+                        class="compact-diff-toggle"
+                        (click)="toggleCompactDiff()"
+                      >
+                        {{
+                          compactDiff()
+                            ? i18n.t('versioning.history.diff.showContext')
+                            : i18n.t('versioning.history.diff.onlyChanges')
+                        }}
+                      </button>
+                    }
+                  </div>
                   <pre
                     class="diff"
-                  >@for (chunk of d.view.body; track $index) {<span class="chunk chunk-{{ chunk.kind }}">{{ chunk.value }}</span>}</pre>
+                  >@for (chunk of visibleChunks(d.view.body); track $index) {<span class="chunk chunk-{{ chunk.kind }}">{{ chunk.value }}</span>}</pre>
                 </section>
               }
               @if (d.view.tags.added.length + d.view.tags.removed.length > 0) {
@@ -847,9 +862,20 @@
               }
             }
             @case ('text') {
+              @if (chunksHaveContext(d.view.chunks)) {
+                <div class="diff-section-head diff-section-head-text">
+                  <button type="button" class="compact-diff-toggle" (click)="toggleCompactDiff()">
+                    {{
+                      compactDiff()
+                        ? i18n.t('versioning.history.diff.showContext')
+                        : i18n.t('versioning.history.diff.onlyChanges')
+                    }}
+                  </button>
+                </div>
+              }
               <pre
                 class="diff"
-              >@for (chunk of d.view.chunks; track $index) {<span class="chunk chunk-{{ chunk.kind }}">{{ chunk.value }}</span>}</pre>
+              >@for (chunk of visibleChunks(d.view.chunks); track $index) {<span class="chunk chunk-{{ chunk.kind }}">{{ chunk.value }}</span>}</pre>
             }
           }
         }

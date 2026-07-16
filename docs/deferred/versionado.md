@@ -42,10 +42,10 @@ Formato por entrada:
 - **Qué**: hoy cada commit de la timeline muestra todos los chips de kind tocado (`note`, `task`, `goal`, `image`, `book`, `file`, `list`, `track`, `tag`, `writing`). Cuando el commit toca 8-10 kinds los chips envuelven a dos líneas y desbalancean visualmente la fila.
 - **Estado**: cerrado. `HistoryContainer.visibleKinds()`/`hiddenKindsCount()` cortan en `MAX_VISIBLE_KIND_CHIPS = 4`; el resto colapsa en un chip `+N más` (`.chip-more`).
 
-### Toggle "ver sólo cambios" en diffs largos
+### ~~Toggle "ver sólo cambios" en diffs largos~~ (resuelto 2026-07-16)
 
-- **Qué**: el diff de cuerpo (TipTap → prosa + jsdiff) muestra todo el contenido, no sólo los chunks `add`/`remove`. En notas largas las líneas de contexto opacitadas dominan visualmente. Sería útil un toggle que oculte los `context` y deje sólo los chunks modificados con un separador `…`.
-- **Por qué se difirió**: nice-to-have. Con contexto reducido (~3 líneas alrededor de cada cambio) la legibilidad puede mejorar sin esconder nada — esa es una alternativa más conservadora que también queda en este ítem.
+- **Qué**: el diff de cuerpo (TipTap → prosa + jsdiff) mostraba todo el contenido, no sólo los chunks `add`/`remove`. En notas largas las líneas de contexto opacitadas dominaban visualmente.
+- **Estado**: cerrado. `compactDiffChunks()` (`diff.utils.ts`) colapsa cada run de chunks `context` a un único separador `…`; se aplica tanto al diff de cuerpo (`kind: 'entity'`) como al diff de texto crudo (`kind: 'text'`). Toggle persistido en `sessionStorage` (`mc:history:compactDiff`, mismo patrón que `onlyMilestones`), botón visible sólo cuando el diff tiene al menos un chunk de contexto que ocultar.
 - **Target**: §19.16f.
 
 ### Tooltip por-día en la panorámica (hover sobre la ladera)

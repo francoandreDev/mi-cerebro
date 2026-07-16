@@ -45,7 +45,7 @@ const formatLocal = (d: Date): string =>
 // why: accepts either a date-only string ("2026-07-10" → EOD) or a full
 //      local-datetime ("2026-07-10T16:20"). Returns null for anything
 //      else so callers degrade gracefully on corrupted data.
-const parseTarget = (target: string): number | null => {
+export const parseTarget = (target: string): number | null => {
   const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(target);
   if (dateOnly) {
     const [, y, mo, d] = dateOnly as unknown as string[];

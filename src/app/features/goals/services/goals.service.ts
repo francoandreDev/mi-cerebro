@@ -312,7 +312,7 @@ export class GoalsService {
         /* skip corrupt */
       }
     }
-    throw new AppError(ERROR_CODES.FS_003, { severity: 'error', context: { id } });
+    throw new AppError(ERROR_CODES.FS_008, { severity: 'error', context: { id } });
   }
 
   private async allocFilename(dir: NativeDirRef, title: string): Promise<string> {

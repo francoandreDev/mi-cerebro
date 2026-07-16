@@ -28,6 +28,11 @@ import { launchPaloma } from '../utils/paloma-flight';
           <button type="button" class="link" (click)="open(r)">
             {{ t('reminders.toast.open') }}
           </button>
+          @if (r.sourceKind === 'goal' || r.sourceKind === 'goal-dormant') {
+            <button type="button" class="link" (click)="scheduler.snoozeGoalReminder(r)">
+              {{ t('reminders.toast.snooze') }}
+            </button>
+          }
           <button type="button" class="ghost" (click)="scheduler.dismiss()" aria-label="Cerrar">
             <mc-icon name="x" />
           </button>

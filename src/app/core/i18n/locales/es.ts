@@ -249,6 +249,8 @@ export const es = {
   'versioning.history.field.key': 'Campo',
   'versioning.history.field.before': 'Antes',
   'versioning.history.field.after': 'Después',
+  'versioning.history.diff.onlyChanges': 'Ver sólo cambios',
+  'versioning.history.diff.showContext': 'Ver contexto completo',
   'versioning.history.anchored.draftAdded': 'Cambio propuesto nuevo',
   'versioning.history.anchored.draftRemoved': 'Cambio retirado',
   'versioning.history.anchored.draftModified': 'Propuesta editada',
@@ -1395,6 +1397,7 @@ export const es = {
   'reminders.toast.goalTitle': 'Recordatorio de meta',
   'reminders.toast.goalDormantTitle': 'Meta dormida',
   'reminders.toast.open': 'Ver',
+  'reminders.toast.snooze': 'Posponer',
   'reminders.sourceGoalBadge': 'Meta',
   'reminders.deleteGoalConfirm':
     'Esto va a desactivar el recordatorio automático de la meta "{title}". ¿Continuar?',

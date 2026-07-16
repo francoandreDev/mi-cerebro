@@ -8,7 +8,7 @@ import type { Reminder } from '@features/reminders/models/reminder.types';
 import { RemindersService } from '@features/reminders/services/reminders.service';
 import { nextDueAfter } from '@features/reminders/utils/recurrence';
 
-import { nextSlotFor } from './goal-cadence.utils';
+import { nextSlotFor, parseTarget } from './goal-cadence.utils';
 
 // why: §14 — owns the ping cadence for EVERY reminder (manual or goal-
 //      sourced). `dueAt` is the user's target; this service maintains
@@ -38,12 +38,29 @@ export class RemindersCadenceService {
   //      ping (advancing past `now`) and persist. Series exhausted ⇒
   //      mark done so the reminder shows up in history but stops firing.
   async advance(reminderId: string): Promise<void> {
+    return this.rescheduleFrom(reminderId, Date.now());
+  }
+
+  // why: "posponer" para reminders goal-sourced — a diferencia de los
+  //      manuales, su `dueAt` refleja el deadline de la meta y lo pisa
+  //      GoalRemindersSyncService en cuanto se desvía, así que no se puede
+  //      empujar como snooze. En cambio saltamos el próximo slot de la
+  //      serie: misma matemática que un fire normal, pero calculada desde
+  //      el slot que está por sonar en vez de desde "ahora".
+  async skipNextSlot(reminderId: string): Promise<void> {
+    const summary = this.reminders.summaries().find((r) => r.id === reminderId);
+    if (!summary) return;
+    const fromMs = parseTarget(summary.nextPingAt) ?? Date.now();
+    return this.rescheduleFrom(reminderId, fromMs);
+  }
+
+  private async rescheduleFrom(reminderId: string, fromMs: number): Promise<void> {
     if (this.workspace.root() === null) return;
     await this.schedule(async () => {
       const summary = this.reminders.summaries().find((r) => r.id === reminderId);
       if (!summary || summary.done) return;
       const lead = this.settings.state().reminders.leadMinutes;
-      const slot = nextSlotFor(summary.dueAt, Date.now(), lead);
+      const slot = nextSlotFor(summary.dueAt, fromMs, lead);
       const current = await this.reminders.read(reminderId);
       if (slot === null) {
         // why: lead-up series exhausted. Recurring reminders roll their

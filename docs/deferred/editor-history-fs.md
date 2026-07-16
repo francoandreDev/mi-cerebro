@@ -29,8 +29,8 @@ Formato por entrada:
 
 ## Fs — Antipatrón `MCB-FS-003` mal usado, deuda restante (origen: §20a, 2026-07-08)
 
-### Migrar `findPath()` de Notes/Tasks/Goals/Lists/Writings y `findChapterFile` de Books a `MCB-FS-008`
+### ~~Migrar `findPath()` de Notes/Tasks/Goals/Lists/Writings y `findChapterFile` de Books a `MCB-FS-008`~~ (resuelto 2026-07-16)
 
-- **Qué**: `§20a` migró `bookDir`/`requireLoc` de `BooksService`/`GalleriesService`/`FilesService` (las 3 entidades directorio-por-entidad) de tirar `MCB-FS-003` a `MCB-FS-008` cuando un `id` no aparece ni tras re-caminar el filesystem. El mismo antipatrón sigue vivo en el `findPath()` interno de `NotesService`/`TasksService`/`GoalsService`/`ListsService`/`WritingsService` (entidades archivo-plano-con-sufijo, patrón preexistente que §20a tomó como referencia pero no tocó) y en `BooksService#findChapterFile` (resolución de capítulo dentro de un libro, walk-based igual que `findPath`, mismo throw final).
-- **Por qué se difirió**: `§20a` acotó su alcance explícitamente a los "dos usos indebidos" nombrados en el roadmap (`books.service.ts`, `bookDir`/`requireLoc`); generalizar a los otros 6 sitios es mecánico pero son call sites adicionales fuera de ese texto, y tocarlos ameritaba su propia revisión (ej. decidir si `findChapterFile` amerita un código distinto de `findLoc`/`findPath` al nivel de libro, dado que resuelve una sub-entidad).
-- **Target**: sin asignar.
+- **Qué**: `§20a` migró `bookDir`/`requireLoc` de `BooksService`/`GalleriesService`/`FilesService` (las 3 entidades directorio-por-entidad) de tirar `MCB-FS-003` a `MCB-FS-008` cuando un `id` no aparece ni tras re-caminar el filesystem. El mismo antipatrón seguía vivo en el `findPath()` interno de `NotesService`/`TasksService`/`GoalsService`/`ListsService`/`WritingsService` y en `BooksService#findChapterFile`.
+- **Estado**: cerrado. Migración mecánica del throw final de cada `findPath()`/`findChapterFile()` (caso "walk exhaustivo, id no encontrado") de `FS_003` a `FS_008`, mismo `context: { id }` (`{ chapterId }` en books). Se dejó sin tocar el otro throw `FS_003` que convive en `Notes/Tasks/Goals/Lists/Writings.read()` (`if (!subdir) throw ...`) — caso distinto (la carpeta del `id` ya resuelto por `findPath()` desapareció entre el índice y la lectura), fuera del alcance de este ítem.
+- **Target**: cerrado.

@@ -27,7 +27,13 @@ import { ShortcutsService } from '@core/shortcuts/shortcuts.service';
 import { BUCKET_LABEL_KEY } from '../services/bucket-labels';
 import { HistoryDiffService } from '../services/diff.service';
 import type { EntityDiff } from '../services/diff.service';
-import type { AnchorChangeStatus, AnchorMode } from '../services/diff.utils';
+import {
+  compactDiffChunks,
+  hasContextChunk,
+  type AnchorChangeStatus,
+  type AnchorMode,
+  type InlineDiffChunk,
+} from '../services/diff.utils';
 import { ALL_FACETS, facetOf, type Facet } from '../services/facet';
 import { HistoryLoader } from '../services/history-loader.service';
 import type { DayAggregate } from '../services/history-loader.service';
@@ -80,6 +86,7 @@ const SS_KEY = {
   query: 'mc:history:query',
   facets: 'mc:history:facets',
   onlyMile: 'mc:history:onlyMilestones',
+  compactDiff: 'mc:history:compactDiff',
   selOid: 'mc:history:selOid',
   panDay: 'mc:history:panoramaDay',
 } as const;
@@ -91,6 +98,7 @@ interface PersistedState {
   query: string;
   facets: readonly Facet[] | null;
   onlyMilestones: boolean;
+  compactDiff: boolean;
   selectedOid: string | null;
   panoramaDay: number | null;
 }
@@ -120,6 +128,7 @@ function readPersistedState(): PersistedState {
     query: safe(() => sessionStorage.getItem(SS_KEY.query) ?? '', ''),
     facets,
     onlyMilestones: safe(() => sessionStorage.getItem(SS_KEY.onlyMile) === '1', false),
+    compactDiff: safe(() => sessionStorage.getItem(SS_KEY.compactDiff) === '1', false),
     selectedOid: safe(() => sessionStorage.getItem(SS_KEY.selOid), null),
     panoramaDay: safe(() => {
       const raw = sessionStorage.getItem(SS_KEY.panDay);
@@ -282,6 +291,20 @@ export class HistoryContainer implements OnInit, OnDestroy {
   protected readonly onlyMilestones = this.onlyMilestonesSignal.asReadonly();
   protected toggleOnlyMilestones(): void {
     this.onlyMilestonesSignal.update((v) => !v);
+  }
+
+  private readonly compactDiffSignal = signal(this.persisted.compactDiff);
+  protected readonly compactDiff = this.compactDiffSignal.asReadonly();
+  protected toggleCompactDiff(): void {
+    this.compactDiffSignal.update((v) => !v);
+  }
+
+  protected visibleChunks(chunks: readonly InlineDiffChunk[]): readonly InlineDiffChunk[] {
+    return this.compactDiffSignal() ? compactDiffChunks(chunks) : chunks;
+  }
+
+  protected chunksHaveContext(chunks: readonly InlineDiffChunk[]): boolean {
+    return hasContextChunk(chunks);
   }
 
   // Free-text search over the timeline. Tokens:
@@ -1075,6 +1098,7 @@ export class HistoryContainer implements OnInit, OnDestroy {
     effect(() => writeSS(SS_KEY.query, this.query() || null));
     effect(() => writeSS(SS_KEY.facets, JSON.stringify(Array.from(this.enabledFacetsSignal()))));
     effect(() => writeSS(SS_KEY.onlyMile, this.onlyMilestonesSignal() ? '1' : '0'));
+    effect(() => writeSS(SS_KEY.compactDiff, this.compactDiffSignal() ? '1' : '0'));
     effect(() => writeSS(SS_KEY.selOid, this.selectedOidSignal()));
     effect(() => {
       const d = this.panoramaSelectedDayStartSignal();

@@ -422,6 +422,30 @@ export interface InlineDiffChunk {
   readonly value: string;
 }
 
+// why: notas largas con un solo cambio chico muestran decenas de líneas de
+//      contexto opacitadas alrededor. El toggle "ver sólo cambios" pide
+//      colapsarlas a un separador "…" en vez de listarlas todas.
+export function compactDiffChunks(chunks: readonly InlineDiffChunk[]): readonly InlineDiffChunk[] {
+  const out: InlineDiffChunk[] = [];
+  let hiddenPending = false;
+  for (const chunk of chunks) {
+    if (chunk.kind === 'context') {
+      hiddenPending = true;
+      continue;
+    }
+    if (hiddenPending) {
+      out.push({ kind: 'context', value: '…\n' });
+      hiddenPending = false;
+    }
+    out.push(chunk);
+  }
+  return out;
+}
+
+export function hasContextChunk(chunks: readonly InlineDiffChunk[]): boolean {
+  return chunks.some((c) => c.kind === 'context');
+}
+
 export function bodyDiffOf(
   before: unknown,
   after: unknown,
