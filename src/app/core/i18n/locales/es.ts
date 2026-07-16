@@ -504,6 +504,9 @@ export const es = {
   'settings.variants.dormant.apply': 'Aplicar',
   'settings.variants.dormant.hint':
     'Las variantes sin actividad por más de N días aparecen en la sección "En reposo".',
+  'settings.goals.dormant.apply': 'Aplicar',
+  'settings.goals.dormant.hint':
+    'Los objetivos sin progreso por más de N días se marcan como dormidos (🌙) en el dashboard y en la pared de objetivos.',
 
   'notes.title': 'Notas',
   'notes.new': 'Nueva nota',

@@ -119,6 +119,7 @@ export class SettingsContainer {
   protected readonly draft = signal('');
   protected readonly error = signal(false);
   protected readonly dormantDraft = signal(0);
+  protected readonly goalsDormantDraft = signal(0);
   protected readonly autocommitDraft = signal(0);
   protected readonly compactionThresholdDraft = signal(0);
   protected readonly authorBioDraft = signal('');
@@ -138,6 +139,7 @@ export class SettingsContainer {
     //      (workspace file load, future cross-tab sync).
     effect(() => this.draft.set(this.state().timezone));
     effect(() => this.dormantDraft.set(this.state().variants.dormantThresholdDays));
+    effect(() => this.goalsDormantDraft.set(this.state().goals.dormantThresholdDays));
     effect(() => this.autocommitDraft.set(this.state().versioning.autocommitMinutes));
     effect(() =>
       this.compactionThresholdDraft.set(this.state().versioning.compactionThresholdCommits),
@@ -197,6 +199,17 @@ export class SettingsContainer {
     event?.preventDefault();
     if (this.dormantDraft() === this.state().variants.dormantThresholdDays) return;
     this.settings.setVariantsDormantThreshold(this.dormantDraft());
+  }
+
+  protected onGoalsDormantInput(event: Event): void {
+    const v = parseInt((event.target as HTMLInputElement).value, 10);
+    if (!isNaN(v)) this.goalsDormantDraft.set(v);
+  }
+
+  protected applyGoalsDormant(event?: Event): void {
+    event?.preventDefault();
+    if (this.goalsDormantDraft() === this.state().goals.dormantThresholdDays) return;
+    this.settings.setGoalsDormantThreshold(this.goalsDormantDraft());
   }
 
   protected t(key: TranslationKey, params?: Record<string, string | number>): string {
