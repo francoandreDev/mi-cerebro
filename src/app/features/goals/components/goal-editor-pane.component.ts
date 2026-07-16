@@ -26,6 +26,7 @@ export class GoalEditorPaneComponent {
   readonly status = input<SaveStatus>('saved');
   readonly availableTags = input.required<readonly Tag[]>();
   readonly editable = input<boolean>(true);
+  readonly dormant = input<boolean>(false);
   readonly titleChange = output<string>();
   readonly bodyChange = output<JSONContent>();
   readonly completedChange = output<boolean>();

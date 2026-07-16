@@ -30,6 +30,7 @@
       [status]="status()"
       [availableTags]="tags()"
       [editable]="lock.editable()"
+      [dormant]="dormant()"
       (titleChange)="onTitleChange($event)"
       (bodyChange)="onBodyChange($event)"
       (completedChange)="onCompletedChange($event)"

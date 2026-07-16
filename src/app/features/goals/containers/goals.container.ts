@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import type { JSONContent } from '@tiptap/core';
 
@@ -10,12 +18,19 @@ import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { EntityLockController } from '@core/locks/entity-lock.controller';
 import { extractEntityId } from '@core/routing/entity-slug';
+import { SettingsService } from '@core/settings/settings.service';
 import { TagsService } from '@core/tags/tags.service';
 import { IconComponent } from '@shared/icon/icon.component';
 import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
 
 import { GoalEditorPaneComponent, type SaveStatus } from '../components/goal-editor-pane.component';
-import { GOAL_KIND, type Goal, type GoalPriority, type GoalStep } from '../models/goal.types';
+import {
+  GOAL_KIND,
+  isGoalDormant,
+  type Goal,
+  type GoalPriority,
+  type GoalStep,
+} from '../models/goal.types';
 import { GoalsService } from '../services/goals.service';
 
 @Component({
@@ -35,11 +50,23 @@ export class GoalsContainer {
   private readonly router = inject(Router);
   private readonly errors = inject(ErrorService);
   private readonly i18n = inject(I18nService);
+  private readonly settings = inject(SettingsService);
 
   protected readonly tags = this.tagsService.tags;
   protected readonly active = signal<Goal | null>(null);
   protected readonly status = signal<SaveStatus>('saved');
   protected readonly lock = new EntityLockController(GOAL_KIND, this.active);
+
+  protected readonly dormant = computed(() => {
+    const goal = this.active();
+    if (!goal) return false;
+    return isGoalDormant(
+      goal.completed,
+      goal.lastProgressAt,
+      this.settings.state().goals.dormantThresholdDays,
+      Date.now(),
+    );
+  });
 
   constructor() {
     effect(() => {

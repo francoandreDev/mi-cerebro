@@ -157,6 +157,7 @@
 .title-button:hover:not(:disabled) { border-bottom-color: rgba(170, 215, 255, 0.55); }
 .title-button:disabled { cursor: default; }
 .title-button.done { text-decoration: line-through; color: rgba(170, 200, 240, 0.6); }
+.dormant-icon { flex: none; color: rgba(180, 220, 255, 0.7); font-size: 1.05em; }
 .title-edit-hint { font-size: 0.75em; opacity: 0.5; }
 .title-button:hover .title-edit-hint { opacity: 1; }
 .title-rename {

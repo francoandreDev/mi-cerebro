@@ -38,6 +38,9 @@
         }
       </button>
     }
+    @if (dormant()) {
+      <mc-icon name="moon" class="dormant-icon" [attr.aria-label]="t('goals.wall.dormantBadge')" />
+    }
   </div>
 
   <div class="chrome">

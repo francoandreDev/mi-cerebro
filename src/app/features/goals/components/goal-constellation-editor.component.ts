@@ -46,6 +46,7 @@ export class GoalConstellationEditorComponent {
   readonly goal = input.required<Goal>();
   readonly editable = input<boolean>(true);
   readonly status = input<SaveStatus>('saved');
+  readonly dormant = input<boolean>(false);
   readonly stepsChange = output<readonly GoalStep[]>();
   readonly priorityChange = output<GoalPriority>();
   readonly deadlineChange = output<string | null>();
