@@ -288,6 +288,33 @@ export class GalleriesService {
     await this.refresh();
   }
 
+  async readTrashCoverBlobs(
+    trashDayDir: NativeDirRef,
+    entryName: string,
+    limit = 4,
+  ): Promise<readonly Blob[]> {
+    const srcDir = await this.fs.getDir(trashDayDir, entryName);
+    if (!srcDir) return [];
+    const gallery = await this.fs.readJson<Gallery>(srcDir, GALLERY_META_FILE);
+    const ids = pickCoverIds(gallery).slice(0, limit);
+    const thumbsDir = await this.fs.getOrCreateDir(srcDir, THUMBS_DIR);
+    const originalDir = await this.fs.getOrCreateDir(srcDir, ORIGINAL_DIR);
+    const blobs: Blob[] = [];
+    for (const id of ids) {
+      try {
+        if (await this.fs.hasEntry(thumbsDir, `${id}.${THUMB_EXT}`)) {
+          blobs.push(await this.fs.readFile(thumbsDir, `${id}.${THUMB_EXT}`));
+          continue;
+        }
+        const meta = gallery.images.find((i) => i.id === id);
+        if (meta) blobs.push(await this.fs.readFile(originalDir, `${id}.${meta.ext}`));
+      } catch (cause) {
+        console.warn('[trash] gallery cover blob load failed', id, cause);
+      }
+    }
+    return blobs;
+  }
+
   async moveGalleryToFolder(id: string, newFolder: string): Promise<void> {
     const loc = await this.findLoc(id);
     if (loc.folder === newFolder) return;

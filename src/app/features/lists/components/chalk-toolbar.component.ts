@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, inject, input, output } from '@angu
 
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
+import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
 import { IconComponent } from '@shared/icon/icon.component';
 
 import type { ChalkColorId, ChalkSize, ChalkTool } from '../models/chalk.types';
@@ -12,7 +14,7 @@ const SIZES: readonly ChalkSize[] = ['s', 'm', 'l'];
 @Component({
   selector: 'mc-chalk-toolbar',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent],
+  imports: [ConfirmDialogComponent, IconComponent],
   templateUrl: './chalk-toolbar.component.html',
   styleUrl: './chalk-toolbar.component.css',
 })
@@ -36,6 +38,8 @@ export class ChalkToolbarComponent {
 
   private readonly i18n = inject(I18nService);
 
+  protected readonly confirm = new ConfirmController();
+
   protected t(key: TranslationKey): string {
     return this.i18n.t(key);
   }
@@ -50,7 +54,15 @@ export class ChalkToolbarComponent {
 
   protected onClear(): void {
     if (!this.canClear()) return;
-    const ok = confirm(this.t('lists.chalk.clearConfirm'));
-    if (ok) this.clearActive.emit();
+    this.confirm.ask(
+      {
+        title: this.t('lists.chalk.confirm.clear.title'),
+        message: this.t('lists.chalk.clearConfirm'),
+        confirmLabel: this.t('lists.chalk.confirm.clear.confirm'),
+        cancelLabel: this.t('lists.chalk.confirm.cancel'),
+        tone: 'danger',
+      },
+      () => this.clearActive.emit(),
+    );
   }
 }

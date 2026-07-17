@@ -15,12 +15,6 @@ Formato por entrada:
 
 ## Papelera / UI (origen: rediseño de /trash)
 
-### Thumbs reales 2×2 para galerías en la papelera
-
-- **Qué**: la card de galería en `/trash` muestra hoy un mosaico estilizado con íconos de cámara y el contador de imágenes (vía `trash.preview.images`). El objetivo es renderizar el `GalleryCoverComponent` real con hasta 4 thumbnails leídos del dir de la galería en `.mi-cerebro/trash/`.
-- **Por qué se difirió**: requiere extender `TrashService` (o `GalleriesService`) con un método que, dado un `TrashEntry` de kind `image`, lea el `meta.json` del dir borrado y devuelva blobs de las primeras N imágenes, más gestión del lifecycle de object URLs en la container (createObjectURL/revokeObjectURL al cambiar visibilidad o desmontar). Es un trabajo cross-feature no trivial para una vista de baja frecuencia. El v1 da el salto visual con cards por kind + countdown + filtros + ops jerarquizadas; la fidelidad fotográfica queda como pulido posterior.
-- **Target**: sin asignar.
-
 ### Volumen real (`BookVolumeComponent`) para libros en la papelera
 
 - **Qué**: la card de libro en `/trash` muestra hoy un tratamiento tipográfico estilizado (inicial grande + byline) en una caja con aspect-ratio 3/4. El objetivo es reusar el `BookVolumeComponent` real con `accent` del bundle del libro borrado.

@@ -23,6 +23,8 @@ import { BLOCK_ID_ATTR } from '@core/tiptap/block-id/block-id.types';
 import { CommentsService } from '@core/versioning/comments.service';
 import { applyOrphanFlags } from '@core/versioning/comments-orphans';
 import type { Comment } from '@core/versioning/comments.types';
+import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
+import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
 import { IconComponent } from '@shared/icon/icon.component';
 
 import { CommentItemComponent } from './comment-item.component';
@@ -30,8 +32,13 @@ import { CommentItemComponent } from './comment-item.component';
 @Component({
   selector: 'mc-comments-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommentItemComponent, IconComponent],
+  imports: [CommentItemComponent, ConfirmDialogComponent, IconComponent],
   template: `
+    <mc-confirm-dialog
+      [request]="confirm.request()"
+      (confirmed)="confirm.accept()"
+      (cancelled)="confirm.cancel()"
+    />
     <header class="head">
       <h3 id="mc-comments-title">{{ t('comments.title') }} ({{ count() }})</h3>
       <button
@@ -100,6 +107,7 @@ export class CommentsPanelContainer {
 
   private readonly all = signal<readonly Comment[]>([]);
   protected readonly loading = signal(false);
+  protected readonly confirm = new ConfirmController();
 
   protected readonly active = computed(() => this.all().filter((c) => !c.orphaned));
   protected readonly orphaned = computed(() => this.all().filter((c) => c.orphaned));
@@ -131,16 +139,25 @@ export class CommentsPanelContainer {
     return this.i18n.t(key);
   }
 
-  protected async onDelete(id: string): Promise<void> {
-    if (typeof confirm !== 'function') return;
-    if (!confirm(this.t('comments.confirm.delete'))) return;
-    const next = this.all().filter((c) => c.id !== id);
-    try {
-      await this.comments.save(this.entityId(), this.entityTitle(), next);
-      this.all.set(next);
-    } catch (err) {
-      this.errors.report(err);
-    }
+  protected onDelete(id: string): void {
+    this.confirm.ask(
+      {
+        title: this.t('comments.confirm.deleteDialog.title'),
+        message: this.t('comments.confirm.delete'),
+        confirmLabel: this.t('comments.confirm.deleteDialog.confirm'),
+        cancelLabel: this.t('comments.confirm.cancel'),
+        tone: 'danger',
+      },
+      async () => {
+        const next = this.all().filter((c) => c.id !== id);
+        try {
+          await this.comments.save(this.entityId(), this.entityTitle(), next);
+          this.all.set(next);
+        } catch (err) {
+          this.errors.report(err);
+        }
+      },
+    );
   }
 
   private async loadFor(id: string): Promise<void> {

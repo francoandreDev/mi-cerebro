@@ -8,6 +8,8 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
+import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
 import { BgColorDirective } from '@shared/directives/bg-color.directive';
 import { IconComponent } from '@shared/icon/icon.component';
 import type { IconName } from '@shared/icon/icons.data';
@@ -36,7 +38,7 @@ import { RemoteService } from '@core/versioning/remote.service';
 @Component({
   selector: 'mc-settings',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, BgColorDirective, IconComponent],
+  imports: [RouterLink, BgColorDirective, ConfirmDialogComponent, IconComponent],
   templateUrl: './settings.container.html',
   styleUrl: './settings.container.css',
 })
@@ -51,6 +53,7 @@ export class SettingsContainer {
 
   protected readonly reindexRunning = signal(false);
   protected readonly reindexDone = signal(false);
+  protected readonly confirm = new ConfirmController();
 
   protected readonly exportIncludeAllVariants = signal(false);
   protected readonly exportIncludeAssets = signal(true);
@@ -265,15 +268,25 @@ export class SettingsContainer {
     }
   }
 
-  protected async clearRemote(): Promise<void> {
-    if (!confirm(this.t('settings.remote.confirmClear'))) return;
-    try {
-      await this.remote.clear();
-      this.remoteUrlDraft.set('');
-      this.remoteTokenDraft.set('');
-    } catch (e) {
-      this.errors.report(e);
-    }
+  protected clearRemote(): void {
+    this.confirm.ask(
+      {
+        title: this.t('settings.remote.confirm.clear.title'),
+        message: this.t('settings.remote.confirmClear'),
+        confirmLabel: this.t('settings.remote.confirm.clear.confirm'),
+        cancelLabel: this.t('settings.remote.confirm.cancel'),
+        tone: 'danger',
+      },
+      async () => {
+        try {
+          await this.remote.clear();
+          this.remoteUrlDraft.set('');
+          this.remoteTokenDraft.set('');
+        } catch (e) {
+          this.errors.report(e);
+        }
+      },
+    );
   }
 
   protected setTheme(next: ThemeOverride): void {

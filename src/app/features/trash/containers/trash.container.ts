@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   HostListener,
   inject,
@@ -13,12 +14,15 @@ import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { TrashService } from '@core/trash/trash.service';
 import type { TrashEntry, TrashKind, TrashPreview } from '@core/trash/trash.types';
+import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
+import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
 import { IconComponent } from '@shared/icon/icon.component';
 import { McDatePipe } from '@shared/pipes/mc-date.pipe';
 
 import { TrashCardContentComponent } from '../components/trash-card-content.component';
 import { TrashCardComponent } from '../components/trash-card.component';
 import { TrashFilterBarComponent } from '../components/trash-filter-bar.component';
+import { TrashCoverUrlCache } from './trash-cover-url-cache';
 
 const KINDS: readonly TrashKind[] = [
   'note',
@@ -35,7 +39,10 @@ const KINDS: readonly TrashKind[] = [
 interface CardState {
   readonly status: 'loading' | 'ready' | 'missing';
   readonly preview: TrashPreview | null;
+  readonly thumbUrls: readonly string[];
 }
+
+const EMPTY_STATE: CardState = { status: 'loading', preview: null, thumbUrls: [] };
 
 const norm = (s: string): string => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
@@ -43,6 +50,7 @@ const norm = (s: string): string => s.toLowerCase().normalize('NFD').replace(/[�
   selector: 'mc-trash',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    ConfirmDialogComponent,
     IconComponent,
     TrashFilterBarComponent,
     TrashCardComponent,
@@ -56,12 +64,14 @@ export class TrashContainer {
   private readonly trash = inject(TrashService);
   private readonly i18n = inject(I18nService);
   private readonly errors = inject(ErrorService);
+  private readonly coverUrls = new TrashCoverUrlCache();
 
   protected readonly entries = this.trash.entries;
   protected readonly isEmpty = computed(() => this.entries().length === 0);
   protected readonly activeKind = signal<TrashKind | null>(null);
   protected readonly query = signal<string>('');
   protected readonly viewing = signal<TrashEntry | null>(null);
+  protected readonly confirm = new ConfirmController();
 
   protected readonly counts = computed<Readonly<Record<TrashKind, number>>>(() => {
     const acc = Object.fromEntries(KINDS.map((k) => [k, 0])) as Record<TrashKind, number>;
@@ -91,6 +101,7 @@ export class TrashContainer {
         }
       }
     });
+    inject(DestroyRef).onDestroy(() => this.coverUrls.revokeAll());
   }
 
   protected t(key: TranslationKey): string {
@@ -110,7 +121,7 @@ export class TrashContainer {
   }
 
   protected cardState(entry: TrashEntry): CardState {
-    return this.previewCache().get(this.entryKey(entry)) ?? { status: 'loading', preview: null };
+    return this.previewCache().get(this.entryKey(entry)) ?? EMPTY_STATE;
   }
 
   protected onSelectKind(kind: TrashKind | null): void {
@@ -154,6 +165,7 @@ export class TrashContainer {
   protected async onRestore(entry: TrashEntry): Promise<void> {
     try {
       await this.trash.restore(entry);
+      this.coverUrls.revoke(this.entryKey(entry));
       if (this.viewing() && this.entryKey(this.viewing()!) === this.entryKey(entry)) {
         this.closeView();
       }
@@ -162,41 +174,77 @@ export class TrashContainer {
     }
   }
 
-  protected async onPurge(entry: TrashEntry): Promise<void> {
+  protected onPurge(entry: TrashEntry): void {
     const label = this.entryTitle(entry);
-    if (!confirm(this.t('trash.purgeConfirm').replace('{title}', label))) return;
-    try {
-      await this.trash.purge(entry);
-      if (this.viewing() && this.entryKey(this.viewing()!) === this.entryKey(entry)) {
-        this.closeView();
-      }
-    } catch (e) {
-      this.errors.report(e);
-    }
+    this.confirm.ask(
+      {
+        title: this.t('trash.confirm.purge.title'),
+        message: this.t('trash.purgeConfirm').replace('{title}', label),
+        confirmLabel: this.t('trash.confirm.purge.confirm'),
+        cancelLabel: this.t('trash.confirm.cancel'),
+        tone: 'danger',
+      },
+      async () => {
+        try {
+          await this.trash.purge(entry);
+          this.coverUrls.revoke(this.entryKey(entry));
+          if (this.viewing() && this.entryKey(this.viewing()!) === this.entryKey(entry)) {
+            this.closeView();
+          }
+        } catch (e) {
+          this.errors.report(e);
+        }
+      },
+    );
   }
 
-  protected async onEmpty(): Promise<void> {
-    if (!confirm(this.t('trash.emptyConfirm'))) return;
-    try {
-      await this.trash.empty();
-      this.closeView();
-    } catch (e) {
-      this.errors.report(e);
-    }
+  protected onEmpty(): void {
+    this.confirm.ask(
+      {
+        title: this.t('trash.confirm.empty.title'),
+        message: this.t('trash.emptyConfirm'),
+        confirmLabel: this.t('trash.confirm.empty.confirm'),
+        cancelLabel: this.t('trash.confirm.cancel'),
+        tone: 'danger',
+      },
+      async () => {
+        try {
+          await this.trash.empty();
+          this.closeView();
+        } catch (e) {
+          this.errors.report(e);
+        }
+      },
+    );
   }
 
   private async loadPreview(entry: TrashEntry): Promise<void> {
     const key = this.entryKey(entry);
-    this.setState(key, { status: 'loading', preview: null });
+    this.setState(key, { status: 'loading', preview: null, thumbUrls: [] });
     try {
       const preview = await this.trash.loadPreview(entry);
       this.setState(
         key,
-        preview ? { status: 'ready', preview } : { status: 'missing', preview: null },
+        preview
+          ? { status: 'ready', preview, thumbUrls: [] }
+          : { status: 'missing', preview: null, thumbUrls: [] },
       );
+      if (preview && entry.kind === 'image') void this.loadCovers(entry);
     } catch (e) {
       this.errors.report(e);
-      this.setState(key, { status: 'missing', preview: null });
+      this.setState(key, { status: 'missing', preview: null, thumbUrls: [] });
+    }
+  }
+
+  private async loadCovers(entry: TrashEntry): Promise<void> {
+    const key = this.entryKey(entry);
+    try {
+      const blobs = await this.trash.loadGalleryCovers(entry);
+      if (!this.previewCache().has(key)) return;
+      const urls = this.coverUrls.set(key, blobs);
+      this.setState(key, { ...this.cardState(entry), thumbUrls: urls });
+    } catch (e) {
+      this.errors.report(e);
     }
   }
 

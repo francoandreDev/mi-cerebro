@@ -1,3 +1,8 @@
+<mc-confirm-dialog
+  [request]="confirm.request()"
+  (confirmed)="confirm.accept()"
+  (cancelled)="confirm.cancel()"
+/>
 <div class="pane">
   <header class="topbar">
     <button type="button" class="back" (click)="onBackToIndex()">

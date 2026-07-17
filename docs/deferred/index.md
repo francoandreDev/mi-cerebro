@@ -25,6 +25,7 @@ Este índice es sólo un mapa de temas — no lista ítems individuales. Para es
 - [`editor-history-fs.md`](./editor-history-fs.md) — editor TipTap, historial y capa de File System Access.
 - [`responsive.md`](./responsive.md) — pantallas mobile pendientes de verificación/rediseño.
 - [`dashboard-evolution.md`](./dashboard-evolution.md) — dashboard combinado y las ideas de `docs/evolution.md` ya iniciadas (resurfacing, dormancia de metas).
+- [`folder-dialogs.md`](./folder-dialogs.md) — diálogos nativos de rename/move/delete de carpetas (`handleFolderAction`) pendientes de migrar al dialog custom.
 
 ---
 

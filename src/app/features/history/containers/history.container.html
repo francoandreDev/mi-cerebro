@@ -1,3 +1,8 @@
+<mc-confirm-dialog
+  [request]="milestones.confirm.request()"
+  (confirmed)="milestones.confirm.accept()"
+  (cancelled)="milestones.confirm.cancel()"
+/>
 <header class="head">
   <h2>
     <mc-icon name="clock-counter-clockwise" class="title-icon" />

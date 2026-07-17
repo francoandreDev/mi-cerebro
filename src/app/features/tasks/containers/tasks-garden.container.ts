@@ -21,6 +21,8 @@ import type { TranslationKey } from '@core/i18n/i18n.types';
 import { between } from '@core/ordering/fractional-position';
 import { entitySlugSegment } from '@core/routing/entity-slug';
 import { TagsService } from '@core/tags/tags.service';
+import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
+import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
 import { FolderBreadcrumbComponent } from '@shared/folder-breadcrumb/folder-breadcrumb.component';
 import { createDndController } from '@shared/utils/dnd-controller';
 
@@ -47,6 +49,7 @@ const BACKLOG_PAGE_SIZE = 24;
   selector: 'mc-tasks-garden',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    ConfirmDialogComponent,
     PlanterComponent,
     PlantCardComponent,
     HarvestBasketComponent,
@@ -77,6 +80,7 @@ export class TasksGardenContainer {
   protected readonly dnd = createDndController<Bucket>();
   protected readonly announce = signal<string>('');
   protected readonly wateredId = signal<string | null>(null);
+  protected readonly confirm = new ConfirmController();
   protected readonly justSproutedId = signal<string | null>(null);
   protected readonly visibleBacklogCount = signal<number>(BACKLOG_PAGE_SIZE);
   protected readonly emergingFrom = signal<number>(BACKLOG_PAGE_SIZE);
@@ -320,16 +324,26 @@ export class TasksGardenContainer {
     }
   }
 
-  protected async onDelete(id: string): Promise<void> {
+  protected onDelete(id: string): void {
     const summary = this.summaries().find((s) => s.id === id);
     const label = summary?.title || this.untitledLabel();
-    if (!confirm(this.t('tasks.deleteConfirm').replace('{title}', label))) return;
-    try {
-      await this.tasksService.deleteToTrash(id);
-      await this.autosave.clear(id);
-    } catch (e) {
-      this.errors.report(e);
-    }
+    this.confirm.ask(
+      {
+        title: this.t('tasks.confirm.delete.title'),
+        message: this.t('tasks.deleteConfirm').replace('{title}', label),
+        confirmLabel: this.t('tasks.confirm.delete.confirm'),
+        cancelLabel: this.t('tasks.confirm.cancel'),
+        tone: 'danger',
+      },
+      async () => {
+        try {
+          await this.tasksService.deleteToTrash(id);
+          await this.autosave.clear(id);
+        } catch (e) {
+          this.errors.report(e);
+        }
+      },
+    );
   }
 
   protected onFolderNavigate(path: string): void {

@@ -20,6 +20,8 @@ import { EntityLockController } from '@core/locks/entity-lock.controller';
 import { extractEntityId } from '@core/routing/entity-slug';
 import { SettingsService } from '@core/settings/settings.service';
 import { TagsService } from '@core/tags/tags.service';
+import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
+import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
 import { IconComponent } from '@shared/icon/icon.component';
 import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
 
@@ -36,7 +38,7 @@ import { GoalsService } from '../services/goals.service';
 @Component({
   selector: 'mc-goals',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [GoalEditorPaneComponent, LockBannerComponent, IconComponent],
+  imports: [ConfirmDialogComponent, GoalEditorPaneComponent, LockBannerComponent, IconComponent],
   templateUrl: './goals.container.html',
   styleUrl: './goals.container.css',
 })
@@ -56,6 +58,7 @@ export class GoalsContainer {
   protected readonly active = signal<Goal | null>(null);
   protected readonly status = signal<SaveStatus>('saved');
   protected readonly lock = new EntityLockController(GOAL_KIND, this.active);
+  protected readonly confirm = new ConfirmController();
 
   protected readonly dormant = computed(() => {
     const goal = this.active();
@@ -144,24 +147,31 @@ export class GoalsContainer {
     });
   }
 
-  protected async onDelete(): Promise<void> {
+  protected onDelete(): void {
     const current = this.active();
     if (!current || !this.lock.guardWrite()) return;
-    const ok = confirm(
-      this.t('goals.deleteConfirm').replace(
-        '{title}',
-        current.title || this.t('goals.untitledTitle'),
-      ),
+    this.confirm.ask(
+      {
+        title: this.t('goals.confirm.delete.title'),
+        message: this.t('goals.deleteConfirm').replace(
+          '{title}',
+          current.title || this.t('goals.untitledTitle'),
+        ),
+        confirmLabel: this.t('goals.confirm.delete.confirm'),
+        cancelLabel: this.t('goals.confirm.cancel'),
+        tone: 'danger',
+      },
+      async () => {
+        try {
+          await this.goalsService.deleteToTrash(current.id);
+          await this.autosave.clear(current.id);
+          this.active.set(null);
+          await this.router.navigate(['/goals']);
+        } catch (e) {
+          this.errors.report(e);
+        }
+      },
     );
-    if (!ok) return;
-    try {
-      await this.goalsService.deleteToTrash(current.id);
-      await this.autosave.clear(current.id);
-      this.active.set(null);
-      await this.router.navigate(['/goals']);
-    } catch (e) {
-      this.errors.report(e);
-    }
   }
 
   private patch(mutate: (current: Goal) => Goal): void {

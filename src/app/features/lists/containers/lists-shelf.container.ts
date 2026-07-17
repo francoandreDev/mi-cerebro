@@ -20,6 +20,8 @@ import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { entitySlugSegment } from '@core/routing/entity-slug';
 import { TagsService } from '@core/tags/tags.service';
+import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
+import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
 import { FolderBreadcrumbComponent } from '@shared/folder-breadcrumb/folder-breadcrumb.component';
 import { IconComponent } from '@shared/icon/icon.component';
 
@@ -56,6 +58,7 @@ const firstLetter = (title: string): string => {
   selector: 'mc-lists-shelf',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    ConfirmDialogComponent,
     IconComponent,
     ChalkEntryComponent,
     ChalkNewEntryComponent,
@@ -82,6 +85,7 @@ export class ListsShelfContainer {
   protected readonly axis = signal<ChalkAxis>('alpha');
   protected readonly activeKey = signal<string | null>(null);
   protected readonly creating = signal<boolean>(false);
+  protected readonly confirm = new ConfirmController();
 
   protected readonly flowRef = viewChild<ElementRef<HTMLElement>>('flow');
 
@@ -234,16 +238,26 @@ export class ListsShelfContainer {
     }
   }
 
-  protected async onDelete(id: string): Promise<void> {
+  protected onDelete(id: string): void {
     const summary = this.summaries().find((s) => s.id === id);
     const label = summary?.title || this.untitledLabel();
-    if (!confirm(this.t('lists.deleteConfirm').replace('{title}', label))) return;
-    try {
-      await this.listsService.deleteToTrash(id);
-      await this.autosave.clear(id);
-    } catch (e) {
-      this.errors.report(e);
-    }
+    this.confirm.ask(
+      {
+        title: this.t('lists.confirm.delete.title'),
+        message: this.t('lists.deleteConfirm').replace('{title}', label),
+        confirmLabel: this.t('lists.confirm.delete.confirm'),
+        cancelLabel: this.t('lists.confirm.cancel'),
+        tone: 'danger',
+      },
+      async () => {
+        try {
+          await this.listsService.deleteToTrash(id);
+          await this.autosave.clear(id);
+        } catch (e) {
+          this.errors.report(e);
+        }
+      },
+    );
   }
 
   protected onFolderNavigate(path: string): void {

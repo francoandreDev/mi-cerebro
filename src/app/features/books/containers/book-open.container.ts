@@ -20,10 +20,8 @@ import { EntityLockController } from '@core/locks/entity-lock.controller';
 import { entitySlugSegment, extractEntityId } from '@core/routing/entity-slug';
 import { SettingsService } from '@core/settings/settings.service';
 import { TagsService } from '@core/tags/tags.service';
-import {
-  ConfirmDialogComponent,
-  type ConfirmRequest,
-} from '@shared/confirm-dialog/confirm-dialog.component';
+import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
+import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
 import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
 import { IconComponent } from '@shared/icon/icon.component';
 import { hashColor } from '@shared/utils/hash-color';
@@ -83,8 +81,7 @@ export class BookOpenContainer {
   protected readonly chapters = signal<readonly ChapterSummary[]>([]);
   protected readonly bookStatus = signal<BookSaveStatus>('saved');
   protected readonly bookLoading = signal<boolean>(false);
-  protected readonly confirmRequest = signal<ConfirmRequest | null>(null);
-  private confirmHandler: (() => void | Promise<void>) | null = null;
+  protected readonly confirm = new ConfirmController();
   protected readonly currentSpread = signal<number>(0);
   // why: el libro arranca siempre cerrado — como agarrar un libro real —
   //      sin importar si la última vez que lo visitaste quedó abierto.
@@ -275,7 +272,7 @@ export class BookOpenContainer {
     const current = this.active();
     if (!current || !this.lock.guardWrite()) return;
     const title = current.title || this.t('books.untitledTitle');
-    this.askConfirm(
+    this.confirm.ask(
       {
         title: this.t('books.confirm.deleteBook.title'),
         message: this.t('books.deleteConfirm').replace('{title}', title),
@@ -366,7 +363,7 @@ export class BookOpenContainer {
     if (!book || !this.lock.guardWrite()) return;
     const ch = this.chapters().find((c) => c.id === chapterId);
     const title = ch?.title || this.t('books.chapters.untitled');
-    this.askConfirm(
+    this.confirm.ask(
       {
         title: this.t('books.confirm.deleteChapter.title'),
         message: this.t('books.chapters.deleteConfirm').replace('{title}', title),
@@ -385,21 +382,6 @@ export class BookOpenContainer {
         }
       },
     );
-  }
-
-  protected onConfirm(): void {
-    const handler = this.confirmHandler;
-    this.confirmRequest.set(null);
-    this.confirmHandler = null;
-    if (handler) void handler();
-  }
-  protected onCancel(): void {
-    this.confirmRequest.set(null);
-    this.confirmHandler = null;
-  }
-  private askConfirm(req: ConfirmRequest, onAccept: () => void | Promise<void>): void {
-    this.confirmHandler = onAccept;
-    this.confirmRequest.set(req);
   }
 
   private async swapChapter(chapterId: string, delta: number): Promise<void> {

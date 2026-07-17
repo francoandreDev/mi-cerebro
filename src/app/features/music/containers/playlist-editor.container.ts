@@ -13,6 +13,8 @@ import { ErrorService } from '@core/errors/error.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { PlayerService } from '@core/music/player.service';
+import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
+import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
 import { IconComponent } from '@shared/icon/icon.component';
 
 import type { Playlist, Track } from '../models/music.types';
@@ -22,7 +24,7 @@ import { PlaylistsService } from '../services/playlists.service';
 @Component({
   selector: 'mc-playlist-editor',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent],
+  imports: [ConfirmDialogComponent, IconComponent],
   templateUrl: './playlist-editor.container.html',
   styleUrl: './playlist-editor.container.css',
 })
@@ -49,6 +51,7 @@ export class PlaylistEditorContainer {
   protected readonly picking = signal(false);
   protected readonly pickerQuery = signal('');
   protected readonly dragOverIdx = signal<number | null>(null);
+  protected readonly confirm = new ConfirmController();
 
   protected readonly tracks = this.library.tracks;
 
@@ -105,16 +108,26 @@ export class PlaylistEditorContainer {
     await this.player.playPlaylist(pl.trackIds, 0, pl.id, true);
   }
 
-  protected async onDelete(): Promise<void> {
+  protected onDelete(): void {
     const pl = this.current();
     if (!pl) return;
-    if (!confirm(this.t('music.deletePlaylistConfirm').replace('{title}', pl.title || '—'))) return;
-    try {
-      await this.playlists.delete(pl.id);
-      this.deleted.emit(pl.id);
-    } catch (e) {
-      this.errors.report(e);
-    }
+    this.confirm.ask(
+      {
+        title: this.t('music.confirm.deletePlaylist.title'),
+        message: this.t('music.deletePlaylistConfirm').replace('{title}', pl.title || '—'),
+        confirmLabel: this.t('music.confirm.deletePlaylist.confirm'),
+        cancelLabel: this.t('music.confirm.cancel'),
+        tone: 'danger',
+      },
+      async () => {
+        try {
+          await this.playlists.delete(pl.id);
+          this.deleted.emit(pl.id);
+        } catch (e) {
+          this.errors.report(e);
+        }
+      },
+    );
   }
 
   protected async onPlayTrack(track: Track): Promise<void> {

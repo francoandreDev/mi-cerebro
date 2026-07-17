@@ -63,6 +63,15 @@
   font-size: 1.4rem;
   opacity: 0.5;
 }
+.tile.has-image {
+  padding: 0;
+}
+.tile.has-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
 .caption {
   font-size: var(--mc-font-size-xs, 0.75rem);
   color: var(--mc-fg-muted);

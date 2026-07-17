@@ -13,6 +13,8 @@ import { entitySlugSegment } from '@core/routing/entity-slug';
 import { SettingsService } from '@core/settings/settings.service';
 import type { Tag } from '@core/tags/tag.types';
 import { TagsService } from '@core/tags/tags.service';
+import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
+import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
 import { FolderBreadcrumbComponent } from '@shared/folder-breadcrumb/folder-breadcrumb.component';
 import { IconComponent } from '@shared/icon/icon.component';
 import { TagChipComponent } from '@shared/tags/tag-chip.component';
@@ -31,7 +33,13 @@ import {
 @Component({
   selector: 'mc-goals-wall',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent, TagChipComponent, GoalPeekOverlayComponent, FolderBreadcrumbComponent],
+  imports: [
+    ConfirmDialogComponent,
+    IconComponent,
+    TagChipComponent,
+    GoalPeekOverlayComponent,
+    FolderBreadcrumbComponent,
+  ],
   templateUrl: './goals-wall.container.html',
   styleUrl: './goals-wall.container.css',
 })
@@ -71,9 +79,20 @@ export class GoalsWallContainer {
   //      Sólo cuando la meta ya está enfocada, un 2do click hace el toggle
   //      del step (o navega si es solitaria). Click fuera/Esc cierra el peek.
   //      Extraído a GoalPeekController (§4.4 límite duro de 300 líneas).
-  protected readonly peek = new GoalPeekController(this.goalsService.summaries, (title) =>
-    confirm(
-      this.t('goals.deleteConfirm').replace('{title}', title || this.t('goals.untitledTitle')),
+  protected readonly confirm = new ConfirmController();
+  protected readonly peek = new GoalPeekController(this.goalsService.summaries, (title, onAccept) =>
+    this.confirm.ask(
+      {
+        title: this.t('goals.confirm.delete.title'),
+        message: this.t('goals.deleteConfirm').replace(
+          '{title}',
+          title || this.t('goals.untitledTitle'),
+        ),
+        confirmLabel: this.t('goals.confirm.delete.confirm'),
+        cancelLabel: this.t('goals.confirm.cancel'),
+        tone: 'danger',
+      },
+      onAccept,
     ),
   );
   // why: drag de constelación entera en el wall. dragCenter es el centro

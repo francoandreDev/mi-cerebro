@@ -1,3 +1,8 @@
+<mc-confirm-dialog
+  [request]="confirm.request()"
+  (confirmed)="confirm.accept()"
+  (cancelled)="confirm.cancel()"
+/>
 <section class="page">
   <header class="head">
     <h2><mc-icon name="gear" class="title-icon mc-hover-spin" /> {{ t('settings.title') }}</h2>

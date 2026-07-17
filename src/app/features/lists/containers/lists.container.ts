@@ -11,6 +11,8 @@ import type { TranslationKey } from '@core/i18n/i18n.types';
 import { EntityLockController } from '@core/locks/entity-lock.controller';
 import { extractEntityId } from '@core/routing/entity-slug';
 import { TagsService } from '@core/tags/tags.service';
+import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
+import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
 import { IconComponent } from '@shared/icon/icon.component';
 import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
 
@@ -22,7 +24,7 @@ import { ListsService } from '../services/lists.service';
 @Component({
   selector: 'mc-lists',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ListEditorPaneComponent, LockBannerComponent, IconComponent],
+  imports: [ConfirmDialogComponent, ListEditorPaneComponent, LockBannerComponent, IconComponent],
   templateUrl: './lists.container.html',
   styleUrl: './lists.container.css',
 })
@@ -41,6 +43,7 @@ export class ListsContainer {
   protected readonly active = signal<List | null>(null);
   protected readonly status = signal<SaveStatus>('saved');
   protected readonly lock = new EntityLockController(LIST_KIND, this.active);
+  protected readonly confirm = new ConfirmController();
 
   constructor() {
     effect(() => {
@@ -112,24 +115,31 @@ export class ListsContainer {
     this.scheduleSave(next);
   }
 
-  protected async onDelete(): Promise<void> {
+  protected onDelete(): void {
     const current = this.active();
     if (!current || !this.lock.guardWrite()) return;
-    const ok = confirm(
-      this.t('lists.deleteConfirm').replace(
-        '{title}',
-        current.title || this.t('lists.untitledTitle'),
-      ),
+    this.confirm.ask(
+      {
+        title: this.t('lists.confirm.delete.title'),
+        message: this.t('lists.deleteConfirm').replace(
+          '{title}',
+          current.title || this.t('lists.untitledTitle'),
+        ),
+        confirmLabel: this.t('lists.confirm.delete.confirm'),
+        cancelLabel: this.t('lists.confirm.cancel'),
+        tone: 'danger',
+      },
+      async () => {
+        try {
+          await this.listsService.deleteToTrash(current.id);
+          await this.autosave.clear(current.id);
+          this.active.set(null);
+          await this.router.navigate(['/lists']);
+        } catch (e) {
+          this.errors.report(e);
+        }
+      },
     );
-    if (!ok) return;
-    try {
-      await this.listsService.deleteToTrash(current.id);
-      await this.autosave.clear(current.id);
-      this.active.set(null);
-      await this.router.navigate(['/lists']);
-    } catch (e) {
-      this.errors.report(e);
-    }
   }
 
   private async loadList(id: string): Promise<void> {

@@ -1,7 +1,7 @@
 <mc-confirm-dialog
-  [request]="confirmRequest()"
-  (confirmed)="onConfirm()"
-  (cancelled)="onCancel()"
+  [request]="confirm.request()"
+  (confirmed)="confirm.accept()"
+  (cancelled)="confirm.cancel()"
 />
 <div class="pane">
   @if (active(); as book) {

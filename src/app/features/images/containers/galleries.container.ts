@@ -19,6 +19,8 @@ import type { TranslationKey } from '@core/i18n/i18n.types';
 import { EntityLockController } from '@core/locks/entity-lock.controller';
 import { extractEntityId } from '@core/routing/entity-slug';
 import { TagsService } from '@core/tags/tags.service';
+import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
+import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
 import { IconComponent } from '@shared/icon/icon.component';
 import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
 import { orderItems, paginateCuartos } from '@shared/utils/museum-asymmetry';
@@ -38,6 +40,7 @@ import { GalleryUrlCache } from './gallery-url-cache';
   selector: 'mc-galleries',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    ConfirmDialogComponent,
     GalleryMetaBarComponent,
     IconComponent,
     ImageLightboxComponent,
@@ -69,6 +72,7 @@ export class GalleriesContainer {
   protected readonly openImageId = signal<string | null>(null);
   protected readonly cuartoIndex = signal<number>(0);
   protected readonly lock = new EntityLockController(IMAGE_KIND, this.active);
+  protected readonly confirm = new ConfirmController();
 
   protected readonly orderedImages = computed<readonly GalleryImage[]>(() => {
     const g = this.active();
@@ -178,25 +182,32 @@ export class GalleriesContainer {
     this.scheduleSave(next);
   }
 
-  protected async onDeleteGallery(): Promise<void> {
+  protected onDeleteGallery(): void {
     const current = this.active();
     if (!current || !this.lock.guardWrite()) return;
-    const ok = confirm(
-      this.t('images.deleteConfirm').replace(
-        '{title}',
-        current.title || this.t('images.untitledTitle'),
-      ),
+    this.confirm.ask(
+      {
+        title: this.t('images.confirm.deleteGallery.title'),
+        message: this.t('images.deleteConfirm').replace(
+          '{title}',
+          current.title || this.t('images.untitledTitle'),
+        ),
+        confirmLabel: this.t('images.confirm.deleteGallery.confirm'),
+        cancelLabel: this.t('images.confirm.cancel'),
+        tone: 'danger',
+      },
+      async () => {
+        try {
+          await this.galleriesService.deleteGalleryToTrash(current.id);
+          await this.autosave.clear(current.id);
+          this.active.set(null);
+          this.urls.revokeAll();
+          await this.router.navigate(['/images']);
+        } catch (e) {
+          this.errors.report(e);
+        }
+      },
     );
-    if (!ok) return;
-    try {
-      await this.galleriesService.deleteGalleryToTrash(current.id);
-      await this.autosave.clear(current.id);
-      this.active.set(null);
-      this.urls.revokeAll();
-      await this.router.navigate(['/images']);
-    } catch (e) {
-      this.errors.report(e);
-    }
   }
 
   protected async onAddFiles(files: readonly File[]): Promise<void> {
@@ -215,21 +226,31 @@ export class GalleriesContainer {
     }
   }
 
-  protected async onRemoveImage(imageId: string): Promise<void> {
+  protected onRemoveImage(imageId: string): void {
     const current = this.active();
     if (!current || !this.lock.guardWrite()) return;
     const img = current.images.find((i) => i.id === imageId);
     if (!img) return;
-    if (!confirm(this.t('images.images.deleteConfirm').replace('{name}', img.originalName))) return;
-    try {
-      await this.galleriesService.removeImage(current.id, imageId);
-      const next = await this.galleriesService.readGallery(current.id);
-      this.active.set(next);
-      this.urls.revokeOne(imageId);
-      if (this.openImageId() === imageId) this.openImageId.set(null);
-    } catch (e) {
-      this.errors.report(e);
-    }
+    this.confirm.ask(
+      {
+        title: this.t('images.confirm.deleteImage.title'),
+        message: this.t('images.images.deleteConfirm').replace('{name}', img.originalName),
+        confirmLabel: this.t('images.confirm.deleteImage.confirm'),
+        cancelLabel: this.t('images.confirm.cancel'),
+        tone: 'danger',
+      },
+      async () => {
+        try {
+          await this.galleriesService.removeImage(current.id, imageId);
+          const next = await this.galleriesService.readGallery(current.id);
+          this.active.set(next);
+          this.urls.revokeOne(imageId);
+          if (this.openImageId() === imageId) this.openImageId.set(null);
+        } catch (e) {
+          this.errors.report(e);
+        }
+      },
+    );
   }
 
   protected onNextCuarto(): void {

@@ -8,6 +8,8 @@ import { TagsAdminService } from '@core/tags/tags-admin.service';
 import { TagsService } from '@core/tags/tags.service';
 import { TAG_SWATCHES, tagHexFor } from '@core/theme/theme-palette';
 import { ThemeService } from '@core/theme/theme.service';
+import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
+import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
 import { BgColorDirective } from '@shared/directives/bg-color.directive';
 import { IconComponent } from '@shared/icon/icon.component';
 
@@ -21,7 +23,7 @@ const norm = (s: string): string => s.normalize('NFKD').replace(/\p{M}/gu, '').t
 @Component({
   selector: 'mc-tags',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent, BgColorDirective],
+  imports: [ConfirmDialogComponent, IconComponent, BgColorDirective],
   templateUrl: './tags.container.html',
   styleUrl: './tags.container.css',
 })
@@ -38,6 +40,7 @@ export class TagsContainer {
   protected readonly recoloringId = signal<string | null>(null);
   protected readonly mergingId = signal<string | null>(null);
   protected readonly busyId = signal<string | null>(null);
+  protected readonly confirm = new ConfirmController();
   protected readonly swatches = TAG_SWATCHES;
 
   protected readonly rows = computed<readonly TagRow[]>(() => {
@@ -133,19 +136,29 @@ export class TagsContainer {
     }
   }
 
-  protected async deleteTag(tag: Tag, usageCount: number): Promise<void> {
+  protected deleteTag(tag: Tag, usageCount: number): void {
     const message =
       usageCount > 0
         ? this.t('tags.page.deleteConfirmUsed', { label: tag.label, count: usageCount })
         : this.t('tags.page.deleteConfirm', { label: tag.label });
-    if (!confirm(message)) return;
-    this.busyId.set(tag.id);
-    try {
-      await this.admin.deleteCascade(tag.id);
-    } catch (e) {
-      this.errors.report(e);
-    } finally {
-      this.busyId.set(null);
-    }
+    this.confirm.ask(
+      {
+        title: this.t('tags.page.confirm.delete.title'),
+        message,
+        confirmLabel: this.t('tags.page.confirm.delete.confirm'),
+        cancelLabel: this.t('tags.page.confirm.cancel'),
+        tone: 'danger',
+      },
+      async () => {
+        this.busyId.set(tag.id);
+        try {
+          await this.admin.deleteCascade(tag.id);
+        } catch (e) {
+          this.errors.report(e);
+        } finally {
+          this.busyId.set(null);
+        }
+      },
+    );
   }
 }

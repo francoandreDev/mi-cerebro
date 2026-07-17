@@ -1,3 +1,8 @@
+<mc-confirm-dialog
+  [request]="confirm.request()"
+  (confirmed)="confirm.accept()"
+  (cancelled)="confirm.cancel()"
+/>
 @if (current(); as playlist) {
   <header class="zone-head pl-edit-head">
     <input

@@ -12,6 +12,8 @@ import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { entitySlugSegment } from '@core/routing/entity-slug';
 import { TagsService } from '@core/tags/tags.service';
+import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
+import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
 import { FolderBreadcrumbComponent } from '@shared/folder-breadcrumb/folder-breadcrumb.component';
 import { IconComponent } from '@shared/icon/icon.component';
 
@@ -27,6 +29,7 @@ const norm = (s: string): string => s.toLowerCase().normalize('NFD').replace(/[Ì
   selector: 'mc-notes-wall',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    ConfirmDialogComponent,
     IconComponent,
     NoteSlipComponent,
     NoteComposeComponent,
@@ -52,6 +55,7 @@ export class NotesWallContainer {
   protected readonly query = signal<string>('');
   protected readonly activeTagIds = signal<ReadonlySet<string>>(new Set());
   protected readonly creating = signal<boolean>(false);
+  protected readonly confirm = new ConfirmController();
 
   private readonly params = toSignal(this.route.queryParamMap, {
     initialValue: this.route.snapshot.queryParamMap,
@@ -111,16 +115,26 @@ export class NotesWallContainer {
     }
   }
 
-  protected async onDelete(id: string): Promise<void> {
+  protected onDelete(id: string): void {
     const summary = this.summaries().find((s) => s.id === id);
     const label = summary?.title || this.t('notes.untitledTitle');
-    if (!confirm(this.t('notes.deleteConfirm').replace('{title}', label))) return;
-    try {
-      await this.notesService.deleteToTrash(id);
-      await this.autosave.clear(id);
-    } catch (e) {
-      this.errors.report(e);
-    }
+    this.confirm.ask(
+      {
+        title: this.t('notes.confirm.delete.title'),
+        message: this.t('notes.deleteConfirm').replace('{title}', label),
+        confirmLabel: this.t('notes.confirm.delete.confirm'),
+        cancelLabel: this.t('notes.confirm.cancel'),
+        tone: 'danger',
+      },
+      async () => {
+        try {
+          await this.notesService.deleteToTrash(id);
+          await this.autosave.clear(id);
+        } catch (e) {
+          this.errors.report(e);
+        }
+      },
+    );
   }
 
   protected onToggleTag(id: string): void {

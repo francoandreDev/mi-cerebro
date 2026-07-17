@@ -1,3 +1,8 @@
+<mc-confirm-dialog
+  [request]="confirm.request()"
+  (confirmed)="confirm.accept()"
+  (cancelled)="confirm.cancel()"
+/>
 <div class="pane">
   @if (active(); as gallery) {
     @if (lock.showForeign()) {

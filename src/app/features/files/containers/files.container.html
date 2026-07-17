@@ -1,3 +1,8 @@
+<mc-confirm-dialog
+  [request]="confirm.request()"
+  (confirmed)="confirm.accept()"
+  (cancelled)="confirm.cancel()"
+/>
 <div class="wall-wrap">
   <header class="wall-head">
     <h2>{{ t('files.title') }}</h2>

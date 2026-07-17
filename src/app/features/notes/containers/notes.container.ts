@@ -11,6 +11,8 @@ import type { TranslationKey } from '@core/i18n/i18n.types';
 import { EntityLockController } from '@core/locks/entity-lock.controller';
 import { extractEntityId } from '@core/routing/entity-slug';
 import { TagsService } from '@core/tags/tags.service';
+import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
+import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
 import { IconComponent } from '@shared/icon/icon.component';
 import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
 
@@ -21,7 +23,7 @@ import { NotesService } from '../services/notes.service';
 @Component({
   selector: 'mc-notes',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NoteEditorPaneComponent, LockBannerComponent, IconComponent],
+  imports: [ConfirmDialogComponent, NoteEditorPaneComponent, LockBannerComponent, IconComponent],
   templateUrl: './notes.container.html',
   styleUrl: './notes.container.css',
 })
@@ -40,6 +42,7 @@ export class NotesContainer {
   protected readonly active = signal<Note | null>(null);
   protected readonly status = signal<SaveStatus>('saved');
   protected readonly lock = new EntityLockController(NOTE_KIND, this.active);
+  protected readonly confirm = new ConfirmController();
 
   constructor() {
     effect(() => {
@@ -111,24 +114,31 @@ export class NotesContainer {
     this.scheduleSave(next);
   }
 
-  protected async onDelete(): Promise<void> {
+  protected onDelete(): void {
     const current = this.active();
     if (!current || !this.lock.guardWrite()) return;
-    const ok = confirm(
-      this.t('notes.deleteConfirm').replace(
-        '{title}',
-        current.title || this.t('notes.untitledTitle'),
-      ),
+    this.confirm.ask(
+      {
+        title: this.t('notes.confirm.delete.title'),
+        message: this.t('notes.deleteConfirm').replace(
+          '{title}',
+          current.title || this.t('notes.untitledTitle'),
+        ),
+        confirmLabel: this.t('notes.confirm.delete.confirm'),
+        cancelLabel: this.t('notes.confirm.cancel'),
+        tone: 'danger',
+      },
+      async () => {
+        try {
+          await this.notesService.deleteToTrash(current.id);
+          await this.autosave.clear(current.id);
+          this.active.set(null);
+          await this.router.navigate(['/notes']);
+        } catch (e) {
+          this.errors.report(e);
+        }
+      },
     );
-    if (!ok) return;
-    try {
-      await this.notesService.deleteToTrash(current.id);
-      await this.autosave.clear(current.id);
-      this.active.set(null);
-      await this.router.navigate(['/notes']);
-    } catch (e) {
-      this.errors.report(e);
-    }
   }
 
   private async loadNote(id: string): Promise<void> {

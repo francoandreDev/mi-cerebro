@@ -8,10 +8,13 @@
     @case ('image') {
       <div class="gallery">
         <div class="mosaic" aria-hidden="true">
-          <span class="tile"><span class="icon">📷</span></span>
-          <span class="tile"><span class="icon">📷</span></span>
-          <span class="tile"><span class="icon">📷</span></span>
-          <span class="tile"><span class="icon">📷</span></span>
+          @for (url of galleryTiles(); track $index) {
+            @if (url) {
+              <span class="tile has-image"><img [src]="url" alt="" /></span>
+            } @else {
+              <span class="tile"><span class="icon">📷</span></span>
+            }
+          }
         </div>
         <span class="caption">{{ galleryLabel() }}</span>
       </div>

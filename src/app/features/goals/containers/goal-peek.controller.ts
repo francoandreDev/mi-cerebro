@@ -26,7 +26,10 @@ export class GoalPeekController {
 
   constructor(
     private readonly summaries: Signal<readonly GoalSummary[]>,
-    private readonly confirmRemove: (title: string) => boolean,
+    private readonly askConfirmRemove: (
+      title: string,
+      onAccept: () => void | Promise<void>,
+    ) => void,
   ) {}
 
   readonly summary = computed<GoalSummary | null>(() => {
@@ -61,17 +64,18 @@ export class GoalPeekController {
     await this.router.navigate(['/goals', entitySlugSegment(this.titleOf(id), id)]);
   }
 
-  async remove(): Promise<void> {
+  remove(): void {
     const id = this.goalId();
     if (!id) return;
-    if (!this.confirmRemove(this.titleOf(id))) return;
-    try {
-      await this.workspace.ensureWritable();
-      await this.goalsService.deleteToTrash(id);
-      this.close();
-    } catch (e) {
-      this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize()));
-    }
+    this.askConfirmRemove(this.titleOf(id), async () => {
+      try {
+        await this.workspace.ensureWritable();
+        await this.goalsService.deleteToTrash(id);
+        this.close();
+      } catch (e) {
+        this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize()));
+      }
+    });
   }
 
   private titleOf(id: string): string {

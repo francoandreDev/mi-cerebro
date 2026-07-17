@@ -14,6 +14,8 @@ import type { TranslationKey } from '@core/i18n/i18n.types';
 import { entitySlugSegment } from '@core/routing/entity-slug';
 import type { Tag } from '@core/tags/tag.types';
 import { TagsService } from '@core/tags/tags.service';
+import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
+import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
 import { FolderBreadcrumbComponent } from '@shared/folder-breadcrumb/folder-breadcrumb.component';
 import { IconComponent } from '@shared/icon/icon.component';
 import { TagChipComponent } from '@shared/tags/tag-chip.component';
@@ -53,6 +55,7 @@ const norm = (s: string): string => s.toLowerCase().normalize('NFD').replace(/[Ì
   selector: 'mc-writings-shelf',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    ConfirmDialogComponent,
     NgTemplateOutlet,
     IconComponent,
     TagChipComponent,
@@ -93,6 +96,7 @@ export class WritingsShelfContainer {
   protected readonly activeTagIds = signal<ReadonlySet<string>>(new Set());
   protected readonly sortKey = signal<SortKey>('updated');
   protected readonly creating = signal<boolean>(false);
+  protected readonly confirm = new ConfirmController();
   protected readonly viewMode = signal<ViewMode>(readStoredViewMode());
   protected readonly groupingEnabled = signal<boolean>(readStoredGrouping());
   protected readonly libraryOpen = signal<boolean>(false);
@@ -263,16 +267,26 @@ export class WritingsShelfContainer {
     }
   }
 
-  protected async onDelete(id: string): Promise<void> {
+  protected onDelete(id: string): void {
     const summary = this.summaries().find((s) => s.id === id);
     const label = summary?.title || this.untitledLabel();
-    if (!confirm(this.t('writings.deleteConfirm').replace('{title}', label))) return;
-    try {
-      await this.writingsService.deleteToTrash(id);
-      await this.autosave.clear(id);
-    } catch (e) {
-      this.errors.report(e);
-    }
+    this.confirm.ask(
+      {
+        title: this.t('writings.confirm.delete.title'),
+        message: this.t('writings.deleteConfirm').replace('{title}', label),
+        confirmLabel: this.t('writings.confirm.delete.confirm'),
+        cancelLabel: this.t('writings.confirm.cancel'),
+        tone: 'danger',
+      },
+      async () => {
+        try {
+          await this.writingsService.deleteToTrash(id);
+          await this.autosave.clear(id);
+        } catch (e) {
+          this.errors.report(e);
+        }
+      },
+    );
   }
 
   protected onFolderNavigate(path: string): void {

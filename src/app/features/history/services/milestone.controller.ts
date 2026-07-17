@@ -11,6 +11,7 @@ import { I18nService } from '@core/i18n/i18n.service';
 import { MilestoneService } from '@core/versioning/milestone.service';
 import { VariantsService } from '@core/versioning/variants.service';
 import { stripHeadsPrefix } from '@core/versioning/variants.io';
+import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
 
 import { facetOf, type Facet } from './facet';
 import { HistoryService } from './history.service';
@@ -26,6 +27,10 @@ export class MilestoneController {
 
   private readonly busySignal = signal(false);
   readonly busy = this.busySignal.asReadonly();
+  // why: no template propio — HistoryContainer, dueño del template que
+  //      renderiza las acciones de milestone, lee este controller y bindea
+  //      el <mc-confirm-dialog> en su propia plantilla.
+  readonly confirm = new ConfirmController();
 
   async mark(oid: string, message: string): Promise<void> {
     if (this.busySignal()) return;
@@ -64,21 +69,28 @@ export class MilestoneController {
     }
   }
 
-  async delete(m: MilestoneEntry): Promise<void> {
+  delete(m: MilestoneEntry): void {
     if (this.busySignal()) return;
-    const ok = window.confirm(
-      this.i18n.t('versioning.history.milestone.deleteConfirm', { name: m.name }),
+    this.confirm.ask(
+      {
+        title: this.i18n.t('versioning.history.milestone.confirm.delete.title'),
+        message: this.i18n.t('versioning.history.milestone.deleteConfirm', { name: m.name }),
+        confirmLabel: this.i18n.t('versioning.history.milestone.confirm.delete.confirm'),
+        cancelLabel: this.i18n.t('versioning.history.milestone.confirm.cancel'),
+        tone: 'danger',
+      },
+      async () => {
+        this.busySignal.set(true);
+        try {
+          await this.milestoneService.delete(m.name);
+          await this.history.refreshMilestones();
+        } catch (e) {
+          this.errors.report(e);
+        } finally {
+          this.busySignal.set(false);
+        }
+      },
     );
-    if (!ok) return;
-    this.busySignal.set(true);
-    try {
-      await this.milestoneService.delete(m.name);
-      await this.history.refreshMilestones();
-    } catch (e) {
-      this.errors.report(e);
-    } finally {
-      this.busySignal.set(false);
-    }
   }
 
   private async attemptCreate(

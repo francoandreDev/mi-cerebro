@@ -1,3 +1,8 @@
+<mc-confirm-dialog
+  [request]="confirm.request()"
+  (confirmed)="confirm.accept()"
+  (cancelled)="confirm.cancel()"
+/>
 <header class="zone-head">
   <h3>
     <mc-icon name="music-note" class="zone-head-icon" />

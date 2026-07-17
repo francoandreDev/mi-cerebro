@@ -1,3 +1,8 @@
+<mc-confirm-dialog
+  [request]="confirm.request()"
+  (confirmed)="confirm.accept()"
+  (cancelled)="confirm.cancel()"
+/>
 <header class="bar">
   <h1><mc-icon name="trash" class="title-icon" /> {{ t('trash.title') }}</h1>
   <div class="bar-tools">

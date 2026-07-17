@@ -11,6 +11,8 @@ import type { TranslationKey } from '@core/i18n/i18n.types';
 import { EntityLockController } from '@core/locks/entity-lock.controller';
 import { extractEntityId } from '@core/routing/entity-slug';
 import { TagsService } from '@core/tags/tags.service';
+import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
+import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
 import { IconComponent } from '@shared/icon/icon.component';
 import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
 
@@ -21,7 +23,7 @@ import { TasksService } from '../services/tasks.service';
 @Component({
   selector: 'mc-tasks',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TaskEditorPaneComponent, LockBannerComponent, IconComponent],
+  imports: [ConfirmDialogComponent, TaskEditorPaneComponent, LockBannerComponent, IconComponent],
   templateUrl: './tasks.container.html',
   styleUrl: './tasks.container.css',
 })
@@ -40,6 +42,7 @@ export class TasksContainer {
   protected readonly active = signal<Task | null>(null);
   protected readonly status = signal<SaveStatus>('saved');
   protected readonly lock = new EntityLockController(TASK_KIND, this.active);
+  protected readonly confirm = new ConfirmController();
 
   constructor() {
     effect(() => {
@@ -115,24 +118,31 @@ export class TasksContainer {
     });
   }
 
-  protected async onDelete(): Promise<void> {
+  protected onDelete(): void {
     const current = this.active();
     if (!current || !this.lock.guardWrite()) return;
-    const ok = confirm(
-      this.t('tasks.deleteConfirm').replace(
-        '{title}',
-        current.title || this.t('tasks.untitledTitle'),
-      ),
+    this.confirm.ask(
+      {
+        title: this.t('tasks.confirm.delete.title'),
+        message: this.t('tasks.deleteConfirm').replace(
+          '{title}',
+          current.title || this.t('tasks.untitledTitle'),
+        ),
+        confirmLabel: this.t('tasks.confirm.delete.confirm'),
+        cancelLabel: this.t('tasks.confirm.cancel'),
+        tone: 'danger',
+      },
+      async () => {
+        try {
+          await this.tasksService.deleteToTrash(current.id);
+          await this.autosave.clear(current.id);
+          this.active.set(null);
+          await this.router.navigate(['/tasks']);
+        } catch (e) {
+          this.errors.report(e);
+        }
+      },
     );
-    if (!ok) return;
-    try {
-      await this.tasksService.deleteToTrash(current.id);
-      await this.autosave.clear(current.id);
-      this.active.set(null);
-      await this.router.navigate(['/tasks']);
-    } catch (e) {
-      this.errors.report(e);
-    }
   }
 
   private patch(mutate: (current: Task) => Task): void {

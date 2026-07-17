@@ -130,6 +130,18 @@ export class TrashService {
     }
   }
 
+  async loadGalleryCovers(entry: TrashEntry): Promise<readonly Blob[]> {
+    if (entry.kind !== 'image') return [];
+    const root = this.requireRoot();
+    const day = await this.dayDir(root, entry.parentPath);
+    if (!day) return [];
+    try {
+      return await this.galleries.readTrashCoverBlobs(day, entry.filename);
+    } catch {
+      return [];
+    }
+  }
+
   private async readDirMeta(
     day: NativeDirRef,
     entry: TrashEntry,

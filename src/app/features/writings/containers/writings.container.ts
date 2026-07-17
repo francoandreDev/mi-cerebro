@@ -11,6 +11,8 @@ import type { TranslationKey } from '@core/i18n/i18n.types';
 import { EntityLockController } from '@core/locks/entity-lock.controller';
 import { extractEntityId } from '@core/routing/entity-slug';
 import { TagsService } from '@core/tags/tags.service';
+import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
+import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
 import { IconComponent } from '@shared/icon/icon.component';
 import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
 
@@ -24,7 +26,7 @@ import { WritingsService } from '../services/writings.service';
 @Component({
   selector: 'mc-writings',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [WritingEditorPaneComponent, LockBannerComponent, IconComponent],
+  imports: [ConfirmDialogComponent, WritingEditorPaneComponent, LockBannerComponent, IconComponent],
   templateUrl: './writings.container.html',
   styleUrl: './writings.container.css',
   host: { '(document:keydown.escape)': 'onEscape($event)' },
@@ -44,6 +46,7 @@ export class WritingsContainer {
   protected readonly active = signal<Writing | null>(null);
   protected readonly status = signal<SaveStatus>('saved');
   protected readonly lock = new EntityLockController(WRITING_KIND, this.active);
+  protected readonly confirm = new ConfirmController();
 
   constructor() {
     effect(() => {
@@ -134,24 +137,31 @@ export class WritingsContainer {
     this.scheduleSave(next);
   }
 
-  protected async onDelete(): Promise<void> {
+  protected onDelete(): void {
     const current = this.active();
     if (!current || !this.lock.guardWrite()) return;
-    const ok = confirm(
-      this.t('writings.deleteConfirm').replace(
-        '{title}',
-        current.title || this.t('writings.untitledTitle'),
-      ),
+    this.confirm.ask(
+      {
+        title: this.t('writings.confirm.delete.title'),
+        message: this.t('writings.deleteConfirm').replace(
+          '{title}',
+          current.title || this.t('writings.untitledTitle'),
+        ),
+        confirmLabel: this.t('writings.confirm.delete.confirm'),
+        cancelLabel: this.t('writings.confirm.cancel'),
+        tone: 'danger',
+      },
+      async () => {
+        try {
+          await this.writingsService.deleteToTrash(current.id);
+          await this.autosave.clear(current.id);
+          this.active.set(null);
+          await this.router.navigate(['/writings']);
+        } catch (e) {
+          this.errors.report(e);
+        }
+      },
     );
-    if (!ok) return;
-    try {
-      await this.writingsService.deleteToTrash(current.id);
-      await this.autosave.clear(current.id);
-      this.active.set(null);
-      await this.router.navigate(['/writings']);
-    } catch (e) {
-      this.errors.report(e);
-    }
   }
 
   private async loadWriting(id: string): Promise<void> {

@@ -7,6 +7,7 @@ import type { TrashKind, TrashPreview } from '@core/trash/trash.types';
 interface ContentState {
   readonly status: 'loading' | 'ready' | 'missing';
   readonly preview: TrashPreview | null;
+  readonly thumbUrls: readonly string[];
 }
 
 @Component({
@@ -32,6 +33,11 @@ export class TrashCardContentComponent {
     if (!p) return 0;
     const fact = p.facts.find((f) => f.labelKey === 'trash.preview.images');
     return fact ? Number(fact.value) || 0 : 0;
+  });
+
+  protected readonly galleryTiles = computed<readonly (string | null)[]>(() => {
+    const urls = this.state().preview ? this.state().thumbUrls : [];
+    return Array.from({ length: 4 }, (_, i) => urls[i] ?? null);
   });
 
   protected readonly galleryLabel = computed<string>(() => {

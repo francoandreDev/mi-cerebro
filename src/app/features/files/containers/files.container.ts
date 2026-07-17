@@ -23,6 +23,8 @@ import type { TranslationKey } from '@core/i18n/i18n.types';
 import { EntityLockController } from '@core/locks/entity-lock.controller';
 import { entitySlugSegment, extractEntityId } from '@core/routing/entity-slug';
 import { TagsService } from '@core/tags/tags.service';
+import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
+import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
 import { FolderBreadcrumbComponent } from '@shared/folder-breadcrumb/folder-breadcrumb.component';
 import { IconComponent } from '@shared/icon/icon.component';
 import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
@@ -46,6 +48,7 @@ import { FilesService } from '../services/files.service';
   selector: 'mc-files',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    ConfirmDialogComponent,
     FileCollectionMetaBarComponent,
     FileGridComponent,
     FileLockerComponent,
@@ -90,6 +93,7 @@ export class FilesContainer {
   });
   protected readonly previewUrls = signal<Record<string, string>>({});
   protected readonly lock = new EntityLockController(FILE_KIND, this.active);
+  protected readonly confirm = new ConfirmController();
 
   constructor() {
     effect(() => {
@@ -193,24 +197,31 @@ export class FilesContainer {
     }
   }
 
-  protected async onDeleteCollection(): Promise<void> {
+  protected onDeleteCollection(): void {
     const current = this.active();
     if (!current || !this.lock.guardWrite()) return;
-    const ok = confirm(
-      this.t('files.deleteConfirm').replace(
-        '{title}',
-        current.title || this.t('files.untitledTitle'),
-      ),
+    this.confirm.ask(
+      {
+        title: this.t('files.confirm.deleteCollection.title'),
+        message: this.t('files.deleteConfirm').replace(
+          '{title}',
+          current.title || this.t('files.untitledTitle'),
+        ),
+        confirmLabel: this.t('files.confirm.deleteCollection.confirm'),
+        cancelLabel: this.t('files.confirm.cancel'),
+        tone: 'danger',
+      },
+      async () => {
+        try {
+          await this.filesService.deleteCollectionToTrash(current.id);
+          await this.autosave.clear(current.id);
+          this.active.set(null);
+          await this.router.navigate(['/files']);
+        } catch (e) {
+          this.errors.report(e);
+        }
+      },
     );
-    if (!ok) return;
-    try {
-      await this.filesService.deleteCollectionToTrash(current.id);
-      await this.autosave.clear(current.id);
-      this.active.set(null);
-      await this.router.navigate(['/files']);
-    } catch (e) {
-      this.errors.report(e);
-    }
   }
 
   protected async onAddFiles(files: readonly File[]): Promise<void> {
@@ -229,20 +240,30 @@ export class FilesContainer {
     }
   }
 
-  protected async onRemoveItem(itemId: string): Promise<void> {
+  protected onRemoveItem(itemId: string): void {
     const current = this.active();
     if (!current || !this.lock.guardWrite()) return;
     const item = current.items.find((i) => i.id === itemId);
     if (!item) return;
-    if (!confirm(this.t('files.items.deleteConfirm').replace('{name}', displayLabel(item)))) return;
-    try {
-      await this.filesService.removeFile(current.id, itemId);
-      const next = await this.filesService.readCollection(current.id);
-      this.active.set(next);
-      await this.refreshPreviewsFor(next);
-    } catch (e) {
-      this.errors.report(e);
-    }
+    this.confirm.ask(
+      {
+        title: this.t('files.confirm.deleteItem.title'),
+        message: this.t('files.items.deleteConfirm').replace('{name}', displayLabel(item)),
+        confirmLabel: this.t('files.confirm.deleteItem.confirm'),
+        cancelLabel: this.t('files.confirm.cancel'),
+        tone: 'danger',
+      },
+      async () => {
+        try {
+          await this.filesService.removeFile(current.id, itemId);
+          const next = await this.filesService.readCollection(current.id);
+          this.active.set(next);
+          await this.refreshPreviewsFor(next);
+        } catch (e) {
+          this.errors.report(e);
+        }
+      },
+    );
   }
 
   protected async onMoveUp(itemId: string): Promise<void> {

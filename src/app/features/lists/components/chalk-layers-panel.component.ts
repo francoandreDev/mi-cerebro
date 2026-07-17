@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, inject, input, output } from '@angu
 
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
+import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
 import { IconComponent } from '@shared/icon/icon.component';
 import { createDndController } from '@shared/utils/dnd-controller';
 
@@ -10,7 +12,7 @@ import type { ChalkLayer } from '../models/chalk.types';
 @Component({
   selector: 'mc-chalk-layers-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent],
+  imports: [ConfirmDialogComponent, IconComponent],
   templateUrl: './chalk-layers-panel.component.html',
   styleUrl: './chalk-layers-panel.component.css',
 })
@@ -31,6 +33,7 @@ export class ChalkLayersPanelComponent {
   private readonly i18n = inject(I18nService);
 
   protected readonly dnd = createDndController<string>();
+  protected readonly confirm = new ConfirmController();
 
   protected t(key: TranslationKey): string {
     return this.i18n.t(key);
@@ -42,8 +45,16 @@ export class ChalkLayersPanelComponent {
   }
 
   protected onRemove(layer: ChalkLayer): void {
-    const ok = confirm(this.t('lists.chalk.removeConfirm').replace('{name}', layer.name));
-    if (ok) this.removeLayer.emit(layer.id);
+    this.confirm.ask(
+      {
+        title: this.t('lists.chalk.confirm.remove.title'),
+        message: this.t('lists.chalk.removeConfirm').replace('{name}', layer.name),
+        confirmLabel: this.t('lists.chalk.confirm.remove.confirm'),
+        cancelLabel: this.t('lists.chalk.confirm.cancel'),
+        tone: 'danger',
+      },
+      () => this.removeLayer.emit(layer.id),
+    );
   }
 
   protected onLayerDrop(targetId: string): void {

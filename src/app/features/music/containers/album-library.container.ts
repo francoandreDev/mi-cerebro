@@ -16,6 +16,8 @@ import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { PlayerService } from '@core/music/player.service';
+import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
+import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
 import { IconComponent } from '@shared/icon/icon.component';
 
 import type { PlaylistSummary, Track } from '../models/music.types';
@@ -29,7 +31,7 @@ import { TRACK_DRAG_MIME, hasFiles } from './music.dnd';
 @Component({
   selector: 'mc-album-library',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent],
+  imports: [ConfirmDialogComponent, IconComponent],
   templateUrl: './album-library.container.html',
   styleUrl: './album-library.container.css',
 })
@@ -53,6 +55,7 @@ export class AlbumLibraryContainer {
   protected readonly dragOver = signal(false);
   protected readonly selectedIds = signal<ReadonlySet<string>>(new Set());
   private lastClickedId: string | null = null;
+  protected readonly confirm = new ConfirmController();
 
   protected readonly youtubeAvailable = this.youtube.isAvailable();
   protected readonly youtubeUrl = signal('');
@@ -177,33 +180,53 @@ export class AlbumLibraryContainer {
     await this.player.playPlaylist(ids, startIndex, null);
   }
 
-  protected async onDeleteRow(id: string): Promise<void> {
+  protected onDeleteRow(id: string): void {
     const t = this.tracks().find((x) => x.id === id);
     if (!t) return;
-    if (!confirm(this.t('music.deleteTrackConfirm').replace('{name}', t.originalName))) return;
-    try {
-      await this.library.removeTrack(t.id);
-      await this.playlists.removeTrackFromAll(t.id);
-      this.tracksTouched.emit([t.id]);
-    } catch (e) {
-      this.errors.report(e);
-    }
+    this.confirm.ask(
+      {
+        title: this.t('music.confirm.deleteTrack.title'),
+        message: this.t('music.deleteTrackConfirm').replace('{name}', t.originalName),
+        confirmLabel: this.t('music.confirm.deleteTrack.confirm'),
+        cancelLabel: this.t('music.confirm.cancel'),
+        tone: 'danger',
+      },
+      async () => {
+        try {
+          await this.library.removeTrack(t.id);
+          await this.playlists.removeTrackFromAll(t.id);
+          this.tracksTouched.emit([t.id]);
+        } catch (e) {
+          this.errors.report(e);
+        }
+      },
+    );
   }
 
-  protected async onBulkDelete(): Promise<void> {
+  protected onBulkDelete(): void {
     const ids = [...this.selectedIds()];
     if (ids.length === 0) return;
-    if (!confirm(this.t('music.bulk.confirmDelete').replace('{n}', String(ids.length)))) return;
-    try {
-      for (const id of ids) {
-        await this.library.removeTrack(id);
-        await this.playlists.removeTrackFromAll(id);
-      }
-      this.tracksTouched.emit(ids);
-      this.onClearSelection();
-    } catch (e) {
-      this.errors.report(e);
-    }
+    this.confirm.ask(
+      {
+        title: this.t('music.confirm.bulkDelete.title'),
+        message: this.t('music.bulk.confirmDelete').replace('{n}', String(ids.length)),
+        confirmLabel: this.t('music.confirm.bulkDelete.confirm'),
+        cancelLabel: this.t('music.confirm.cancel'),
+        tone: 'danger',
+      },
+      async () => {
+        try {
+          for (const id of ids) {
+            await this.library.removeTrack(id);
+            await this.playlists.removeTrackFromAll(id);
+          }
+          this.tracksTouched.emit(ids);
+          this.onClearSelection();
+        } catch (e) {
+          this.errors.report(e);
+        }
+      },
+    );
   }
 
   protected async onBulkAddToPlaylist(event: Event): Promise<void> {

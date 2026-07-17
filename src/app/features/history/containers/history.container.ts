@@ -17,6 +17,7 @@ import { ErrorService } from '@core/errors/error.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import { CompactionSchedulerService } from '@core/versioning/compaction-scheduler.service';
 import { RestoreService } from '@core/versioning/restore.service';
+import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
 import { IconComponent } from '@shared/icon/icon.component';
 import { McDatePipe } from '@shared/pipes/mc-date.pipe';
 
@@ -235,7 +236,7 @@ function groupKeyForPath(path: string): GroupKey {
   selector: 'mc-history',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [HistoryLoader, HistoryService, HistoryDiffService, MilestoneController],
-  imports: [McDatePipe, IconComponent, NgTemplateOutlet, RouterLink],
+  imports: [ConfirmDialogComponent, McDatePipe, IconComponent, NgTemplateOutlet, RouterLink],
   templateUrl: './history.container.html',
   styleUrl: './history.container.css',
 })

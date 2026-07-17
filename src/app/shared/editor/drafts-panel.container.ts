@@ -24,6 +24,8 @@ import { AutocommitService } from '@core/versioning/autocommit.service';
 import { applyMarkToDoc } from '@core/versioning/draft-apply';
 import { DraftsService } from '@core/versioning/drafts.service';
 import type { DiffMark } from '@core/versioning/drafts.types';
+import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
+import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
 import { IconComponent } from '@shared/icon/icon.component';
 
 import { DraftPreviewComponent } from './draft-preview.component';
@@ -32,8 +34,13 @@ import { DraftsListComponent } from './drafts-list.component';
 @Component({
   selector: 'mc-drafts-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DraftPreviewComponent, DraftsListComponent, IconComponent],
+  imports: [ConfirmDialogComponent, DraftPreviewComponent, DraftsListComponent, IconComponent],
   template: `
+    <mc-confirm-dialog
+      [request]="confirm.request()"
+      (confirmed)="confirm.accept()"
+      (cancelled)="confirm.cancel()"
+    />
     <header class="head">
       <h3 id="mc-drafts-title">{{ t('drafts.title') }} ({{ count() }})</h3>
       <button
@@ -102,6 +109,7 @@ export class DraftsPanelContainer {
   protected readonly marks = computed(() => this.all());
   protected readonly count = computed(() => this.all().length);
   protected readonly selectedId = signal<string | null>(null);
+  protected readonly confirm = new ConfirmController();
   protected readonly selectedMark = computed<DiffMark | null>(() => {
     const id = this.selectedId();
     if (!id) return null;
@@ -152,18 +160,38 @@ export class DraftsPanelContainer {
     await this.persist(next);
   }
 
-  protected async onAcceptAll(): Promise<void> {
+  protected onAcceptAll(): void {
     const list = this.all();
     if (list.length === 0) return;
-    if (!this.confirmIf('drafts.confirm.acceptAll', list.length)) return;
-    await this.applyMarks(list);
+    this.confirm.ask(
+      {
+        title: this.t('drafts.confirm.acceptAllDialog.title'),
+        message: this.t('drafts.confirm.acceptAll').replace('{n}', String(list.length)),
+        confirmLabel: this.t('drafts.confirm.acceptAllDialog.confirm'),
+        cancelLabel: this.t('drafts.confirm.cancel'),
+        tone: 'danger',
+      },
+      async () => {
+        await this.applyMarks(list);
+      },
+    );
   }
 
-  protected async onRejectAll(): Promise<void> {
+  protected onRejectAll(): void {
     const list = this.all();
     if (list.length === 0) return;
-    if (!this.confirmIf('drafts.confirm.rejectAll', list.length)) return;
-    await this.persist([]);
+    this.confirm.ask(
+      {
+        title: this.t('drafts.confirm.rejectAllDialog.title'),
+        message: this.t('drafts.confirm.rejectAll').replace('{n}', String(list.length)),
+        confirmLabel: this.t('drafts.confirm.rejectAllDialog.confirm'),
+        cancelLabel: this.t('drafts.confirm.cancel'),
+        tone: 'danger',
+      },
+      async () => {
+        await this.persist([]);
+      },
+    );
   }
 
   // why: optimistic — update the visible list + emit the mutated doc right
@@ -239,12 +267,6 @@ export class DraftsPanelContainer {
   private syncSelection(list: readonly DiffMark[]): void {
     const id = this.selectedId();
     if (id && !list.some((m) => m.id === id)) this.selectedId.set(null);
-  }
-
-  private confirmIf(key: TranslationKey, n?: number): boolean {
-    if (typeof confirm !== 'function') return true;
-    const msg = n === undefined ? this.t(key) : this.t(key).replace('{n}', String(n));
-    return confirm(msg);
   }
 }
 

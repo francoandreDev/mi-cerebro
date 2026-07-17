@@ -1,3 +1,8 @@
+<mc-confirm-dialog
+  [request]="confirm.request()"
+  (confirmed)="confirm.accept()"
+  (cancelled)="confirm.cancel()"
+/>
 <section class="garden" [class.garden--night]="night()" [class.garden--watering]="watering()">
   <header class="head">
     <h1 class="title">{{ t('tasks.garden.headerTitle') }}</h1>
