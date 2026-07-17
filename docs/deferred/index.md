@@ -25,3 +25,9 @@ Este índice es sólo un mapa de temas — no lista ítems individuales. Para es
 - [`editor-history-fs.md`](./editor-history-fs.md) — editor TipTap, historial y capa de File System Access.
 - [`responsive.md`](./responsive.md) — pantallas mobile pendientes de verificación/rediseño.
 - [`dashboard-evolution.md`](./dashboard-evolution.md) — dashboard combinado y las ideas de `docs/evolution.md` ya iniciadas (resurfacing, dormancia de metas).
+
+---
+
+## Trabajo paralelo
+
+Si se van a atacar varios ítems de este directorio en simultáneo (varios agentes/worktrees a la vez), ver [`trabajo-paralelo.md`](./trabajo-paralelo.md) — regla de agrupación por tema desacoplado, mecánica de worktrees y orden de merge.
