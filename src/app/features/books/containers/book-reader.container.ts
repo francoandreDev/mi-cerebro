@@ -69,7 +69,7 @@ export class BookReaderContainer {
   protected readonly chapterStatus = signal<BookSaveStatus>('saved');
   protected readonly chapterLoading = signal<boolean>(false);
   private readonly localFocusMode = signal<boolean>(false);
-  // why: F11 app-wide focus mode (§19.17) and this reader's own Ctrl+.
+  // why: Alt+Shift+F app-wide focus mode (§19.17) and this reader's own Ctrl+.
   //      focus toggle both hide the same chrome, so either one activates it.
   protected readonly focusMode = computed(
     () => this.localFocusMode() || this.globalFocusMode.active(),

@@ -9,8 +9,12 @@ export class FocusModeService {
 
   constructor() {
     const shortcuts = inject(ShortcutsService);
+    // why: F11 is native browser fullscreen — Chrome/Firefox don't let JS
+    // preventDefault() it reliably, so it toggled our state AND the OS
+    // window chrome at once. Alt+Shift+F doesn't collide with any browser
+    // default (see docs/deferred/shortcuts-cross-section.md).
     const dispose = shortcuts.register({
-      combo: 'F11',
+      combo: 'Alt+Shift+F',
       labelKey: 'shortcuts.focusMode',
       scope: 'global',
       handler: () => this.toggle(),

@@ -74,8 +74,11 @@ export class TtsControlsComponent {
     this.settingsOpen.set(false);
   }
 
-  @HostListener('document:keydown.escape')
-  protected onEsc(): void {
-    this.settingsOpen.set(false);
+  @HostListener('document:keydown.escape', ['$event'])
+  protected onEsc(event: Event): void {
+    if (this.settingsOpen()) {
+      event.preventDefault();
+      this.settingsOpen.set(false);
+    }
   }
 }
