@@ -28,6 +28,8 @@ export class BookMetaBarComponent {
   readonly chaptersCount = input<number>(0);
   readonly totalWords = input<number>(0);
   readonly removeBook = output<void>();
+  readonly duplicateBook = output<void>();
+  readonly exportBookMarkdown = output<void>();
   readonly addTag = output<string>();
   readonly removeTag = output<string>();
 
@@ -57,10 +59,16 @@ export class BookMetaBarComponent {
     return 'check';
   }
   protected menuOptions(): readonly MenuOption[] {
-    return [{ key: 'delete', label: this.t('books.menu.delete') }];
+    return [
+      { key: 'duplicate', label: this.t('books.menu.duplicate') },
+      { key: 'export-md', label: this.t('books.menu.exportMd') },
+      { key: 'delete', label: this.t('books.menu.delete') },
+    ];
   }
   protected onMenuChoose(key: string): void {
     if (key === 'delete') this.removeBook.emit();
+    else if (key === 'duplicate') this.duplicateBook.emit();
+    else if (key === 'export-md') this.exportBookMarkdown.emit();
   }
 }
 

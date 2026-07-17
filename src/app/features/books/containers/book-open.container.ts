@@ -15,6 +15,7 @@ import { withReauthIfNeeded } from '@core/errors/with-reauth';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { ImageReaderService } from '@core/images/image-reader.service';
 import { EntityLockController } from '@core/locks/entity-lock.controller';
 import { entitySlugSegment, extractEntityId } from '@core/routing/entity-slug';
 import { SettingsService } from '@core/settings/settings.service';
@@ -27,10 +28,12 @@ import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
 import { IconComponent } from '@shared/icon/icon.component';
 import { hashColor } from '@shared/utils/hash-color';
 import { reorderById } from '@shared/utils/reorder';
+import { triggerDownload } from '@shared/utils/trigger-download';
 
 import { BookMetaBarComponent, type BookSaveStatus } from '../components/book-meta-bar.component';
 import { ChapterIndexCardComponent } from '../components/chapter-index-card.component';
 import { BOOK_KIND, type Book, type ChapterSummary } from '../models/book.types';
+import { bookToMarkdown, buildImageResolver, markdownFilename } from '../services/book-export.util';
 import { BooksService } from '../services/books.service';
 
 interface IndexPage {
@@ -72,6 +75,7 @@ export class BookOpenContainer {
   private readonly errors = inject(ErrorService);
   private readonly i18n = inject(I18nService);
   private readonly settings = inject(SettingsService);
+  private readonly imageReader = inject(ImageReaderService);
 
   protected readonly tags = this.tagsService.tags;
   protected readonly authorBio = this.settings.authorBio;
@@ -289,6 +293,36 @@ export class BookOpenContainer {
         }
       },
     );
+  }
+
+  protected async onDuplicateBook(): Promise<void> {
+    const current = this.active();
+    if (!current || !this.lock.guardWrite()) return;
+    try {
+      await this.workspace.ensureWritable();
+      const copy = await this.booksService.duplicateBook(current.id);
+      await this.router.navigate(['/books', entitySlugSegment(copy.title, copy.id, 'libro')]);
+    } catch (e) {
+      this.errors.report(this.withReauth(e));
+    }
+  }
+
+  protected async onExportBookMarkdown(): Promise<void> {
+    const current = this.active();
+    if (!current) return;
+    try {
+      const chapters = await this.booksService.readAllChaptersOrdered(current.id);
+      const resolveImage = await buildImageResolver(
+        this.imageReader,
+        chapters.map((c) => c.body),
+      );
+      const untitled = this.t('books.chapters.untitled');
+      const md = bookToMarkdown(current, chapters, untitled, resolveImage);
+      const filename = markdownFilename(current.title || this.t('books.untitledTitle'), 'libro');
+      triggerDownload(new Blob([md], { type: 'text/markdown' }), filename);
+    } catch (e) {
+      this.errors.report(this.withReauth(e));
+    }
   }
 
   protected onOpenChapter(chapterId: string): void {

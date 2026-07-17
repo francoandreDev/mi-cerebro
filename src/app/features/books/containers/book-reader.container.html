@@ -29,6 +29,17 @@
         >
       }
       <span class="spacer"></span>
+      @if (chapter()) {
+        <button
+          type="button"
+          class="ghost"
+          [attr.aria-label]="t('books.reader.exportChapter')"
+          [title]="t('books.reader.exportChapter')"
+          (click)="onExportChapterMarkdown()"
+        >
+          ⬇
+        </button>
+      }
       <button
         type="button"
         class="ghost"

@@ -64,12 +64,6 @@ Formato por entrada:
 - **Por qué se difirió**: para tener páginas exactas sin abrir el capítulo habría que renderizar el editor en headless al cargar el libro (caro) o derivar la métrica de un cálculo de altura puro sobre el JSONContent (frágil, depende del CSS). Es una optimización para libros viejos que nunca pasaron por el editor v4; libros nuevos se autocorrigen apenas el usuario los abre.
 - **Target**: sin asignar.
 
-### Menú ⋯ con duplicar / exportar a Markdown
-
-- **Qué**: opciones "Duplicar libro", "Exportar libro a .md", "Exportar capítulo activo a .md" en el menú overflow del meta bar. Hoy sólo hay "Mover a papelera".
-- **Por qué se difirió**: duplicar requiere lógica nueva en `BooksService` (copiar dir + reasignar IDs + reindexar) y exportar a MD requiere un converter de ProseMirror→Markdown que toca `@core/tiptap/`. Ambos son features de tamaño propio, no parte del rediseño visual.
-- **Target**: sin asignar.
-
 ### Subset + conversión a woff2 de Crimson Pro
 
 - **Qué**: las tres variantes de Crimson Pro viven en `public/fonts/` como `.ttf` (~98KB c/u, ~294KB total). Convertirlas a `.woff2` recortaría ~50% y un subset latin-extended bajaría otro ~30%.

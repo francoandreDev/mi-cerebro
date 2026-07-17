@@ -20,6 +20,7 @@ import { WorkspaceService } from '@core/fs/workspace.service';
 // why: addChapter desde el editor pane usa el mismo flujo que en el desk.
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { ImageReaderService } from '@core/images/image-reader.service';
 import { EntityLockController } from '@core/locks/entity-lock.controller';
 import { entitySlugSegment, extractEntityId } from '@core/routing/entity-slug';
 import { TtsService } from '@core/tts/tts.service';
@@ -27,12 +28,18 @@ import type { TtsAction, TtsPaneState } from '@core/tts/tts.types';
 import { emptyWritingStats } from '@core/writing-stats/writing-stats.types';
 import { WritingStatsService } from '@core/writing-stats/writing-stats.service';
 import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
+import { triggerDownload } from '@shared/utils/trigger-download';
 
 import { ChapterEditorPaneComponent } from '../components/chapter-editor-pane.component';
 import type { BookSaveStatus } from '../components/book-meta-bar.component';
 import { ReaderMetaRailComponent } from '../components/reader-meta-rail.component';
 import { ReaderTocRailComponent } from '../components/reader-toc-rail.component';
 import { BOOK_KIND, type Book, type Chapter, type ChapterSummary } from '../models/book.types';
+import {
+  buildImageResolver,
+  chapterToMarkdown,
+  markdownFilename,
+} from '../services/book-export.util';
 import { BooksService } from '../services/books.service';
 import { registerReaderShortcuts } from './book-reader.shortcuts';
 
@@ -61,6 +68,7 @@ export class BookReaderContainer {
   private readonly globalFocusMode = inject(FocusModeService);
   private readonly writingStats = inject(WritingStatsService);
   private readonly tts = inject(TtsService);
+  private readonly imageReader = inject(ImageReaderService);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly book = signal<Book | null>(null);
@@ -254,6 +262,16 @@ export class BookReaderContainer {
     const next = { ...current, pageCount };
     this.chapter.set(next);
     this.scheduleChapterSave(next);
+  }
+
+  protected async onExportChapterMarkdown(): Promise<void> {
+    const ch = this.chapter();
+    if (!ch) return;
+    const resolveImage = await buildImageResolver(this.imageReader, [ch.body]);
+    const untitled = this.t('books.chapters.untitled');
+    const md = chapterToMarkdown(ch, untitled, resolveImage);
+    const filename = markdownFilename(ch.title || untitled, 'capitulo');
+    triggerDownload(new Blob([md], { type: 'text/markdown' }), filename);
   }
 
   protected async onAddChapter(): Promise<void> {

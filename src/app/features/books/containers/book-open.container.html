@@ -32,6 +32,8 @@
       [chaptersCount]="chapters().length"
       [totalWords]="totalWords()"
       (removeBook)="onDeleteBook()"
+      (duplicateBook)="onDuplicateBook()"
+      (exportBookMarkdown)="onExportBookMarkdown()"
       (addTag)="onAddTag($event)"
       (removeTag)="onRemoveTag($event)"
     />

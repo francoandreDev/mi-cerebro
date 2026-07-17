@@ -231,6 +231,79 @@ export class BooksService {
     for (const ch of chapters) await this.search.remove(ch.id);
   }
 
+  // why: keeps the same title (no "(copy)" suffix) — same convention as
+  //      RemindersService's duplicate, see reminders.container.ts#onDuplicate.
+  async duplicateBook(id: string): Promise<Book> {
+    const loc = await this.findLoc(id);
+    const original = await this.readBook(id);
+    const bookDir = await this.bookDir(id);
+    const rawChapters = await this.readAllChapters(bookDir);
+    const chapters = await Promise.all(
+      rawChapters.map((c) => this.migrations.migrate<Chapter>(BOOK_KIND, c)),
+    );
+
+    const parent = await this.getFolderDir(loc.folder);
+    if (!parent) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
+    const slug = await this.allocSlug(parent, original.title);
+    const newBookDir = await this.fs.getOrCreateDir(parent, slug);
+    const newChaptersDir = await this.fs.getOrCreateDir(newBookDir, CHAPTERS_DIR);
+
+    const now = new Date().toISOString();
+    const newBookId = crypto.randomUUID();
+    const idMap = new Map<string, string>();
+    const newChapters: Chapter[] = [];
+    for (const ch of chapters) {
+      const newId = crypto.randomUUID();
+      idMap.set(ch.id, newId);
+      const newChapter: Chapter = {
+        ...ch,
+        id: newId,
+        bookId: newBookId,
+        createdAt: now,
+        updatedAt: now,
+      };
+      const filename = await this.allocChapterSlug(newChaptersDir, newChapter.title);
+      await this.fs.writeFileAtomic(newChaptersDir, filename, JSON.stringify(newChapter, null, 2));
+      newChapters.push(newChapter);
+    }
+    const newOrder = original.order
+      .map((oldId) => idMap.get(oldId))
+      .filter((v): v is string => v !== undefined);
+    const position = nextPositionAfter(lastPosition(this.summariesSignal()));
+    const newBook: Book = {
+      ...original,
+      id: newBookId,
+      order: newOrder,
+      createdAt: now,
+      updatedAt: now,
+      position,
+    };
+    await this.fs.writeFileAtomic(newBookDir, BOOK_META_FILE, JSON.stringify(newBook, null, 2));
+
+    this.idToLoc.set(newBookId, { folder: loc.folder, slug });
+    this.chapterCountById.set(newBookId, newChapters.length);
+    this.summariesSignal.update((curr) =>
+      sortByPosition([...curr, this.toSummary(newBook, loc.folder, newChapters.length)]),
+    );
+    const chapterTexts = newChapters.map((c) => `${c.title} ${extractPlainText(c.body)}`);
+    await this.search.upsert(this.toSearchDoc(newBook, chapterTexts));
+    for (const c of newChapters) await this.search.upsert(this.toChapterSearchDoc(c));
+    return newBook;
+  }
+
+  // why: listChapters only returns previews (no `body`) for the desk/reader
+  //      chrome — markdown export needs the full chapter content, in reading
+  //      order, so it reads each one through the same cached lookup path
+  //      `readChapter` already uses.
+  async readAllChaptersOrdered(bookId: string): Promise<readonly Chapter[]> {
+    const book = await this.readBook(bookId);
+    const chapters: Chapter[] = [];
+    for (const chapterId of book.order) {
+      chapters.push(await this.readChapter(bookId, chapterId));
+    }
+    return chapters;
+  }
+
   async restoreFromBundle(bundle: BookBundle): Promise<void> {
     const root = await this.booksDir();
     const slug = await this.allocSlug(root, bundle.book.title);
