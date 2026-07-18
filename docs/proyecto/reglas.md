@@ -42,7 +42,7 @@ Reglas que rigen todo el desarrollo. Cualquier excepción se justifica en el com
   <name>.routes.ts
   <name>.config.ts   # solo si hace falta
   ```
-- **`core/`** por dominio: `fs/`, `idb/`, `index/`, `theme/`, `continuity/`, `reminders/`, `versioning/`, `autosave/`, `errors/`, `migrations/`, `tags/`, `i18n/`.
+- **`core/`** por dominio: `fs/`, `idb/`, `index/`, `theme/`, `continuity/`, `reminders/`, `versioning/`, `autosave/`, `errors/`, `migrations/`, `tags/`, `i18n/`, `dnd/` (auto-scroll de borde durante drag-and-drop nativo, transversal a toda la app — ver `DragAutoScrollService`).
 - **`shared/`** por tipo: `components/`, `directives/`, `pipes/`, `utils/`, `editor/` (wrapper TipTap propio, ver §11), `tree/` (árbol con filtro inteligente, ver §10), `tags/` (chip + picker de etiquetas, ver §2).
 - **Regla de oro:** subcarpeta con un solo archivo no existe; se inlinea un nivel arriba. Nace cuando hay 2+ archivos relacionados.
 

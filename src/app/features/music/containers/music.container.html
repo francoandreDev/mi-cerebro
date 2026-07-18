@@ -21,6 +21,8 @@
           [class.is-active]="leftView() === 'playlists'"
           class="tab mc-hover-grow"
           (click)="onSelectLeftView('playlists')"
+          (dragover)="onPlaylistsTabDragOver($event)"
+          (dragleave)="onPlaylistsTabDragLeave()"
         >
           <mc-icon name="list-bullets" />
           <span>{{ t('music.tabs.playlists') }}</span>

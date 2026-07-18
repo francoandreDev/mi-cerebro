@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
 import { ContinuityService } from '@core/continuity/continuity.service';
+import { DragAutoScrollService } from '@core/dnd/drag-auto-scroll.service';
 import { ErrorService } from '@core/errors/error.service';
 import { FocusModeService } from '@core/focus-mode/focus-mode.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
@@ -127,6 +128,7 @@ export class AppShellContainer {
   private readonly switchVariant = inject(SwitchVariantService);
   private readonly settings = inject(SettingsService);
   private readonly continuity = inject(ContinuityService);
+  private readonly dragAutoScroll = inject(DragAutoScrollService);
   // why: instantiate eagerly so its effect on goals/reminders summaries
   //      starts watching at boot; otherwise no consumer would pull it in.
   private readonly goalRemindersSync = inject(GoalRemindersSyncService);
@@ -140,6 +142,7 @@ export class AppShellContainer {
 
   constructor() {
     this.continuity.start();
+    this.dragAutoScroll.start();
     this.autoPush.start();
     this.compactionScheduler.start();
     void this.goalRemindersSync;

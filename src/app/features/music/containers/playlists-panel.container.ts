@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, output, signal } from '@angular/core';
 
 import { ErrorService } from '@core/errors/error.service';
 import { withReauthIfNeeded } from '@core/errors/with-reauth';
@@ -10,6 +10,7 @@ import { IconComponent } from '@shared/icon/icon.component';
 
 import type { PlaylistSummary } from '../models/music.types';
 import { PlaylistsService } from '../services/playlists.service';
+import { TRACK_DRAG_MIME } from './music.dnd';
 
 // why: v2 originally hid playlists behind a modal; that buried the entry point.
 // v12 polish exposes them as a second view of the left column (tab-toggled with
@@ -33,6 +34,7 @@ export class PlaylistsPanelContainer {
 
   protected readonly summaries = this.playlists.summaries;
   protected readonly currentSourceId = this.player.currentSourceId;
+  protected readonly dragOverId = signal<string | null>(null);
 
   protected t(key: TranslationKey): string {
     return this.i18n.t(key);
@@ -40,6 +42,31 @@ export class PlaylistsPanelContainer {
 
   protected onSelect(summary: PlaylistSummary): void {
     this.selected.emit(summary);
+  }
+
+  protected onRowDragOver(id: string, event: DragEvent): void {
+    if (!event.dataTransfer?.types.includes(TRACK_DRAG_MIME)) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'copy';
+    this.dragOverId.set(id);
+  }
+
+  protected onRowDragLeave(id: string): void {
+    if (this.dragOverId() === id) this.dragOverId.set(null);
+  }
+
+  protected async onRowDrop(id: string, event: DragEvent): Promise<void> {
+    event.preventDefault();
+    this.dragOverId.set(null);
+    const raw = event.dataTransfer?.getData(TRACK_DRAG_MIME);
+    if (!raw) return;
+    try {
+      const trackIds = JSON.parse(raw) as unknown;
+      if (!Array.isArray(trackIds) || trackIds.length === 0) return;
+      await this.playlists.addTracks(id, trackIds);
+    } catch (e) {
+      this.errors.report(e);
+    }
   }
 
   protected async onCreate(): Promise<void> {

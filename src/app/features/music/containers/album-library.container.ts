@@ -1,11 +1,14 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
+  effect,
   inject,
   input,
   output,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
 import type { ElementRef } from '@angular/core';
@@ -43,6 +46,7 @@ export class AlbumLibraryContainer {
   private readonly errors = inject(ErrorService);
   private readonly i18n = inject(I18nService);
   private readonly youtube = inject(YoutubeDownloadService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly playlistSummaries = input.required<readonly PlaylistSummary[]>();
   readonly tracksTouched = output<readonly string[]>();
@@ -83,6 +87,61 @@ export class AlbumLibraryContainer {
   protected readonly bulkCountLabel = computed(() =>
     this.t('music.bulk.selectedCount').replace('{n}', String(this.selectedCount())),
   );
+
+  // why: album headers show the real cover instead of a generic icon (closes
+  // the "miniatura en columna de título" part of the ID3 cover art item —
+  // Now Playing already loaded real covers, this list didn't). Cached by
+  // content-addressed `coverPath` so covers persist across re-groupings.
+  private readonly coverUrls = signal<ReadonlyMap<string, string>>(new Map());
+  private readonly coverLoading = new Set<string>();
+
+  constructor() {
+    effect(() => {
+      const paths = new Set(
+        this.albumGroups()
+          .map((g) => g.coverPath)
+          .filter((p): p is string => p !== null),
+      );
+      untracked(() => this.syncCoverUrls(paths));
+    });
+    this.destroyRef.onDestroy(() => {
+      for (const url of this.coverUrls().values()) URL.revokeObjectURL(url);
+    });
+  }
+
+  protected coverUrlFor(path: string | null): string | null {
+    return path !== null ? (this.coverUrls().get(path) ?? null) : null;
+  }
+
+  private syncCoverUrls(paths: ReadonlySet<string>): void {
+    const current = this.coverUrls();
+    const stale = [...current.keys()].filter((p) => !paths.has(p));
+    if (stale.length > 0) {
+      const next = new Map(current);
+      for (const p of stale) {
+        const url = next.get(p);
+        if (url) URL.revokeObjectURL(url);
+        next.delete(p);
+      }
+      this.coverUrls.set(next);
+    }
+    for (const path of paths) {
+      if (current.has(path) || this.coverLoading.has(path)) continue;
+      this.coverLoading.add(path);
+      this.library
+        .readCoverBlob(path)
+        .then((blob) => {
+          this.coverLoading.delete(path);
+          if (!blob) return;
+          const url = URL.createObjectURL(blob);
+          this.coverUrls.update((m) => new Map(m).set(path, url));
+        })
+        .catch((cause) => {
+          this.coverLoading.delete(path);
+          console.warn('[album-library] cover load failed', path, cause);
+        });
+    }
+  }
 
   focusSearch(): void {
     this.libSearch()?.nativeElement.focus();
@@ -237,10 +296,7 @@ export class AlbumLibraryContainer {
     const trackIds = [...this.selectedIds()];
     if (trackIds.length === 0) return;
     try {
-      const pl = await this.playlists.read(playlistId);
-      const merged = [...pl.trackIds];
-      for (const id of trackIds) if (!merged.includes(id)) merged.push(id);
-      await this.playlists.save({ ...pl, trackIds: merged });
+      await this.playlists.addTracks(playlistId, trackIds);
       this.tracksTouched.emit([]);
       this.onClearSelection();
     } catch (e) {

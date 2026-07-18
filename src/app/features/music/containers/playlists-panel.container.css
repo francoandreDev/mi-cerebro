@@ -86,6 +86,11 @@
 .pl-list li button.now-playing {
   color: var(--mc-accent-primary);
 }
+.pl-list li button.drag-over {
+  background: var(--mc-bg-selected);
+  outline: 2px dashed var(--mc-accent-primary);
+  outline-offset: -2px;
+}
 .pl-title {
   flex: 1;
   min-width: 0;

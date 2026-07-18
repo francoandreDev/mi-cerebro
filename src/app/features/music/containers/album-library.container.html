@@ -104,7 +104,11 @@
           <details class="album" open>
             <summary class="album-head">
               <span class="album-cover" aria-hidden="true">
-                <mc-icon name="music-note" />
+                @if (coverUrlFor(g.coverPath); as coverUrl) {
+                  <img [src]="coverUrl" alt="" />
+                } @else {
+                  <mc-icon name="music-note" />
+                }
               </span>
               <span class="album-meta">
                 <span class="album-title">

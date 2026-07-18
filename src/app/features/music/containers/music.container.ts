@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 
 import { ErrorService } from '@core/errors/error.service';
 import { withReauthIfNeeded } from '@core/errors/with-reauth';
@@ -18,6 +25,13 @@ import { PlaylistsPanelContainer } from './playlists-panel.container';
 import { QueuePanelContainer } from './queue-panel.container';
 import { ResonantSurfaceContainer } from './resonant-surface.container';
 import { registerMusicShortcuts } from './music.shortcuts';
+import { TRACK_DRAG_MIME } from './music.dnd';
+
+// why: hovering a track drag over the "Playlists" tab auto-switches the left
+// column so the drop target becomes reachable without the source view (drag
+// starts from "Albums"). Small delay avoids flicker when just passing over
+// the tab on the way to somewhere else — same pattern as OS folder auto-expand.
+const TAB_SWITCH_DELAY_MS = 350;
 
 type LeftView = 'albums' | 'playlists';
 
@@ -42,6 +56,7 @@ export class MusicContainer {
   private readonly workspace = inject(WorkspaceService);
   private readonly errors = inject(ErrorService);
   private readonly i18n = inject(I18nService);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly playlistSummaries = this.playlists.summaries;
   protected readonly active = signal<Playlist | null>(null);
@@ -49,6 +64,7 @@ export class MusicContainer {
   protected readonly leftView = signal<LeftView>('albums');
 
   private readonly albumLib = viewChild(AlbumLibraryContainer);
+  private tabSwitchTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     registerMusicShortcuts({
@@ -61,6 +77,7 @@ export class MusicContainer {
       togglePlaylistsView: () =>
         this.leftView.update((v) => (v === 'playlists' ? 'albums' : 'playlists')),
     });
+    this.destroyRef.onDestroy(() => this.onPlaylistsTabDragLeave());
   }
 
   protected t(key: TranslationKey): string {
@@ -69,6 +86,22 @@ export class MusicContainer {
 
   protected onSelectLeftView(view: LeftView): void {
     this.leftView.set(view);
+  }
+
+  protected onPlaylistsTabDragOver(event: DragEvent): void {
+    if (!event.dataTransfer?.types.includes(TRACK_DRAG_MIME)) return;
+    event.preventDefault();
+    if (this.leftView() === 'playlists' || this.tabSwitchTimer !== null) return;
+    this.tabSwitchTimer = setTimeout(() => {
+      this.tabSwitchTimer = null;
+      this.leftView.set('playlists');
+    }, TAB_SWITCH_DELAY_MS);
+  }
+
+  protected onPlaylistsTabDragLeave(): void {
+    if (this.tabSwitchTimer === null) return;
+    clearTimeout(this.tabSwitchTimer);
+    this.tabSwitchTimer = null;
   }
 
   protected async onSelectPlaylistFromPanel(summary: PlaylistSummary): Promise<void> {

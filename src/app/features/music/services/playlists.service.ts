@@ -84,6 +84,13 @@ export class PlaylistsService {
     this.summariesSignal.update((curr) => curr.filter((s) => s.id !== id));
   }
 
+  async addTracks(id: string, trackIds: readonly string[]): Promise<Playlist> {
+    const pl = await this.read(id);
+    const merged = [...pl.trackIds];
+    for (const trackId of trackIds) if (!merged.includes(trackId)) merged.push(trackId);
+    return this.save({ ...pl, trackIds: merged });
+  }
+
   async removeTrackFromAll(trackId: string): Promise<void> {
     for (const summary of [...this.summariesSignal()]) {
       const pl = await this.read(summary.id);

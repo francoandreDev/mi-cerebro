@@ -21,7 +21,11 @@
         <button
           type="button"
           [class.now-playing]="currentSourceId() === p.id"
+          [class.drag-over]="dragOverId() === p.id"
           (click)="onSelect(p)"
+          (dragover)="onRowDragOver(p.id, $event)"
+          (dragleave)="onRowDragLeave(p.id)"
+          (drop)="onRowDrop(p.id, $event)"
         >
           <span class="pl-title">
             @if (currentSourceId() === p.id) {
