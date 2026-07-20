@@ -21,11 +21,6 @@ Formato por entrada:
 - **Por qué se difirió**: fuera del alcance de la verificación funcional de esa sesión (typecheck/lint/tests + click-through en desktop); mismo patrón de breakpoint ya usado y probado en el resto de §21, riesgo bajo pero no confirmado.
 - **Target**: sin asignar — agrupable con la próxima pasada de verificación visual de §21 si el bridge de Chrome está sano.
 
-### ~~Tags no se muestran en los widgets del dashboard~~ (resuelto 2026-07-14)
-
-- **Qué**: `TaskSummary`/`GoalSummary`/`NoteSummary`/`WritingSummary` ya traen `tags: readonly string[]`, pero ninguno de los 4 widgets de `/dashboard` los renderiza (sin chips de tag, a diferencia de `note-slip-card`/`kind-card` en otras vistas).
-- **Estado**: cerrado (widget de reminders no aplica: `ReminderSummary` no tiene `tags`). `DashboardTaskItem`/`DashboardGoalItem` suman campo `tags` en `dashboard.types.ts`, poblado en `DashboardService` desde los summaries reales. `DashboardRecentEntry` ya traía `tags` sin usar. Los 3 widgets (`tasks`, `goals`, `recent`) reciben `[availableTags]` (signal `TagsService.tags` inyectado en `DashboardContainer`) y resuelven `tagIds → Tag` con el mismo patrón que `note-slip-card`/`tagged-generic-card`, renderizando `<mc-tag-chip>` en una segunda fila bajo el título (`.row-main` + `.tags` en `dashboard-widget.component.css`). Sin dependencias nuevas ni cambios de schema — solo se expuso un dato ya calculado.
-
 ## Resurfacing pasivo en dashboard (origen: §19.22bis, `docs/evolution.md` idea 1)
 
 ### Capítulos de libros en el pool de resurfacing
@@ -55,9 +50,3 @@ Formato por entrada:
 - **Por qué se difirió**: fuera del alcance del primer corte; depende de si la persistencia entre sesiones (ítem anterior) se implementa primero, porque un dismiss sin persistencia no sirve de nada.
 - **Diseño decidido (2026-07-15, sin implementar)**: nuevo `output<DashboardRecentEntry>()` `dismiss` en `DashboardResurfaceWidgetComponent` (botón "✕" por fila, aparte del click de "abrir"). Handler → `dashboard.dismissResurfaceEntry(id)` reusa el mismo store persistido del ítem anterior (mismo TTL de 14 días) y saca la entrada de la vista al toque, sin esperar el próximo shuffle. Fundido con el "snooze" automático por touch — un solo mecanismo, un solo TTL, sin distinguir "posponer" de "descartar" para no sumar superficie sin necesidad probada.
 - **Target**: sin asignar.
-
-## Acompañamiento adaptativo de metas (origen: §19.25, `docs/evolution.md` idea 3)
-
-### ~~Notificación proactiva de meta recién dormida~~ (resuelto 2026-07-16)
-
-- **Estado**: cerrado. `GoalDormantRemindersSyncService` (`core/reminders/goal-dormant-reminders-sync.service.ts`) crea un `Reminder` puntual (`sourceKind: 'goal-dormant'`, `dueAt: now`, sin recurrencia) cuando `goal.reminder.notifyOnDormant` está en `true` y `isGoalDormant` es `true` y todavía no existe el reminder para esa meta — esa comprobación de existencia hace de "detección de flanco" sin necesitar un Map de estado anterior en memoria. Se borra solo si la meta deja de estar dormida (retomó progreso) antes de ser atendido. Nuevo campo `GoalReminderConfig.notifyOnDormant: boolean`, default `false` (migración `goal.types` v8→v9), con toggle propio en `GoalEditorPaneComponent` (independiente del toggle de `reminder.enabled`, no requiere `deadline`). Borrar el reminder desde `/reminders` desactiva el flag en la meta en vez de dejar que el próximo sync lo recree — mismo patrón que ya usa `GoalRemindersSyncService` para los reminders de deadline. Ver §13/§14 en `features.md`.

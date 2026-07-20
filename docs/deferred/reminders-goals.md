@@ -27,12 +27,6 @@ Formato por entrada:
 - **Por qué se difirió**: el modelo `Goal.deadline` es date-only y agregarle hora implica migración + UI en `DeadlinePickerComponent`. 23:59 es razonable para casi todo plazo "fin del día".
 - **Target**: sin asignar.
 
-### ~~Snooze inteligente del goal-reminder~~ (resuelto 2026-07-16)
-
-- **Qué**: el goal-reminder disparaba su toast y se re-armaba al siguiente slot sin ninguna acción de posponer — sólo "Ver" y cerrar. Hacía falta decidir entre snooze skip-one (saltar el próximo slot de la serie) y snooze delay-fixed (empujar N horas/días), y resolver que para reminders goal-sourced el `dueAt` está bloqueado por `GoalRemindersSyncService` (lo pisa de vuelta al deadline de la meta en el siguiente tick), así que el patrón delay-fixed que ya usan los reminders manuales (mover `dueAt`) no aplica acá.
-- **Estado**: cerrado. Se implementó skip-one: `RemindersCadenceService.skipNextSlot()` recalcula `nextSlotFor(dueAt, fromMs, lead)` usando el `nextPingAt` actual como `fromMs` en vez de "ahora" — misma matemática que un fire normal, pero saltando exactamente el próximo slot sin tocar `dueAt` ni el toggle. Botón "Posponer" en el toast (`ReminderToastContainer`), visible sólo para `sourceKind` `goal`/`goal-dormant` — los reminders manuales ya tienen su propio snooze (fixed-hours/día/lunes/fin-de-semana) en el footer de detalle de `/reminders`.
-- **Target**: sin asignar.
-
 ### Recordatorios automáticos para tareas / escritos con deadline
 
 - **Qué**: extender el patrón goal-sourced a otras entidades con fecha (tareas con `dueDate`, escritos con plazo planificado), abriendo `sourceKind: 'task' | 'writing' | ...`.
@@ -87,18 +81,8 @@ Formato por entrada:
 
 ## Recordatorios — Mejoras UI (origen: rediseño 2026-06-19)
 
-### ~~Snooze próximo lunes / fin de semana / menú overflow `⋯`~~ (resuelto 2026-07-06)
-
-- **Qué**: presets adicionales de posponer (próximo lunes, fin de semana) y un menú overflow `⋯` que agrupe las acciones del footer de detalle en lugar de chips sueltos.
-- **Estado**: cerrado en `1508ac9`. `snooze-presets.ts` resuelve la ambigüedad "¿hoy cuenta si ya es el día target?" con `nextWeekdayAfter()` (si la hora preset del día ya pasó, salta a la semana siguiente — mismo criterio que usaría una persona). Acciones (posponer 1h/1 día/lunes/fin de semana, duplicar, borrar) movidas a un menú overflow `⋯` por reminder en `RemindersContainer`, que cierra con click afuera o Escape.
-
 ### Atajos de navegación de fila (J/K, Space, E, Del)
 
 - **Qué**: navegación por teclado dentro de la lista (J/K), Space para toggle done, E para editar, Del para borrar — todos con scope `editable-safe`.
 - **Por qué se difirió**: hoy la lista no tiene concepto de "fila enfocada" (no hay roving tabindex ni signal de cursor). Implementarlo bien implica patrón reutilizable (`listbox` ARIA + cursor signal) que conviene resolver una sola vez para reminders/tasks/goals juntos. Por ahora solo `N` (nuevo) y `/` (buscar) están registrados.
 - **Target**: cuando se aborde patrón compartido de listas navegables.
-
-### ~~Badge de vencidas en el rail global~~ (resuelto 2026-07-04)
-
-- **Qué**: pintar un badge numérico junto al ícono de Reminders en el sidebar con la cantidad de vencidas.
-- **Estado**: cerrado. `RemindersService.overdueCount` (computed sobre `summaries()` + `bucketOf`) inyectado en `WorkspaceSidebarContainer`; badge rojo `.rail-badge` sobre `.rail-btn.reminders`, sólo visible cuando el conteo es > 0.

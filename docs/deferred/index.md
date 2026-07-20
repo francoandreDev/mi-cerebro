@@ -14,18 +14,16 @@ Este índice es sólo un mapa de temas — no lista ítems individuales. Para es
 ---
 
 - [`notes-search-navigation.md`](./notes-search-navigation.md) — notas, árbol de carpetas con filtro, tags y búsqueda global.
-- [`versionado.md`](./versionado.md) — versionado, variantes, historial, merges.
 - [`trash-books.md`](./trash-books.md) — papelera y biblioteca de libros.
-- [`music.md`](./music.md) — reproductor de música (WebAudio, playlists, cover art/ID3).
 - [`reminders-goals.md`](./reminders-goals.md) — recordatorios (incluido el "palomar") y metas/constelaciones.
 - [`files-writings-tasks.md`](./files-writings-tasks.md) — archivos sueltos, escritos y tareas.
 - [`lists-images.md`](./lists-images.md) — listas (tiza sobre pizarra) e imágenes (museo).
 - [`shortcuts-cross-section.md`](./shortcuts-cross-section.md) — atajos de teclado y vista cross-section por tag.
 - [`sync.md`](./sync.md) — sincronización con remoto (UI y push).
-- [`editor-history-fs.md`](./editor-history-fs.md) — editor TipTap, historial y capa de File System Access.
 - [`responsive.md`](./responsive.md) — pantallas mobile pendientes de verificación/rediseño.
 - [`dashboard-evolution.md`](./dashboard-evolution.md) — dashboard combinado y las ideas de `docs/evolution.md` ya iniciadas (resurfacing, dormancia de metas).
 - [`folder-dialogs.md`](./folder-dialogs.md) — diálogos nativos de rename/move/delete de carpetas (`handleFolderAction`) pendientes de migrar al dialog custom.
+- [`versionado.md`](./versionado.md) — versionado, variantes, historial, merges. **Sección más extensa/compleja — atacar al final.**
 
 ---
 

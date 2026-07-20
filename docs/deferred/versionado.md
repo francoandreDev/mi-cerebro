@@ -15,16 +15,6 @@ Formato por entrada:
 
 ## Versionado y variantes (origen: paso 13)
 
-### ~~Anchor `range` multi-bloque (selección que cruza párrafos)~~ (resuelto en §19.16e-iii)
-
-- **Qué**: hoy `range` queda confinado al bloque donde está `$from`. Selecciones que cruzan dos o más bloques caen al anchor `block` del primero (sin range). Comentar a través de párrafos no se soporta.
-- **Estado**: cerrado. Nuevo `CommentAnchorType` `'range'` + `Comment.span: { startBlockId, startOffset, endBlockId, endOffset }` (par de endpoints, no lista — más simple de mapear/orphanar). Orphan handling en `comments-orphans.ts`: sólo se marca huérfano si `startBlockId` o `endBlockId` desaparecen; un bloque borrado _entre_ medio no orphana (el span simplemente cubre menos contenido). `comment-range-mapping.ext.ts` trackea ambos endpoints como posiciones absolutas (igual que el `range` de un solo bloque — `tr.mapping` no distingue bloques) y los re-resuelve a bloque/offset en cada `view.update` vía lookup inverso posición→bloque. `comment-clouds.ext.ts` dibuja la nube al final del último bloque del span y una única decoración inline que cruza los nodos intermedios sin clamping (ProseMirror lo permite nativamente). Creación: `blockSpanAtSelection` en `editor-selection.utils.ts` detecta selección cross-block comparando el blockId en `$from` vs `$to`.
-
-### ~~Widget render para diff-marks de tipo "insertion-only"~~ (resuelto en §19.16e-iv)
-
-- **Qué**: los diff-marks que insertan bloques enteros sin anchor en `main` no tenían punto de inserción inline natural y quedaban listados sólo en el popover de pendientes.
-- **Estado**: cerrado. Nuevo mini-renderer JSON→DOM puro (`core/tiptap/draft-decorations/diff-mark-preview.ts`) cubre el subset de nodos/marcas que produce el editor (paragraph/heading/blockquote/lists/codeBlock/horizontalRule + bold/italic/strike/code/highlight), con fallback a `div` para cualquier tipo de nodo inesperado. `draft-decorations.ext.ts` lo usa para pintar cada mark `insert` (anchorType `block`) como un widget decoration (`Decoration.widget`) al final del doc — mismo punto donde `applyMarkToDoc` los aplica al aceptar — en vez de dejarlos sin renderizar como antes. El widget (`.mc-draft-insert`) es no editable (`contenteditable="false"`), clickeable, y delega el click a `EditorComponent.onDraftInsertClick`, que abre el popover de borradores con ese mark pre-seleccionado (nuevo input `focusId` en `DraftsPanelContainer`). Los marks `insert` con `anchorType: 'doc'` siguen sin renderizado inline (son el fallback raro de todo-el-documento); el popover sigue siendo la única vía para esos y para accept/reject de cualquier mark.
-
 ### Granularidad por faceta dentro del bundle de merge
 
 - **Qué**: en 13b–d el merge ofrece elegir por entidad el bundle entero (main + draft + comments de la variante origen). Una versión avanzada permitiría tomar `main` de la variante origen pero quedarse con el `draft` o los `comments` de la variante destino.
@@ -36,17 +26,6 @@ Formato por entrada:
 - **Qué**: si el adapter de isomorphic-git resulta inviable en 13a y se cae al fallback de snapshots en `.mi-cerebro/history/`, las variantes (13b en adelante) no son soportables. La app degrada a una sola "Principal" implícita.
 - **Por qué**: implementar variantes sin git significaría reinventar branching + merge desde cero. No vale la pena hasta confirmar que isomorphic-git no funciona.
 - **Target**: sin asignar (sólo se aborda si el fallback se activa en 13a).
-
-### ~~Colapsar chips de kind en la timeline cuando hay más de N~~ (resuelto 2026-07-04)
-
-- **Qué**: hoy cada commit de la timeline muestra todos los chips de kind tocado (`note`, `task`, `goal`, `image`, `book`, `file`, `list`, `track`, `tag`, `writing`). Cuando el commit toca 8-10 kinds los chips envuelven a dos líneas y desbalancean visualmente la fila.
-- **Estado**: cerrado. `HistoryContainer.visibleKinds()`/`hiddenKindsCount()` cortan en `MAX_VISIBLE_KIND_CHIPS = 4`; el resto colapsa en un chip `+N más` (`.chip-more`).
-
-### ~~Toggle "ver sólo cambios" en diffs largos~~ (resuelto 2026-07-16)
-
-- **Qué**: el diff de cuerpo (TipTap → prosa + jsdiff) mostraba todo el contenido, no sólo los chunks `add`/`remove`. En notas largas las líneas de contexto opacitadas dominaban visualmente.
-- **Estado**: cerrado. `compactDiffChunks()` (`diff.utils.ts`) colapsa cada run de chunks `context` a un único separador `…`; se aplica tanto al diff de cuerpo (`kind: 'entity'`) como al diff de texto crudo (`kind: 'text'`). Toggle persistido en `sessionStorage` (`mc:history:compactDiff`, mismo patrón que `onlyMilestones`), botón visible sólo cuando el diff tiene al menos un chunk de contexto que ocultar.
-- **Target**: §19.16f.
 
 ### Tooltip por-día en la panorámica (hover sobre la ladera)
 
@@ -113,16 +92,6 @@ Formato por entrada:
 - **Qué**: un índice MiniSearch sobre el log de commits (mensaje + entidades tocadas) integrado al palette global, para poder buscar "¿cuándo toqué X?" sin abrir `/history` y escanear estratos a mano.
 - **Por qué se difirió**: misma familia de problema que los índices de `main`/`comments`/`draft` diferidos arriba — requiere decidir priming al boot y si comparte infraestructura con esos índices. Se agrupa con ellos para diseñarse una sola vez.
 - **Target**: §19.16d (pulido de búsqueda) — junto con los índices por familia ya diferidos.
-
-### ~~Umbral de compactación configurable en settings~~ (resuelto 2026-07-04)
-
-- **Qué**: §12 "Compactación del historial" fijaba el umbral de disparo en 500 commits por rama sin exponerlo en settings.
-- **Estado**: cerrado. `Settings.versioning.compactionThresholdCommits` (default 500, clamp 50–10000) en `settings.types.ts`/`settings.service.ts`; `CompactionSchedulerService.threshold` pasó a computed leyendo ese valor. Campo numérico con draft/apply en `/settings` → Versionado, junto al de autocommit.
-
-### ~~Dev panel para la compactación~~ (resuelto 2026-07-04)
-
-- **Qué**: una pantalla `/dev` que exponga `CompactionSchedulerService.runOnce({ ignoreThreshold })` como botón para QA, en vez de depender de la consola del navegador.
-- **Estado**: cerrado. Ruta `/dev` (no linkeada desde el rail) con `DevContainer` — muestra rama más pesada vista + umbral actual y un botón "Compactar ahora" con estado busy/done. Los demás toggles de dev-perf (`DevPerfService`, `dev-variants-switch-tests`) siguen sin UI propia; se suman a este panel si aparece necesidad real.
 
 ### Compactación manual sobre rango específico
 
