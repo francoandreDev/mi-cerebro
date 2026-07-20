@@ -44,6 +44,8 @@ import { RemoteStatusDotComponent } from '@layout/components/remote-status-dot.c
 import { BgColorDirective } from '@shared/directives/bg-color.directive';
 import { IconComponent } from '@shared/icon/icon.component';
 import type { IconName } from '@shared/icon/icons.data';
+import { FolderActionDialogComponent } from '@shared/folder-action-dialog/folder-action-dialog.component';
+import { FolderActionDialogController } from '@shared/folder-action-dialog/folder-action-dialog.controller';
 import { MenuButtonComponent, type MenuOption } from '@shared/menu-button/menu-button.component';
 import { filterTree } from '@shared/tree/filter';
 import { TreeFilterComponent, type FilterMatchEntry } from '@shared/tree/tree-filter.component';
@@ -59,7 +61,7 @@ import {
   type EntityReorderAdapter,
 } from '@shared/folder-tree/tree-reorder';
 
-import { handleCreateFolder, handleEntityAction, handleFolderAction } from './folder-actions';
+import { handleCreateFolder, handleEntityAction, openFolderActionDialog } from './folder-actions';
 import { goalBadges, tagBadges, taskBadges } from './tree-badges';
 
 type EntityKind = 'note' | 'task' | 'goal' | 'list' | 'writing' | 'book' | 'image' | 'file';
@@ -93,6 +95,7 @@ interface RailItem {
     RemoteStatusDotComponent,
     BgColorDirective,
     IconComponent,
+    FolderActionDialogComponent,
   ],
   templateUrl: './workspace-sidebar.container.html',
   styleUrl: './workspace-sidebar.container.css',
@@ -124,6 +127,8 @@ export class WorkspaceSidebarContainer {
   private readonly player = inject(PlayerService);
   private readonly treeState = inject(TreeStateService);
   private readonly creationIntent = inject(CreationIntentService);
+
+  protected readonly folderActionDialog = new FolderActionDialogController();
 
   protected readonly query = signal('');
   protected readonly direction = signal<FilterDirection>('general');
@@ -772,7 +777,13 @@ export class WorkspaceSidebarContainer {
     try {
       await this.workspace.ensureWritable();
       if (nodeId.startsWith('folder:')) {
-        await handleFolderAction(nodeId.slice('folder:'.length), this.foldersService, this.i18n);
+        openFolderActionDialog(
+          nodeId.slice('folder:'.length),
+          this.foldersService,
+          this.i18n,
+          this.folderActionDialog,
+          (e) => this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize())),
+        );
       } else {
         await handleEntityAction(
           nodeId,

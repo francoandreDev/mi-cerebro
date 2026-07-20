@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import { ErrorService } from '@core/errors/error.service';
 import { withReauthIfNeeded } from '@core/errors/with-reauth';
-import { handleCreateFolder, handleFolderAction } from '@core/folders/folder-crud';
+import { handleCreateFolder, openFolderActionDialog } from '@core/folders/folder-crud';
 import { FoldersService } from '@core/folders/folders.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
@@ -15,6 +15,8 @@ import type { Tag } from '@core/tags/tag.types';
 import { TagsService } from '@core/tags/tags.service';
 import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
 import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
+import { FolderActionDialogComponent } from '@shared/folder-action-dialog/folder-action-dialog.component';
+import { FolderActionDialogController } from '@shared/folder-action-dialog/folder-action-dialog.controller';
 import { FolderBreadcrumbComponent } from '@shared/folder-breadcrumb/folder-breadcrumb.component';
 import { IconComponent } from '@shared/icon/icon.component';
 import { TagChipComponent } from '@shared/tags/tag-chip.component';
@@ -39,6 +41,7 @@ import {
     TagChipComponent,
     GoalPeekOverlayComponent,
     FolderBreadcrumbComponent,
+    FolderActionDialogComponent,
   ],
   templateUrl: './goals-wall.container.html',
   styleUrl: './goals-wall.container.css',
@@ -80,6 +83,7 @@ export class GoalsWallContainer {
   //      del step (o navega si es solitaria). Click fuera/Esc cierra el peek.
   //      Extraído a GoalPeekController (§4.4 límite duro de 300 líneas).
   protected readonly confirm = new ConfirmController();
+  protected readonly folderActionDialog = new FolderActionDialogController();
   protected readonly peek = new GoalPeekController(this.goalsService.summaries, (title, onAccept) =>
     this.confirm.ask(
       {
@@ -315,7 +319,13 @@ export class GoalsWallContainer {
     await handleCreateFolder('goal', this.foldersService, this.i18n, this.currentFolder());
   }
 
-  protected async onManageFolder(path: string): Promise<void> {
-    await handleFolderAction(`goal:${path}`, this.foldersService, this.i18n);
+  protected onManageFolder(path: string): void {
+    openFolderActionDialog(
+      `goal:${path}`,
+      this.foldersService,
+      this.i18n,
+      this.folderActionDialog,
+      (e) => this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize())),
+    );
   }
 }

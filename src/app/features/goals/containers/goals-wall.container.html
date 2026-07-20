@@ -3,6 +3,15 @@
   (confirmed)="confirm.accept()"
   (cancelled)="confirm.cancel()"
 />
+<mc-folder-action-dialog
+  [state]="folderActionDialog.state()"
+  (chooseRename)="folderActionDialog.chooseRename()"
+  (chooseMove)="folderActionDialog.chooseMove()"
+  (chooseDelete)="folderActionDialog.chooseDelete()"
+  (textSubmitted)="folderActionDialog.submitText($event)"
+  (confirmDelete)="folderActionDialog.confirmDelete()"
+  (cancelled)="folderActionDialog.cancel()"
+/>
 <section class="wall">
   <header class="wall-head">
     <h1 class="wall-title">

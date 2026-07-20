@@ -12,13 +12,15 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import { ErrorService } from '@core/errors/error.service';
 import { withReauthIfNeeded } from '@core/errors/with-reauth';
-import { handleCreateFolder, handleFolderAction } from '@core/folders/folder-crud';
+import { handleCreateFolder, openFolderActionDialog } from '@core/folders/folder-crud';
 import { FoldersService } from '@core/folders/folders.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { entitySlugSegment } from '@core/routing/entity-slug';
 
+import { FolderActionDialogComponent } from '@shared/folder-action-dialog/folder-action-dialog.component';
+import { FolderActionDialogController } from '@shared/folder-action-dialog/folder-action-dialog.controller';
 import { FolderBreadcrumbComponent } from '@shared/folder-breadcrumb/folder-breadcrumb.component';
 import { BookVolumeComponent } from '@shared/entity-cards/book-volume.component';
 import { IconComponent } from '@shared/icon/icon.component';
@@ -51,6 +53,7 @@ const TALLNESS: readonly ('short' | 'medium' | 'tall')[] = ['short', 'medium', '
     BookVolumeComponent,
     IconComponent,
     FolderBreadcrumbComponent,
+    FolderActionDialogComponent,
   ],
   templateUrl: './bookshelf.container.html',
   styleUrl: './bookshelf.container.css',
@@ -63,6 +66,8 @@ export class BookshelfContainer {
   private readonly route = inject(ActivatedRoute);
   private readonly errors = inject(ErrorService);
   private readonly i18n = inject(I18nService);
+
+  protected readonly folderActionDialog = new FolderActionDialogController();
 
   protected readonly summaries = this.booksService.summaries;
   protected readonly folders = this.booksService.folders;
@@ -267,8 +272,14 @@ export class BookshelfContainer {
     await handleCreateFolder('book', this.foldersService, this.i18n, this.currentFolder());
   }
 
-  protected async onManageFolder(path: string): Promise<void> {
-    await handleFolderAction(`book:${path}`, this.foldersService, this.i18n);
+  protected onManageFolder(path: string): void {
+    openFolderActionDialog(
+      `book:${path}`,
+      this.foldersService,
+      this.i18n,
+      this.folderActionDialog,
+      (e) => this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize())),
+    );
   }
 }
 

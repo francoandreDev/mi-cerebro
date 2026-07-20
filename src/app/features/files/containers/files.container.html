@@ -3,6 +3,15 @@
   (confirmed)="confirm.accept()"
   (cancelled)="confirm.cancel()"
 />
+<mc-folder-action-dialog
+  [state]="folderActionDialog.state()"
+  (chooseRename)="folderActionDialog.chooseRename()"
+  (chooseMove)="folderActionDialog.chooseMove()"
+  (chooseDelete)="folderActionDialog.chooseDelete()"
+  (textSubmitted)="folderActionDialog.submitText($event)"
+  (confirmDelete)="folderActionDialog.confirmDelete()"
+  (cancelled)="folderActionDialog.cancel()"
+/>
 <div class="wall-wrap">
   <header class="wall-head">
     <h2>{{ t('files.title') }}</h2>

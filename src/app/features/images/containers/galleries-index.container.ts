@@ -13,13 +13,15 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import { ErrorService } from '@core/errors/error.service';
 import { withReauthIfNeeded } from '@core/errors/with-reauth';
-import { handleCreateFolder, handleFolderAction } from '@core/folders/folder-crud';
+import { handleCreateFolder, openFolderActionDialog } from '@core/folders/folder-crud';
 import { FoldersService } from '@core/folders/folders.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { entitySlugSegment } from '@core/routing/entity-slug';
 import { TagsService } from '@core/tags/tags.service';
+import { FolderActionDialogComponent } from '@shared/folder-action-dialog/folder-action-dialog.component';
+import { FolderActionDialogController } from '@shared/folder-action-dialog/folder-action-dialog.controller';
 import { FolderBreadcrumbComponent } from '@shared/folder-breadcrumb/folder-breadcrumb.component';
 import { IconComponent } from '@shared/icon/icon.component';
 import { hashColor } from '@shared/utils/hash-color';
@@ -45,7 +47,12 @@ interface PlantCell {
 @Component({
   selector: 'mc-galleries-index',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent, MuseumRoomComponent, FolderBreadcrumbComponent],
+  imports: [
+    IconComponent,
+    MuseumRoomComponent,
+    FolderBreadcrumbComponent,
+    FolderActionDialogComponent,
+  ],
   templateUrl: './galleries-index.container.html',
   styleUrl: './galleries-index.container.css',
 })
@@ -59,6 +66,8 @@ export class GalleriesIndexContainer {
   private readonly errors = inject(ErrorService);
   private readonly i18n = inject(I18nService);
   private readonly destroyRef = inject(DestroyRef);
+
+  protected readonly folderActionDialog = new FolderActionDialogController();
 
   protected readonly summaries = this.galleriesService.summaries;
   protected readonly tags = this.tagsService.tags;
@@ -282,7 +291,13 @@ export class GalleriesIndexContainer {
     await handleCreateFolder('image', this.foldersService, this.i18n, this.currentFolder());
   }
 
-  protected async onManageFolder(path: string): Promise<void> {
-    await handleFolderAction(`image:${path}`, this.foldersService, this.i18n);
+  protected onManageFolder(path: string): void {
+    openFolderActionDialog(
+      `image:${path}`,
+      this.foldersService,
+      this.i18n,
+      this.folderActionDialog,
+      (e) => this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize())),
+    );
   }
 }

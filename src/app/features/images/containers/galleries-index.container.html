@@ -1,3 +1,13 @@
+<mc-folder-action-dialog
+  [state]="folderActionDialog.state()"
+  (chooseRename)="folderActionDialog.chooseRename()"
+  (chooseMove)="folderActionDialog.chooseMove()"
+  (chooseDelete)="folderActionDialog.chooseDelete()"
+  (textSubmitted)="folderActionDialog.submitText($event)"
+  (confirmDelete)="folderActionDialog.confirmDelete()"
+  (cancelled)="folderActionDialog.cancel()"
+/>
+
 <header class="header">
   <h1><mc-icon name="image-square" class="title-icon" /> {{ t('images.title') }}</h1>
   <div class="ops">

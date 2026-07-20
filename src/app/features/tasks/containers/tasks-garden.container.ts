@@ -13,7 +13,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AutosaveService } from '@core/autosave/autosave.service';
 import { ErrorService } from '@core/errors/error.service';
 import { withReauthIfNeeded } from '@core/errors/with-reauth';
-import { handleCreateFolder, handleFolderAction } from '@core/folders/folder-crud';
+import { handleCreateFolder, openFolderActionDialog } from '@core/folders/folder-crud';
 import { FoldersService } from '@core/folders/folders.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
@@ -23,6 +23,8 @@ import { entitySlugSegment } from '@core/routing/entity-slug';
 import { TagsService } from '@core/tags/tags.service';
 import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
 import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
+import { FolderActionDialogComponent } from '@shared/folder-action-dialog/folder-action-dialog.component';
+import { FolderActionDialogController } from '@shared/folder-action-dialog/folder-action-dialog.controller';
 import { FolderBreadcrumbComponent } from '@shared/folder-breadcrumb/folder-breadcrumb.component';
 import { createDndController } from '@shared/utils/dnd-controller';
 
@@ -54,6 +56,7 @@ const BACKLOG_PAGE_SIZE = 24;
     PlantCardComponent,
     HarvestBasketComponent,
     FolderBreadcrumbComponent,
+    FolderActionDialogComponent,
   ],
   templateUrl: './tasks-garden.container.html',
   styleUrl: './tasks-garden.container.css',
@@ -81,6 +84,7 @@ export class TasksGardenContainer {
   protected readonly announce = signal<string>('');
   protected readonly wateredId = signal<string | null>(null);
   protected readonly confirm = new ConfirmController();
+  protected readonly folderActionDialog = new FolderActionDialogController();
   protected readonly justSproutedId = signal<string | null>(null);
   protected readonly visibleBacklogCount = signal<number>(BACKLOG_PAGE_SIZE);
   protected readonly emergingFrom = signal<number>(BACKLOG_PAGE_SIZE);
@@ -358,8 +362,14 @@ export class TasksGardenContainer {
     await handleCreateFolder('task', this.foldersService, this.i18n, this.currentFolder());
   }
 
-  protected async onManageFolder(path: string): Promise<void> {
-    await handleFolderAction(`task:${path}`, this.foldersService, this.i18n);
+  protected onManageFolder(path: string): void {
+    openFolderActionDialog(
+      `task:${path}`,
+      this.foldersService,
+      this.i18n,
+      this.folderActionDialog,
+      (e) => this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize())),
+    );
   }
 }
 

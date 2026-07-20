@@ -3,6 +3,15 @@
   (confirmed)="confirm.accept()"
   (cancelled)="confirm.cancel()"
 />
+<mc-folder-action-dialog
+  [state]="folderActionDialog.state()"
+  (chooseRename)="folderActionDialog.chooseRename()"
+  (chooseMove)="folderActionDialog.chooseMove()"
+  (chooseDelete)="folderActionDialog.chooseDelete()"
+  (textSubmitted)="folderActionDialog.submitText($event)"
+  (confirmDelete)="folderActionDialog.confirmDelete()"
+  (cancelled)="folderActionDialog.cancel()"
+/>
 <section class="garden" [class.garden--night]="night()" [class.garden--watering]="watering()">
   <header class="head">
     <h1 class="title">{{ t('tasks.garden.headerTitle') }}</h1>

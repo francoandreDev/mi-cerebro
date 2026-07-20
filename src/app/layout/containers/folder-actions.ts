@@ -1,4 +1,4 @@
-import { handleCreateFolder, handleFolderAction } from '@core/folders/folder-crud';
+import { handleCreateFolder, openFolderActionDialog } from '@core/folders/folder-crud';
 import type { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import type { GoalsService } from '@features/goals/services/goals.service';
@@ -21,7 +21,7 @@ export interface EntityServices {
   readonly files: FilesService;
 }
 
-export { handleCreateFolder, handleFolderAction };
+export { handleCreateFolder, openFolderActionDialog };
 
 const t = (i18n: I18nService, key: TranslationKey): string => i18n.t(key);
 

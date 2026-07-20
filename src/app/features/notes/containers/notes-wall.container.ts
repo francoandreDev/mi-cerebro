@@ -5,7 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AutosaveService } from '@core/autosave/autosave.service';
 import { ErrorService } from '@core/errors/error.service';
 import { withReauthIfNeeded } from '@core/errors/with-reauth';
-import { handleCreateFolder, handleFolderAction } from '@core/folders/folder-crud';
+import { handleCreateFolder, openFolderActionDialog } from '@core/folders/folder-crud';
 import { FoldersService } from '@core/folders/folders.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
@@ -14,6 +14,8 @@ import { entitySlugSegment } from '@core/routing/entity-slug';
 import { TagsService } from '@core/tags/tags.service';
 import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
 import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
+import { FolderActionDialogComponent } from '@shared/folder-action-dialog/folder-action-dialog.component';
+import { FolderActionDialogController } from '@shared/folder-action-dialog/folder-action-dialog.controller';
 import { FolderBreadcrumbComponent } from '@shared/folder-breadcrumb/folder-breadcrumb.component';
 import { IconComponent } from '@shared/icon/icon.component';
 
@@ -35,6 +37,7 @@ const norm = (s: string): string => s.toLowerCase().normalize('NFD').replace(/[Ì
     NoteComposeComponent,
     NotesFilterBarComponent,
     FolderBreadcrumbComponent,
+    FolderActionDialogComponent,
   ],
   templateUrl: './notes-wall.container.html',
   styleUrl: './notes-wall.container.css',
@@ -56,6 +59,7 @@ export class NotesWallContainer {
   protected readonly activeTagIds = signal<ReadonlySet<string>>(new Set());
   protected readonly creating = signal<boolean>(false);
   protected readonly confirm = new ConfirmController();
+  protected readonly folderActionDialog = new FolderActionDialogController();
 
   private readonly params = toSignal(this.route.queryParamMap, {
     initialValue: this.route.snapshot.queryParamMap,
@@ -167,7 +171,13 @@ export class NotesWallContainer {
     await handleCreateFolder('note', this.foldersService, this.i18n, this.currentFolder());
   }
 
-  protected async onManageFolder(path: string): Promise<void> {
-    await handleFolderAction(`note:${path}`, this.foldersService, this.i18n);
+  protected onManageFolder(path: string): void {
+    openFolderActionDialog(
+      `note:${path}`,
+      this.foldersService,
+      this.i18n,
+      this.folderActionDialog,
+      (e) => this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize())),
+    );
   }
 }

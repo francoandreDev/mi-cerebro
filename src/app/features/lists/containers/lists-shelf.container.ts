@@ -13,7 +13,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AutosaveService } from '@core/autosave/autosave.service';
 import { ErrorService } from '@core/errors/error.service';
 import { withReauthIfNeeded } from '@core/errors/with-reauth';
-import { handleCreateFolder, handleFolderAction } from '@core/folders/folder-crud';
+import { handleCreateFolder, openFolderActionDialog } from '@core/folders/folder-crud';
 import { FoldersService } from '@core/folders/folders.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
@@ -22,6 +22,8 @@ import { entitySlugSegment } from '@core/routing/entity-slug';
 import { TagsService } from '@core/tags/tags.service';
 import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
 import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
+import { FolderActionDialogComponent } from '@shared/folder-action-dialog/folder-action-dialog.component';
+import { FolderActionDialogController } from '@shared/folder-action-dialog/folder-action-dialog.controller';
 import { FolderBreadcrumbComponent } from '@shared/folder-breadcrumb/folder-breadcrumb.component';
 import { IconComponent } from '@shared/icon/icon.component';
 
@@ -64,6 +66,7 @@ const firstLetter = (title: string): string => {
     ChalkNewEntryComponent,
     ChalkRailComponent,
     FolderBreadcrumbComponent,
+    FolderActionDialogComponent,
   ],
   templateUrl: './lists-shelf.container.html',
   styleUrl: './lists-shelf.container.css',
@@ -86,6 +89,7 @@ export class ListsShelfContainer {
   protected readonly activeKey = signal<string | null>(null);
   protected readonly creating = signal<boolean>(false);
   protected readonly confirm = new ConfirmController();
+  protected readonly folderActionDialog = new FolderActionDialogController();
 
   protected readonly flowRef = viewChild<ElementRef<HTMLElement>>('flow');
 
@@ -272,8 +276,14 @@ export class ListsShelfContainer {
     await handleCreateFolder('list', this.foldersService, this.i18n, this.currentFolder());
   }
 
-  protected async onManageFolder(path: string): Promise<void> {
-    await handleFolderAction(`list:${path}`, this.foldersService, this.i18n);
+  protected onManageFolder(path: string): void {
+    openFolderActionDialog(
+      `list:${path}`,
+      this.foldersService,
+      this.i18n,
+      this.folderActionDialog,
+      (e) => this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize())),
+    );
   }
 }
 
