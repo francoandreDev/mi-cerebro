@@ -27,11 +27,6 @@ Formato por entrada:
 - **Por qué se difirió**: el modelo `Goal.deadline` es date-only y agregarle hora implica migración + UI en `DeadlinePickerComponent`. 23:59 es razonable para casi todo plazo "fin del día".
 - **Target**: sin asignar.
 
-### ~~Recordatorios automáticos para tareas / escritos con deadline~~ (resuelto, cierre documentado 2026-07-20)
-
-- **Qué**: extender el patrón goal-sourced a otras entidades con fecha (tareas con `dueDate`, escritos con plazo planificado), abriendo `sourceKind: 'task' | 'writing' | ...`.
-- **Estado**: cerrado. Ya implementado en el commit `8128516` ("add automatic reminders for tasks and writings with a deadline") — `TaskRemindersSyncService`/`WritingRemindersSyncService` (`core/reminders/`) existen y están inyectados en `AppShellContainer`, `TaskReminderConfig`/`WritingReminderConfig` (default `{ enabled: false }`) viven en los schemas respectivos. Sólo esta entrada de `deferred/` había quedado sin cerrar (violaba regla 24, doc desactualizada) — descubierto de rebote mientras se verificaba el modo "Relacionado" del dashboard (§22bis), que reveló además que ese mismo commit había roto la compilación de tests: `TaskSummary.reminder`/`WritingSummary.deadline` pasaron a requeridos pero `dashboard-filters.spec.ts`, `task-buckets.spec.ts` y `tasks.service.spec.ts` (schemaVersion esperado quedó en 4, el schema real ya estaba en 5) no se habían actualizado — toda la suite de tests no compilaba. Corregido de paso (mecánico, sin tocar producción): factories de test con los campos nuevos, assertion de schemaVersion actualizada. Suite: 532/536 en verde tras el fix (las 4 fallas restantes son el baseline preexistente de `tree-state.service.spec.ts`).
-
 ---
 
 ## Metas — pasos como estrellas (origen: schema v6, 2026-06-24; canvas editor v7, 2026-06-24)
