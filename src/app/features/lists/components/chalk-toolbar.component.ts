@@ -5,16 +5,19 @@ import type { TranslationKey } from '@core/i18n/i18n.types';
 import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
 import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
 import { IconComponent } from '@shared/icon/icon.component';
+import { MenuButtonComponent } from '@shared/menu-button/menu-button.component';
 
 import type { ChalkColorId, ChalkSize, ChalkTool } from '../models/chalk.types';
 import { CHALK_COLORS } from '../models/chalk.types';
 
 const SIZES: readonly ChalkSize[] = ['s', 'm', 'l'];
 
+export type ChalkExportFormat = 'png' | 'svg';
+
 @Component({
   selector: 'mc-chalk-toolbar',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ConfirmDialogComponent, IconComponent],
+  imports: [ConfirmDialogComponent, IconComponent, MenuButtonComponent],
   templateUrl: './chalk-toolbar.component.html',
   styleUrl: './chalk-toolbar.component.css',
 })
@@ -32,9 +35,15 @@ export class ChalkToolbarComponent {
   readonly sizeChange = output<ChalkSize>();
   readonly clearActive = output<void>();
   readonly toggleLayers = output<void>();
+  readonly exportBoard = output<ChalkExportFormat>();
 
   protected readonly palette = CHALK_COLORS;
   protected readonly sizes = SIZES;
+
+  protected readonly exportOptions = [
+    { key: 'png', label: 'PNG' },
+    { key: 'svg', label: 'SVG' },
+  ];
 
   private readonly i18n = inject(I18nService);
 
@@ -50,6 +59,10 @@ export class ChalkToolbarComponent {
 
   protected sizeLabel(s: ChalkSize): string {
     return this.t(`lists.chalk.size.${s}` as TranslationKey);
+  }
+
+  protected onExportChoice(key: string): void {
+    if (key === 'png' || key === 'svg') this.exportBoard.emit(key);
   }
 
   protected onClear(): void {

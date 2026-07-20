@@ -97,5 +97,12 @@
       <mc-icon name="list-bullets" />
       <span>{{ t('lists.chalk.layers') }}</span>
     </button>
+
+    <mc-menu-button
+      variant="ghost"
+      [label]="t('lists.chalk.export')"
+      [options]="exportOptions"
+      (choose)="onExportChoice($event)"
+    />
   }
 </div>

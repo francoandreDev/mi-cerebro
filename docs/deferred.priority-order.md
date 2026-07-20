@@ -79,7 +79,7 @@ Polish visual, casos de baja frecuencia, o ítems que el propio `deferred/index.
 42. Riego con cursor regadera (tasks) (Tier 3) — bajo riesgo de uso real hasta que el jardín se llene.
 43. Cesta de cosecha con salto en arco (tasks) (Tier 3) — falta sólo la animación FLIP.
 44. Textura realista de tiza (Tier 3) — polish, entra si las capas se sienten "planchadas".
-45. Export PNG/SVG de las capas (listas) (Tier 3) — conveniencia, no necesaria para no perder trabajo.
+45. ~~Export PNG/SVG de las capas (listas)~~ — resuelto 2026-07-20, botón "Exportar" (`mc-menu-button`) en la toolbar de tiza serializa las capas visibles a un SVG standalone (puntos normalizados horneados a px reales) y opcionalmente rasteriza a PNG vía canvas (`svgToPngBlob`), descarga con `triggerDownload` (ver `deferred/lists-images.md`, entrada eliminada).
 46. Undo/redo dedicado para trazos (listas) (Tier 3) — panel de capas + historial git ya cubren.
 47. Estilo "pizarra de verdad" en todo el pane (Tier 3) — riesgo de romper modo lectura.
 48. Animaciones de snooze / gestos manuales (palomar) (Tier 3) — las animaciones críticas del scheduler ya están.

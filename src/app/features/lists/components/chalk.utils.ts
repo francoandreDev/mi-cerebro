@@ -1,5 +1,12 @@
+import { toSlug } from '@shared/utils/slug';
+
 import type { ChalkLayer, ChalkStroke } from '../models/chalk.types';
-import { ERASER_RADIUS_PX, newChalkLayer } from '../models/chalk.types';
+import {
+  CHALK_COLORS,
+  CHALK_SIZE_PX,
+  ERASER_RADIUS_PX,
+  newChalkLayer,
+} from '../models/chalk.types';
 
 export const ensureActiveLayer = (
   layers: readonly ChalkLayer[],
@@ -122,3 +129,32 @@ export const pointsToPath = (points: readonly (readonly [number, number])[]): st
   }
   return d;
 };
+
+// why: on-screen strokes use viewBox "0 0 1 1" + vector-effect="non-scaling-stroke"
+//      so stroke-width stays constant in screen px regardless of the board's
+//      real size. A standalone export can't rely on that (no live scale
+//      transform once detached), so points are baked into real px coordinates
+//      here and stroke-width is written as a plain px value in the same space.
+export const buildChalkExportSvg = (
+  layers: readonly ChalkLayer[],
+  widthPx: number,
+  heightPx: number,
+): string => {
+  const w = Math.max(1, Math.round(widthPx));
+  const h = Math.max(1, Math.round(heightPx));
+  const groups = layers
+    .filter((l) => l.visible)
+    .map((l) => `<g>${l.strokes.map((s) => strokeToSvgPath(s, w, h)).join('')}</g>`)
+    .join('');
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${groups}</svg>`;
+};
+
+const strokeToSvgPath = (stroke: ChalkStroke, w: number, h: number): string => {
+  const d = pointsToPath(stroke.points.map(([x, y]) => [x * w, y * h] as const));
+  const hex = CHALK_COLORS.find((c) => c.id === stroke.color)?.hex ?? '#f1f5d8';
+  const width = CHALK_SIZE_PX[stroke.size];
+  return `<path d="${d}" stroke="${hex}" stroke-width="${width}" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.92" />`;
+};
+
+export const chalkExportFilename = (title: string, ext: 'svg' | 'png'): string =>
+  `${toSlug(title, 'pizarra')}.${ext}`;

@@ -6,10 +6,13 @@ import {
   input,
   output,
   signal,
+  viewChild,
 } from '@angular/core';
 
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { triggerDownload } from '@shared/utils/trigger-download';
+import { svgToPngBlob } from '@shared/utils/svg-to-png';
 
 import type {
   ChalkColorId,
@@ -20,9 +23,11 @@ import type {
 } from '../models/chalk.types';
 import { ChalkBoardComponent } from './chalk-board.component';
 import { ChalkLayersPanelComponent } from './chalk-layers-panel.component';
+import type { ChalkExportFormat } from './chalk-toolbar.component';
 import { ChalkToolbarComponent } from './chalk-toolbar.component';
 import {
   addLayer,
+  chalkExportFilename,
   clearLayer,
   ensureActiveLayer,
   eraseAt,
@@ -45,10 +50,12 @@ import {
 export class ChalkboardOverlayComponent {
   readonly layers = input.required<readonly ChalkLayer[]>();
   readonly editable = input<boolean>(true);
+  readonly entityTitle = input<string>('');
 
   readonly layersChange = output<readonly ChalkLayer[]>();
 
   private readonly i18n = inject(I18nService);
+  private readonly board = viewChild(ChalkBoardComponent);
 
   protected readonly active = signal<boolean>(false);
   protected readonly tool = signal<ChalkTool>('chalk');
@@ -142,6 +149,21 @@ export class ChalkboardOverlayComponent {
 
   protected onToggleLayers(): void {
     this.layersOpen.update((v) => !v);
+  }
+
+  protected async onExportBoard(format: ChalkExportFormat): Promise<void> {
+    const data = this.board()?.exportData();
+    if (!data) return;
+    const filename = chalkExportFilename(
+      this.entityTitle() || this.t('lists.chalk.export'),
+      format,
+    );
+    if (format === 'svg') {
+      triggerDownload(new Blob([data.svg], { type: 'image/svg+xml' }), filename);
+      return;
+    }
+    const png = await svgToPngBlob(data.svg, data.width, data.height);
+    triggerDownload(png, filename);
   }
 
   private defaultLayerName(currentCount: number): string {

@@ -27,12 +27,6 @@ Formato por entrada:
 - **Por qué se difirió**: el feel "tiza" lo aporta la combinación de paleta apagada sobre fondo oscuro del pane. Sumar filtros SVG complica el rendering en trazos largos. Polish que entra si las capas se sienten "planchadas".
 - **Target**: sin asignar.
 
-### Export PNG / SVG de las capas
-
-- **Qué**: botón "exportar pizarra" que serialice las capas visibles a una imagen.
-- **Por qué se difirió**: las capas viven en el JSON de la lista (versionado git las preserva). Exportar es una conveniencia, no necesario para no perder trabajo. Cuando aparezca el caso de uso (compartir un esquema fuera de la app), se agrega.
-- **Target**: sin asignar.
-
 ### Undo/redo dedicado para trazos
 
 - **Qué**: `Ctrl+Z` que deshaga el último trazo / acción de capa sin pasar por history git.

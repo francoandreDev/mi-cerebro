@@ -17,7 +17,13 @@ import type {
   ChalkTool,
 } from '../models/chalk.types';
 import { CHALK_COLORS, CHALK_SIZE_PX } from '../models/chalk.types';
-import { pointsToPath } from './chalk.utils';
+import { buildChalkExportSvg, pointsToPath } from './chalk.utils';
+
+export interface ChalkExportData {
+  readonly svg: string;
+  readonly width: number;
+  readonly height: number;
+}
 
 interface RenderableStroke {
   readonly id: string;
@@ -105,6 +111,15 @@ export class ChalkBoardComponent {
     }
     this.points = [];
     this.previewPath.set('');
+  }
+
+  exportData(): ChalkExportData | null {
+    const svgEl = this.svg()?.nativeElement;
+    if (!svgEl) return null;
+    const rect = svgEl.getBoundingClientRect();
+    const width = rect.width || 1;
+    const height = rect.height || 1;
+    return { svg: buildChalkExportSvg(this.layers(), width, height), width, height };
   }
 
   private toRenderable(stroke: ChalkStroke): RenderableStroke {

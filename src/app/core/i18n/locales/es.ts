@@ -902,6 +902,7 @@ export const es = {
   'lists.chalk.confirm.clear.confirm': 'Sí, vaciar',
   'lists.chalk.confirm.cancel': 'Cancelar',
   'lists.chalk.layers': 'Capas',
+  'lists.chalk.export': 'Exportar',
   'lists.chalk.layersEmpty': 'Sin capas todavía. El primer trazo crea una.',
   'lists.chalk.addLayer': 'Nueva capa',
   'lists.chalk.layerDefault': 'Capa {n}',

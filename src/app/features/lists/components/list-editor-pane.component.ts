@@ -60,6 +60,7 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
       class="board"
       [layers]="list().chalkLayers"
       [editable]="editable()"
+      [entityTitle]="list().title"
       (layersChange)="chalkLayersChange.emit($event)"
     >
       <mc-editor
