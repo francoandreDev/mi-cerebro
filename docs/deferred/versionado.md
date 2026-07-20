@@ -27,22 +27,10 @@ Formato por entrada:
 - **Por qué**: implementar variantes sin git significaría reinventar branching + merge desde cero. No vale la pena hasta confirmar que isomorphic-git no funciona.
 - **Target**: sin asignar (sólo se aborda si el fallback se activa en 13a).
 
-### Tooltip por-día en la panorámica (hover sobre la ladera)
-
-- **Qué**: al pasar el mouse sobre la silueta de la cordillera (`.panorama-svg`), mostrar un tooltip flotante con `{fecha} · N hallazgos · mix de facetas`. Actualmente el hit-rect ya tiene `<title>` accesible (nativo del navegador), pero el hover no revela el pico exacto en el eje horizontal — el título aparece con retardo del OS y no muestra el mix de facetas.
-- **Por qué se difirió**: Fase 3 lo dejó marcado como "no crítico, pulido posterior". Cerramos Fase 5 sin abordarlo porque la navegación real (doble-click en columna, click en fósil, mini-mapa desde estratos) ya cubre el flujo principal y agregar un tooltip HTML propio implica un componente flotante posicionado sobre SVG con manejo de escape/scroll.
-- **Target**: §19.16f (pulido del historial) — junto con el resto del polish visual del rediseño.
-
 ### Pulido visual general de `/history`
 
 - **Qué**: cuando cerramos 13a el usuario confirmó que la información está completa y legible pero "mucha info, poco visual". Queda como ítem único agrupador para futuras iteraciones de tipografía, densidad, jerarquía y micro-interacciones del historial (anchos de columna, separadores entre buckets, hover states, animación del cambio de selección, etc.).
 - **Por qué se difirió**: estructura y funcionalidad están; el polish entra cuando 13a-d estén cerrados y tengamos uso real para saber qué duele.
-- **Target**: §19.16f.
-
-### Iconito de entidad principal en cada polaroid revelada
-
-- **Qué**: cada polaroid del zoom cordel muestra el diff ya renderizado (entidades tocadas en la leyenda al pie), pero no un ícono de la entidad principal del commit sobre la propia foto — pendiente desde el plan original de `docs/history-v2-handoff.md`.
-- **Por qué se difirió**: usa `entities` del diff, que ya está disponible una vez que `HistoryDiffService.loadForCommit` resuelve; quedó anotado como pulido visual menor, no bloqueante para el gate de la Fase 4.
 - **Target**: §19.16f.
 
 ### Refactor de `/history` a subcomponentes por zoom
@@ -97,12 +85,6 @@ Formato por entrada:
 
 - **Qué**: además de la pasada background automática, una acción "Compactar este rango" desde `/history` que permita al usuario seleccionar un span de commits y forzar la fusión, respetando las barreras (tags, `before-restore`, `Merge-Group`).
 - **Por qué se difirió**: la compactación background con buckets por edad cubre el caso 95%. Compactación manual es una herramienta avanzada que se justifica si el usuario quiere "limpiar" un período específico sin esperar al auto. Sin uso real no hay forma de saber si vale la UI.
-- **Target**: sin asignar.
-
-### Banner accionable de "compactar ahora" en el lecho de roca de `/history`
-
-- **Qué**: el `.bedrock` al pie de la vista de estratos ya muestra el conteo real de commits compactables pendientes (`CompactionSchedulerService.shouldSuggestEnableCompaction`), pero es informativo — no tiene un botón que dispare la compactación desde ahí mismo. Hoy esa acción sólo existe en `/dev` (`DevContainer`, no linkeado desde el rail).
-- **Por qué se difirió**: se dejó para cuando el flujo de compactación tenga UI dedicada más allá del panel de dev/QA — traer la acción al lecho de roca implica exponerla a un flujo de usuario final, no sólo debug.
 - **Target**: sin asignar.
 
 ### `.git/` en OPFS para acelerar operaciones git

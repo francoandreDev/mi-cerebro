@@ -14,10 +14,14 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { ErrorService } from '@core/errors/error.service';
 import { I18nService } from '@core/i18n/i18n.service';
+import { SettingsService } from '@core/settings/settings.service';
 import { CompactionSchedulerService } from '@core/versioning/compaction-scheduler.service';
 import { RestoreService } from '@core/versioning/restore.service';
+import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
 import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
+import { entityKindIcon } from '@shared/entity-cards/entity-kind-icon';
 import { IconComponent } from '@shared/icon/icon.component';
+import type { IconName } from '@shared/icon/icons.data';
 import { McDatePipe } from '@shared/pipes/mc-date.pipe';
 
 import type { TranslationKey } from '@core/i18n/i18n.types';
@@ -55,6 +59,7 @@ import {
   startOfDayMs,
 } from '../services/strata.utils';
 import type {
+  PanoramaColumn,
   PanoramaGeometry,
   PanoramaFossil,
   StratumDensity,
@@ -246,9 +251,12 @@ export class HistoryContainer implements OnInit, OnDestroy {
   private readonly diff = inject(HistoryDiffService);
   private readonly restore = inject(RestoreService);
   private readonly compactionScheduler = inject(CompactionSchedulerService);
+  private readonly settings = inject(SettingsService);
   private readonly shortcuts = inject(ShortcutsService);
   protected readonly suggestEnableCompaction =
     this.compactionScheduler.shouldSuggestEnableCompaction;
+  protected readonly compactionConfirm = new ConfirmController();
+  protected readonly compacting = signal(false);
   protected readonly milestones = inject(MilestoneController);
   private readonly errors = inject(ErrorService);
   protected readonly i18n = inject(I18nService);
@@ -490,6 +498,14 @@ export class HistoryContainer implements OnInit, OnDestroy {
   private readonly panoramaViewportH = signal(
     typeof window !== 'undefined' ? Math.round(window.innerHeight * 0.4) : 260,
   );
+  // why: hover state for the panorama tooltip (§ deferred "tooltip por-día") —
+  //      stores the whole column, not just its dayStart, so the template
+  //      doesn't need a second lookup to know where to position the tooltip.
+  protected readonly panoramaHoverColumn = signal<PanoramaColumn | null>(null);
+  private readonly panoramaAggByDay = computed<ReadonlyMap<number, DayAggregate>>(
+    () => new Map(this.panoramaAggregatesSignal().map((a) => [a.dayStart, a])),
+  );
+
   protected readonly panoramaGeometry = computed<PanoramaGeometry>(() => {
     const H = Math.max(160, this.panoramaViewportH());
     return computePanoramaGeometry(this.panoramaAggregatesSignal(), { height: H });
@@ -921,6 +937,46 @@ export class HistoryContainer implements OnInit, OnDestroy {
     return Math.max(0, kinds.length - MAX_VISIBLE_KIND_CHIPS);
   }
 
+  // why: a commit can touch several entities/kinds; the polaroid only has
+  //      room for one badge, so it shows the first kind touched rather than
+  //      trying to represent the full set (the strata chips already do that).
+  protected primaryKindIcon(kinds: readonly string[]): IconName | null {
+    const kind = kinds[0];
+    return kind ? entityKindIcon(kind) : null;
+  }
+
+  // why: the banner only shows when compaction is remote-gated
+  //      (`shouldSuggestEnableCompaction` — remote configured, "compactar
+  //      con remoto" off). `decideCompaction` skips remote-gated refs
+  //      unconditionally, `ignoreThreshold` does NOT bypass that gate — so
+  //      just calling `runOnce` here would silently no-op in exactly the
+  //      case this button is shown for. The real action is the one the old
+  //      "ir a configuración" link pointed at: turn the setting on, then run.
+  //      Rewrites git history (and force-pushes if a remote is configured),
+  //      so it's gated behind a real confirm, same as the /dev QA button.
+  protected onCompactNow(): void {
+    this.compactionConfirm.ask(
+      {
+        title: this.i18n.t('versioning.history.compactionBanner.confirm.title'),
+        message: this.i18n.t('versioning.history.compactionBanner.confirm.body'),
+        confirmLabel: this.i18n.t('versioning.history.compactionBanner.confirm.confirm'),
+        cancelLabel: this.i18n.t('versioning.history.compactionBanner.confirm.cancel'),
+        tone: 'default',
+      },
+      async () => {
+        this.compacting.set(true);
+        try {
+          this.settings.setCompactWithRemote(true);
+          await this.compactionScheduler.runOnce({ ignoreThreshold: true });
+        } catch (e) {
+          this.errors.report(e);
+        } finally {
+          this.compacting.set(false);
+        }
+      },
+    );
+  }
+
   private readonly selectedOidSignal = signal<string | null>(null);
   protected readonly selectedOid = this.selectedOidSignal.asReadonly();
   protected readonly selectedEntry = computed<CommitEntry | null>(() => {
@@ -1345,6 +1401,23 @@ export class HistoryContainer implements OnInit, OnDestroy {
       date: new Date(dayStart).toLocaleDateString(),
       n: count,
     });
+  }
+
+  // why: the native <title> on `.panorama-hit` already gives an accessible
+  //      fallback but only shows count, not facet mix, and OS tooltips lag —
+  //      this custom tooltip reveals both instantly on hover.
+  protected panoramaTooltipFacets(dayStart: number): readonly string[] {
+    const agg = this.panoramaAggByDay().get(dayStart);
+    if (!agg || agg.count === 0) return [];
+    return (['main', 'comments', 'draft'] as const)
+      .filter((f) => agg.byFacet[f] > 0)
+      .map((f) =>
+        this.i18n.t('versioning.history.panorama.facetShare', {
+          facet: this.i18n.t(`versioning.history.facet.${f}` as TranslationKey),
+          n: agg.byFacet[f],
+          pct: Math.round((agg.byFacet[f] / agg.count) * 100),
+        }),
+      );
   }
 
   // Keyboard nav between milestones: '[' previous, ']' next. Bracket-keys are

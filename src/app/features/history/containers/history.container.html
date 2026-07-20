@@ -3,6 +3,11 @@
   (confirmed)="milestones.confirm.accept()"
   (cancelled)="milestones.confirm.cancel()"
 />
+<mc-confirm-dialog
+  [request]="compactionConfirm.request()"
+  (confirmed)="compactionConfirm.accept()"
+  (cancelled)="compactionConfirm.cancel()"
+/>
 <header class="head">
   <h2>
     <mc-icon name="clock-counter-clockwise" class="title-icon" />
@@ -192,6 +197,8 @@
                   [attr.aria-label]="panoramaColumnTitle(c.dayStart, c.count)"
                   (click)="setPanoramaSelectedDay(c.dayStart)"
                   (dblclick)="onPanoramaColumnActivate(c.dayStart)"
+                  (mouseenter)="panoramaHoverColumn.set(c)"
+                  (mouseleave)="panoramaHoverColumn.set(null)"
                 >
                   <title>{{ panoramaColumnTitle(c.dayStart, c.count) }}</title>
                 </rect>
@@ -275,6 +282,18 @@
                   </svg>
                 </span>
               }
+              @if (panoramaHoverColumn(); as hover) {
+                <div
+                  class="panorama-tooltip"
+                  [style.left.%]="(hover.x / (panoramaGeometry().width || 1)) * 100"
+                  [style.top.%]="(hover.peakY / panoramaGeometry().height) * 100"
+                >
+                  <strong>{{ panoramaColumnTitle(hover.dayStart, hover.count) }}</strong>
+                  @for (line of panoramaTooltipFacets(hover.dayStart); track line) {
+                    <span>{{ line }}</span>
+                  }
+                </div>
+              }
             </div>
           </div>
         </div>
@@ -351,6 +370,9 @@
                         class="polaroid-card"
                         [style.borderLeftColor]="commitOriginColor(p.oid)"
                       >
+                        @if (primaryKindIcon(p.kinds); as icon) {
+                          <mc-icon [name]="icon" class="polaroid-kind-icon" />
+                        }
                         <span class="polaroid-caption">
                           <span class="polaroid-time">{{ p.date | mcDate }}</span>
                           <span class="polaroid-message">{{ p.message.split('\n')[0] }}</span>
@@ -606,9 +628,23 @@
           <div class="bedrock-body">
             <strong>{{ i18n.t('versioning.history.compactionBanner.title') }}</strong>
             <p>{{ i18n.t('versioning.history.compactionBanner.body') }}</p>
-            <a class="bedrock-cta" routerLink="/settings">
-              {{ i18n.t('versioning.history.compactionBanner.cta') }} →
-            </a>
+            <div class="bedrock-actions">
+              <button
+                type="button"
+                class="bedrock-cta bedrock-cta-primary"
+                [disabled]="compacting()"
+                (click)="onCompactNow()"
+              >
+                {{
+                  compacting()
+                    ? i18n.t('versioning.history.compactionBanner.compacting')
+                    : i18n.t('versioning.history.compactionBanner.compactNow')
+                }}
+              </button>
+              <a class="bedrock-cta" routerLink="/settings">
+                {{ i18n.t('versioning.history.compactionBanner.cta') }} →
+              </a>
+            </div>
           </div>
         </aside>
       }

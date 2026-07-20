@@ -213,6 +213,13 @@ export const es = {
   'versioning.history.compactionBanner.body':
     'Alguna de tus ramas pasó los 500 commits. La compactación automática está desactivada porque hay un remoto configurado: activá "Compactar aunque haya remoto" en configuración para que se reescriba sola.',
   'versioning.history.compactionBanner.cta': 'Ir a configuración',
+  'versioning.history.compactionBanner.compactNow': 'Compactar ahora',
+  'versioning.history.compactionBanner.confirm.title': 'Compactar el historial ahora',
+  'versioning.history.compactionBanner.confirm.body':
+    'Esto activa "Compactar aunque haya remoto" y reescribe el historial de git de inmediato (con force-push si tenés un remoto configurado). No se puede deshacer.',
+  'versioning.history.compactionBanner.confirm.confirm': 'Compactar',
+  'versioning.history.compactionBanner.confirm.cancel': 'Cancelar',
+  'versioning.history.compactionBanner.compacting': 'Compactando…',
   'versioning.history.placeholder': 'Próximamente: timeline de commits, diff por entidad, restore.',
   'versioning.history.openButton': 'Abrir historial',
   'versioning.history.railLabel': 'Historial',
