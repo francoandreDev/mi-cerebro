@@ -54,6 +54,7 @@ const previewBook = (raw: Record<string, unknown>): TrashPreview => {
     createdAt: asString(book['createdAt']),
     updatedAt: asString(book['updatedAt']),
     facts: [{ labelKey: 'trash.preview.chapters', value: String(count) }],
+    accent: asString(book['accent']),
   };
 };
 
@@ -69,6 +70,7 @@ const previewCollection = (
     createdAt: asString(raw['createdAt']),
     updatedAt: asString(raw['updatedAt']),
     facts: [{ labelKey, value: String(count) }],
+    accent: null,
   };
 };
 
@@ -81,6 +83,7 @@ const previewReminder = (raw: Record<string, unknown>): TrashPreview => ({
     { labelKey: 'trash.preview.dueAt', value: asString(raw['dueAt']) ?? '—' },
     statusFact(raw['done'], 'trash.preview.status.done', 'trash.preview.status.pending'),
   ],
+  accent: null,
 });
 
 const taskFacts = (raw: Record<string, unknown>): TrashPreviewFact[] => {
@@ -116,6 +119,7 @@ const previewBodied = (
   createdAt: asString(raw['createdAt']),
   updatedAt: asString(raw['updatedAt']),
   facts,
+  accent: null,
 });
 
 export const buildTrashPreview = (kind: TrashKind, raw: Record<string, unknown>): TrashPreview => {

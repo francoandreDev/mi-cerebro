@@ -20,9 +20,15 @@
       </div>
     }
     @case ('book') {
-      <div class="spine" aria-hidden="true">
-        <span class="initial">{{ bookInitial() }}</span>
-        <span class="byline">{{ t('trash.bookByline') }}</span>
+      <div class="volume-slot" aria-hidden="true">
+        <mc-book-volume
+          [bookId]="id()"
+          [title]="title()"
+          [chapterCount]="bookChapterCount()"
+          [accent]="bookAccent()"
+          tallness="short"
+          density="compact"
+        />
       </div>
     }
     @case ('list') {

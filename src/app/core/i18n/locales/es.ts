@@ -1322,7 +1322,6 @@ export const es = {
   'trash.noMatch': 'Sin items de este tipo en la papelera.',
   'trash.galleryImages.one': '1 imagen',
   'trash.galleryImages.many': '{n} imágenes',
-  'trash.bookByline': 'Libro guardado',
   'trash.taskPending': 'Pendiente',
   'trash.taskDone': 'Hecha',
   'trash.view': 'Ver',

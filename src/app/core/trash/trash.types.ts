@@ -32,6 +32,7 @@ export interface TrashPreview {
   readonly createdAt: string | null;
   readonly updatedAt: string | null;
   readonly facts: readonly TrashPreviewFact[];
+  readonly accent: string | null;
 }
 
 export const TRASH_META_DIR = '.mi-cerebro';

@@ -77,37 +77,13 @@
   color: var(--mc-fg-muted);
 }
 
-/* book spine */
-.spine {
+/* book volume */
+.volume-slot {
   flex: 1 1 auto;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--mc-space-2);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--mc-fg-tertiary, #cf222e) 12%, var(--mc-bg-base)) 0%,
-    var(--mc-bg-base) 100%
-  );
-  border-radius: var(--mc-radius-sm);
   padding: var(--mc-space-3);
-  aspect-ratio: 3 / 4;
-  border: 1px solid var(--mc-border-default);
-}
-.initial {
-  font-family: var(--mc-font-serif, Georgia, serif);
-  font-size: 3.2rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  color: var(--mc-fg-tertiary, #cf222e);
-  line-height: 1;
-}
-.byline {
-  font-size: var(--mc-font-size-xs, 0.75rem);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--mc-fg-muted);
 }
 
 /* list */

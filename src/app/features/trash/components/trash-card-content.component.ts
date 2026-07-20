@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input } from '@an
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import type { TrashKind, TrashPreview } from '@core/trash/trash.types';
+import { BookVolumeComponent } from '@shared/entity-cards/book-volume.component';
 
 interface ContentState {
   readonly status: 'loading' | 'ready' | 'missing';
@@ -13,20 +14,28 @@ interface ContentState {
 @Component({
   selector: 'mc-trash-card-content',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [BookVolumeComponent],
   templateUrl: './trash-card-content.component.html',
   styleUrl: './trash-card-content.component.css',
 })
 export class TrashCardContentComponent {
   readonly kind = input.required<TrashKind>();
+  readonly id = input.required<string>();
   readonly title = input.required<string>();
   readonly state = input.required<ContentState>();
 
   private readonly i18n = inject(I18nService);
 
-  protected readonly bookInitial = computed<string>(() => {
-    const t = this.title().trim();
-    return t.length > 0 ? t[0]!.toUpperCase() : '·';
+  protected readonly bookChapterCount = computed<number>(() => {
+    const p = this.state().preview;
+    if (!p) return 0;
+    const fact = p.facts.find((f) => f.labelKey === 'trash.preview.chapters');
+    return fact ? Number(fact.value) || 0 : 0;
   });
+
+  protected readonly bookAccent = computed<string | null>(
+    () => this.state().preview?.accent ?? null,
+  );
 
   protected readonly galleryCount = computed<number>(() => {
     const p = this.state().preview;

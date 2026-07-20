@@ -13,16 +13,6 @@ Formato por entrada:
 
 ---
 
-## Papelera / UI (origen: rediseño de /trash)
-
-### Volumen real (`BookVolumeComponent`) para libros en la papelera
-
-- **Qué**: la card de libro en `/trash` muestra hoy un tratamiento tipográfico estilizado (inicial grande + byline) en una caja con aspect-ratio 3/4. El objetivo es reusar el `BookVolumeComponent` real con `accent` del bundle del libro borrado.
-- **Por qué se difirió**: requiere leer el `BookBundle` desde el archivo de la papelera para extraer `accent` + cualquier otro metadato necesario por el volumen. Mismo razonamiento que los thumbs: baja frecuencia, no bloquea la UX nueva.
-- **Target**: sin asignar.
-
----
-
 ## Books / UI (origen: rediseño de /books)
 
 ### Pin/fijado de estantes al tope del bookshelf

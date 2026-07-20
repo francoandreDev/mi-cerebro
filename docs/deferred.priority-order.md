@@ -87,7 +87,7 @@ Polish visual, casos de baja frecuencia, o ítems que el propio `deferred/index.
 50. Palomares temáticos por categoría (Tier 3) — los filtros del MVP ya resuelven la saturación.
 51. ~~Drag-and-drop de tracks a playlist (música)~~ — resuelto 2026-07-18, auto-switch de tab + drop en fila de playlist (ver `deferred/music.md`).
 52. Thumbs reales 2×2 para galerías en la papelera (Tier 3) — baja frecuencia, vista de papelera no crítica.
-53. Volumen real (`BookVolumeComponent`) en la papelera (Tier 3) — mismo razonamiento.
+53. ~~Volumen real (`BookVolumeComponent`) en la papelera~~ — resuelto 2026-07-20, la card de libro en `/trash` reusa `mc-book-volume` (`shared/entity-cards/`) con `accent`/cantidad de capítulos leídos del `BookBundle` guardado, en vez del placeholder tipográfico (ver `deferred/trash-books.md`, entrada eliminada).
 54. Pulido visual general de `/history` (Tier 4) — agrupador sin límite claro, entra cuando haya uso real.
 55. Override de imágenes para portada/miniaturas (books) (Tier 4) — los faces procedurales ya dan identidad visual.
 56. Paginación real persistida fila por fila (books) (Tier 4) — se autocorrige apenas el usuario abre el capítulo.
