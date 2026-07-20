@@ -353,6 +353,8 @@ export const es = {
   'versioning.history.zoom.shortcutIn': 'Zoom in en /historial',
   'versioning.history.zoom.shortcutOut': 'Zoom out en /historial',
   'versioning.history.zoom.shortcutUp': 'Salir del zoom actual (subir)',
+  'versioning.history.nav.shortcutPrev': 'Milestone/polaroid anterior en /historial',
+  'versioning.history.nav.shortcutNext': 'Milestone/polaroid siguiente en /historial',
   'versioning.history.panorama.loading': 'Levantando el paisaje…',
   'versioning.history.panorama.empty':
     'Todavía no hay cumbres que dibujar. Trabajá un rato y volvé.',

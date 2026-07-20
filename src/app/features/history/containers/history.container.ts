@@ -3,7 +3,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
-  HostListener,
   computed,
   effect,
   inject,
@@ -1144,6 +1143,21 @@ export class HistoryContainer implements OnInit, OnDestroy {
         scope: 'editable-safe',
         handler: () => this.stepZoom(-1),
       }),
+      // why: '[' / ']' navegan milestone a milestone (o polaroid a polaroid
+      //      en cordel) — elegidas por ser estables entre layouts de teclado
+      //      y no colisionar con nada dentro del timeline head.
+      this.shortcuts.register({
+        combo: '[',
+        labelKey: 'versioning.history.nav.shortcutPrev',
+        scope: 'editable-safe',
+        handler: () => this.navigateAdjacent(-1),
+      }),
+      this.shortcuts.register({
+        combo: ']',
+        labelKey: 'versioning.history.nav.shortcutNext',
+        scope: 'editable-safe',
+        handler: () => this.navigateAdjacent(1),
+      }),
     );
   }
 
@@ -1335,15 +1349,8 @@ export class HistoryContainer implements OnInit, OnDestroy {
 
   // Keyboard nav between milestones: '[' previous, ']' next. Bracket-keys are
   // a stable choice across keyboard layouts and don't collide with the inputs
-  // inside the timeline head.
-  @HostListener('document:keydown', ['$event'])
-  protected onKeydown(ev: KeyboardEvent): void {
-    if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
-    const target = ev.target as HTMLElement | null;
-    if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
-    if (target?.isContentEditable) return;
-    if (ev.key !== '[' && ev.key !== ']') return;
-    const direction = ev.key === ']' ? 1 : -1;
+  // inside the timeline head. Registered via ShortcutsService (see ngOnInit).
+  private navigateAdjacent(direction: 1 | -1): void {
     // why: en cordel [/] navega polaroid a polaroid (no sólo milestones).
     //      Fósiles siguen destacados visualmente en la tira.
     const target_ =
@@ -1351,7 +1358,6 @@ export class HistoryContainer implements OnInit, OnDestroy {
         ? this.findAdjacentCommit(direction)
         : this.findAdjacentMilestone(direction);
     if (!target_) return;
-    ev.preventDefault();
     this.selectedOidSignal.set(target_);
     queueMicrotask(() => {
       document

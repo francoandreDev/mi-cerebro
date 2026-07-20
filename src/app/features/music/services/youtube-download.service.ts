@@ -1,7 +1,11 @@
-// §19b — Descarga de MP3 desde YouTube. Sólo funciona en Tauri: yt-dlp
-// (sidecar, ver §19a) hace la extracción, ffmpeg (sidecar, ver §19a-bis)
-// hace la transcodificación a mp3 — yt-dlp lo spawnea directo vía
-// `--ffmpeg-location`, la capa JS nunca invoca ffmpeg.
+// §19b — Descarga de MP3 desde YouTube. En Tauri, yt-dlp (sidecar, ver §19a)
+// hace la extracción y ffmpeg (sidecar, ver §19a-bis) la transcodificación a
+// mp3 — yt-dlp lo spawnea directo vía `--ffmpeg-location`, la capa JS nunca
+// invoca ffmpeg. En Capacitor (addendum 2026-07-18) no hay spawn de procesos
+// arbitrarios permitido por el sandbox de Android, así que la misma pareja
+// yt-dlp+ffmpeg se resuelve como librería nativa embebida (youtubedl-android)
+// detrás de un plugin Capacitor propio — ver YoutubeDlPlugin.java y
+// youtube-download-native.plugin.ts. Sin equivalente en browser ni iOS.
 import { Injectable, inject } from '@angular/core';
 import { invoke } from '@tauri-apps/api/core';
 import { join, tempDir } from '@tauri-apps/api/path';
@@ -11,6 +15,8 @@ import { readFile, remove } from '@tauri-apps/plugin-fs';
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
 import { PlatformService } from '@core/platform/platform.service';
+
+import { YoutubeDlNative } from './youtube-download-native.plugin';
 
 const YOUTUBE_URL_RE = /^https?:\/\/(www\.|m\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[\w-]+/i;
 
@@ -32,12 +38,19 @@ function sanitizeFilename(title: string): string {
   return title.replace(/[/\\?%*:|"<>]/g, '').trim() || 'youtube-track';
 }
 
+function base64ToBytes(base64: string): Uint8Array {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
 @Injectable({ providedIn: 'root' })
 export class YoutubeDownloadService {
   private readonly platform = inject(PlatformService);
 
   isAvailable(): boolean {
-    return this.platform.current === 'tauri';
+    return this.platform.current === 'tauri' || this.platform.current === 'capacitor';
   }
 
   isValidUrl(url: string): boolean {
@@ -57,8 +70,19 @@ export class YoutubeDownloadService {
       });
     }
 
-    const ffmpegPath = await this.resolveFfmpegPath();
     const title = await this.fetchTitle(trimmed);
+    const bytes =
+      this.platform.current === 'tauri'
+        ? await this.downloadTauri(trimmed)
+        : await this.downloadCapacitor(trimmed);
+
+    const filename = `${sanitizeFilename(title)}.mp3`;
+    const file = new File([bytes as BlobPart], filename, { type: 'audio/mpeg' });
+    return { file, title };
+  }
+
+  private async downloadTauri(url: string): Promise<Uint8Array> {
+    const ffmpegPath = await this.resolveFfmpegPath();
 
     const dir = await tempDir();
     const id = crypto.randomUUID();
@@ -76,7 +100,7 @@ export class YoutubeDownloadService {
       ffmpegPath,
       '-o',
       outputTemplate,
-      trimmed,
+      url,
     ];
     const result = await Command.sidecar('binaries/yt-dlp', args).execute();
 
@@ -84,7 +108,7 @@ export class YoutubeDownloadService {
       throw new AppError(ERROR_CODES.MUS_004, {
         severity: 'error',
         context: {
-          url: trimmed,
+          url,
           exitCode: result.code,
           args,
           stdout: result.stdout,
@@ -101,15 +125,26 @@ export class YoutubeDownloadService {
       throw new AppError(ERROR_CODES.MUS_004, {
         severity: 'error',
         cause,
-        context: { url: trimmed, expectedPath },
+        context: { url, expectedPath },
         recoverable: true,
       });
     }
     await remove(expectedPath).catch(() => undefined);
+    return bytes;
+  }
 
-    const filename = `${sanitizeFilename(title)}.mp3`;
-    const file = new File([bytes as BlobPart], filename, { type: 'audio/mpeg' });
-    return { file, title };
+  private async downloadCapacitor(url: string): Promise<Uint8Array> {
+    try {
+      const { base64 } = await YoutubeDlNative.download({ url });
+      return base64ToBytes(base64);
+    } catch (cause) {
+      throw new AppError(ERROR_CODES.MUS_004, {
+        severity: 'error',
+        cause,
+        context: { url, reason: 'capacitor-native-download-failed' },
+        recoverable: true,
+      });
+    }
   }
 
   private async resolveFfmpegPath(): Promise<string> {
@@ -126,6 +161,12 @@ export class YoutubeDownloadService {
   }
 
   private async fetchTitle(url: string): Promise<string> {
+    return this.platform.current === 'tauri'
+      ? this.fetchTitleTauri(url)
+      : this.fetchTitleCapacitor(url);
+  }
+
+  private async fetchTitleTauri(url: string): Promise<string> {
     const result = await Command.sidecar('binaries/yt-dlp', [
       ...YOUTUBE_EXTRACTOR_ARGS,
       '--skip-download',
@@ -141,5 +182,19 @@ export class YoutubeDownloadService {
       });
     }
     return result.stdout.trim();
+  }
+
+  private async fetchTitleCapacitor(url: string): Promise<string> {
+    try {
+      const { title } = await YoutubeDlNative.fetchTitle({ url });
+      return title;
+    } catch (cause) {
+      throw new AppError(ERROR_CODES.MUS_004, {
+        severity: 'error',
+        cause,
+        context: { url, reason: 'capacitor-native-fetch-title-failed' },
+        recoverable: true,
+      });
+    }
   }
 }

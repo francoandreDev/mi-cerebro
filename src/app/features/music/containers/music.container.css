@@ -50,6 +50,12 @@
 .zone-center {
   padding: 0;
   background: transparent;
+  /* why: zone-center's real pixel width is set by the grid's fr ratio with
+     zone-left (music.container.css .zones), not by the page viewport — a
+     viewport @media can't see when this column itself gets squeezed. Expose
+     it as a size container so children can react to their true width. */
+  container-type: inline-size;
+  container-name: mc-zone-center;
 }
 .zone-center > .center-top,
 .zone-center > .center-bottom,

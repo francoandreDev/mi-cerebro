@@ -297,3 +297,15 @@
 .eq i:nth-child(3) { animation-delay: 300ms; }
 .eq.paused i { animation-play-state: paused; height: 30%; }
 @keyframes mc-alb-eq { 0%, 100% { height: 30%; } 50% { height: 100%; } }
+
+@media (max-width: 1100px) {
+  /* why: zone-left shrinks to minmax(260px, 1fr) at this breakpoint (see
+     music.container.css) — the youtube-download form (input + button) and
+     the upload button no longer both fit on one nowrap row. */
+  .zone-head-actions {
+    flex-wrap: wrap;
+  }
+  .youtube-download {
+    flex: 1 1 100%;
+  }
+}

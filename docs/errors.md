@@ -502,9 +502,9 @@ Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `d
 ### MCB-MUS-002 — Descarga de YouTube no disponible en esta plataforma
 
 - **Severidad:** warning
-- **Cuándo:** `YoutubeDownloadService.download()` se invoca corriendo en navegador o Capacitor (`PlatformService.current !== 'tauri'`).
-- **Causa típica:** guard de defensa en profundidad — la UI ya debería deshabilitar el botón con tooltip en estas plataformas (§19). Sólo se ve si algo llama al servicio programáticamente.
-- **Cómo resolver:** usar la versión de escritorio (Tauri) de la app para descargar de YouTube.
+- **Cuándo:** `YoutubeDownloadService.download()` se invoca corriendo en navegador (`PlatformService.current === 'browser'`). Ya no aplica a Capacitor desde el addendum 2026-07-18 (ver §19b en `roadmap-19-21.md`) — ahí baja por el plugin nativo `YoutubeDlPlugin`.
+- **Causa típica:** guard de defensa en profundidad — la UI ya debería deshabilitar el botón con tooltip en browser (§19). Sólo se ve si algo llama al servicio programáticamente.
+- **Cómo resolver:** usar la versión de escritorio (Tauri) o el APK de Android de la app para descargar de YouTube.
 - **Recuperable:** sí — no se intenta ninguna descarga.
 
 ### MCB-MUS-003 — URL de YouTube inválida
@@ -518,9 +518,9 @@ Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `d
 ### MCB-MUS-004 — Falló la descarga o conversión a MP3
 
 - **Severidad:** error
-- **Cuándo:** el sidecar `yt-dlp` termina con código de error, o el archivo `.mp3` esperado no aparece en el directorio temporal después de una corrida "exitosa".
-- **Causa típica:** video privado/eliminado/con restricción de edad o región, sin conexión de red, extractor de yt-dlp desactualizado contra un cambio de YouTube, o el sidecar `ffmpeg` no se encontró (`sidecar_path` de Tauri no lo resolvió).
-- **Cómo resolver:** verificar que el link abre en el navegador, reintentar (yt-dlp se actualiza seguido para nuevos cambios de YouTube), o revisar que la instalación de escritorio tenga los binarios `yt-dlp`/`ffmpeg` bundleados correctamente.
+- **Cuándo:** en Tauri, el sidecar `yt-dlp` termina con código de error o el archivo `.mp3` esperado no aparece en el directorio temporal tras una corrida "exitosa". En Capacitor, `YoutubeDlPlugin` (native, `youtubedl-android`) falla al inicializar, al extraer, o el `.mp3` esperado no aparece en el cache dir de la app.
+- **Causa típica:** video privado/eliminado/con restricción de edad o región, sin conexión de red, extractor de yt-dlp desactualizado contra un cambio de YouTube, el sidecar `ffmpeg` no se encontró en Tauri (`sidecar_path` no lo resolvió), o en Capacitor `youtubedl-android`/`ffmpeg` de `YoutubeDlPlugin.load()` no inicializó (ABI no soportada, libs nativas no extraídas).
+- **Cómo resolver:** verificar que el link abre en el navegador, reintentar (yt-dlp se actualiza seguido para nuevos cambios de YouTube), o revisar que la instalación de escritorio tenga los binarios `yt-dlp`/`ffmpeg` bundleados correctamente (Tauri) / que el APK incluya las libs nativas para la ABI del dispositivo (Capacitor).
 - **Recuperable:** sí — no se escribe nada en la biblioteca hasta que la descarga completa OK.
 
 ### MCB-MUS-005 — No se pudo buscar la letra online

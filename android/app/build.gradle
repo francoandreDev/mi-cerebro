@@ -10,6 +10,12 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        ndk {
+            // why: youtubedl-android ships native libs (python/ffmpeg) only
+            //      for these ABIs — without the filter, Gradle tries to
+            //      package non-existent slices for other targets and fails.
+            abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
+        }
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
              // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
@@ -40,6 +46,11 @@ dependencies {
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
     implementation project(':capacitor-cordova-android-plugins')
+
+    // §19b addendum — native yt-dlp for Capacitor (see YoutubeDlPlugin.java).
+    def youtubedlAndroidVersion = '0.18.1'
+    implementation "io.github.junkfood02.youtubedl-android:library:$youtubedlAndroidVersion"
+    implementation "io.github.junkfood02.youtubedl-android:ffmpeg:$youtubedlAndroidVersion"
 }
 
 apply from: 'capacitor.build.gradle'

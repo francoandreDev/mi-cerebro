@@ -233,3 +233,22 @@
   color: var(--mc-fg-muted);
   font-variant-numeric: tabular-nums;
 }
+
+@container mc-zone-center (max-width: 440px) {
+  /* why: zone-center's pixel width depends on the .zones grid fr-ratio with
+     zone-left (min 260px), not the page viewport, so this must be a
+     container query keyed to zone-center's own width (see .zone-center in
+     music.container.css) rather than a @media breakpoint — a viewport-based
+     query missed real squeeze cases in the 481-1100px viewport range where
+     zone-center itself was already too narrow. Stack art above meta/wave. */
+  .np-card {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'art'
+      'meta'
+      'wave';
+  }
+  .np-art {
+    max-width: 140px;
+  }
+}
