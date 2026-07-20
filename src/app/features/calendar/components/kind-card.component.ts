@@ -5,6 +5,7 @@ import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { IconComponent } from '@shared/icon/icon.component';
 import type { IconName } from '@shared/icon/icons.data';
+import { MC_INTERNAL_DND_TYPE } from '@shared/utils/dnd';
 
 import { formatDayMonth } from '../utils/calendar-dates';
 
@@ -40,7 +41,13 @@ import { formatDayMonth } from '../utils/calendar-dates';
       } @else {
         <ul>
           @for (e of sorted(); track e.id) {
-            <li class="mc-anim-slide-up" [class.done]="e.done">
+            <li
+              class="mc-anim-slide-up"
+              [class.done]="e.done"
+              [attr.draggable]="kind() === 'task' ? 'true' : null"
+              [attr.title]="kind() === 'task' ? t('calendar.day.dragToReschedule') : null"
+              (dragstart)="onDragStart($event, e)"
+            >
               <button type="button" (click)="openEvent.emit(e)">
                 <mc-icon [name]="e.done ? 'check' : 'dot-outline'" class="bullet" />
                 <span class="when">{{ formatWhen(e.date) }}</span>
@@ -162,6 +169,9 @@ import { formatDayMonth } from '../utils/calendar-dates';
       text-decoration: line-through;
       color: var(--mc-fg-muted);
     }
+    li[draggable='true'] {
+      cursor: grab;
+    }
     .when {
       color: var(--mc-fg-muted);
       font-size: var(--mc-font-size-xs);
@@ -220,5 +230,17 @@ export class CalendarKindCardComponent {
 
   protected formatWhen(iso: string): string {
     return formatDayMonth(iso);
+  }
+
+  // why: only tasks can be dragged to reschedule (only they have a real,
+  //      per-date `dueDates` array to move); the composite payload carries
+  //      both the entity id and the specific date being moved, since a task
+  //      can have several due dates and only one is being dragged.
+  protected onDragStart(event: DragEvent, e: CalendarEvent): void {
+    if (e.kind !== 'task' || !event.dataTransfer) return;
+    const payload = `${e.entityId}::${e.date}`;
+    event.dataTransfer.setData(MC_INTERNAL_DND_TYPE, payload);
+    event.dataTransfer.setData('text/plain', payload);
+    event.dataTransfer.effectAllowed = 'move';
   }
 }

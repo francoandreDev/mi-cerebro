@@ -88,6 +88,7 @@
           [kindFilter]="kindFilter()"
           (pick)="onPickDay($event)"
           (toggleKind)="onToggleKind($event)"
+          (taskRescheduled)="onTaskRescheduled($event)"
         />
       } @else if (view() === 'week') {
         <mc-calendar-leather-book

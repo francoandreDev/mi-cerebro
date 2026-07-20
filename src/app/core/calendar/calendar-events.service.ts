@@ -97,6 +97,12 @@ export class CalendarEventsService {
       return e.tags.some((t) => filters.tagIds.has(t));
     });
   }
+
+  // why: lets the calendar drag-reschedule a task without importing
+  //      TasksService directly from the calendar feature (rule 4.2.10).
+  async rescheduleTask(taskId: string, fromIso: string, toIso: string): Promise<void> {
+    await this.tasks.rescheduleDueDate(taskId, fromIso, toIso);
+  }
 }
 
 const isoDay = (raw: string): string | null => {

@@ -166,6 +166,18 @@ export class TasksService {
     return updated;
   }
 
+  // why: used by the calendar's drag-to-reschedule — moves one specific
+  //      due date to a new day without disturbing the task's other dates
+  //      (a task can have several, see `Task.dueDates`).
+  async rescheduleDueDate(id: string, fromIso: string, toIso: string): Promise<Task> {
+    const task = await this.read(id);
+    if (fromIso === toIso) return task;
+    const idx = task.dueDates.indexOf(fromIso);
+    const dueDates =
+      idx >= 0 ? task.dueDates.map((d, i) => (i === idx ? toIso : d)) : [...task.dueDates, toIso];
+    return this.save({ ...task, dueDates });
+  }
+
   async transplant(id: string, bucket: Bucket, now: Date = new Date()): Promise<Task> {
     const task = await this.read(id);
     const dueDates = sortDueDates(bucketToDueDate(bucket, now));

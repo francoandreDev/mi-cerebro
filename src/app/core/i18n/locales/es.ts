@@ -1427,6 +1427,7 @@ export const es = {
   'calendar.day.heading': 'Día {date}',
   'calendar.day.empty': 'Sin entradas en este día.',
   'calendar.day.untitled': 'Sin título',
+  'calendar.day.dragToReschedule': 'Arrastrá a otro día para reagendar',
   'calendar.day.newTask': 'Nueva tarea',
   'calendar.day.newGoal': 'Nueva meta',
   'calendar.day.newReminder': 'Nuevo recordatorio',

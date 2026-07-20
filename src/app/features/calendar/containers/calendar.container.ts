@@ -10,6 +10,7 @@ import {
   type CalendarEventKind,
   type CalendarFilters,
 } from '@core/calendar/calendar-event.types';
+import { ErrorService } from '@core/errors/error.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { TagsService } from '@core/tags/tags.service';
@@ -18,7 +19,10 @@ import { IconComponent } from '@shared/icon/icon.component';
 import { CalendarDayModalComponent } from '../components/day-modal.component';
 import { CalendarKindCardComponent } from '../components/kind-card.component';
 import { CalendarLeatherBookComponent } from '../components/leather-book.component';
-import { CalendarLightTableComponent } from '../components/light-table.component';
+import {
+  CalendarLightTableComponent,
+  type TaskRescheduled,
+} from '../components/light-table.component';
 import { CalendarTagFilterComponent } from '../components/tag-filter.component';
 import { CalendarToolbarComponent } from '../components/toolbar.component';
 import { CalendarYearGridComponent } from '../components/year-grid.component';
@@ -60,6 +64,7 @@ export class CalendarContainer {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly i18n = inject(I18nService);
+  private readonly errors = inject(ErrorService);
 
   protected readonly tags = this.tagsService.tags;
   protected readonly allEvents = this.events.events;
@@ -277,6 +282,14 @@ export class CalendarContainer {
     if (next.has(kind)) next.delete(kind);
     else next.add(kind);
     this.kindFilter.set(next);
+  }
+
+  protected async onTaskRescheduled(event: TaskRescheduled): Promise<void> {
+    try {
+      await this.events.rescheduleTask(event.taskId, event.fromIso, event.toIso);
+    } catch (e) {
+      this.errors.report(e);
+    }
   }
 
   protected onToggleTag(tagId: string): void {
