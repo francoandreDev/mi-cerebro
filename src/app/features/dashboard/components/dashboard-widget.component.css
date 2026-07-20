@@ -21,6 +21,23 @@ header .icon {
   color: var(--mc-accent-primary);
 }
 
+.mode-toggle {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid var(--mc-border-default);
+  color: var(--mc-fg-muted);
+  cursor: pointer;
+  padding: 2px var(--mc-space-1);
+  border-radius: var(--mc-radius-sm);
+  font-size: var(--mc-font-size-xs);
+  font-weight: 400;
+}
+
+.mode-toggle:hover {
+  background: var(--mc-bg-hover);
+  color: var(--mc-fg-primary);
+}
+
 .empty {
   color: var(--mc-fg-muted);
   margin: 0;
@@ -51,6 +68,33 @@ li button {
   cursor: pointer;
   border-radius: var(--mc-radius-sm);
   font-size: var(--mc-font-size-sm);
+}
+
+li.entry {
+  position: relative;
+}
+
+li.entry .dismiss {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: auto;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  color: var(--mc-fg-muted);
+  border-radius: var(--mc-radius-sm);
+}
+
+li.entry:hover .dismiss,
+li.entry .dismiss:focus-visible {
+  display: inline-flex;
+}
+
+li.entry .dismiss:hover {
+  background: var(--mc-bg-hover);
+  color: var(--mc-fg-primary);
 }
 
 .row-main {

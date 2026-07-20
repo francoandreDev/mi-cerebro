@@ -117,6 +117,18 @@ export interface BookBundle {
   readonly chapters: readonly Chapter[];
 }
 
+// why: flattened cross-book projection for dashboard resurfacing (§19.22bis
+//      addendum) — tags are inherited from the parent book (chapters don't
+//      have their own).
+export interface BookChapterEntry {
+  readonly id: string;
+  readonly bookId: string;
+  readonly title: string;
+  readonly updatedAt: string;
+  readonly preview: string;
+  readonly tags: readonly string[];
+}
+
 export const emptyChapterDoc = (): JSONContent => ({
   type: 'doc',
   content: [{ type: 'paragraph' }],

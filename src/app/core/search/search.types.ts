@@ -31,6 +31,12 @@ export interface SearchQuery {
   readonly tagIds?: readonly string[];
   readonly kinds?: readonly EntityKind[];
   readonly limit?: number;
+  // why: the command palette wants AND (the default) — every typed word
+  //      should narrow results. A "find documents like this one" query
+  //      (dashboard resurfacing's related mode) needs OR: querying with a
+  //      whole paragraph under AND semantics requires the target to contain
+  //      every single word, which returns nothing for real prose.
+  readonly combineWith?: 'AND' | 'OR';
 }
 
 export const SEARCH_INDEX_VERSION = 2;

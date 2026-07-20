@@ -96,7 +96,7 @@ export class ListsService {
     this.summariesSignal.set(summaries);
     const folders = await listFolders(this.fs, dir);
     this.foldersSignal.set(folders.map((f) => f.path));
-    await this.search.rebuild(indexDocs);
+    await this.search.rebuildKind(LIST_KIND, indexDocs);
     return summaries;
   }
 

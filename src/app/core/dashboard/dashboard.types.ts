@@ -29,7 +29,9 @@ export interface DashboardReminderItem {
   readonly nextPingAt: string;
 }
 
-export type DashboardEntryKind = 'note' | 'writing' | 'list';
+export type DashboardEntryKind = 'note' | 'writing' | 'list' | 'book-chapter';
+
+export type DashboardResurfaceMode = 'random' | 'related';
 
 export interface DashboardRecentEntry {
   readonly id: string;
@@ -38,15 +40,26 @@ export interface DashboardRecentEntry {
   readonly preview: string;
   readonly updatedAt: string;
   readonly tags: readonly string[];
+  // why: only set for kind 'book-chapter' — the detail route needs both the
+  //      book and chapter id (/books/:bookId/:chapterId), unlike the other
+  //      three kinds which resolve from a single id.
+  readonly bookId?: string;
 }
 
-const ENTRY_ROUTE_BASE: Record<DashboardEntryKind, string> = {
+const ENTRY_ROUTE_BASE: Record<Exclude<DashboardEntryKind, 'book-chapter'>, string> = {
   note: '/notes',
   writing: '/writings',
   list: '/lists',
 };
 
-export const dashboardEntryRoute = (entry: DashboardRecentEntry): readonly string[] => [
-  ENTRY_ROUTE_BASE[entry.kind],
-  entitySlugSegment(entry.title, entry.id),
-];
+// why: book/chapter segments accept a bare id with no slug (extractEntityId
+//      falls back to the whole segment when there's no slug prefix — same
+//      mechanism that keeps pre-§20c bookmark links working), so this
+//      doesn't need the book's own title, which DashboardRecentEntry doesn't
+//      carry.
+export const dashboardEntryRoute = (entry: DashboardRecentEntry): readonly string[] => {
+  if (entry.kind === 'book-chapter') {
+    return ['/books', entry.bookId ?? '', entry.id];
+  }
+  return [ENTRY_ROUTE_BASE[entry.kind], entitySlugSegment(entry.title, entry.id)];
+};

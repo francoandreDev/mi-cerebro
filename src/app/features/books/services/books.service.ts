@@ -35,6 +35,7 @@ import {
   emptyChapterDoc,
   type Book,
   type BookBundle,
+  type BookChapterEntry,
   type BookSummary,
   type Chapter,
   type ChapterImageRef,
@@ -73,6 +74,26 @@ export class BooksService {
   private readonly foldersSignal = signal<readonly string[]>([]);
   readonly folders = this.foldersSignal.asReadonly();
   readonly foldersSet = computed(() => new Set(this.foldersSignal()));
+
+  // why: cross-book chapter projection for dashboard resurfacing — loaded
+  //      lazily (see ensureChaptersIndexLoaded) so visiting /dashboard is
+  //      the only thing that pays the N x listChapters() cost, not app boot.
+  private readonly chaptersIndexSignal = signal<readonly BookChapterEntry[]>([]);
+  readonly chaptersIndex = this.chaptersIndexSignal.asReadonly();
+  private chaptersIndexPromise: Promise<void> | null = null;
+  // why: /dashboard can mount before WorkspaceRefreshService's boot-time
+  //      refreshAll() reaches books.refresh() — without this,
+  //      ensureChaptersIndexLoaded() could read `summaries()` while it's
+  //      still `[]` and permanently cache an empty result (found live
+  //      2026-07-20: dashboard visited fast enough that chaptersIndex
+  //      stayed empty for the whole session). Resolved once refresh()
+  //      completes at least once; a no-op DI-level dependency on
+  //      WorkspaceRefreshService would create a cycle (it already injects
+  //      BooksService), so this stays self-contained instead.
+  private resolveFirstRefresh!: () => void;
+  private readonly firstRefreshDone = new Promise<void>((resolve) => {
+    this.resolveFirstRefresh = resolve;
+  });
 
   constructor() {
     this.migrations.register({
@@ -131,7 +152,8 @@ export class BooksService {
     summaries.sort(comparePosition);
     this.summariesSignal.set(summaries);
     this.foldersSignal.set(folders);
-    await this.search.rebuild(indexDocs);
+    await this.search.rebuildKind(BOOK_KIND, indexDocs);
+    this.resolveFirstRefresh();
     return summaries;
   }
 
@@ -415,6 +437,36 @@ export class BooksService {
     this.chapterCountById.set(bookId, ordered.length);
     this.chapterFileCache.set(bookId, idToFile);
     return ordered;
+  }
+
+  // why: dedupes concurrent callers (e.g. dashboard resolver + a second tab
+  //      component) behind one in-flight promise, and only ever runs once
+  //      per session — the index isn't kept live-reactive to chapter edits
+  //      elsewhere in the app, same tradeoff `resurfaceEntries` already
+  //      accepts for other kinds (recomputed on next full refresh, not on
+  //      every write).
+  async ensureChaptersIndexLoaded(): Promise<void> {
+    if (this.chaptersIndexPromise) return this.chaptersIndexPromise;
+    this.chaptersIndexPromise = this.firstRefreshDone.then(() => this.refreshChaptersIndex());
+    return this.chaptersIndexPromise;
+  }
+
+  async refreshChaptersIndex(): Promise<void> {
+    const entries: BookChapterEntry[] = [];
+    for (const book of this.summaries()) {
+      const chapters = await this.listChapters(book.id);
+      for (const ch of chapters) {
+        entries.push({
+          id: ch.id,
+          bookId: book.id,
+          title: ch.title,
+          updatedAt: ch.updatedAt,
+          preview: ch.preview.head,
+          tags: book.tags,
+        });
+      }
+    }
+    this.chaptersIndexSignal.set(entries);
   }
 
   async addChapter(bookId: string, title = ''): Promise<Chapter> {

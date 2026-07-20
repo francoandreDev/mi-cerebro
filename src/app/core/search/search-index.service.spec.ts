@@ -118,4 +118,37 @@ describe('SearchIndexService', () => {
     await svc.rebuild([doc('a', 'algo', 'reunión con clientes')]);
     expect(svc.query({ text: 'reunion' })[0]?.id).toBe('a');
   });
+
+  it('OR combineWith matches on any term instead of requiring all of them', async () => {
+    await svc.rebuild([doc('a', 'Idea suelta', 'cuerpo de la nota')]);
+    expect(svc.query({ text: 'nota inventado123', combineWith: 'AND' })).toEqual([]);
+    expect(svc.query({ text: 'nota inventado123', combineWith: 'OR' })[0]?.id).toBe('a');
+  });
+
+  describe('rebuildKind', () => {
+    const taskDoc = (id: string, title: string): SearchDoc => ({
+      id,
+      kind: 'task',
+      title,
+      body: '',
+      tagIds: [],
+    });
+
+    it('only replaces entries of the given kind, leaving other kinds intact', async () => {
+      await svc.rebuild([doc('n1', 'Nota vieja', ''), taskDoc('t1', 'Tarea vieja')]);
+      await svc.rebuildKind('note', [doc('n2', 'Nota nueva', '')]);
+      const ids = svc.query({ text: '' }).map((h) => h.id);
+      expect(ids).toEqual(expect.arrayContaining(['n2', 't1']));
+      expect(ids).not.toContain('n1');
+    });
+
+    it('is commutative under concurrent calls for different kinds', async () => {
+      await Promise.all([
+        svc.rebuildKind('note', [doc('n1', 'Nota', '')]),
+        svc.rebuildKind('task', [taskDoc('t1', 'Tarea')]),
+      ]);
+      const ids = svc.query({ text: '' }).map((h) => h.id);
+      expect(ids.sort()).toEqual(['n1', 't1']);
+    });
+  });
 });

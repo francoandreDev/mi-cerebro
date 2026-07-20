@@ -8,6 +8,7 @@ const summary = (id: string, dueDates: readonly string[], done = false): TaskSum
   title: id,
   done,
   dueDates,
+  reminder: { enabled: false },
   updatedAt: '2026-06-01T00:00:00Z',
   tags: [],
   folder: '',

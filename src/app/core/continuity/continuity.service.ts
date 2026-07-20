@@ -16,6 +16,12 @@ export class ContinuityService {
   private readonly router = inject(Router);
   private started = false;
   private currentUrl: string | null = null;
+  // why: distinct from persisted lastRoute (which is "restore here on next
+  //      boot", so it already points at /dashboard itself by the time
+  //      /dashboard reads it). previousUrl is in-memory only, one step back
+  //      in this session's navigation — what dashboard resurfacing needs to
+  //      find "the entity the user was just looking at".
+  private previousUrl: string | null = null;
   private scrollOrder: string[] = [];
 
   start(): void {
@@ -27,6 +33,7 @@ export class ContinuityService {
         this.captureScroll(this.currentUrl);
       } else if (evt instanceof NavigationEnd) {
         const url = evt.urlAfterRedirects;
+        this.previousUrl = this.currentUrl;
         this.currentUrl = url;
         this.persistLastRoute(url);
         queueMicrotask(() => this.restoreScroll(url));
@@ -40,6 +47,10 @@ export class ContinuityService {
     } catch {
       return null;
     }
+  }
+
+  getPreviousRoute(): string | null {
+    return this.previousUrl;
   }
 
   private persistLastRoute(url: string): void {

@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import type { SearchHit } from '@core/search/search.types';
+import type { BookChapterEntry } from '@features/books/models/book.types';
 import type { GoalSummary } from '@features/goals/models/goal.types';
 import type { ListSummary } from '@features/lists/models/list.types';
 import type { NoteSummary } from '@features/notes/models/note.types';
@@ -10,7 +12,9 @@ import type { WritingSummary } from '@features/writings/models/writing.types';
 import {
   mergeRecentEntries,
   mergeResurfacePool,
+  resolveContinuityEntry,
   selectActiveGoals,
+  selectRelatedEntries,
   selectResurfaceEntries,
   selectTodayTasks,
   selectUpcomingReminders,
@@ -23,6 +27,7 @@ const task = (overrides: Partial<TaskSummary>): TaskSummary => ({
   title: 'Task',
   done: false,
   dueDates: [],
+  reminder: { enabled: false },
   updatedAt: '2026-07-01T00:00:00.000Z',
   tags: [],
   folder: '',
@@ -78,6 +83,8 @@ const note = (overrides: Partial<NoteSummary>): NoteSummary => ({
 const writing = (overrides: Partial<WritingSummary>): WritingSummary => ({
   id: 'w1',
   title: 'Writing',
+  deadline: null,
+  reminder: { enabled: false },
   updatedAt: '2026-07-01T00:00:00.000Z',
   tags: [],
   folder: '',
@@ -96,6 +103,16 @@ const list = (overrides: Partial<ListSummary>): ListSummary => ({
   position: '0',
   previewItems: [],
   itemCount: 0,
+  ...overrides,
+});
+
+const bookChapter = (overrides: Partial<BookChapterEntry>): BookChapterEntry => ({
+  id: 'c1',
+  bookId: 'b1',
+  title: 'Chapter',
+  updatedAt: '2026-07-01T00:00:00.000Z',
+  preview: '',
+  tags: [],
   ...overrides,
 });
 
@@ -183,6 +200,75 @@ describe('mergeResurfacePool', () => {
       expect.objectContaining({ id: 'w1', kind: 'writing' }),
       expect.objectContaining({ id: 'l1', kind: 'list', preview: 'comprar leche · llamar a mamá' }),
     ]);
+  });
+
+  it('includes book chapters, inheriting tags from the parent book', () => {
+    const c = bookChapter({ id: 'c1', bookId: 'b1', tags: ['tag-1'] });
+    const result = mergeResurfacePool([], [], [], [c]);
+    expect(result).toEqual([
+      expect.objectContaining({
+        id: 'c1',
+        kind: 'book-chapter',
+        bookId: 'b1',
+        tags: ['tag-1'],
+      }),
+    ]);
+  });
+
+  it('defaults to no book chapters when the 4th arg is omitted', () => {
+    expect(mergeResurfacePool([], [], [])).toEqual([]);
+  });
+});
+
+describe('resolveContinuityEntry', () => {
+  it('returns null when there is no previous route', () => {
+    expect(
+      resolveContinuityEntry(null, mergeResurfacePool([note({ id: 'n1' })], [], [])),
+    ).toBeNull();
+  });
+
+  it('resolves the entity by the trailing id of the previous route', () => {
+    const p = mergeResurfacePool([note({ id: 'n1' })], [], []);
+    // why: extractEntityId only strips a slug prefix off a real UUID suffix
+    //      (see core/routing/entity-slug.ts) — with a plain test id like
+    //      'n1' the bare segment (no slug) is the realistic shape to test.
+    const result = resolveContinuityEntry('/notes/n1', p);
+    expect(result?.id).toBe('n1');
+  });
+
+  it('returns null when the previous route id is not in the pool', () => {
+    const p = mergeResurfacePool([note({ id: 'n1' })], [], []);
+    expect(resolveContinuityEntry('/tasks/t9', p)).toBeNull();
+  });
+});
+
+describe('selectRelatedEntries', () => {
+  const hit = (overrides: Partial<SearchHit>): SearchHit => ({
+    id: 'n1',
+    kind: 'note',
+    title: '',
+    snippet: { pre: '', match: '', post: '' },
+    score: 1,
+    tagIds: [],
+    ...overrides,
+  });
+
+  it('excludes the query entity itself and caps at count', () => {
+    const pool = mergeResurfacePool(
+      [note({ id: 'self' }), note({ id: 'n1' }), note({ id: 'n2' }), note({ id: 'n3' })],
+      [],
+      [],
+    );
+    const hits = [hit({ id: 'self' }), hit({ id: 'n1' }), hit({ id: 'n2' }), hit({ id: 'n3' })];
+    const result = selectRelatedEntries(pool, hits, 'self', 2);
+    expect(result.map((e) => e.id)).toEqual(['n1', 'n2']);
+  });
+
+  it('skips hits that are not in the pool', () => {
+    const pool = mergeResurfacePool([note({ id: 'n1' })], [], []);
+    const hits = [hit({ id: 'ghost' }), hit({ id: 'n1' })];
+    const result = selectRelatedEntries(pool, hits, 'self', 5);
+    expect(result.map((e) => e.id)).toEqual(['n1']);
   });
 });
 

@@ -7,6 +7,7 @@ import { IdbService } from '@core/idb/idb.service';
 import {
   SEARCH_INDEX_KEY,
   SEARCH_INDEX_VERSION,
+  type EntityKind,
   type SearchDoc,
   type SearchHit,
   type SearchQuery,
@@ -107,6 +108,26 @@ export class SearchIndexService {
     this.ready.set(true);
   }
 
+  // why: the 6 kind-owning services (notes/tasks/goals/lists/writings/books)
+  //      each call this once per boot refresh(), all running concurrently —
+  //      `rebuild()` wipes the *entire* shared index, so whichever finished
+  //      last silently erased every other kind's docs (real bug, found
+  //      2026-07-20 while a dashboard feature's cross-kind search came back
+  //      empty). This only clears/reseeds entries for the given kind,
+  //      leaving the other 5 kinds' entries — the concurrent calls become
+  //      commutative instead of last-write-wins.
+  async rebuildKind(kind: EntityKind, docs: readonly SearchDoc[]): Promise<void> {
+    for (const [id, meta] of this.metaById) {
+      if (meta.kind !== kind) continue;
+      if (this.mini.has(id)) this.mini.discard(id);
+      this.metaById.delete(id);
+    }
+    for (const doc of docs) this.indexOne(doc);
+    await this.persist();
+    this.loaded = true;
+    this.ready.set(true);
+  }
+
   async upsert(doc: SearchDoc): Promise<void> {
     if (this.mini.has(doc.id)) this.mini.discard(doc.id);
     this.indexOne(doc);
@@ -148,7 +169,7 @@ export class SearchIndexService {
 
     if (text === '') return this.browse(passes, limit);
 
-    const raw = this.mini.search(text);
+    const raw = this.mini.search(text, { combineWith: q.combineWith ?? 'AND' });
     const hits: SearchHit[] = [];
     for (const r of raw) {
       const id = String(r['id']);

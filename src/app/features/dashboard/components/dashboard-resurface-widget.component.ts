@@ -8,12 +8,13 @@ import type { IconName } from '@shared/icon/icons.data';
 import { McDatePipe } from '@shared/pipes/mc-date.pipe';
 import { TagChipComponent } from '@shared/tags/tag-chip.component';
 
-import type { DashboardRecentEntry } from '@core/dashboard/dashboard.types';
+import type { DashboardRecentEntry, DashboardResurfaceMode } from '@core/dashboard/dashboard.types';
 
 const ENTRY_ICON: Record<DashboardRecentEntry['kind'], IconName> = {
   note: 'note',
   writing: 'pen-nib',
   list: 'list-bullets',
+  'book-chapter': 'books',
 };
 
 @Component({
@@ -26,8 +27,12 @@ const ENTRY_ICON: Record<DashboardRecentEntry['kind'], IconName> = {
 export class DashboardResurfaceWidgetComponent {
   readonly entries = input.required<readonly DashboardRecentEntry[]>();
   readonly availableTags = input.required<readonly Tag[]>();
+  readonly mode = input.required<DashboardResurfaceMode>();
+  readonly relatedAvailable = input.required<boolean>();
   readonly open = output<DashboardRecentEntry>();
   readonly shuffle = output<void>();
+  readonly dismiss = output<DashboardRecentEntry>();
+  readonly modeChange = output<DashboardResurfaceMode>();
 
   private readonly i18n = inject(I18nService);
 
@@ -44,5 +49,9 @@ export class DashboardResurfaceWidgetComponent {
     return entry.tags
       .map((id) => available.find((tag) => tag.id === id))
       .filter((tag): tag is Tag => tag !== undefined);
+  }
+
+  protected onToggleMode(): void {
+    this.modeChange.emit(this.mode() === 'related' ? 'random' : 'related');
   }
 }

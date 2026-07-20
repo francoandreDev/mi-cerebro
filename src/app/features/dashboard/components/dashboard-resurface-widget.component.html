@@ -1,13 +1,22 @@
 <header>
   <mc-icon name="sparkle" class="icon" />
   <span>{{ t('dashboard.resurface.title') }}</span>
+  @if (relatedAvailable()) {
+    <button type="button" class="mode-toggle" (click)="onToggleMode()">
+      {{
+        mode() === 'related'
+          ? t('dashboard.resurface.modeRelated')
+          : t('dashboard.resurface.modeRandom')
+      }}
+    </button>
+  }
 </header>
 @if (entries().length === 0) {
   <p class="empty">{{ t('dashboard.resurface.empty') }}</p>
 } @else {
   <ul>
     @for (entry of entries(); track entry.id) {
-      <li>
+      <li class="entry">
         <button type="button" (click)="open.emit(entry)">
           <div class="row-main">
             <mc-icon [name]="entryIcon(entry)" class="bullet" />
@@ -25,13 +34,24 @@
             </div>
           }
         </button>
+        <button
+          type="button"
+          class="dismiss"
+          [attr.aria-label]="t('dashboard.resurface.dismiss')"
+          [title]="t('dashboard.resurface.dismiss')"
+          (click)="dismiss.emit(entry)"
+        >
+          <mc-icon name="x" />
+        </button>
       </li>
     }
   </ul>
   <div class="footer">
-    <button type="button" (click)="shuffle.emit()">
-      <mc-icon name="shuffle" />
-      {{ t('dashboard.resurface.shuffle') }}
-    </button>
+    @if (mode() === 'random') {
+      <button type="button" (click)="shuffle.emit()">
+        <mc-icon name="shuffle" />
+        {{ t('dashboard.resurface.shuffle') }}
+      </button>
+    }
   </div>
 }

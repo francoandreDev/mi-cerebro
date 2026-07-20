@@ -6,6 +6,7 @@ import {
   dashboardEntryRoute,
   type DashboardGoalItem,
   type DashboardRecentEntry,
+  type DashboardResurfaceMode,
   type DashboardTaskItem,
 } from '@core/dashboard/dashboard.types';
 import { I18nService } from '@core/i18n/i18n.service';
@@ -43,7 +44,16 @@ export class DashboardContainer {
   protected readonly upcomingReminders = this.dashboard.upcomingReminders;
   protected readonly recentEntries = this.dashboard.recentEntries;
   protected readonly resurfaceEntries = this.dashboard.resurfaceEntries;
+  protected readonly resurfaceMode = this.dashboard.resurfaceMode;
+  protected readonly resurfaceRelatedAvailable = this.dashboard.resurfaceRelatedAvailable;
   protected readonly availableTags = this.tagsService.tags;
+
+  constructor() {
+    // why: lazy-loads BooksService.chaptersIndex — only /dashboard pays the
+    //      N x listChapters() cost, not app boot (see
+    //      docs/deferred/dashboard-evolution.md decision log).
+    this.dashboard.ensureChaptersIndexLoaded();
+  }
 
   protected t(key: TranslationKey): string {
     return this.i18n.t(key);
@@ -67,5 +77,13 @@ export class DashboardContainer {
 
   protected onShuffleResurface(): void {
     this.dashboard.reshuffleResurface();
+  }
+
+  protected onDismissResurfaceEntry(entry: DashboardRecentEntry): void {
+    this.dashboard.dismissResurfaceEntry(entry.id);
+  }
+
+  protected onResurfaceModeChange(mode: DashboardResurfaceMode): void {
+    this.dashboard.setResurfaceMode(mode);
   }
 }

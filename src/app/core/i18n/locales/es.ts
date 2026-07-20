@@ -1409,6 +1409,9 @@ export const es = {
   'dashboard.resurface.title': 'Redescubrí esto',
   'dashboard.resurface.empty': 'Todavía no hay nada lo bastante viejo para redescubrir.',
   'dashboard.resurface.shuffle': 'Otra',
+  'dashboard.resurface.dismiss': 'No me interesa esto',
+  'dashboard.resurface.modeRandom': 'Aleatorio',
+  'dashboard.resurface.modeRelated': 'Relacionado',
 
   'calendar.title': 'Calendario',
   'calendar.view.month': 'Mes',

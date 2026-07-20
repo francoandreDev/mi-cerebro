@@ -28,7 +28,7 @@ describe('TasksService', () => {
     const task = await svc.create('Comprar pan');
     expect(task.done).toBe(false);
     expect(task.dueDates).toEqual([]);
-    expect(task.schemaVersion).toBe(4);
+    expect(task.schemaVersion).toBe(5);
     expect(task.position).toBeTypeOf('string');
     const tasks = fs.root.dirs.get('tasks')!;
     expect(tasks.files.has('comprar-pan.json')).toBe(true);

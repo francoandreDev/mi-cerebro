@@ -26,8 +26,12 @@
     <mc-dashboard-resurface-widget
       [entries]="resurfaceEntries()"
       [availableTags]="availableTags()"
+      [mode]="resurfaceMode()"
+      [relatedAvailable]="resurfaceRelatedAvailable()"
       (open)="onOpenEntry($event)"
       (shuffle)="onShuffleResurface()"
+      (dismiss)="onDismissResurfaceEntry($event)"
+      (modeChange)="onResurfaceModeChange($event)"
     />
   </div>
 </div>

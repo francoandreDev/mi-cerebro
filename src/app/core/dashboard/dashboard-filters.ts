@@ -1,3 +1,6 @@
+import { extractEntityId } from '@core/routing/entity-slug';
+import type { SearchHit } from '@core/search/search.types';
+import type { BookChapterEntry } from '@features/books/models/book.types';
 import type { GoalSummary } from '@features/goals/models/goal.types';
 import type { ListSummary } from '@features/lists/models/list.types';
 import type { NoteSummary } from '@features/notes/models/note.types';
@@ -93,6 +96,16 @@ const listToEntry = (l: ListSummary): DashboardRecentEntry => ({
   tags: l.tags,
 });
 
+const bookChapterToEntry = (c: BookChapterEntry): DashboardRecentEntry => ({
+  id: c.id,
+  kind: 'book-chapter',
+  title: c.title,
+  preview: c.preview,
+  updatedAt: c.updatedAt,
+  tags: c.tags,
+  bookId: c.bookId,
+});
+
 export const mergeRecentEntries = (
   notes: readonly NoteSummary[],
   writings: readonly WritingSummary[],
@@ -113,10 +126,12 @@ export const mergeResurfacePool = (
   notes: readonly NoteSummary[],
   writings: readonly WritingSummary[],
   lists: readonly ListSummary[],
+  bookChapters: readonly BookChapterEntry[] = [],
 ): readonly DashboardRecentEntry[] => [
   ...notes.map(noteToEntry),
   ...writings.map(writingToEntry),
   ...lists.map(listToEntry),
+  ...bookChapters.map(bookChapterToEntry),
 ];
 
 // why: peso lineal por antigüedad (más viejo = más probable), sin reemplazo,
@@ -164,3 +179,41 @@ const weightedSampleByAge = (
 
 const ageDays = (updatedAt: string, now: Date): number =>
   Math.max(1, (now.getTime() - Date.parse(updatedAt)) / DAY_MS);
+
+// why: "related" mode's query context is whatever entity the user was on
+//      right before landing on /dashboard — found by id inside the same
+//      resurface pool it's about to search against, not by kind (a
+//      continuity route for a task/goal/image/file simply won't match
+//      anything here, which is exactly the "no context" case).
+export const resolveContinuityEntry = (
+  previousRoute: string | null,
+  pool: readonly DashboardRecentEntry[],
+): DashboardRecentEntry | null => {
+  if (!previousRoute) return null;
+  const segment = previousRoute.split('/').filter(Boolean).pop();
+  if (!segment) return null;
+  const id = extractEntityId(segment);
+  return pool.find((e) => e.id === id) ?? null;
+};
+
+// why: no similarity threshold — top-N search hits as-is (see
+//      dashboard-evolution.md decision log), just excluding the query
+//      entity itself and anything the search index knows about that isn't
+//      in this particular pool (e.g. a stale/removed doc).
+export const selectRelatedEntries = (
+  pool: readonly DashboardRecentEntry[],
+  hits: readonly SearchHit[],
+  selfId: string,
+  count: number,
+): readonly DashboardRecentEntry[] => {
+  const byId = new Map(pool.map((e) => [e.id, e]));
+  const picked: DashboardRecentEntry[] = [];
+  for (const hit of hits) {
+    if (hit.id === selfId) continue;
+    const entry = byId.get(hit.id);
+    if (!entry) continue;
+    picked.push(entry);
+    if (picked.length >= count) break;
+  }
+  return picked;
+};

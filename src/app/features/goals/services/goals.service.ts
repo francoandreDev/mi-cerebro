@@ -114,7 +114,7 @@ export class GoalsService {
     this.summariesSignal.set(summaries);
     const folders = await listFolders(this.fs, dir);
     this.foldersSignal.set(folders.map((f) => f.path));
-    await this.search.rebuild(indexDocs);
+    await this.search.rebuildKind(GOAL_KIND, indexDocs);
     return summaries;
   }
 
