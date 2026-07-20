@@ -22,8 +22,10 @@ import { GoalRemindersSyncService } from '@core/reminders/goal-reminders-sync.se
 import { TaskRemindersSyncService } from '@core/reminders/task-reminders-sync.service';
 import { WritingRemindersSyncService } from '@core/reminders/writing-reminders-sync.service';
 import { ShortcutsService } from '@core/shortcuts/shortcuts.service';
+import type { ShortcutBinding } from '@core/shortcuts/shortcuts.types';
 import { IconComponent } from '@shared/icon/icon.component';
 import { McDatePipe } from '@shared/pipes/mc-date.pipe';
+import { createListCursor } from '@shared/utils/list-cursor';
 
 import type {
   Recurrence,
@@ -111,6 +113,7 @@ export class RemindersContainer {
   protected readonly overflowOpenId = signal<string | null>(null);
   protected readonly editing = signal<EditingState | null>(null);
   protected readonly undo = signal<PendingUndo | null>(null);
+  protected readonly cursor = createListCursor();
 
   constructor() {
     effect(() => {
@@ -119,6 +122,15 @@ export class RemindersContainer {
       if (req.requestedAt <= this.lastCreationAt) return;
       this.lastCreationAt = req.requestedAt;
       this.focusQuickAdd();
+    });
+    effect(() => {
+      const id = this.cursor.focusedId();
+      if (!id) return;
+      queueMicrotask(() => {
+        document
+          .querySelector(`[data-paloma-id="${CSS.escape(id)}"]`)
+          ?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      });
     });
     this.registerShortcuts();
   }
@@ -162,6 +174,13 @@ export class RemindersContainer {
     if (!id) return null;
     return this.summaries().find((r) => r.id === id) ?? null;
   });
+
+  // why: J/K cursor order — nichos first, then perch — mirrors the visual
+  //      reading order of the palomar wall (top-down, then the overdue rail).
+  protected readonly rowIds = computed<readonly string[]>(() => [
+    ...this.inNichos().map((p) => p.summary.id),
+    ...this.onPerch().map((p) => p.summary.id),
+  ]);
 
   protected t(key: TranslationKey): string {
     return this.i18n.t(key);
@@ -480,22 +499,60 @@ export class RemindersContainer {
     queueMicrotask(() => this.searchInput?.nativeElement.focus());
   }
 
+  private focusedSummary(): ReminderSummary | null {
+    const id = this.cursor.focusedId();
+    if (!id) return null;
+    return this.summaries().find((r) => r.id === id) ?? null;
+  }
+
+  private focusedPaloma(): Paloma | null {
+    const id = this.cursor.focusedId();
+    if (!id) return null;
+    return [...this.inNichos(), ...this.onPerch()].find((p) => p.summary.id === id) ?? null;
+  }
+
   private registerShortcuts(): void {
-    const unregN = this.shortcuts.register({
-      combo: 'n',
-      labelKey: 'reminders.new',
-      scope: 'editable-safe',
-      handler: () => this.focusQuickAdd(),
-    });
-    const unregSlash = this.shortcuts.register({
-      combo: '/',
-      labelKey: 'reminders.shortcuts.search',
-      scope: 'editable-safe',
-      handler: () => this.focusSearch(),
-    });
+    const bindings: readonly Omit<ShortcutBinding, 'scope'>[] = [
+      { combo: 'n', labelKey: 'reminders.new', handler: () => this.focusQuickAdd() },
+      { combo: '/', labelKey: 'reminders.shortcuts.search', handler: () => this.focusSearch() },
+      {
+        combo: 'j',
+        labelKey: 'reminders.shortcuts.next',
+        handler: () => this.cursor.move(1, this.rowIds()),
+      },
+      {
+        combo: 'k',
+        labelKey: 'reminders.shortcuts.prev',
+        handler: () => this.cursor.move(-1, this.rowIds()),
+      },
+      {
+        combo: 'e',
+        labelKey: 'reminders.shortcuts.open',
+        handler: () => {
+          const p = this.focusedPaloma();
+          if (p) this.onSelectPaloma(p);
+        },
+      },
+      {
+        combo: ' ',
+        labelKey: 'reminders.shortcuts.toggleDone',
+        handler: () => {
+          const s = this.focusedSummary();
+          if (s) void this.onTakeNote(s);
+        },
+      },
+      {
+        combo: 'Delete',
+        labelKey: 'reminders.shortcuts.delete',
+        handler: () => {
+          const s = this.focusedSummary();
+          if (s) void this.onDelete(s);
+        },
+      },
+    ];
+    const unregs = bindings.map((b) => this.shortcuts.register({ ...b, scope: 'editable-safe' }));
     this.destroyRef.onDestroy(() => {
-      unregN();
-      unregSlash();
+      unregs.forEach((unreg) => unreg());
       this.clearUndoTimer();
     });
   }

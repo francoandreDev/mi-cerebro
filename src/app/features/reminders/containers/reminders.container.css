@@ -230,6 +230,10 @@
   outline: 2px solid var(--paloma-paper);
   outline-offset: 2px;
 }
+.nicho.is-focused {
+  outline: 2px dashed var(--mc-accent-primary);
+  outline-offset: 3px;
+}
 .nicho-mouth {
   /* perch lip just under the opening */
   position: absolute;
@@ -394,6 +398,11 @@
 .paloma-perch.is-selected {
   outline: 2px solid var(--paloma-paper);
   outline-offset: 2px;
+  border-radius: 6px;
+}
+.paloma-perch.is-focused {
+  outline: 2px dashed var(--mc-accent-primary);
+  outline-offset: 3px;
   border-radius: 6px;
 }
 

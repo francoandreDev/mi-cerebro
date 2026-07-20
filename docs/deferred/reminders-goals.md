@@ -75,8 +75,8 @@ Formato por entrada:
 
 ## Recordatorios — Mejoras UI (origen: rediseño 2026-06-19)
 
-### Atajos de navegación de fila (J/K, Space, E, Del)
+### Atajos de navegación de fila (J/K, Space, E, Del) — pendiente en tasks/goals
 
-- **Qué**: navegación por teclado dentro de la lista (J/K), Space para toggle done, E para editar, Del para borrar — todos con scope `editable-safe`.
-- **Por qué se difirió**: hoy la lista no tiene concepto de "fila enfocada" (no hay roving tabindex ni signal de cursor). Implementarlo bien implica patrón reutilizable (`listbox` ARIA + cursor signal) que conviene resolver una sola vez para reminders/tasks/goals juntos. Por ahora solo `N` (nuevo) y `/` (buscar) están registrados.
-- **Target**: cuando se aborde patrón compartido de listas navegables.
+- **Qué**: navegación por teclado con "fila enfocada" (J/K mueve el cursor, Space toggle done, E abre, Del borra), scope `editable-safe`. Resuelto en reminders (ver abajo); tasks y goals quedan afuera.
+- **Por qué se difirió (tasks/goals específicamente)**: el ítem original asumía que las tres secciones eran listas lineales. Ya no es así — desde sus rediseños, `/tasks` es un kanban de buckets (jardín con columnas today/week/backlog) y `/goals` es una wall de constelación con posiciones libres x/y. Ninguna de las dos tiene un "orden de fila" real al que J/K pueda mapear sin inventar un orden arbitrario que no coincide con el layout visual (violaría la regla de "la UI no debe mentir" — ver `docs/proyecto/reglas.md`). Reminders sí conserva un orden de lectura genuino (nichos → perch), por eso se resolvió ahí primero con el primitivo compartido `createListCursor` (`shared/utils/list-cursor.ts`), reutilizable el día que tasks/goals adopten (o vuelvan a) una vista lineal.
+- **Target**: sin asignar — requiere decidir primero si tasks/goals necesitan una vista lineal alternativa (ej. modo lista) antes de que J/K tenga sentido ahí.

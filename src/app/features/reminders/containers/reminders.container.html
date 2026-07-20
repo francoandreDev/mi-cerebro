@@ -59,6 +59,7 @@
               [attr.data-paloma-id]="p.summary.id"
               [class.is-paused]="p.summary.paused"
               [class.is-selected]="selectedId() === p.summary.id"
+              [class.is-focused]="cursor.focusedId() === p.summary.id"
               [class.is-sourced]="p.fromSource"
               [attr.data-bucket]="p.bucket"
               [attr.data-door]="p.door"
@@ -101,7 +102,9 @@
           <button
             type="button"
             class="paloma-perch"
+            [attr.data-paloma-id]="p.summary.id"
             [class.is-selected]="selectedId() === p.summary.id"
+            [class.is-focused]="cursor.focusedId() === p.summary.id"
             (click)="onSelectPaloma(p)"
             [attr.aria-label]="p.summary.title || t('reminders.untitled')"
             [title]="(p.summary.title || t('reminders.untitled')) + ' · ' + bucketLabel('overdue')"
