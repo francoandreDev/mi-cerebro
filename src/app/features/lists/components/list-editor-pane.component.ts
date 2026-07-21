@@ -61,6 +61,7 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
       [layers]="list().chalkLayers"
       [editable]="editable()"
       [entityTitle]="list().title"
+      [listId]="list().id"
       (layersChange)="chalkLayersChange.emit($event)"
     >
       <mc-editor

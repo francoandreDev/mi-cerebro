@@ -120,6 +120,20 @@ export const addLayer = (
   return { layers: [...layers, created], activeId: created.id };
 };
 
+// why: cheap "hand pressure" jitter — one deterministic pseudo-random opacity
+//      per stroke (not per segment/DOM node, so it costs nothing extra on
+//      long strokes) derived from the stroke's own id. Combined with the
+//      single shared <filter> grain in chalk-board.component.html for the
+//      "real chalk" feel (see docs/deferred/lists-images.md).
+export const strokeOpacity = (id: string): number => {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = (hash * 31 + id.charCodeAt(i)) | 0;
+  }
+  const unit = (hash >>> 0) / 0xffffffff;
+  return 0.82 + unit * 0.15;
+};
+
 export const pointsToPath = (points: readonly (readonly [number, number])[]): string => {
   if (points.length === 0) return '';
   let d = `M${points[0]![0].toFixed(5)} ${points[0]![1].toFixed(5)}`;

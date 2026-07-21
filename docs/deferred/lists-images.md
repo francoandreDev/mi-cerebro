@@ -15,24 +15,6 @@ Formato por entrada:
 
 ## Listas — Tiza sobre pizarra (origen: schema v4, 2026-06-25)
 
-### Atajos directos a herramientas y colores
-
-- **Qué**: registrar atajos en `ShortcutsService` para alternar modo tiza (`Mod+Shift+T`), elegir tiza/goma (`B`/`E`) y saltar entre colores (`1..5`) cuando el editor no tiene foco.
-- **Por qué se difirió**: en v1 toda la interacción pasa por la toolbar visible; el modo tiza es deliberadamente disruptivo (toggle explícito), no algo que el usuario quiera prender con el teclado mientras está editando texto. Si en uso real aparece la fricción "tengo que ir al mouse", se cablea.
-- **Target**: sin asignar.
-
-### Textura realista de tiza (jitter + grano)
-
-- **Qué**: los trazos hoy son SVG `path` con `stroke` plano. La sensación "tiza de verdad" pide jitter de opacidad por segmento + textura granulada (filtros SVG o canvas pattern).
-- **Por qué se difirió**: el feel "tiza" lo aporta la combinación de paleta apagada sobre fondo oscuro del pane. Sumar filtros SVG complica el rendering en trazos largos. Polish que entra si las capas se sienten "planchadas".
-- **Target**: sin asignar.
-
-### Undo/redo dedicado para trazos
-
-- **Qué**: `Ctrl+Z` que deshaga el último trazo / acción de capa sin pasar por history git.
-- **Por qué se difirió**: `Ctrl+Z` ya está tomado por TipTap dentro del editor; encadenar un undo de capas dispara conflictos de scope. Para revertir trazos sirve el panel de capas (vaciar capa) o el historial git. Si en uso real el `clear` se siente demasiado destructivo, se agrega un stack local.
-- **Target**: sin asignar.
-
 ### Estilo "pizarra de verdad" en todo el pane
 
 - **Qué**: el fondo del pane `/lists/:id` hoy mantiene la superficie base (tema activo). La metáfora "pizarra" se transmite por la paleta de tizas y el panel oscuro de la toolbar; ir más lejos implicaría restilizar el editor TipTap (texto claro sobre fondo verde-pizarra) y cargar fuente "Caveat" en el body.

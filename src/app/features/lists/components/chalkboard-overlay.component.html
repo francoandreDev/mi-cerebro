@@ -6,6 +6,8 @@
     [size]="size()"
     [layersOpen]="layersOpen()"
     [canClear]="activeLayerHasStrokes()"
+    [canUndo]="canUndo()"
+    [canRedo]="canRedo()"
     (toggleActive)="onToggleActive()"
     (toolChange)="tool.set($event)"
     (colorChange)="color.set($event)"
@@ -13,6 +15,8 @@
     (clearActive)="onClearActive()"
     (toggleLayers)="onToggleLayers()"
     (exportBoard)="onExportBoard($event)"
+    (undo)="onUndo()"
+    (redo)="onRedo()"
   />
 
   <div class="surface">

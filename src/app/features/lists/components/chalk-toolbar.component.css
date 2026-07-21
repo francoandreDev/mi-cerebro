@@ -56,6 +56,17 @@
   background: rgba(241, 245, 216, 0.15);
   border-color: rgba(241, 245, 216, 0.5);
 }
+.tool:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.history {
+  gap: 2px;
+}
+.mirror mc-icon {
+  display: inline-block;
+  transform: scaleX(-1);
+}
 .chalk {
   width: 20px;
   height: 28px;

@@ -10,18 +10,40 @@
   (pointerup)="onPointerUp($event)"
   (pointercancel)="onPointerUp($event)"
 >
+  <!-- why: one shared filter, referenced by every layer group instead of a
+       unique filter per <path> — keeps the grain cheap even on long strokes
+       (see docs/deferred/lists-images.md "Textura realista de tiza"). -->
+  <defs>
+    <filter
+      id="chalk-grain"
+      primitiveUnits="objectBoundingBox"
+      x="-5%"
+      y="-5%"
+      width="110%"
+      height="110%"
+    >
+      <feTurbulence type="fractalNoise" baseFrequency="60" numOctaves="2" seed="7" result="noise" />
+      <feColorMatrix
+        in="noise"
+        type="matrix"
+        values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0.16 0.16 0.16 0 0.5"
+        result="grainAlpha"
+      />
+      <feComposite in="SourceGraphic" in2="grainAlpha" operator="in" />
+    </filter>
+  </defs>
   @for (layer of renderedLayers(); track layer.id) {
-    <g>
+    <g filter="url(#chalk-grain)">
       @for (s of layer.strokes; track s.id) {
         <path
           [attr.d]="s.d"
           [attr.stroke]="s.stroke"
           [attr.stroke-width]="s.widthPx"
+          [attr.opacity]="s.opacity"
           fill="none"
           stroke-linecap="round"
           stroke-linejoin="round"
           vector-effect="non-scaling-stroke"
-          opacity="0.92"
         />
       }
     </g>

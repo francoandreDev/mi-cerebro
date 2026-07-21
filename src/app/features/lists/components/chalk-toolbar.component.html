@@ -75,6 +75,29 @@
       }
     </div>
 
+    <div class="group history">
+      <button
+        type="button"
+        class="tool"
+        [disabled]="!canUndo()"
+        [attr.aria-label]="t('lists.chalk.undoAria')"
+        [title]="t('lists.chalk.undo')"
+        (click)="undo.emit()"
+      >
+        <mc-icon name="arrow-counter-clockwise" />
+      </button>
+      <button
+        type="button"
+        class="tool mirror"
+        [disabled]="!canRedo()"
+        [attr.aria-label]="t('lists.chalk.redoAria')"
+        [title]="t('lists.chalk.redo')"
+        (click)="redo.emit()"
+      >
+        <mc-icon name="arrow-counter-clockwise" />
+      </button>
+    </div>
+
     <button
       type="button"
       class="ghost"

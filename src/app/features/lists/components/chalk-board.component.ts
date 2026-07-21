@@ -17,7 +17,7 @@ import type {
   ChalkTool,
 } from '../models/chalk.types';
 import { CHALK_COLORS, CHALK_SIZE_PX } from '../models/chalk.types';
-import { buildChalkExportSvg, pointsToPath } from './chalk.utils';
+import { buildChalkExportSvg, pointsToPath, strokeOpacity } from './chalk.utils';
 
 export interface ChalkExportData {
   readonly svg: string;
@@ -30,6 +30,7 @@ interface RenderableStroke {
   readonly d: string;
   readonly stroke: string;
   readonly widthPx: number;
+  readonly opacity: number;
 }
 
 @Component({
@@ -128,6 +129,7 @@ export class ChalkBoardComponent {
       d: pointsToPath(stroke.points),
       stroke: CHALK_COLORS.find((c) => c.id === stroke.color)?.hex ?? '#f1f5d8',
       widthPx: CHALK_SIZE_PX[stroke.size],
+      opacity: strokeOpacity(stroke.id),
     };
   }
 

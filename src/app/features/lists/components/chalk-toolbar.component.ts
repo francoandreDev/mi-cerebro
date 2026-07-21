@@ -28,6 +28,8 @@ export class ChalkToolbarComponent {
   readonly size = input<ChalkSize>('m');
   readonly layersOpen = input<boolean>(false);
   readonly canClear = input<boolean>(false);
+  readonly canUndo = input<boolean>(false);
+  readonly canRedo = input<boolean>(false);
 
   readonly toggleActive = output<void>();
   readonly toolChange = output<ChalkTool>();
@@ -36,6 +38,8 @@ export class ChalkToolbarComponent {
   readonly clearActive = output<void>();
   readonly toggleLayers = output<void>();
   readonly exportBoard = output<ChalkExportFormat>();
+  readonly undo = output<void>();
+  readonly redo = output<void>();
 
   protected readonly palette = CHALK_COLORS;
   protected readonly sizes = SIZES;

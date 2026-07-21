@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   input,
   output,
@@ -22,7 +23,15 @@ import type {
   ChalkTool,
 } from '../models/chalk.types';
 import { ChalkBoardComponent } from './chalk-board.component';
+import type { ChalkHistoryState } from './chalk-history.utils';
+import {
+  emptyChalkHistory,
+  recordChalkHistory,
+  redoChalkHistory,
+  undoChalkHistory,
+} from './chalk-history.utils';
 import { ChalkLayersPanelComponent } from './chalk-layers-panel.component';
+import { registerChalkShortcuts } from './chalk-shortcuts';
 import type { ChalkExportFormat } from './chalk-toolbar.component';
 import { ChalkToolbarComponent } from './chalk-toolbar.component';
 import {
@@ -51,6 +60,7 @@ export class ChalkboardOverlayComponent {
   readonly layers = input.required<readonly ChalkLayer[]>();
   readonly editable = input<boolean>(true);
   readonly entityTitle = input<string>('');
+  readonly listId = input<string>('');
 
   readonly layersChange = output<readonly ChalkLayer[]>();
 
@@ -64,11 +74,33 @@ export class ChalkboardOverlayComponent {
   protected readonly activeLayerId = signal<string | null>(null);
   protected readonly layersOpen = signal<boolean>(false);
 
+  // why: local, session-scoped undo/redo — see chalk-history.utils.ts. Reset
+  //      whenever the list identity changes since the overlay component
+  //      instance is reused across `/lists/:id` navigations.
+  private readonly history = signal<ChalkHistoryState>(emptyChalkHistory);
+  protected readonly canUndo = computed(() => this.history().past.length > 0);
+  protected readonly canRedo = computed(() => this.history().future.length > 0);
+
   protected readonly activeLayerHasStrokes = computed(() => {
     const id = this.activeLayerId();
     const layer = this.layers().find((l) => l.id === id);
     return (layer?.strokes.length ?? 0) > 0;
   });
+
+  constructor() {
+    effect(() => {
+      this.listId();
+      this.history.set(emptyChalkHistory);
+    });
+    registerChalkShortcuts({
+      toggleMode: () => this.onToggleActive(),
+      pickChalk: () => this.active() && this.tool.set('chalk'),
+      pickEraser: () => this.active() && this.tool.set('eraser'),
+      pickColor: (c) => this.active() && this.color.set(c),
+      undo: () => this.active() && this.onUndo(),
+      redo: () => this.active() && this.onRedo(),
+    });
+  }
 
   protected t(key: TranslationKey): string {
     return this.i18n.t(key);
@@ -87,7 +119,7 @@ export class ChalkboardOverlayComponent {
       this.defaultLayerName(this.layers().length),
     );
     if (activeId !== this.activeLayerId()) this.activeLayerId.set(activeId);
-    this.layersChange.emit(pushStroke(layers, activeId, stroke));
+    this.commit(pushStroke(layers, activeId, stroke));
   }
 
   protected onErase(event: {
@@ -100,13 +132,13 @@ export class ChalkboardOverlayComponent {
     if (!id) return;
     const layer = this.layers().find((l) => l.id === id);
     if (!layer || layer.locked || !layer.visible) return;
-    this.layersChange.emit(eraseAt(this.layers(), id, event.point, event.widthPx, event.heightPx));
+    this.commit(eraseAt(this.layers(), id, event.point, event.widthPx, event.heightPx));
   }
 
   protected onClearActive(): void {
     const id = this.activeLayerId();
     if (!id) return;
-    this.layersChange.emit(clearLayer(this.layers(), id));
+    this.commit(clearLayer(this.layers(), id));
   }
 
   protected onAddLayer(): void {
@@ -115,7 +147,7 @@ export class ChalkboardOverlayComponent {
       this.defaultLayerName(this.layers().length),
     );
     this.activeLayerId.set(activeId);
-    this.layersChange.emit(layers);
+    this.commit(layers);
   }
 
   protected onSelectLayer(id: string): void {
@@ -123,28 +155,47 @@ export class ChalkboardOverlayComponent {
   }
 
   protected onRenameLayer(event: { id: string; name: string }): void {
-    this.layersChange.emit(renameLayer(this.layers(), event.id, event.name));
+    this.commit(renameLayer(this.layers(), event.id, event.name));
   }
 
   protected onToggleVisible(id: string): void {
-    this.layersChange.emit(toggleLayerVisible(this.layers(), id));
+    this.commit(toggleLayerVisible(this.layers(), id));
   }
 
   protected onToggleLocked(id: string): void {
-    this.layersChange.emit(toggleLayerLocked(this.layers(), id));
+    this.commit(toggleLayerLocked(this.layers(), id));
   }
 
   protected onRemoveLayer(id: string): void {
     if (this.activeLayerId() === id) this.activeLayerId.set(null);
-    this.layersChange.emit(removeLayer(this.layers(), id));
+    this.commit(removeLayer(this.layers(), id));
   }
 
   protected onMoveLayer(event: { id: string; direction: -1 | 1 }): void {
-    this.layersChange.emit(moveLayer(this.layers(), event.id, event.direction));
+    this.commit(moveLayer(this.layers(), event.id, event.direction));
   }
 
   protected onReorderLayer(event: { from: string; to: string }): void {
-    this.layersChange.emit(reorderLayer(this.layers(), event.from, event.to));
+    this.commit(reorderLayer(this.layers(), event.from, event.to));
+  }
+
+  protected onUndo(): void {
+    const step = undoChalkHistory(this.history(), this.layers());
+    if (!step) return;
+    this.history.set(step.history);
+    this.layersChange.emit(step.layers);
+  }
+
+  protected onRedo(): void {
+    const step = redoChalkHistory(this.history(), this.layers());
+    if (!step) return;
+    this.history.set(step.history);
+    this.layersChange.emit(step.layers);
+  }
+
+  private commit(next: readonly ChalkLayer[]): void {
+    this.history.update((h) => recordChalkHistory(h, this.layers()));
+    this.layersChange.emit(next);
   }
 
   protected onToggleLayers(): void {
