@@ -10,6 +10,10 @@ export class FolderActionDialogController {
   private readonly stateSignal = signal<FolderActionState | null>(null);
   readonly state = this.stateSignal.asReadonly();
   private handlers: FolderActionHandlers | null = null;
+  private promptHandler: ((value: string) => void | Promise<void>) | null = null;
+  // why: la mayoría de prompts (crear carpeta) exigen texto no vacío, pero
+  //      mover una entidad a la raíz se representa como carpeta vacía.
+  private promptAllowEmpty = false;
   private initialRenameValue = '';
   private initialMoveValue = '';
 
@@ -23,6 +27,16 @@ export class FolderActionDialogController {
     this.initialRenameValue = initialRenameValue;
     this.initialMoveValue = initialMoveValue;
     this.stateSignal.set({ labels, step: { kind: 'choose' } });
+  }
+
+  openPrompt(
+    labels: FolderActionLabels,
+    onSubmit: (value: string) => void | Promise<void>,
+    options?: { readonly allowEmpty?: boolean },
+  ): void {
+    this.promptHandler = onSubmit;
+    this.promptAllowEmpty = options?.allowEmpty ?? false;
+    this.stateSignal.set({ labels, step: { kind: 'prompt' } });
   }
 
   chooseRename(): void {
@@ -49,9 +63,17 @@ export class FolderActionDialogController {
 
   submitText(value: string): void {
     const step = this.stateSignal()?.step;
-    const handlers = this.handlers;
-    if (!step || !handlers) return;
+    if (!step) return;
     const trimmed = value.trim();
+    if (step.kind === 'prompt') {
+      if (trimmed === '' && !this.promptAllowEmpty) return;
+      const handler = this.promptHandler;
+      this.close();
+      if (handler) void handler(trimmed);
+      return;
+    }
+    const handlers = this.handlers;
+    if (!handlers) return;
     if (step.kind === 'rename' && trimmed !== '') {
       this.close();
       void handlers.onRename(trimmed);
@@ -79,5 +101,7 @@ export class FolderActionDialogController {
   private close(): void {
     this.stateSignal.set(null);
     this.handlers = null;
+    this.promptHandler = null;
+    this.promptAllowEmpty = false;
   }
 }

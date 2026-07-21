@@ -636,7 +636,13 @@ export class WorkspaceSidebarContainer {
       if (!kind) return;
       try {
         await this.workspace.ensureWritable();
-        await handleCreateFolder(kind as FolderKind, this.foldersService, this.i18n);
+        handleCreateFolder(
+          kind as FolderKind,
+          this.foldersService,
+          this.i18n,
+          this.folderActionDialog,
+          (e) => this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize())),
+        );
       } catch (e) {
         this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize()));
       }
@@ -785,7 +791,7 @@ export class WorkspaceSidebarContainer {
           (e) => this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize())),
         );
       } else {
-        await handleEntityAction(
+        handleEntityAction(
           nodeId,
           {
             notes: this.notesService,
@@ -798,6 +804,8 @@ export class WorkspaceSidebarContainer {
             files: this.filesService,
           },
           this.i18n,
+          this.folderActionDialog,
+          (e) => this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize())),
         );
       }
     } catch (e) {

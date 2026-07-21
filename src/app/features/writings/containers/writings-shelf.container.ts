@@ -301,8 +301,15 @@ export class WritingsShelfContainer {
     });
   }
 
-  protected async onCreateSubfolder(): Promise<void> {
-    await handleCreateFolder('writing', this.foldersService, this.i18n, this.currentFolder());
+  protected onCreateSubfolder(): void {
+    handleCreateFolder(
+      'writing',
+      this.foldersService,
+      this.i18n,
+      this.folderActionDialog,
+      (e) => this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize())),
+      this.currentFolder(),
+    );
   }
 
   protected onManageFolder(path: string): void {

@@ -358,8 +358,15 @@ export class TasksGardenContainer {
     });
   }
 
-  protected async onCreateSubfolder(): Promise<void> {
-    await handleCreateFolder('task', this.foldersService, this.i18n, this.currentFolder());
+  protected onCreateSubfolder(): void {
+    handleCreateFolder(
+      'task',
+      this.foldersService,
+      this.i18n,
+      this.folderActionDialog,
+      (e) => this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize())),
+      this.currentFolder(),
+    );
   }
 
   protected onManageFolder(path: string): void {

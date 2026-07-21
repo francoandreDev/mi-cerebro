@@ -387,8 +387,15 @@ export class FilesContainer {
     });
   }
 
-  protected async onCreateSubfolder(): Promise<void> {
-    await handleCreateFolder('file', this.foldersService, this.i18n, this.currentFolder());
+  protected onCreateSubfolder(): void {
+    handleCreateFolder(
+      'file',
+      this.foldersService,
+      this.i18n,
+      this.folderActionDialog,
+      (e) => this.errors.report(this.withReauthIfNeeded(e)),
+      this.currentFolder(),
+    );
   }
 
   protected onManageFolder(path: string): void {

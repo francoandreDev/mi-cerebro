@@ -9,6 +9,7 @@ import type { BooksService } from '@features/books/services/books.service';
 import type { FilesService } from '@features/files/services/files.service';
 import type { GalleriesService } from '@features/images/services/galleries.service';
 import type { WritingsService } from '@features/writings/services/writings.service';
+import type { FolderActionDialogController } from '@shared/folder-action-dialog/folder-action-dialog.controller';
 
 export interface EntityServices {
   readonly notes: NotesService;
@@ -25,24 +26,38 @@ export { handleCreateFolder, openFolderActionDialog };
 
 const t = (i18n: I18nService, key: TranslationKey): string => i18n.t(key);
 
-export const handleEntityAction = async (
+export const handleEntityAction = (
   nodeId: string,
   services: EntityServices,
   i18n: I18nService,
-): Promise<void> => {
+  dialog: FolderActionDialogController,
+  onError: (e: unknown) => void,
+): void => {
   // nodeId format: '<kind>:<id>'
   const colon = nodeId.indexOf(':');
   const kind = nodeId.slice(0, colon);
   const id = nodeId.slice(colon + 1);
-  const newFolder = prompt(t(i18n, 'folders.entityMovePrompt'), '');
-  if (newFolder === null) return;
-  const folder = newFolder.trim();
-  if (kind === 'note') await services.notes.moveToFolder(id, folder);
-  else if (kind === 'task') await services.tasks.moveToFolder(id, folder);
-  else if (kind === 'goal') await services.goals.moveToFolder(id, folder);
-  else if (kind === 'list') await services.lists.moveToFolder(id, folder);
-  else if (kind === 'writing') await services.writings.moveToFolder(id, folder);
-  else if (kind === 'book') await services.books.moveBookToFolder(id, folder);
-  else if (kind === 'image') await services.galleries.moveGalleryToFolder(id, folder);
-  else if (kind === 'file') await services.files.moveCollectionToFolder(id, folder);
+  dialog.openPrompt(
+    {
+      cancelLabel: t(i18n, 'common.cancel'),
+      confirmLabel: t(i18n, 'common.confirm'),
+      promptLabel: t(i18n, 'folders.entityMovePrompt'),
+    },
+    async (value) => {
+      const folder = value.trim();
+      try {
+        if (kind === 'note') await services.notes.moveToFolder(id, folder);
+        else if (kind === 'task') await services.tasks.moveToFolder(id, folder);
+        else if (kind === 'goal') await services.goals.moveToFolder(id, folder);
+        else if (kind === 'list') await services.lists.moveToFolder(id, folder);
+        else if (kind === 'writing') await services.writings.moveToFolder(id, folder);
+        else if (kind === 'book') await services.books.moveBookToFolder(id, folder);
+        else if (kind === 'image') await services.galleries.moveGalleryToFolder(id, folder);
+        else if (kind === 'file') await services.files.moveCollectionToFolder(id, folder);
+      } catch (e) {
+        onError(e);
+      }
+    },
+    { allowEmpty: true },
+  );
 };

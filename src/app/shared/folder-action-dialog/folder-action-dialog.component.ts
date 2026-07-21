@@ -84,6 +84,23 @@ import type { FolderActionState } from './folder-action-dialog.types';
               </button>
             </div>
           }
+          @case ('prompt') {
+            <h3 [id]="titleId">{{ s.labels.promptLabel }}</h3>
+            <input
+              #textInput
+              type="text"
+              value=""
+              (keydown.enter)="textSubmitted.emit(textInput.value)"
+            />
+            <div class="actions">
+              <button type="button" class="ghost" (click)="cancelled.emit()">
+                {{ s.labels.cancelLabel }}
+              </button>
+              <button type="button" class="primary" (click)="textSubmitted.emit(textInput.value)">
+                {{ s.labels.confirmLabel }}
+              </button>
+            </div>
+          }
           @case ('delete') {
             <h3 [id]="titleId">{{ s.labels.deleteConfirmMessage }}</h3>
             <div class="actions">

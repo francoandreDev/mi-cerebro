@@ -62,15 +62,28 @@ export const openFolderActionDialog = (
   );
 };
 
-export const handleCreateFolder = async (
+export const handleCreateFolder = (
   kind: FolderKind,
   folders: FoldersService,
   i18n: I18nService,
+  dialog: FolderActionDialogController,
+  onError: (e: unknown) => void,
   parentPath = '',
-): Promise<void> => {
-  const name = prompt(t(i18n, 'folders.createPrompt'), '');
-  if (name === null || name.trim() === '') return;
-  await folders.createFolder(kind, parentPath, name.trim());
+): void => {
+  dialog.openPrompt(
+    {
+      cancelLabel: t(i18n, 'common.cancel'),
+      confirmLabel: t(i18n, 'common.confirm'),
+      promptLabel: t(i18n, 'folders.createPrompt'),
+    },
+    async (name: string) => {
+      try {
+        await folders.createFolder(kind, parentPath, name);
+      } catch (e) {
+        onError(e);
+      }
+    },
+  );
 };
 
 const pathLeaf = (path: string): string => {
