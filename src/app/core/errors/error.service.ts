@@ -2,6 +2,7 @@ import { Injectable, computed, signal } from '@angular/core';
 
 import { AppError } from './app-error';
 import { ERROR_CODES } from './error.codes';
+import type { ErrorContext } from './error.types';
 
 // why: blocking modal needs full attention; toast queue stays out of the way.
 const MODAL_SEVERITIES = new Set(['error', 'fatal'] as const);
@@ -31,6 +32,22 @@ export class ErrorService {
       this.pushToast(wrapped);
     }
     // TODO: persist last N to IndexedDB once IdbService exists (step 4).
+  }
+
+  // why: ~20 scan sites across features skip a corrupt/unreadable entry per
+  //      item so the rest of the workspace still loads (rule 20). Rule 28
+  //      requires that skip to stay visible, but one modal/toast per bad
+  //      file would be worse UX than the console.warn it replaces — so
+  //      scans accumulate a count and call this once, after the loop, for
+  //      a single aggregated toast instead of one AppError per file.
+  reportSkippedEntries(count: number, context?: ErrorContext): void {
+    if (count <= 0) return;
+    this.report(
+      new AppError(ERROR_CODES.ENT_003, {
+        severity: 'warning',
+        context: { count, ...context },
+      }),
+    );
   }
 
   dismissModal(): void {

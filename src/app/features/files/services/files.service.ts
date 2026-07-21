@@ -2,6 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
+import { ErrorService } from '@core/errors/error.service';
 import { FsService } from '@core/fs/fs.service';
 import type { NativeDirRef } from '@core/fs/native-fs.types';
 import { getDirByPath, getOrCreateDirByPath, joinPath } from '@core/fs/walk';
@@ -41,6 +42,7 @@ export class FilesService {
   private readonly migrations = inject(MigrationsService);
   private readonly search = inject(SearchIndexService);
   private readonly tags = inject(TagsService);
+  private readonly errors = inject(ErrorService);
 
   private readonly idToLoc = new Map<string, CollectionLocation>();
   private readonly summariesSignal = signal<readonly FileCollectionSummary[]>([]);
@@ -64,7 +66,9 @@ export class FilesService {
     const folders: string[] = [];
     const indexDocs: SearchDoc[] = [];
     const collectionsById = new Map<string, FileCollection>();
-    await this.walkCollections(root, '', summaries, folders, indexDocs, collectionsById);
+    const skipped = { count: 0 };
+    await this.walkCollections(root, '', summaries, folders, indexDocs, collectionsById, skipped);
+    this.errors.reportSkippedEntries(skipped.count, { area: 'files' });
     summaries.sort(compareLegacy);
     const seeds = seedMissingPositions(summaries);
     if (seeds.length > 0) {
@@ -310,6 +314,7 @@ export class FilesService {
     folders: string[],
     indexDocs: SearchDoc[],
     collectionsById: Map<string, FileCollection>,
+    skipped: { count: number },
   ): Promise<void> {
     for await (const name of this.fs.listSubdirs(dir)) {
       const sub = await this.fs.getDir(dir, name);
@@ -323,12 +328,21 @@ export class FilesService {
           summaries.push(this.toSummary(collection, folder));
           indexDocs.push(this.toSearchDoc(collection));
         } catch (cause) {
+          skipped.count++;
           console.warn('[files] skipped collection', name, cause);
         }
       } else {
         const path = joinPath(folder, name);
         folders.push(path);
-        await this.walkCollections(sub, path, summaries, folders, indexDocs, collectionsById);
+        await this.walkCollections(
+          sub,
+          path,
+          summaries,
+          folders,
+          indexDocs,
+          collectionsById,
+          skipped,
+        );
       }
     }
   }

@@ -2,6 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
+import { ErrorService } from '@core/errors/error.service';
 import { FsService } from '@core/fs/fs.service';
 import type { NativeDirRef } from '@core/fs/native-fs.types';
 import {
@@ -44,6 +45,7 @@ export class NotesService {
   private readonly migrations = inject(MigrationsService);
   private readonly search = inject(SearchIndexService);
   private readonly tags = inject(TagsService);
+  private readonly errors = inject(ErrorService);
 
   // why: caches relative path like 'inbox/idea.json' so save/read/delete
   //      reach the right subdirectory without re-walking the tree.
@@ -69,6 +71,7 @@ export class NotesService {
     const summaries: NoteSummary[] = [];
     const indexDocs: SearchDoc[] = [];
     const notesById = new Map<string, Note>();
+    let skipped = 0;
     for await (const entry of walkEntities(this.fs, dir, NOTE_FILE_SUFFIX)) {
       try {
         const raw = await this.fs.readJson<Note>(entry.dirHandle, entry.filename);
@@ -78,9 +81,16 @@ export class NotesService {
         summaries.push(this.toSummary(note, entry.folder));
         indexDocs.push(this.toSearchDoc(note));
       } catch (cause) {
-        await this.dropIfEmpty(entry.dirHandle, entry.filename, entry.relativePath, cause);
+        const dropped = await this.dropIfEmpty(
+          entry.dirHandle,
+          entry.filename,
+          entry.relativePath,
+          cause,
+        );
+        if (!dropped) skipped++;
       }
     }
+    this.errors.reportSkippedEntries(skipped, { area: 'notes' });
     summaries.sort(compareLegacy);
     const seeds = seedMissingPositions(summaries);
     if (seeds.length > 0) {
@@ -224,24 +234,29 @@ export class NotesService {
   // why: zero-byte JSONs are leftovers from an aborted write — they can't
   //      be parsed and clutter the workspace forever. Drop them on refresh
   //      so the user sees a clean list. Anything else (truly corrupt JSON,
-  //      permission failure) we leave in place and just log.
+  //      permission failure) we leave in place, log, and let the caller
+  //      count it towards the aggregated skipped-entries toast (rule 28).
+  //      Returns true when the file was silently dropped (no user-visible
+  //      loss — it was empty garbage, not content), false when it was a
+  //      genuine skip the caller should surface.
   private async dropIfEmpty(
     dir: NativeDirRef,
     filename: string,
     relativePath: string,
     cause: unknown,
-  ): Promise<void> {
+  ): Promise<boolean> {
     const size = await this.fs.fileSize(dir, filename);
     if (size === 0) {
       try {
         await this.fs.removeEntry(dir, filename);
         console.info('[notes] dropped empty file', relativePath);
-        return;
+        return true;
       } catch {
         /* fall through to warn */
       }
     }
     console.warn('[notes] skipped unreadable file', relativePath, cause);
+    return false;
   }
 
   setKnownPath(id: string, relativePath: string): void {

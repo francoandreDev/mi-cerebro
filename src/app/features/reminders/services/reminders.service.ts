@@ -2,6 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
+import { ErrorService } from '@core/errors/error.service';
 import { FsService } from '@core/fs/fs.service';
 import type { NativeDirRef } from '@core/fs/native-fs.types';
 import { WorkspaceService } from '@core/fs/workspace.service';
@@ -30,6 +31,7 @@ export class RemindersService {
   private readonly fs = inject(FsService);
   private readonly workspace = inject(WorkspaceService);
   private readonly migrations = inject(MigrationsService);
+  private readonly errors = inject(ErrorService);
 
   private readonly idToFile = new Map<string, string>();
   private readonly summariesSignal = signal<readonly ReminderSummary[]>([]);
@@ -75,6 +77,7 @@ export class RemindersService {
     const dir = await this.remindersDir();
     this.idToFile.clear();
     const summaries: ReminderSummary[] = [];
+    let skipped = 0;
     for await (const name of this.fs.listFiles(dir, REMINDER_FILE_SUFFIX)) {
       try {
         const raw = await this.fs.readJson<Reminder>(dir, name);
@@ -82,9 +85,11 @@ export class RemindersService {
         this.idToFile.set(reminder.id, name);
         summaries.push(this.toSummary(reminder));
       } catch (cause) {
-        await this.dropIfEmpty(dir, name, cause);
+        const dropped = await this.dropIfEmpty(dir, name, cause);
+        if (!dropped) skipped++;
       }
     }
+    this.errors.reportSkippedEntries(skipped, { area: 'reminders' });
     summaries.sort(compareSummaries);
     this.summariesSignal.set(summaries);
     return summaries;
@@ -184,19 +189,23 @@ export class RemindersService {
   }
 
   // why: zero-byte JSONs come from aborted writes and can't be parsed —
-  //      drop them on refresh so the dir stays clean.
-  private async dropIfEmpty(dir: NativeDirRef, filename: string, cause: unknown): Promise<void> {
+  //      drop them on refresh so the dir stays clean. Returns true when
+  //      silently dropped (empty garbage, nothing lost), false when it's a
+  //      genuine skip the caller should count towards the aggregated
+  //      skipped-entries toast (rule 28).
+  private async dropIfEmpty(dir: NativeDirRef, filename: string, cause: unknown): Promise<boolean> {
     const size = await this.fs.fileSize(dir, filename);
     if (size === 0) {
       try {
         await this.fs.removeEntry(dir, filename);
         console.info('[reminders] dropped empty file', filename);
-        return;
+        return true;
       } catch {
         /* fall through to warn */
       }
     }
     console.warn('[reminders] skipped unreadable file', filename, cause);
+    return false;
   }
 
   setKnownFilename(id: string, filename: string): void {

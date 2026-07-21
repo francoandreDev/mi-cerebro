@@ -2,6 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
+import { ErrorService } from '@core/errors/error.service';
 import { FsService } from '@core/fs/fs.service';
 import { ImageReaderService } from '@core/images/image-reader.service';
 import type { ImageRef, ImageRefGallery } from '@core/images/image-reader.types';
@@ -49,6 +50,7 @@ export class GalleriesService {
   private readonly search = inject(SearchIndexService);
   private readonly tags = inject(TagsService);
   private readonly imageReader = inject(ImageReaderService);
+  private readonly errors = inject(ErrorService);
 
   private readonly idToLoc = new Map<string, GalleryLocation>();
   private readonly summariesSignal = signal<readonly GallerySummary[]>([]);
@@ -73,7 +75,9 @@ export class GalleriesService {
     const folders: string[] = [];
     const indexDocs: SearchDoc[] = [];
     const galleriesById = new Map<string, Gallery>();
-    await this.walkGalleries(root, '', summaries, folders, indexDocs, galleriesById);
+    const skipped = { count: 0 };
+    await this.walkGalleries(root, '', summaries, folders, indexDocs, galleriesById, skipped);
+    this.errors.reportSkippedEntries(skipped.count, { area: 'images' });
     summaries.sort(compareLegacy);
     const seeds = seedMissingPositions(summaries);
     if (seeds.length > 0) {
@@ -352,6 +356,7 @@ export class GalleriesService {
     folders: string[],
     indexDocs: SearchDoc[],
     galleriesById: Map<string, Gallery>,
+    skipped: { count: number },
   ): Promise<void> {
     for await (const name of this.fs.listSubdirs(dir)) {
       const sub = await this.fs.getDir(dir, name);
@@ -371,12 +376,13 @@ export class GalleriesService {
           summaries.push(this.toSummary(gallery, folder));
           indexDocs.push(this.toSearchDoc(gallery));
         } catch (cause) {
+          skipped.count++;
           console.warn('[images] skipped gallery', name, cause);
         }
       } else {
         const path = joinPath(folder, name);
         folders.push(path);
-        await this.walkGalleries(sub, path, summaries, folders, indexDocs, galleriesById);
+        await this.walkGalleries(sub, path, summaries, folders, indexDocs, galleriesById, skipped);
       }
     }
   }

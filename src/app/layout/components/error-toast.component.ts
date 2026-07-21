@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, inject, input, output } from '@angu
 import type { AppError } from '@core/errors/app-error';
 import type { ErrorAction } from '@core/errors/error.types';
 import { I18nService } from '@core/i18n/i18n.service';
-import type { TranslationKey } from '@core/i18n/i18n.types';
+import type { TranslationKey, TranslationParams } from '@core/i18n/i18n.types';
 
 @Component({
   selector: 'mc-error-toast',
@@ -11,7 +11,7 @@ import type { TranslationKey } from '@core/i18n/i18n.types';
   template: `
     <div class="toast" role="status" [attr.data-severity]="error().severity">
       <span class="title">{{ t(error().titleKey) }}</span>
-      <span class="message">{{ t(error().messageKey) }}</span>
+      <span class="message">{{ t(error().messageKey, error().context) }}</span>
       <span class="code mc-mono">{{ error().code }}</span>
       <div class="actions">
         @for (action of error().actions; track action.labelKey) {
@@ -76,8 +76,12 @@ export class ErrorToastComponent {
 
   private readonly i18n = inject(I18nService);
 
-  protected t(key: string): string {
-    return this.i18n.t(key as TranslationKey);
+  // why: context values (e.g. a skipped-entry count) are plain data next to
+  //      an already-i18n message, same pattern as other t(key, params)
+  //      call sites — cast is safe here since only aggregated-count errors
+  //      currently rely on interpolation.
+  protected t(key: string, params?: Readonly<Record<string, unknown>>): string {
+    return this.i18n.t(key as TranslationKey, params as TranslationParams | undefined);
   }
 
   protected async runAction(action: ErrorAction): Promise<void> {

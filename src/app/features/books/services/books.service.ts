@@ -3,6 +3,7 @@ import type { JSONContent } from '@tiptap/core';
 
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
+import { ErrorService } from '@core/errors/error.service';
 import { FsService } from '@core/fs/fs.service';
 import type { NativeDirRef } from '@core/fs/native-fs.types';
 import { getDirByPath, getOrCreateDirByPath, joinPath } from '@core/fs/walk';
@@ -66,6 +67,7 @@ export class BooksService {
   private readonly tags = inject(TagsService);
   private readonly settings = inject(SettingsService);
   private readonly writingStats = inject(WritingStatsService);
+  private readonly errors = inject(ErrorService);
 
   private readonly idToLoc = new Map<string, BookLocation>();
   private readonly chapterCountById = new Map<string, number>();
@@ -135,7 +137,9 @@ export class BooksService {
     const folders: string[] = [];
     const indexDocs: SearchDoc[] = [];
     const booksById = new Map<string, Book>();
-    await this.walkBooks(root, '', summaries, folders, indexDocs, booksById);
+    const skipped = { count: 0 };
+    await this.walkBooks(root, '', summaries, folders, indexDocs, booksById, skipped);
+    this.errors.reportSkippedEntries(skipped.count, { area: 'books' });
     summaries.sort(compareLegacy);
     const seeds = seedMissingPositions(summaries);
     if (seeds.length > 0) {
@@ -397,6 +401,7 @@ export class BooksService {
     }
     const map = new Map<string, Draft>();
     const idToFile = new Map<string, string>();
+    let skipped = 0;
     for await (const filename of this.fs.listFiles(chaptersDir, CHAPTER_FILE_SUFFIX)) {
       try {
         const raw = await this.fs.readJson<Chapter>(chaptersDir, filename);
@@ -414,9 +419,11 @@ export class BooksService {
         });
         idToFile.set(ch.id, filename);
       } catch (cause) {
+        skipped++;
         console.warn('[books] skipped chapter', filename, cause);
       }
     }
+    this.errors.reportSkippedEntries(skipped, { area: 'books', bookId });
     const book = await this.readBook(bookId);
     const draftsOrdered: Draft[] = [];
     for (const id of book.order) {
@@ -578,6 +585,7 @@ export class BooksService {
     folders: string[],
     indexDocs: SearchDoc[],
     booksById: Map<string, Book>,
+    skipped: { count: number },
   ): Promise<void> {
     for await (const name of this.fs.listSubdirs(dir)) {
       const sub = await this.fs.getDir(dir, name);
@@ -599,19 +607,20 @@ export class BooksService {
               chTexts.push(`${ch.title} ${extractPlainText(ch.body)}`);
               indexDocs.push(this.toChapterSearchDoc(ch));
             } catch {
-              /* skip */
+              skipped.count++;
             }
           }
           this.chapterCountById.set(book.id, count);
           summaries.push(this.toSummary(book, folder, count));
           indexDocs.push(this.toSearchDoc(book, chTexts));
         } catch (cause) {
+          skipped.count++;
           console.warn('[books] skipped book', name, cause);
         }
       } else {
         const path = joinPath(folder, name);
         folders.push(path);
-        await this.walkBooks(sub, path, summaries, folders, indexDocs, booksById);
+        await this.walkBooks(sub, path, summaries, folders, indexDocs, booksById, skipped);
       }
     }
   }

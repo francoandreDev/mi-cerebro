@@ -207,6 +207,14 @@ Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `d
 - **Cómo resolver:** renombrar/eliminar uno de los dos. Si querés conservar ambos, abrí el JSON y reemplazá uno de los IDs por un UUID nuevo.
 - **Recuperable:** sí — los links que apuntaban al ID original quedan intactos.
 
+### MCB-ENT-003 — Archivos omitidos durante un escaneo
+
+- **Severidad:** warning
+- **Cuándo:** al listar todas las entidades de un tipo (notas, tareas, metas, listas, escritos, libros/capítulos, galerías, colecciones de archivos, playlists, recordatorios), uno o más archivos no pudieron leerse o parsearse. Se reporta una sola vez por escaneo, agregando el conteo total de archivos afectados (no uno por archivo).
+- **Causa típica:** las mismas que MCB-ENT-001 (JSON cortado, encoding, corrupción), pero surfaceado como aviso agregado en vez de bloquear con un modal por archivo — el resto del listado carga igual.
+- **Cómo resolver:** revisar la consola (`[<feature>] skipped ...`) para identificar el/los archivo(s) puntuales, luego seguir la resolución de MCB-ENT-001.
+- **Recuperable:** sí — los archivos buenos del mismo escaneo se cargan con normalidad; los omitidos quedan intactos en disco para reparar o restaurar.
+
 ---
 
 ## VER — Versionado e historial

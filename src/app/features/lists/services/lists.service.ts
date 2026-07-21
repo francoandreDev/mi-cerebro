@@ -2,6 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
+import { ErrorService } from '@core/errors/error.service';
 import { FsService } from '@core/fs/fs.service';
 import type { NativeDirRef } from '@core/fs/native-fs.types';
 import {
@@ -45,6 +46,7 @@ export class ListsService {
   private readonly migrations = inject(MigrationsService);
   private readonly search = inject(SearchIndexService);
   private readonly tags = inject(TagsService);
+  private readonly errors = inject(ErrorService);
 
   private readonly idToPath = new Map<string, string>();
   private readonly summariesSignal = signal<readonly ListSummary[]>([]);
@@ -67,6 +69,7 @@ export class ListsService {
     const summaries: ListSummary[] = [];
     const indexDocs: SearchDoc[] = [];
     const listsById = new Map<string, List>();
+    let skipped = 0;
     for await (const entry of walkEntities(this.fs, dir, LIST_FILE_SUFFIX)) {
       try {
         const raw = await this.fs.readJson<List>(entry.dirHandle, entry.filename);
@@ -76,9 +79,11 @@ export class ListsService {
         summaries.push(this.toSummary(list, entry.folder));
         indexDocs.push(this.toSearchDoc(list));
       } catch (cause) {
+        skipped++;
         console.warn('[lists] skipped unreadable file', entry.relativePath, cause);
       }
     }
+    this.errors.reportSkippedEntries(skipped, { area: 'lists' });
     summaries.sort(compareLegacy);
     const seeds = seedMissingPositions(summaries);
     if (seeds.length > 0) {
