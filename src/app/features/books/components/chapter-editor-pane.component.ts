@@ -18,6 +18,7 @@ import type { TranslationKey } from '@core/i18n/i18n.types';
 import type { TtsAction, TtsPaneState, TtsSegment } from '@core/tts/tts.types';
 import { emptyWritingStats, type WritingStats } from '@core/writing-stats/writing-stats.types';
 import { EditorComponent } from '@shared/editor/editor.component';
+import { TypewriterModeService } from '@shared/editor/typewriter-mode.service';
 import { IconComponent } from '@shared/icon/icon.component';
 import { TtsControlsComponent } from '@shared/tts-controls/tts-controls.component';
 import { toRoman } from '@shared/utils/roman';
@@ -48,6 +49,7 @@ export interface ChapterWritingStats {
   styleUrl: './chapter-editor-pane.component.css',
   host: {
     '[style.--mc-pages-x]': '(-currentSpread() * bandWidth()) + "px"',
+    '[class.typewriter-mode]': 'typewriterMode.active()',
   },
 })
 export class ChapterEditorPaneComponent {
@@ -83,6 +85,7 @@ export class ChapterEditorPaneComponent {
   //      component's public toggle methods.
   private readonly editorRef = viewChild(EditorComponent);
   private readonly destroyRef = inject(DestroyRef);
+  protected readonly typewriterMode = inject(TypewriterModeService);
   protected readonly ttsHighlightBlockId = signal<string | null>(null);
 
   protected readonly currentSpread = signal<number>(0);
@@ -350,6 +353,9 @@ export class ChapterEditorPaneComponent {
   }
   protected toggleStats(): void {
     this.statsOpen.update((v) => !v);
+  }
+  protected toggleTypewriterMode(): void {
+    this.typewriterMode.toggle();
   }
 }
 

@@ -23,6 +23,7 @@ import { COMMENT_RANGE_MAPPING_META_KEY } from '@core/tiptap/comment-range-mappi
 import { DRAFT_DECORATIONS_META_KEY } from '@core/tiptap/draft-decorations/draft-decorations.ext';
 import { IMAGE_REF_NAME } from '@core/tiptap/image-ref/image-ref.node';
 import { TTS_HIGHLIGHT_META_KEY } from '@core/tiptap/tts-highlight/tts-highlight.ext';
+import { TYPEWRITER_FOCUS_META_KEY } from '@core/tiptap/typewriter-focus/typewriter-focus.ext';
 import { CommentsService } from '@core/versioning/comments.service';
 import type { Comment } from '@core/versioning/comments.types';
 import { DraftsService } from '@core/versioning/drafts.service';
@@ -35,6 +36,7 @@ import { DraftsPanelContainer } from './drafts-panel.container';
 import { DraftSessionController } from './draft-session.controller';
 import { EditorCommentsCoordinator } from './editor-comments.coordinator';
 import { EditorToolbarComponent } from './editor-toolbar.component';
+import { TypewriterModeService } from './typewriter-mode.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import { ImagePickerDialogComponent } from './image-picker-dialog.component';
 import {
@@ -86,6 +88,7 @@ export class EditorComponent {
   private readonly i18n = inject(I18nService);
   private readonly drafts = inject(DraftsService);
   private readonly comments = inject(CommentsService);
+  protected readonly typewriterMode = inject(TypewriterModeService);
 
   protected readonly pickerOpen = signal(false);
   protected readonly view = signal<'clean' | 'combined'>('clean');
@@ -410,6 +413,15 @@ export class EditorComponent {
     view?.dispatch(view.state.tr.setMeta(TTS_HIGHLIGHT_META_KEY, this.ttsHighlightBlockId()));
   }
 
+  private pushTypewriterFocus(): void {
+    const view = this.editor?.view;
+    view?.dispatch(view.state.tr.setMeta(TYPEWRITER_FOCUS_META_KEY, this.typewriterMode.active()));
+  }
+
+  protected toggleTypewriterMode(): void {
+    this.typewriterMode.toggle();
+  }
+
   private onEditorSelectionUpdate(ed: Editor): void {
     this.refreshListActiveState(ed);
     const { from, to } = ed.state.selection;
@@ -475,6 +487,10 @@ export class EditorComponent {
     effect(() => {
       this.ttsHighlightBlockId();
       this.pushTtsHighlight();
+    }, opts);
+    effect(() => {
+      this.typewriterMode.active();
+      this.pushTypewriterFocus();
     }, opts);
 
     this.destroyRef.onDestroy(() => {

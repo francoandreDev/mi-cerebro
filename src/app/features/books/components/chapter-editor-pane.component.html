@@ -141,6 +141,17 @@
         >
           <mc-icon name="minus" />
         </button>
+        <button
+          type="button"
+          class="list-toggle"
+          [class.active]="typewriterMode.active()"
+          [attr.aria-pressed]="typewriterMode.active()"
+          [attr.aria-label]="t('editor.typewriter.button')"
+          [title]="t('editor.typewriter.button')"
+          (click)="toggleTypewriterMode()"
+        >
+          <mc-icon name="target" />
+        </button>
       }
       <mc-tts-controls [state]="ttsState()" (action)="ttsAction.emit($event)" />
       <button

@@ -14,6 +14,7 @@
     [italicActive]="italicActive()"
     [activeHeadingLevel]="activeHeadingLevel()"
     [citationActive]="citationActive()"
+    [typewriterActive]="typewriterMode.active()"
     (openPicker)="pickerOpen.set(true)"
     (setView)="setView($event)"
     (toggleCommentsIndex)="commentsIndexOpen.set(!commentsIndexOpen())"
@@ -26,6 +27,7 @@
     (setHeadingLevel)="setHeadingLevel($event)"
     (toggleCitation)="toggleCitation()"
     (insertSceneBreak)="insertSceneBreak()"
+    (toggleTypewriter)="toggleTypewriterMode()"
   />
 }
 <div class="shell" [class.has-popover]="commentsIndexOpen() || draftsIndexOpen()">

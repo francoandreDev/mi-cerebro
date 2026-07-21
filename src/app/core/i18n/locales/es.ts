@@ -1406,6 +1406,7 @@ export const es = {
   'editor.mark.bold': 'Negrita',
   'editor.mark.italic': 'Cursiva',
   'editor.sceneBreak': 'Separador de escena',
+  'editor.typewriter.button': 'Modo máquina de escribir',
   'editor.heading.level2': 'Subtítulo (H2)',
   'editor.heading.level3': 'Subtítulo (H3)',
   'editor.heading.level4': 'Subtítulo (H4)',

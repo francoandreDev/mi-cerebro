@@ -25,6 +25,18 @@
   overflow-y: auto;
   overflow-anchor: none;
 }
+/* why: typewriter mode's scroll-padding lives here too for consistency with
+   writing-editor-pane.component.css, but in practice it rarely does
+   anything visible in the reader — the spread paginates horizontally via a
+   `transform` on `.pages` (see bandWidth/currentSpread in the .ts), not
+   vertical scroll, so there's usually no vertical overflow for the caret to
+   scroll within. Kept anyway: a single very tall block (e.g. a huge pasted
+   table) that temporarily overflows a spread's fixed height still benefits
+   from it, and the toggle's dimming effect (mc-typewriter-dim) works here
+   regardless of pagination. */
+:host.typewriter-mode {
+  scroll-padding-block: 40vh;
+}
 
 :host-context(:root[data-theme='light']) {
   --mc-book-paper-bg: #f7efdc;

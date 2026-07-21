@@ -134,6 +134,16 @@ const HIGHLIGHT_SWATCH_LABELS: Record<string, TranslationKey> = {
         >
           <mc-icon name="minus" />
         </button>
+        <button
+          type="button"
+          class="ghost"
+          [attr.aria-pressed]="typewriterActive()"
+          [attr.aria-label]="t('editor.typewriter.button')"
+          [title]="t('editor.typewriter.button')"
+          (click)="toggleTypewriter.emit()"
+        >
+          <mc-icon name="target" />
+        </button>
       }
       @if (editable()) {
         <div class="highlight-wrap">
@@ -247,6 +257,7 @@ export class EditorToolbarComponent {
   readonly italicActive = input<boolean>(false);
   readonly activeHeadingLevel = input<2 | 3 | 4 | 0>(0);
   readonly citationActive = input<boolean>(false);
+  readonly typewriterActive = input<boolean>(false);
 
   readonly openPicker = output<void>();
   readonly setView = output<EditorView>();
@@ -257,6 +268,7 @@ export class EditorToolbarComponent {
   readonly toggleBold = output<void>();
   readonly toggleItalic = output<void>();
   readonly insertSceneBreak = output<void>();
+  readonly toggleTypewriter = output<void>();
   readonly pickHighlight = output<string | null>();
   readonly toggleBulletList = output<void>();
   readonly toggleOrderedList = output<void>();

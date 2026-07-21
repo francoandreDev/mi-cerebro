@@ -26,6 +26,7 @@ import { createDraftDecorationsExtension } from '@core/tiptap/draft-decorations/
 import { createHighlightExtension } from '@core/tiptap/highlight/highlight.ext';
 import { createImageRefNode } from '@core/tiptap/image-ref/image-ref.node';
 import { createTtsHighlightExtension } from '@core/tiptap/tts-highlight/tts-highlight.ext';
+import { createTypewriterFocusExtension } from '@core/tiptap/typewriter-focus/typewriter-focus.ext';
 import type { Comment } from '@core/versioning/comments.types';
 
 // why: StarterKit's bullet/ordered list nodes ship a hardcoded
@@ -94,6 +95,7 @@ export const createEditorInstance = (ctx: SetupEditorContext): Editor =>
       createHighlightExtension(),
       createBlockIdExtension(),
       createTtsHighlightExtension(),
+      createTypewriterFocusExtension(),
       createImageRefNode(ctx.reader),
       createDraftDecorationsExtension({
         onClick: ctx.onDraftInsertClick,

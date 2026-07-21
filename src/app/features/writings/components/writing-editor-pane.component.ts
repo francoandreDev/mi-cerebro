@@ -6,6 +6,7 @@ import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import type { Tag } from '@core/tags/tag.types';
 import { EditorComponent } from '@shared/editor/editor.component';
+import { TypewriterModeService } from '@shared/editor/typewriter-mode.service';
 import { IconComponent } from '@shared/icon/icon.component';
 import type { IconName } from '@shared/icon/icons.data';
 import { TagPickerComponent } from '@shared/tags/tag-picker.component';
@@ -20,6 +21,12 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
   imports: [EditorComponent, TagPickerComponent, IconComponent],
   templateUrl: './writing-editor-pane.component.html',
   styleUrl: './writing-editor-pane.component.css',
+  // why: :host is the pane's own scroll container when typewriter mode is
+  //      on — see the `.typewriter-mode` rule in the .css for why it has to
+  //      be this element and not an app-shell ancestor.
+  host: {
+    '[class.typewriter-mode]': 'typewriterMode.active()',
+  },
 })
 export class WritingEditorPaneComponent {
   readonly writing = input.required<Writing>();
@@ -36,6 +43,7 @@ export class WritingEditorPaneComponent {
 
   private readonly i18n = inject(I18nService);
   protected readonly focusMode = inject(FocusModeService);
+  protected readonly typewriterMode = inject(TypewriterModeService);
   protected t(key: TranslationKey): string {
     return this.i18n.t(key);
   }

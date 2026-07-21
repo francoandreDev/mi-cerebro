@@ -6,6 +6,19 @@
   padding: var(--mc-space-4);
   gap: var(--mc-space-3);
 }
+/* why: typewriter mode ("máquina de escribir", ver TypewriterModeService)
+   necesita que el propio host sea el scrollport para que scroll-padding
+   surta efecto — Chromium (único navegador soportado, ver reglas.md §3)
+   ya incluye scroll-padding en el cálculo de "traer el caret a la vista"
+   cuando el usuario tipea o mueve el cursor con las flechas, así que no
+   hace falta un plugin de ProseMirror escuchando selectionUpdate. min-height:0
+   deja que el host se achique dentro de `.canvas` (flex column) en vez de
+   forzar la altura del padre — sin eso overflow-y:auto nunca dispara. */
+:host.typewriter-mode {
+  min-height: 0;
+  overflow-y: auto;
+  scroll-padding-block: 40vh;
+}
 .bar {
   display: flex;
   align-items: center;
