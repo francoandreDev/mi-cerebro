@@ -780,6 +780,8 @@ export const es = {
   'goals.editor.overdueLabel': 'Vencido hace {n} d',
   'goals.editor.seedDeadline': 'Sembrar plazo',
   'goals.editor.deadlineAria': 'Plazo de la meta',
+  'goals.editor.deadlineTimeAria': 'Hora del plazo (por defecto 23:59)',
+  'goals.editor.deadlineTimeHint': 'Hora del plazo. Sin definir, se toma como 23:59.',
   'goals.editor.priorityAria': 'Prioridad de la meta',
   'goals.editor.progressPill': '{done} de {total} pasos · {pct}%',
   'goals.editor.progressEmpty': 'Sembrá pasos para ver avance',
@@ -806,6 +808,9 @@ export const es = {
   'goals.reminder.notifyOnDormantLabel': 'Avisarme si esta meta se duerme',
   'goals.reminder.notifyOnDormantHint':
     'Crea un recordatorio puntual apenas la meta cruce el umbral de dormancia. Se borra solo si retomás el progreso.',
+  'goals.reminder.leadLabel': 'Empezar a avisar',
+  'goals.reminder.leadUseGlobal': 'Usar default global ({minutes})',
+  'goals.reminder.leadHint': 'Reemplaza el default global solo para esta meta.',
   'goals.wall.searchPlaceholder': 'Buscar metas...',
   'goals.wall.searchAria': 'Buscar metas',
   'goals.wall.searchClear': 'Limpiar búsqueda',

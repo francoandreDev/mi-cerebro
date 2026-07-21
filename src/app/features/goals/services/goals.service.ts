@@ -41,6 +41,7 @@ import { goalDormantNotifyMigrationStep } from './dormant-notify.migration';
 import { goalPriorityProgressMigrationStep } from './priority-progress.migration';
 import { goalProgressActivityMigrationStep } from './progress-activity.migration';
 import { goalReminderConfigMigrationStep } from './reminder-config.migration';
+import { goalReminderLeadDeadlineTimeMigrationStep } from './reminder-lead-deadline-time.migration';
 import { goalStepPositionsMigrationStep } from './step-positions.migration';
 import { goalStepsMigrationStep } from './steps.migration';
 
@@ -75,6 +76,7 @@ export class GoalsService {
         goalStepPositionsMigrationStep(6),
         goalProgressActivityMigrationStep(7),
         goalDormantNotifyMigrationStep(8),
+        goalReminderLeadDeadlineTimeMigrationStep(9),
       ],
     });
   }
@@ -360,7 +362,14 @@ export class GoalsService {
       stepsTotal: steps.length,
       stepsDone,
     };
-    return goal.wallCenter ? { ...base, wallCenter: goal.wallCenter } : base;
+    const withWallCenter = goal.wallCenter ? { ...base, wallCenter: goal.wallCenter } : base;
+    const withLead =
+      typeof goal.reminderLeadMinutes === 'number'
+        ? { ...withWallCenter, reminderLeadMinutes: goal.reminderLeadMinutes }
+        : withWallCenter;
+    return typeof goal.deadlineTime === 'string'
+      ? { ...withLead, deadlineTime: goal.deadlineTime }
+      : withLead;
   }
 
   private toSearchDoc(goal: Goal): SearchDoc {

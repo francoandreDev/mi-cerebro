@@ -13,22 +13,6 @@ Formato por entrada:
 
 ---
 
-## Recordatorios automáticos por meta (origen: unificación 2026-06-23)
-
-### Lead-time por meta
-
-- **Qué**: hoy el `settings.goals.reminderLeadMinutes` es global. Una versión avanzada permite override per-goal (este objetivo arranca antes / después que el default).
-- **Por qué se difirió**: YAGNI mientras un único lead-time alcance. Sumar UI + campo en `reminder` config + migración solo se justifica si el usuario pide tratar metas distinto entre sí.
-- **Target**: sin asignar.
-
-### Hora del deadline configurable / deadline con hora propia
-
-- **Qué**: hoy el deadline es solo `YYYY-MM-DD` y se trata como 23:59 local. Una versión avanzada permite que cada meta tenga `deadlineTime?: HH:mm` (o un setting global "considero el deadline a las HH:mm").
-- **Por qué se difirió**: el modelo `Goal.deadline` es date-only y agregarle hora implica migración + UI en `DeadlinePickerComponent`. 23:59 es razonable para casi todo plazo "fin del día".
-- **Target**: sin asignar.
-
----
-
 ## Metas — pasos como estrellas (origen: schema v6, 2026-06-24; canvas editor v7, 2026-06-24)
 
 ### Drag-to-reposition de estrellas existentes en el editor

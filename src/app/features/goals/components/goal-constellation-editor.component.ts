@@ -19,6 +19,8 @@ import { stepOffset } from '../containers/goal-wall-layout.utils';
 import {
   GOAL_PRIORITIES,
   deriveProgressFromSteps,
+  goalDeadlineInstant,
+  isValidTimeOfDay,
   newGoalStep,
   type Goal,
   type GoalPriority,
@@ -50,6 +52,7 @@ export class GoalConstellationEditorComponent {
   readonly stepsChange = output<readonly GoalStep[]>();
   readonly priorityChange = output<GoalPriority>();
   readonly deadlineChange = output<string | null>();
+  readonly deadlineTimeChange = output<string | null>();
   readonly titleChange = output<string>();
   readonly completedChange = output<boolean>();
   readonly removeGoal = output<void>();
@@ -148,11 +151,23 @@ export class GoalConstellationEditorComponent {
     return Math.max(0, Math.min(100, ((now - start) / (end - start)) * 100));
   });
 
+  // why: overdue tone checks the exact deadline instant (respects a custom
+  //      `deadlineTime`), not just the calendar-day diff — a goal due today
+  //      at 09:00 should tint red once 09:00 passes, not only at midnight.
+  //      `daysLabel()`/`daysToDeadline()` stay day-granularity on purpose
+  //      (§13's "tenés X tiempo" framing), only the tone reacts to the hour.
+  protected readonly isOverdue = computed<boolean>(() => {
+    const g = this.goal();
+    if (!g.deadline) return false;
+    const instant = goalDeadlineInstant(g.deadline, g.deadlineTime);
+    return instant !== null && Date.now() > instant;
+  });
+
   protected readonly skyTone = computed<'soon' | 'overdue' | 'completed' | 'calm'>(() => {
     if (this.goal().completed) return 'completed';
     const d = this.daysToDeadline();
     if (d === null) return 'calm';
-    return d < 0 ? 'overdue' : d <= 7 ? 'soon' : 'calm';
+    return this.isOverdue() ? 'overdue' : d <= 7 ? 'soon' : 'calm';
   });
 
   protected t(key: TranslationKey): string {
@@ -319,6 +334,16 @@ export class GoalConstellationEditorComponent {
     this.deadlineOpen.set(!this.deadlineOpen());
   }
 
+  // why: date + time live in one focusout-managed group so tabbing from the
+  //      date input into the time input doesn't close the picker (a plain
+  //      per-input `(blur)` would fire before the time input gets focus).
+  protected onPickerFocusOut(event: FocusEvent): void {
+    const next = event.relatedTarget as Node | null;
+    const wrap = event.currentTarget as HTMLElement;
+    if (next && wrap.contains(next)) return;
+    this.deadlineOpen.set(false);
+  }
+
   protected onDeadlinePick(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
     if (value === '' || value < this.todayIso) return;
@@ -329,7 +354,20 @@ export class GoalConstellationEditorComponent {
     event.stopPropagation();
     if (event.type === 'keydown') event.preventDefault();
     this.deadlineChange.emit(null);
+    this.deadlineTimeChange.emit(null);
     this.deadlineOpen.set(false);
+  }
+
+  // why: docs/deferred/reminders-goals.md "Hora del deadline configurable" —
+  //      empty value clears the override back to the implicit 23:59.
+  protected onDeadlineTimePick(event: Event): void {
+    const value = (event.target as HTMLInputElement).value;
+    if (value === '') {
+      this.deadlineTimeChange.emit(null);
+      return;
+    }
+    if (!isValidTimeOfDay(value)) return;
+    this.deadlineTimeChange.emit(value);
   }
 
   protected priorityKey(p: GoalPriority): TranslationKey {

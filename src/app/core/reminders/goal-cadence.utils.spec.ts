@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { LEAD_PRESETS, nextLeadupSlot, nextSlotFor, parseTarget } from './goal-cadence.utils';
+import {
+  LEAD_PRESETS,
+  nextLeadupSlot,
+  nextSlotFor,
+  parseTarget,
+  resolveLeadMinutes,
+} from './goal-cadence.utils';
 
 const at = (y: number, mo: number, d: number, h = 9, mi = 0): number =>
   new Date(y, mo - 1, d, h, mi, 0, 0).getTime();
@@ -71,5 +77,20 @@ describe('nextLeadupSlot', () => {
     // target = 16:20, now = 16:15 → next is 16:18 (2m offset).
     const slot = nextSlotFor('2026-07-10T16:20', at(2026, 7, 10, 16, 15), 1440);
     expect(slot).toBe('2026-07-10T16:18');
+  });
+});
+
+describe('resolveLeadMinutes', () => {
+  it('uses the goal override when the reminder is goal-sourced and the goal has one', () => {
+    expect(resolveLeadMinutes('goal', 60, 1440)).toBe(60);
+  });
+
+  it('falls back to the global lead when the goal has no override', () => {
+    expect(resolveLeadMinutes('goal', undefined, 1440)).toBe(1440);
+  });
+
+  it('ignores the override for non-goal reminders (manual, task, writing, goal-dormant)', () => {
+    expect(resolveLeadMinutes('task', 60, 1440)).toBe(1440);
+    expect(resolveLeadMinutes(null, 60, 1440)).toBe(1440);
   });
 });

@@ -2,7 +2,11 @@ import { Injectable, effect, inject } from '@angular/core';
 
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { GoalsService } from '@features/goals/services/goals.service';
-import type { GoalSummary } from '@features/goals/models/goal.types';
+import {
+  DEFAULT_DEADLINE_TIME,
+  isValidTimeOfDay,
+  type GoalSummary,
+} from '@features/goals/models/goal.types';
 import type { ReminderSummary } from '@features/reminders/models/reminder.types';
 import { RemindersService } from '@features/reminders/services/reminders.service';
 
@@ -13,11 +17,12 @@ interface SyncDiff {
   readonly toReschedule: readonly { id: string; target: string }[];
 }
 
-// why: end-of-day timestamp for a goal's date-only deadline. The
-//      reminder lives in user-facing wall-clock, so we encode the
-//      "you have until the end of that day" semantics by setting the
-//      target to 23:59 local.
-const deadlineTarget = (deadline: string): string => `${deadline}T23:59`;
+// why: end-of-day timestamp for a goal's date-only deadline, unless the
+//      goal set its own `deadlineTime` (docs/deferred/reminders-goals.md
+//      "Hora del deadline configurable") — falls back to 23:59 local so
+//      goals without the field keep their pre-existing behavior.
+const deadlineTarget = (deadline: string, deadlineTime?: string): string =>
+  `${deadline}T${isValidTimeOfDay(deadlineTime) ? deadlineTime : DEFAULT_DEADLINE_TIME}`;
 
 // why: §14 — owns the goal→reminder lifecycle: one Reminder per enabled
 //      goal-with-deadline, with title + target kept in sync. The actual
@@ -108,7 +113,7 @@ export class GoalRemindersSyncService {
       else if (!needsReminder && existing) toDelete.push(existing.id);
       else if (needsReminder && existing && goal.deadline !== null) {
         if (goal.title && existing.title !== goal.title) toRetitle.push(existing);
-        const expected = deadlineTarget(goal.deadline);
+        const expected = deadlineTarget(goal.deadline, goal.deadlineTime);
         if (existing.dueAt !== expected) {
           toReschedule.push({ id: existing.id, target: expected });
         }
@@ -130,7 +135,7 @@ export class GoalRemindersSyncService {
     if (op.kind === 'create') {
       const goal = op.goal;
       if (goal.deadline === null) return;
-      const target = deadlineTarget(goal.deadline);
+      const target = deadlineTarget(goal.deadline, goal.deadlineTime);
       await this.reminders.create(goal.title, target, { kind: 'goal', id: goal.id });
       return;
     }

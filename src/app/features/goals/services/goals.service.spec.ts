@@ -28,14 +28,63 @@ describe('GoalsService', () => {
     const goal = await svc.create('Aprender ruso');
     expect(goal.completed).toBe(false);
     expect(goal.deadline).toBeNull();
-    expect(goal.schemaVersion).toBe(9);
+    expect(goal.schemaVersion).toBe(10);
     expect(goal.steps).toEqual([]);
     expect(goal.priority).toBe('med');
     expect(goal.progress).toBe(0);
     expect(goal.reminder).toEqual({ enabled: false, notifyOnDormant: false });
     expect(goal.position).toBeTypeOf('string');
+    expect(goal.reminderLeadMinutes).toBeUndefined();
+    expect(goal.deadlineTime).toBeUndefined();
     const goals = fs.root.dirs.get('goals')!;
     expect(goals.files.has('aprender-ruso.json')).toBe(true);
+  });
+
+  it('migrates a legacy v9 goal without reminderLeadMinutes/deadlineTime unchanged', async () => {
+    const created = await svc.create('Meta vieja');
+    const goalsDir = fs.root.dirs.get('goals')!;
+    const filename = [...goalsDir.files.keys()][0]!;
+    const legacyV9 = {
+      id: created.id,
+      title: 'Meta vieja',
+      body: created.body,
+      tags: [],
+      deadline: '2026-08-01',
+      completed: false,
+      priority: 'med',
+      progress: 0,
+      reminder: { enabled: false, notifyOnDormant: false },
+      steps: [],
+      lastProgressAt: created.lastProgressAt,
+      createdAt: created.createdAt,
+      updatedAt: created.updatedAt,
+      schemaVersion: 9,
+      position: created.position,
+    };
+    goalsDir.files.set(filename, JSON.stringify(legacyV9));
+
+    const migrated = await svc.read(created.id);
+
+    expect(migrated.schemaVersion).toBe(10);
+    expect(migrated.reminderLeadMinutes).toBeUndefined();
+    expect(migrated.deadlineTime).toBeUndefined();
+    expect(migrated.deadline).toBe('2026-08-01');
+  });
+
+  it('save persists a per-goal reminderLeadMinutes override and deadlineTime', async () => {
+    const goal = await svc.create('Meta con override');
+    const saved = await svc.save({
+      ...goal,
+      deadline: '2026-09-01',
+      reminderLeadMinutes: 60,
+      deadlineTime: '09:00',
+    });
+    expect(saved.reminderLeadMinutes).toBe(60);
+    expect(saved.deadlineTime).toBe('09:00');
+    const list = await svc.refresh();
+    const summary = list.find((s) => s.id === goal.id)!;
+    expect(summary.reminderLeadMinutes).toBe(60);
+    expect(summary.deadlineTime).toBe('09:00');
   });
 
   it('save persists deadline and bumps updatedAt', async () => {

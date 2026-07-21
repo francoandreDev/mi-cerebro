@@ -1,6 +1,6 @@
 import type { JSONContent } from '@tiptap/core';
 
-export const GOAL_SCHEMA_VERSION = 9;
+export const GOAL_SCHEMA_VERSION = 10;
 export const GOAL_KIND = 'goal';
 export const GOALS_DIR = 'goals';
 export const GOAL_FILE_SUFFIX = '.json';
@@ -42,12 +42,45 @@ export interface Goal {
   //      `lastProgressAt` mide "cuándo avanzó de verdad" — es la señal de
   //      dormancia, no la de edición.
   readonly lastProgressAt: string;
+  // why: docs/deferred/reminders-goals.md "Lead-time por meta" — overrides
+  //      `settings.reminders.leadMinutes` for this goal's reminder only.
+  //      Absent ⇒ falls back to the global setting (unchanged behavior).
+  readonly reminderLeadMinutes?: number;
+  // why: docs/deferred/reminders-goals.md "Hora del deadline configurable" —
+  //      `HH:mm` local. Absent ⇒ the deadline is still treated as 23:59
+  //      (unchanged behavior for every goal created before this field).
+  readonly deadlineTime?: string;
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly schemaVersion: number;
   readonly position?: string;
   readonly [key: string]: unknown;
 }
+
+// why: shared bounds with the global setting (SettingsService.setReminderLeadMinutes)
+//      — 2 min is the tightest ping in the fixed cadence, 30 days is the ceiling.
+export const MIN_REMINDER_LEAD_MINUTES = 2;
+export const MAX_REMINDER_LEAD_MINUTES = 43_200;
+
+export const clampReminderLeadMinutes = (minutes: number): number =>
+  Math.max(MIN_REMINDER_LEAD_MINUTES, Math.min(MAX_REMINDER_LEAD_MINUTES, Math.round(minutes)));
+
+const TIME_OF_DAY_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+export const isValidTimeOfDay = (v: unknown): v is string =>
+  typeof v === 'string' && TIME_OF_DAY_RE.test(v);
+
+export const DEFAULT_DEADLINE_TIME = '23:59';
+
+// why: single source of truth for "what instant does this goal's deadline
+//      point to" — used by the constellation editor's overdue tone and by
+//      the goal→reminder sync (`deadlineTarget`) so both agree with a
+//      goal's custom `deadlineTime` (or the implicit 23:59 fallback).
+export const goalDeadlineInstant = (deadline: string, deadlineTime?: string): number | null => {
+  const time = isValidTimeOfDay(deadlineTime) ? deadlineTime : DEFAULT_DEADLINE_TIME;
+  const ms = Date.parse(`${deadline}T${time}:00`);
+  return Number.isNaN(ms) ? null : ms;
+};
 
 export interface GoalReminderConfig {
   readonly enabled: boolean;
@@ -104,6 +137,8 @@ export interface GoalSummary {
   readonly stepsTotal: number;
   readonly stepsDone: number;
   readonly wallCenter?: { readonly x: number; readonly y: number };
+  readonly reminderLeadMinutes?: number;
+  readonly deadlineTime?: string;
 }
 
 export const clampProgress = (n: number): number => {

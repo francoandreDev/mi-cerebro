@@ -54,7 +54,10 @@
       >
         <mc-icon [name]="goal().deadline ? 'moon' : 'calendar-blank'" />
         @if (goal().deadline) {
-          <span>{{ daysLabel() }} · {{ goal().deadline | mcDate }}</span>
+          <span
+            >{{ daysLabel() }} · {{ goal().deadline | mcDate
+            }}{{ goal().deadlineTime ? ' · ' + goal().deadlineTime : '' }}</span
+          >
         } @else {
           <span>{{ t('goals.editor.seedDeadline') }}</span>
         }
@@ -72,15 +75,26 @@
         }
       </button>
       @if (deadlineOpen()) {
-        <input
-          type="date"
-          class="deadline-picker"
-          mcAutofocus
-          [value]="goal().deadline ?? ''"
-          [min]="todayIso"
-          (change)="onDeadlinePick($event)"
-          (blur)="deadlineOpen.set(false)"
-        />
+        <div class="deadline-picker-group" (focusout)="onPickerFocusOut($event)">
+          <input
+            type="date"
+            class="deadline-picker"
+            mcAutofocus
+            [value]="goal().deadline ?? ''"
+            [min]="todayIso"
+            (change)="onDeadlinePick($event)"
+          />
+          @if (goal().deadline) {
+            <input
+              type="time"
+              class="deadline-time-picker"
+              [value]="goal().deadlineTime ?? ''"
+              [attr.aria-label]="t('goals.editor.deadlineTimeAria')"
+              [attr.title]="t('goals.editor.deadlineTimeHint')"
+              (change)="onDeadlineTimePick($event)"
+            />
+          }
+        </div>
       }
     </div>
     <span class="save-status" [attr.data-status]="status()" [attr.title]="statusLabel()">

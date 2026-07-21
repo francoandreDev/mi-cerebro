@@ -91,6 +91,20 @@ export interface LeadPreset {
   readonly labelKey: string;
 }
 
+// why: docs/deferred/reminders-goals.md "Lead-time por meta" — a goal
+//      reminder uses its source goal's `reminderLeadMinutes` when set, else
+//      the global setting. Non-goal reminders (manual, task, writing,
+//      goal-dormant) always use the global setting — no other source kind
+//      has a per-entity override (YAGNI until one needs it). Pulled out as
+//      a pure function so RemindersCadenceService's lookup logic (which
+//      needs live signals to find the goal) stays testable without DI.
+export const resolveLeadMinutes = (
+  sourceKind: string | null,
+  goalLeadMinutesOverride: number | undefined,
+  globalLeadMinutes: number,
+): number =>
+  sourceKind === 'goal' ? (goalLeadMinutesOverride ?? globalLeadMinutes) : globalLeadMinutes;
+
 export const LEAD_PRESETS: readonly LeadPreset[] = [
   { minutes: 10080, labelKey: 'settings.reminders.lead.preset.1w' },
   { minutes: 1440, labelKey: 'settings.reminders.lead.preset.1d' },

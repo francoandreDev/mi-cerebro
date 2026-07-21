@@ -217,15 +217,19 @@
 .deadline-chip-wrap:not(.has-deadline) .deadline-chip { border-style: dashed; color: rgba(255, 220, 150, 0.85); }
 .deadline-clear { display: inline-flex; align-items: center; padding: 2px; border-radius: 50%; color: rgba(200, 215, 245, 0.55); cursor: pointer; }
 .deadline-clear:hover { color: #ffb0b0; background: rgba(255, 120, 120, 0.18); }
-.deadline-picker {
+.deadline-picker-group {
   position: absolute; top: calc(100% + 4px); right: 0;
+  display: flex; gap: 6px;
   background: rgba(10, 18, 40, 0.95);
   border: 1px solid rgba(170, 215, 255, 0.55);
   border-radius: var(--mc-radius-md);
-  color: #fff; padding: 4px 8px;
-  font-size: var(--mc-font-size-sm);
+  padding: 4px 8px;
   box-shadow: 0 0 16px rgba(170, 215, 255, 0.4);
   z-index: 7;
+}
+.deadline-picker, .deadline-time-picker {
+  background: transparent; border: none;
+  color: #fff; font-size: var(--mc-font-size-sm);
 }
 .save-status { display: inline-flex; align-items: center; color: rgba(200, 215, 245, 0.55); }
 .save-status[data-status='saving'] { color: rgba(170, 215, 255, 0.95); }

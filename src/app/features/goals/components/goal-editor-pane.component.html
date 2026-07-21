@@ -7,6 +7,7 @@
     (stepsChange)="stepsChange.emit($event)"
     (priorityChange)="priorityChange.emit($event)"
     (deadlineChange)="deadlineChange.emit($event)"
+    (deadlineTimeChange)="deadlineTimeChange.emit($event)"
     (titleChange)="titleChange.emit($event)"
     (completedChange)="completedChange.emit($event)"
     (removeGoal)="removeGoal.emit()"
@@ -29,6 +30,35 @@
       <span class="reminder-hint">{{ t('goals.reminder.toggleHint') }}</span>
     }
   </section>
+
+  @if (goal().reminder.enabled) {
+    <section class="meta reminder">
+      <mc-icon name="hourglass-medium" class="meta-icon" />
+      <label class="reminder-toggle">
+        <span>{{ t('goals.reminder.leadLabel') }}</span>
+        <select
+          [disabled]="!editable()"
+          [attr.aria-label]="t('goals.reminder.leadLabel')"
+          (change)="onLeadMinutesSelect($event)"
+        >
+          <option value="" [selected]="goal().reminderLeadMinutes === undefined">
+            {{ t('goals.reminder.leadUseGlobal').replace('{minutes}', globalLeadLabel()) }}
+          </option>
+          @for (preset of leadPresets; track preset.minutes) {
+            <option
+              [value]="preset.minutes"
+              [selected]="goal().reminderLeadMinutes === preset.minutes"
+            >
+              {{ t(asKey(preset.labelKey)) }}
+            </option>
+          }
+        </select>
+      </label>
+      @if (goal().reminderLeadMinutes !== undefined) {
+        <span class="reminder-hint">{{ t('goals.reminder.leadHint') }}</span>
+      }
+    </section>
+  }
 
   <section class="meta reminder">
     <mc-icon name="moon" class="meta-icon" />

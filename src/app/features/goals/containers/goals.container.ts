@@ -28,6 +28,7 @@ import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
 import { GoalEditorPaneComponent, type SaveStatus } from '../components/goal-editor-pane.component';
 import {
   GOAL_KIND,
+  clampReminderLeadMinutes,
   isGoalDormant,
   type Goal,
   type GoalPriority,
@@ -59,6 +60,10 @@ export class GoalsContainer {
   protected readonly status = signal<SaveStatus>('saved');
   protected readonly lock = new EntityLockController(GOAL_KIND, this.active);
   protected readonly confirm = new ConfirmController();
+
+  protected readonly globalLeadMinutes = computed(
+    () => this.settings.state().reminders.leadMinutes,
+  );
 
   protected readonly dormant = computed(() => {
     const goal = this.active();
@@ -107,6 +112,26 @@ export class GoalsContainer {
 
   protected onDeadlineChange(deadline: string | null): void {
     this.patch((current) => ({ ...current, deadline }));
+  }
+
+  protected onDeadlineTimeChange(deadlineTime: string | null): void {
+    this.patch((current) => {
+      if (deadlineTime === null) {
+        const { deadlineTime: _drop, ...rest } = current;
+        return rest as Goal;
+      }
+      return { ...current, deadlineTime };
+    });
+  }
+
+  protected onReminderLeadMinutesChange(minutes: number | null): void {
+    this.patch((current) => {
+      if (minutes === null) {
+        const { reminderLeadMinutes: _drop, ...rest } = current;
+        return rest as Goal;
+      }
+      return { ...current, reminderLeadMinutes: clampReminderLeadMinutes(minutes) };
+    });
   }
 
   protected onPriorityChange(priority: GoalPriority): void {

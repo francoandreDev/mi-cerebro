@@ -33,6 +33,14 @@
   font-size: var(--mc-font-size-sm); color: #eaf3ff; cursor: pointer;
 }
 .reminder-toggle input:disabled + span { color: rgba(200, 215, 245, 0.4); cursor: default; }
+.reminder-toggle select {
+  background: rgba(10, 18, 40, 0.55);
+  border: 1px solid rgba(170, 215, 255, 0.25);
+  border-radius: var(--mc-radius-sm);
+  color: #eaf3ff; font-size: var(--mc-font-size-sm);
+  padding: 2px 6px;
+}
+.reminder-toggle select:disabled { opacity: 0.5; cursor: default; }
 .reminder-hint {
   font-size: var(--mc-font-size-sm);
   color: rgba(200, 215, 245, 0.5);

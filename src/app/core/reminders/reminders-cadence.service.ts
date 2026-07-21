@@ -4,11 +4,12 @@ import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { SettingsService } from '@core/settings/settings.service';
-import type { Reminder } from '@features/reminders/models/reminder.types';
+import { GoalsService } from '@features/goals/services/goals.service';
+import type { Reminder, ReminderSourceKind } from '@features/reminders/models/reminder.types';
 import { RemindersService } from '@features/reminders/services/reminders.service';
 import { nextDueAfter } from '@features/reminders/utils/recurrence';
 
-import { nextSlotFor, parseTarget } from './goal-cadence.utils';
+import { nextSlotFor, parseTarget, resolveLeadMinutes } from './goal-cadence.utils';
 
 // why: §14 — owns the ping cadence for EVERY reminder (manual or goal-
 //      sourced). `dueAt` is the user's target; this service maintains
@@ -21,6 +22,7 @@ export class RemindersCadenceService {
   private readonly workspace = inject(WorkspaceService);
   private readonly settings = inject(SettingsService);
   private readonly reminders = inject(RemindersService);
+  private readonly goals = inject(GoalsService);
 
   // why: serialize FS writes so cascading signal updates don't race.
   private pending: Promise<void> = Promise.resolve();
@@ -29,9 +31,25 @@ export class RemindersCadenceService {
     effect(() => {
       this.reminders.summaries();
       this.settings.state();
+      // why: a goal's `reminderLeadMinutes` override changes the cadence for
+      //      its reminder without necessarily touching reminders.summaries()
+      //      — read it here so editing the override re-syncs immediately.
+      this.goals.summaries();
       if (this.workspace.root() === null) return;
       this.schedule(() => this.sync());
     });
+  }
+
+  // why: docs/deferred/reminders-goals.md "Lead-time por meta" — a goal
+  //      reminder uses its source goal's `reminderLeadMinutes` when set,
+  //      else the global `settings.reminders.leadMinutes` (unchanged
+  //      behavior for every non-goal reminder and every goal without an
+  //      override).
+  private leadMinutesFor(sourceKind: ReminderSourceKind | null, sourceId: string | null): number {
+    const globalLead = this.settings.state().reminders.leadMinutes;
+    const goal =
+      sourceId === null ? undefined : this.goals.summaries().find((g) => g.id === sourceId);
+    return resolveLeadMinutes(sourceKind, goal?.reminderLeadMinutes, globalLead);
   }
 
   // why: called by the scheduler right after firing — recompute the next
@@ -59,7 +77,7 @@ export class RemindersCadenceService {
     await this.schedule(async () => {
       const summary = this.reminders.summaries().find((r) => r.id === reminderId);
       if (!summary || summary.done) return;
-      const lead = this.settings.state().reminders.leadMinutes;
+      const lead = this.leadMinutesFor(summary.sourceKind, summary.sourceId);
       const slot = nextSlotFor(summary.dueAt, fromMs, lead);
       const current = await this.reminders.read(reminderId);
       if (slot === null) {
@@ -119,13 +137,13 @@ export class RemindersCadenceService {
   }
 
   private pickFirstOp(): RescheduleOp | null {
-    const lead = this.settings.state().reminders.leadMinutes;
     const now = Date.now();
     for (const r of this.reminders.summaries()) {
       if (r.done) continue;
       // why: paused reminders stay where they are — neither rescheduled
       //      nor marked done — so resuming picks back up cleanly.
       if (r.paused) continue;
+      const lead = this.leadMinutesFor(r.sourceKind, r.sourceId);
       const expected = nextSlotFor(r.dueAt, now, lead);
       if (expected === null) {
         // why: target has passed and the lead-up tail is exhausted.
