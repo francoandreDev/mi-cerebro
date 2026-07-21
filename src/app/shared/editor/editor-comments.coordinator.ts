@@ -7,6 +7,7 @@
 import { signal } from '@angular/core';
 import type { JSONContent } from '@tiptap/core';
 
+import type { TranslationKey } from '@core/i18n/i18n.types';
 import type { CommentRangeUpdate } from '@core/tiptap/comment-range-mapping/comment-range-mapping.ext';
 import type { CommentsService } from '@core/versioning/comments.service';
 import type { Comment, CommentRange, CommentSpan } from '@core/versioning/comments.types';
@@ -25,6 +26,7 @@ export interface EditorCommentsContext {
   readonly entityId: () => string;
   readonly entityTitle: () => string;
   readonly pushClouds: (list: readonly Comment[]) => void;
+  readonly t: (key: TranslationKey) => string;
 }
 
 export interface PopoverState {
@@ -121,7 +123,7 @@ export class EditorCommentsCoordinator {
     if (!current) return;
     const body = current.body.trim();
     if (body.length === 0) {
-      this.popover.set({ ...current, error: 'El comentario no puede estar vacío.' });
+      this.popover.set({ ...current, error: this.ctx.t('comments.errors.empty') });
       return;
     }
     const previous = this.list();
@@ -138,7 +140,11 @@ export class EditorCommentsCoordinator {
     } catch (err) {
       this.list.set(previous);
       this.ctx.pushClouds(previous);
-      this.popover.set({ ...current, busy: false, error: 'No se pudo guardar.' });
+      this.popover.set({
+        ...current,
+        busy: false,
+        error: this.ctx.t('comments.errors.saveFailed'),
+      });
       throw err;
     }
   }
@@ -157,7 +163,11 @@ export class EditorCommentsCoordinator {
     } catch (err) {
       this.list.set(previous);
       this.ctx.pushClouds(previous);
-      this.popover.set({ ...current, busy: false, error: 'No se pudo borrar.' });
+      this.popover.set({
+        ...current,
+        busy: false,
+        error: this.ctx.t('comments.errors.deleteFailed'),
+      });
       throw err;
     }
   }

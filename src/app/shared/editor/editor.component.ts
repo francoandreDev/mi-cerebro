@@ -119,6 +119,7 @@ export class EditorComponent {
     entityId: () => this.entityId(),
     entityTitle: () => this.entityTitle(),
     pushClouds: (list) => this.pushCommentClouds(list),
+    t: (key) => this.i18n.t(key),
   });
   protected readonly commentPopover = this.commentsCoord.popover;
   private readonly draftMarks = signal<readonly DiffMark[]>([]);

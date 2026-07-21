@@ -29,6 +29,7 @@ const ctxOf = (svc: CommentsService, pushClouds = vi.fn()) =>
     entityId: () => 'e-1',
     entityTitle: () => 'Entity',
     pushClouds,
+    t: (key: string) => key,
   }) as const;
 
 const sample = (over: Partial<Comment> = {}): Comment => ({
