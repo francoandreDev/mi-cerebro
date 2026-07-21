@@ -3,12 +3,15 @@ export const TRACKS_DIR = 'tracks';
 export const COVERS_DIR = 'covers';
 export const PLAYLISTS_DIR = 'playlists';
 export const LIBRARY_FILE = '_library.json';
+export const TRACK_META_FILE = 'meta.json';
 export const PLAYLIST_FILE_SUFFIX = '.json';
 export const TRACK_EXT = '.mp3';
 export const TRACK_MIME = 'audio/mpeg';
 
 export const MUSIC_LIBRARY_KIND = 'music-library';
 export const MUSIC_LIBRARY_SCHEMA_VERSION = 2;
+export const PLAYLIST_KIND = 'playlist';
+export const TRACK_KIND = 'track';
 
 // why: bump when a *new ID3 field* is added (like `lyrics`) so tracks probed
 // under an older version get re-scanned once even though `metadataProbedAt`

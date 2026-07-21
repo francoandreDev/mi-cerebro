@@ -34,6 +34,8 @@ const KINDS: readonly TrashKind[] = [
   'image',
   'file',
   'reminder',
+  'track',
+  'playlist',
 ];
 
 interface CardState {

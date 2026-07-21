@@ -74,6 +74,27 @@ const previewCollection = (
   };
 };
 
+const previewTrack = (raw: Record<string, unknown>): TrashPreview => {
+  const facts: TrashPreviewFact[] = [];
+  const artist = asString(raw['artist']);
+  if (artist) facts.push({ labelKey: 'trash.preview.artist', value: artist });
+  const durationMs = raw['durationMs'];
+  if (typeof durationMs === 'number' && durationMs > 0) {
+    const totalSec = Math.round(durationMs / 1000);
+    const mm = Math.floor(totalSec / 60);
+    const ss = String(totalSec % 60).padStart(2, '0');
+    facts.push({ labelKey: 'trash.preview.duration', value: `${mm}:${ss}` });
+  }
+  return {
+    excerpt: null,
+    tags: [],
+    createdAt: asString(raw['addedAt']),
+    updatedAt: null,
+    facts,
+    accent: null,
+  };
+};
+
 const previewReminder = (raw: Record<string, unknown>): TrashPreview => ({
   excerpt: null,
   tags: [],
@@ -129,5 +150,7 @@ export const buildTrashPreview = (kind: TrashKind, raw: Record<string, unknown>)
   if (kind === 'reminder') return previewReminder(raw);
   if (kind === 'task') return previewBodied(raw, taskFacts(raw));
   if (kind === 'goal') return previewBodied(raw, goalFacts(raw));
+  if (kind === 'track') return previewTrack(raw);
+  if (kind === 'playlist') return previewCollection(raw, 'trackIds', 'trash.preview.tracks');
   return previewBodied(raw, []);
 };

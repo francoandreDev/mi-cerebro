@@ -2,6 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
+import { ErrorService } from '@core/errors/error.service';
 import { FsService } from '@core/fs/fs.service';
 import type { NativeDirRef } from '@core/fs/native-fs.types';
 import { WorkspaceService } from '@core/fs/workspace.service';
@@ -11,14 +12,19 @@ import {
   MUSIC_DIR,
   PLAYLISTS_DIR,
   PLAYLIST_FILE_SUFFIX,
+  PLAYLIST_KIND,
   type Playlist,
   type PlaylistSummary,
 } from '../models/music.types';
+
+const TRASH_META_DIR = '.mi-cerebro';
+const TRASH_SUBDIR = 'trash';
 
 @Injectable({ providedIn: 'root' })
 export class PlaylistsService {
   private readonly fs = inject(FsService);
   private readonly workspace = inject(WorkspaceService);
+  private readonly errors = inject(ErrorService);
 
   private readonly idToFile = new Map<string, string>();
   private readonly summariesSignal = signal<readonly PlaylistSummary[]>([]);
@@ -28,15 +34,18 @@ export class PlaylistsService {
     const dir = await this.playlistsDir();
     this.idToFile.clear();
     const summaries: PlaylistSummary[] = [];
+    let skipped = 0;
     for await (const name of this.fs.listFiles(dir, PLAYLIST_FILE_SUFFIX)) {
       try {
         const raw = await this.fs.readJson<Playlist>(dir, name);
         this.idToFile.set(raw.id, name);
         summaries.push(this.toSummary(raw));
       } catch (cause) {
+        skipped++;
         console.warn('[playlists] skipped unreadable file', name, cause);
       }
     }
+    this.errors.reportSkippedEntries(skipped, { area: 'playlists' });
     summaries.sort((a, b) => a.title.localeCompare(b.title));
     this.summariesSignal.set(summaries);
     return summaries;
@@ -76,12 +85,23 @@ export class PlaylistsService {
     return updated;
   }
 
-  async delete(id: string): Promise<void> {
+  async deleteToTrash(id: string): Promise<void> {
+    const root = this.requireRoot();
     const dir = await this.playlistsDir();
     const filename = this.requireFilename(id);
-    await this.fs.removeEntry(dir, filename);
+    const trash = await this.trashDir(root);
+    const dest = `${PLAYLIST_KIND}__${id}__${filename}`;
+    await this.fs.moveFile(dir, filename, trash, dest);
     this.idToFile.delete(id);
     this.summariesSignal.update((curr) => curr.filter((s) => s.id !== id));
+  }
+
+  async restoreFromTrash(trashDayDir: NativeDirRef, filename: string): Promise<void> {
+    const dir = await this.playlistsDir();
+    const original = filename.replace(new RegExp(`^${PLAYLIST_KIND}__[^_]+__`), '');
+    const dest = await this.allocAvailable(dir, original);
+    await this.fs.moveFile(trashDayDir, filename, dir, dest);
+    await this.refresh();
   }
 
   async addTracks(id: string, trackIds: readonly string[]): Promise<Playlist> {
@@ -106,10 +126,38 @@ export class PlaylistsService {
   }
 
   private async playlistsDir(): Promise<NativeDirRef> {
-    const root = this.workspace.root();
-    if (!root) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
+    const root = this.requireRoot();
     const music = await this.fs.getOrCreateDir(root, MUSIC_DIR);
     return this.fs.getOrCreateDir(music, PLAYLISTS_DIR);
+  }
+
+  private requireRoot(): NativeDirRef {
+    const root = this.workspace.root();
+    if (!root) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
+    return root;
+  }
+
+  private async trashDir(root: NativeDirRef): Promise<NativeDirRef> {
+    const meta = await this.fs.getOrCreateDir(root, TRASH_META_DIR);
+    const trash = await this.fs.getOrCreateDir(meta, TRASH_SUBDIR);
+    const today = new Date().toISOString().slice(0, 10).replace(/-/g, '/');
+    let cursor = trash;
+    for (const part of today.split('/')) {
+      cursor = await this.fs.getOrCreateDir(cursor, part);
+    }
+    return cursor;
+  }
+
+  private async allocAvailable(dir: NativeDirRef, name: string): Promise<string> {
+    if (!(await this.fs.hasEntry(dir, name))) return name;
+    const dot = name.lastIndexOf('.');
+    const base = dot >= 0 ? name.slice(0, dot) : name;
+    const ext = dot >= 0 ? name.slice(dot) : '';
+    for (let n = 1; n < 1000; n++) {
+      const candidate = `${base}-${n}${ext}`;
+      if (!(await this.fs.hasEntry(dir, candidate))) return candidate;
+    }
+    throw new AppError(ERROR_CODES.FS_001, { severity: 'error' });
   }
 
   private async allocFilename(dir: NativeDirRef, title: string): Promise<string> {

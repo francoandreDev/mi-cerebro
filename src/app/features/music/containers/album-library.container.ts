@@ -252,7 +252,7 @@ export class AlbumLibraryContainer {
       },
       async () => {
         try {
-          await this.library.removeTrack(t.id);
+          await this.library.removeTrackToTrash(t.id);
           await this.playlists.removeTrackFromAll(t.id);
           this.tracksTouched.emit([t.id]);
         } catch (e) {
@@ -276,7 +276,7 @@ export class AlbumLibraryContainer {
       async () => {
         try {
           for (const id of ids) {
-            await this.library.removeTrack(id);
+            await this.library.removeTrackToTrash(id);
             await this.playlists.removeTrackFromAll(id);
           }
           this.tracksTouched.emit(ids);

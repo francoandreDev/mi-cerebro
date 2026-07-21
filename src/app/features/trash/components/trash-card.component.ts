@@ -18,6 +18,8 @@ const KIND_ICON: Record<TrashKind, IconName> = {
   image: 'image',
   file: 'file',
   reminder: 'bell',
+  track: 'music-note',
+  playlist: 'music-notes',
 };
 
 @Component({

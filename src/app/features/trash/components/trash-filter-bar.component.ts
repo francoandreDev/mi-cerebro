@@ -17,6 +17,8 @@ const ORDER: readonly TrashKind[] = [
   'image',
   'file',
   'reminder',
+  'track',
+  'playlist',
 ];
 
 interface KindChip {

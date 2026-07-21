@@ -17,6 +17,9 @@ import { GalleriesService } from '@features/images/services/galleries.service';
 import { GALLERY_META_FILE } from '@core/images/image-paths';
 import { RemindersService } from '@features/reminders/services/reminders.service';
 import { WritingsService } from '@features/writings/services/writings.service';
+import { MusicLibraryService } from '@features/music/services/music-library.service';
+import { PlaylistsService } from '@features/music/services/playlists.service';
+import { TRACK_META_FILE } from '@features/music/models/music.types';
 
 import { buildTrashPreview } from './trash-preview';
 import {
@@ -42,6 +45,8 @@ export class TrashService {
   private readonly galleries = inject(GalleriesService);
   private readonly files = inject(FilesService);
   private readonly reminders = inject(RemindersService);
+  private readonly musicLibrary = inject(MusicLibraryService);
+  private readonly playlists = inject(PlaylistsService);
 
   private readonly entriesSignal = signal<readonly TrashEntry[]>([]);
   readonly entries = this.entriesSignal.asReadonly();
@@ -99,6 +104,16 @@ export class TrashService {
       this.entriesSignal.update((list) => list.filter((e) => !sameEntry(e, entry)));
       return;
     }
+    if (entry.kind === 'track') {
+      await this.musicLibrary.restoreTrackFromTrash(day, entry.filename);
+      this.entriesSignal.update((list) => list.filter((e) => !sameEntry(e, entry)));
+      return;
+    }
+    if (entry.kind === 'playlist') {
+      await this.playlists.restoreFromTrash(day, entry.filename);
+      this.entriesSignal.update((list) => list.filter((e) => !sameEntry(e, entry)));
+      return;
+    }
     const target = await this.fs.getOrCreateDir(root, KIND_DIRS[entry.kind]);
     const original = this.stripPrefix(entry.filename, entry.kind, entry.id);
     const dest = await this.allocDest(target, original);
@@ -148,7 +163,12 @@ export class TrashService {
   ): Promise<Record<string, unknown> | null> {
     const dir = await this.fs.getDir(day, entry.filename);
     if (!dir) return null;
-    const metaFile = entry.kind === 'image' ? GALLERY_META_FILE : COLLECTION_META_FILE;
+    const metaFile =
+      entry.kind === 'image'
+        ? GALLERY_META_FILE
+        : entry.kind === 'track'
+          ? TRACK_META_FILE
+          : COLLECTION_META_FILE;
     return this.fs.readJson<Record<string, unknown>>(dir, metaFile);
   }
 
@@ -191,7 +211,8 @@ export class TrashService {
       kind !== 'list' &&
       kind !== 'writing' &&
       kind !== 'book' &&
-      kind !== 'reminder'
+      kind !== 'reminder' &&
+      kind !== 'playlist'
     ) {
       return null;
     }
@@ -226,7 +247,7 @@ export class TrashService {
     const sep = name.indexOf('__');
     if (sep < 0) return null;
     const kind = name.slice(0, sep);
-    if (kind !== 'image' && kind !== 'file') return null;
+    if (kind !== 'image' && kind !== 'file' && kind !== 'track') return null;
     const rest = name.slice(sep + 2);
     const sep2 = rest.indexOf('__');
     if (sep2 < 0) return null;
@@ -234,14 +255,19 @@ export class TrashService {
     try {
       const dir = await this.fs.getDir(day, name);
       if (!dir) return null;
-      const metaFile = kind === 'image' ? GALLERY_META_FILE : COLLECTION_META_FILE;
-      const raw = await this.fs.readJson<{ title?: string }>(dir, metaFile);
+      const metaFile =
+        kind === 'image'
+          ? GALLERY_META_FILE
+          : kind === 'track'
+            ? TRACK_META_FILE
+            : COLLECTION_META_FILE;
+      const raw = await this.fs.readJson<{ title?: string; originalName?: string }>(dir, metaFile);
       return {
         filename: name,
         parentPath,
         id,
         kind: kind as TrashKind,
-        title: raw.title ?? '',
+        title: raw.title ?? raw.originalName ?? '',
         deletedAt: parentPath.join('-'),
         shape: 'directory',
       };

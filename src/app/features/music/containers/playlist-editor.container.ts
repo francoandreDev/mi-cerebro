@@ -121,7 +121,7 @@ export class PlaylistEditorContainer {
       },
       async () => {
         try {
-          await this.playlists.delete(pl.id);
+          await this.playlists.deleteToTrash(pl.id);
           this.deleted.emit(pl.id);
         } catch (e) {
           this.errors.report(e);

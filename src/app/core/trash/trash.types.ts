@@ -7,7 +7,9 @@ export type TrashKind =
   | 'book'
   | 'image'
   | 'file'
-  | 'reminder';
+  | 'reminder'
+  | 'track'
+  | 'playlist';
 
 export type TrashEntryShape = 'file' | 'directory';
 
@@ -49,4 +51,9 @@ export const KIND_DIRS: Record<TrashKind, string> = {
   image: 'images',
   file: 'files',
   reminder: 'reminders',
+  // why: track/playlist restore is bespoke (like book/image/file) since both
+  //      live nested under `music/`, not directly under the workspace root —
+  //      these entries only exist to satisfy Record<TrashKind, string>.
+  track: 'music-tracks',
+  playlist: 'music-playlists',
 };

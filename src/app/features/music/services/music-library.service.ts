@@ -2,10 +2,12 @@ import { Injectable, inject, signal } from '@angular/core';
 
 import { AppError } from '@core/errors/app-error';
 import { ERROR_CODES } from '@core/errors/error.codes';
+import { ErrorService } from '@core/errors/error.service';
 import { FsService } from '@core/fs/fs.service';
 import type { NativeDirRef } from '@core/fs/native-fs.types';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { MigrationsService } from '@core/migrations/migrations.service';
+import { toSlug } from '@shared/utils/slug';
 
 import {
   COVERS_DIR,
@@ -16,6 +18,8 @@ import {
   MUSIC_METADATA_PROBE_VERSION,
   TRACKS_DIR,
   TRACK_EXT,
+  TRACK_KIND,
+  TRACK_META_FILE,
   TRACK_MIME,
   type MusicLibrary,
   type Track,
@@ -24,11 +28,15 @@ import { extFromMime, sha1Hex } from './cover-hash';
 import { readId3, trackFieldsFromId3 } from './id3-reader';
 import { musicLibraryV2MigrationStep } from './music-library.migration';
 
+const TRASH_META_DIR = '.mi-cerebro';
+const TRASH_SUBDIR = 'trash';
+
 @Injectable({ providedIn: 'root' })
 export class MusicLibraryService {
   private readonly fs = inject(FsService);
   private readonly workspace = inject(WorkspaceService);
   private readonly migrations = inject(MigrationsService);
+  private readonly errors = inject(ErrorService);
 
   private readonly tracksSignal = signal<readonly Track[]>([]);
   readonly tracks = this.tracksSignal.asReadonly();
@@ -53,6 +61,13 @@ export class MusicLibraryService {
         lib = await this.migrations.migrate<MusicLibrary>(MUSIC_LIBRARY_KIND, seeded);
       } catch (cause) {
         console.warn('[music] library file unreadable', cause);
+        // why: unlike per-entry scan skips elsewhere, this is a single
+        //      critical file — if it's corrupt the whole library shows
+        //      empty, so report it immediately instead of via the
+        //      aggregated skipped-entries count (rule 28: no silent fail).
+        this.errors.report(
+          new AppError(ERROR_CODES.ENT_001, { severity: 'warning', context: { area: 'music' } }),
+        );
       }
     }
     const backfilled = await this.backfillMetadata(root, lib.tracks);
@@ -153,12 +168,19 @@ export class MusicLibraryService {
     return added;
   }
 
-  async removeTrack(id: string): Promise<void> {
+  async removeTrackToTrash(id: string): Promise<void> {
+    const track = this.tracksSignal().find((t) => t.id === id);
+    if (!track) return;
     const root = await this.musicDir();
     const tracksDir = await this.fs.getOrCreateDir(root, TRACKS_DIR);
+    const wsRoot = this.requireRoot();
+    const trash = await this.trashDir(wsRoot);
+    const slug = toSlug(track.title || track.originalName || 'track');
+    const destDir = await this.fs.getOrCreateDir(trash, `${TRACK_KIND}__${id}__${slug}`);
+    await this.fs.writeFileAtomic(destDir, TRACK_META_FILE, JSON.stringify(track, null, 2));
     const filename = `${id}${TRACK_EXT}`;
     if (await this.fs.hasEntry(tracksDir, filename)) {
-      await this.fs.removeEntry(tracksDir, filename);
+      await this.fs.moveFile(tracksDir, filename, destDir, filename);
     }
     const next: MusicLibrary = {
       schemaVersion: MUSIC_LIBRARY_SCHEMA_VERSION,
@@ -166,6 +188,30 @@ export class MusicLibraryService {
     };
     await this.writeLibrary(root, next);
     this.tracksSignal.set(next.tracks);
+  }
+
+  async restoreTrackFromTrash(trashDayDir: NativeDirRef, entryName: string): Promise<void> {
+    const srcDir = await this.fs.getDir(trashDayDir, entryName);
+    if (!srcDir) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
+    const track = await this.fs.readJson<Track>(srcDir, TRACK_META_FILE);
+    const root = await this.musicDir();
+    const tracksDir = await this.fs.getOrCreateDir(root, TRACKS_DIR);
+    const filename = `${track.id}${TRACK_EXT}`;
+    if (await this.fs.hasEntry(srcDir, filename)) {
+      await this.fs.moveFile(srcDir, filename, tracksDir, filename);
+    }
+    const next: MusicLibrary = {
+      schemaVersion: MUSIC_LIBRARY_SCHEMA_VERSION,
+      tracks: [...this.tracksSignal(), track],
+    };
+    await this.writeLibrary(root, next);
+    const sorted = [...next.tracks].sort((a, b) => a.originalName.localeCompare(b.originalName));
+    this.tracksSignal.set(sorted);
+    try {
+      await this.fs.removeEntry(trashDayDir, entryName, { recursive: true });
+    } catch {
+      /* already gone */
+    }
   }
 
   async backfillDurationMs(id: string, durationMs: number): Promise<void> {
@@ -240,9 +286,24 @@ export class MusicLibraryService {
   }
 
   private async musicDir(): Promise<NativeDirRef> {
+    return this.fs.getOrCreateDir(this.requireRoot(), MUSIC_DIR);
+  }
+
+  private requireRoot(): NativeDirRef {
     const root = this.workspace.root();
     if (!root) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
-    return this.fs.getOrCreateDir(root, MUSIC_DIR);
+    return root;
+  }
+
+  private async trashDir(root: NativeDirRef): Promise<NativeDirRef> {
+    const meta = await this.fs.getOrCreateDir(root, TRASH_META_DIR);
+    const trash = await this.fs.getOrCreateDir(meta, TRASH_SUBDIR);
+    const today = new Date().toISOString().slice(0, 10).replace(/-/g, '/');
+    let cursor = trash;
+    for (const part of today.split('/')) {
+      cursor = await this.fs.getOrCreateDir(cursor, part);
+    }
+    return cursor;
   }
 
   private async writeLibrary(dir: NativeDirRef, lib: MusicLibrary): Promise<void> {

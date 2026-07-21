@@ -13,6 +13,8 @@ const ENTITY_KIND_ICON: Readonly<Record<string, IconName>> = {
   image: 'image-square',
   file: 'folder',
   reminder: 'bell',
+  track: 'music-note',
+  playlist: 'music-notes',
 };
 
 const FALLBACK_ICON: IconName = 'tag';
