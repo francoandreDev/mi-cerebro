@@ -121,6 +121,10 @@ export const es = {
   'errors.ent.002.message':
     'Encontré dos archivos distintos compartiendo el mismo ID interno. Renombrá o eliminá una de las copias antes de seguir.',
 
+  'errors.ent.003.title': 'Algunos archivos no se pudieron leer',
+  'errors.ent.003.message':
+    '{count} archivo(s) no se pudieron leer y fueron omitidos. El resto del contenido cargó normalmente.',
+
   'errors.ver.001.title': 'No se pudo guardar la versión',
   'errors.ver.001.message':
     'Una operación del sistema de versionado falló. Tus cambios siguen guardados en disco; el historial reintentará al próximo cambio.',
@@ -285,6 +289,9 @@ export const es = {
     '¿Sobrescribir "{path}" con la versión del commit {shortOid}? Quedará un commit nuevo con el cambio.',
   'versioning.history.restoreEntityDeleteConfirm':
     'En el commit {shortOid} esta entidad no existía. ¿Borrar "{path}" del disco? Quedará un commit nuevo con el cambio.',
+  'versioning.history.confirm.restoreEntity.title': 'Restaurar versión',
+  'versioning.history.confirm.restoreEntity.confirm': 'Restaurar',
+  'versioning.history.confirm.cancel': 'Cancelar',
   'versioning.history.restoring': 'Restaurando…',
   'versioning.history.headBadge': 'Actual',
   'versioning.history.restoreCommit': 'Restaurar todo este commit',
@@ -304,6 +311,7 @@ export const es = {
   'versioning.history.milestone.confirm.delete.title': 'Eliminar milestone',
   'versioning.history.milestone.confirm.delete.confirm': 'Sí, eliminar',
   'versioning.history.milestone.confirm.cancel': 'Cancelar',
+  'versioning.history.milestone.confirm.mark.confirm': 'Marcar',
   'versioning.history.milestone.collisionTitle': 'Ya existe un milestone llamado "{name}"',
   'versioning.history.milestone.collisionBody': 'Apunta al commit {shortOid}. ¿Qué hacemos?',
   'versioning.history.milestone.collisionUseOther': 'Usar otro nombre',
@@ -1328,6 +1336,8 @@ export const es = {
   'trash.kind.book': 'Libro',
   'trash.kind.image': 'Galería',
   'trash.kind.file': 'Colección',
+  'trash.kind.track': 'Canción',
+  'trash.kind.playlist': 'Playlist',
   'trash.preview.loading': 'Cargando previsualización…',
   'trash.preview.unavailable': 'No se pudo leer la previsualización.',
   'trash.preview.noContent': 'Sin contenido visible.',
@@ -1336,6 +1346,9 @@ export const es = {
   'trash.preview.chapters': 'Capítulos',
   'trash.preview.images': 'Imágenes',
   'trash.preview.files': 'Archivos',
+  'trash.preview.artist': 'Artista',
+  'trash.preview.duration': 'Duración',
+  'trash.preview.tracks': 'Canciones',
   'trash.preview.dueAt': 'Vence',
   'trash.preview.dueDates': 'Fechas',
   'trash.preview.deadline': 'Fecha límite',
@@ -1485,7 +1498,6 @@ export const es = {
   'reminders.titlePlaceholder': 'Título del recordatorio',
   'reminders.markDone': 'Marcar como hecho',
   'reminders.markPending': 'Reabrir',
-  'reminders.deleteConfirm': '¿Borrar "{title}"?',
   'reminders.toast.title': 'Recordatorio',
   'reminders.toast.goalTitle': 'Recordatorio de meta',
   'reminders.toast.goalDormantTitle': 'Meta dormida',
@@ -1496,6 +1508,9 @@ export const es = {
   'reminders.sourceGoalBadge': 'Meta',
   'reminders.sourceTaskBadge': 'Tarea',
   'reminders.sourceWritingBadge': 'Escrito',
+  'reminders.confirm.disable.title': 'Desactivar recordatorio',
+  'reminders.confirm.disable.confirm': 'Desactivar',
+  'reminders.confirm.cancel': 'Cancelar',
   'reminders.deleteGoalConfirm':
     'Esto va a desactivar el recordatorio automático de la meta "{title}". ¿Continuar?',
   'reminders.deleteGoalDormantConfirm':
@@ -1768,6 +1783,7 @@ export const es = {
   'comments.errors.noBlock': 'Elegí un bloque al que anclar el comentario.',
   'comments.errors.noBlocks': 'No hay bloques con id en la entidad — anclá a toda la entidad.',
   'comments.errors.saveFailed': 'No se pudo guardar el comentario. Reintentá.',
+  'comments.errors.deleteFailed': 'No se pudo borrar el comentario. Reintentá.',
   'comments.block.preview.empty': '(bloque vacío)',
 
   'drafts.title': 'Borradores pendientes',
