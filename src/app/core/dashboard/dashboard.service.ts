@@ -153,9 +153,18 @@ export class DashboardService {
 
   // why: dispatched once per /dashboard visit (see DashboardContainer) —
   //      cheap no-op on repeat calls within the same session, since
-  //      BooksService dedupes behind an in-flight promise.
-  ensureChaptersIndexLoaded(): void {
-    void this.books.ensureChaptersIndexLoaded();
+  //      BooksService dedupes behind an in-flight promise. Returns the
+  //      promise (rather than swallowing it with `void`) so the caller can
+  //      route a rejection — e.g. a dropped FS permission surfacing as an
+  //      AppError from BooksService.chaptersDir/readBook — through
+  //      ErrorService instead of it becoming a silent unhandled rejection.
+  //      Unlike books.refresh() at boot (which entity-ready.guard.ts
+  //      deliberately lets fail silently because the container's own read
+  //      shows the real error — see that guard's comment), nothing else
+  //      ever calls ensureChaptersIndexLoaded, so no other layer catches
+  //      this one.
+  ensureChaptersIndexLoaded(): Promise<void> {
+    return this.books.ensureChaptersIndexLoaded();
   }
 
   // why: excluye lo mostrado antes de recomputar, para que el próximo pick
