@@ -23,6 +23,8 @@ import { TaskRemindersSyncService } from '@core/reminders/task-reminders-sync.se
 import { WritingRemindersSyncService } from '@core/reminders/writing-reminders-sync.service';
 import { ShortcutsService } from '@core/shortcuts/shortcuts.service';
 import type { ShortcutBinding } from '@core/shortcuts/shortcuts.types';
+import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
+import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
 import { IconComponent } from '@shared/icon/icon.component';
 import { McDatePipe } from '@shared/pipes/mc-date.pipe';
 import { createListCursor } from '@shared/utils/list-cursor';
@@ -79,7 +81,7 @@ const DOOR_BY_BUCKET: Record<BucketKey, 0 | 1 | 2 | 3> = {
 @Component({
   selector: 'mc-reminders',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [McDatePipe, IconComponent],
+  imports: [McDatePipe, IconComponent, ConfirmDialogComponent],
   templateUrl: './reminders.container.html',
   styleUrl: './reminders.container.css',
 })
@@ -114,6 +116,7 @@ export class RemindersContainer {
   protected readonly editing = signal<EditingState | null>(null);
   protected readonly undo = signal<PendingUndo | null>(null);
   protected readonly cursor = createListCursor();
+  protected readonly confirm = new ConfirmController();
 
   constructor() {
     effect(() => {
@@ -418,23 +421,38 @@ export class RemindersContainer {
     }
   }
 
-  protected async onDelete(summary: ReminderSummary): Promise<void> {
+  protected onDelete(summary: ReminderSummary): void {
     this.overflowOpenId.set(null);
     const source = summary.sourceId === null ? null : this.sourceDisableConfig(summary.sourceKind);
     if (source !== null && summary.sourceId !== null) {
-      const ok = confirm(
-        this.t(source.confirmKey).replace('{title}', summary.title || this.t('reminders.untitled')),
+      const sourceId = summary.sourceId;
+      this.confirm.ask(
+        {
+          title: this.t('reminders.confirm.disable.title'),
+          message: this.t(source.confirmKey).replace(
+            '{title}',
+            summary.title || this.t('reminders.untitled'),
+          ),
+          confirmLabel: this.t('reminders.confirm.disable.confirm'),
+          cancelLabel: this.t('reminders.confirm.cancel'),
+          tone: 'danger',
+        },
+        async () => {
+          try {
+            await this.workspace.ensureWritable();
+            await source.disable(sourceId);
+            this.onCloseDetail();
+          } catch (e) {
+            this.errors.report(this.withReauth(e));
+          }
+        },
       );
-      if (!ok) return;
-      try {
-        await this.workspace.ensureWritable();
-        await source.disable(summary.sourceId);
-        this.onCloseDetail();
-      } catch (e) {
-        this.errors.report(this.withReauth(e));
-      }
       return;
     }
+    void this.deletePlain(summary);
+  }
+
+  private async deletePlain(summary: ReminderSummary): Promise<void> {
     try {
       const current = await this.reminders.read(summary.id);
       await this.reminders.deleteToTrash(summary.id);
