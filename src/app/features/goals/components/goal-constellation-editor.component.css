@@ -67,6 +67,9 @@
 }
 .star.done .spike { fill: rgba(255, 230, 170, 0.95); }
 .star.popover-open .halo { filter: blur(1.5px); opacity: 0.9; }
+.star.selected .halo { filter: blur(1.5px); opacity: 1; }
+.star.selected .halo-mid { fill: rgba(170, 215, 255, 0.95); }
+.star.selected .core { filter: drop-shadow(0 0 1px #fff) drop-shadow(0 0 4px rgba(170, 215, 255, 0.95)); }
 
 .canvas-hint {
   position: absolute; inset: 0; margin: 0;

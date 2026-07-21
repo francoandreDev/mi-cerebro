@@ -27,10 +27,10 @@ Formato por entrada:
 - **Por qué se difirió**: el layout hash-based cubre el caso sin nuevo estado. Persistir requiere otro bump de schema y resolver colisiones/overflow al resize.
 - **Target**: sin asignar.
 
-### Multi-select de pasos para acciones por lote
+### Lasso selection para multi-select de pasos
 
-- **Qué**: marcar varios pasos a la vez (shift+click o lasso) para toggle/eliminar en batch.
-- **Por qué se difirió**: el caso "marco 3 pasos a la vez" no apareció todavía como necesidad real; agregar selección visual + barra de acciones contextual es trabajo medible.
+- **Qué**: shift+click para selección múltiple de pasos (toggle/eliminar en lote) ya está resuelto (`createMultiSelect`, `GoalSelectionToolbarComponent`). Queda afuera la variante "lasso" (arrastrar un rectángulo sobre el lienzo para seleccionar todo lo que cae adentro).
+- **Por qué se difirió**: el `<svg>` del lienzo ya sobrecarga `(click)` para crear pasos y drag de estrella (`onStarDown/Move/Up` con `stopPropagation` + flag `suppressCanvasClick` para no disparar el click sintetizado). Meter un lasso de fondo ahí requeriría rehacer esa coreografía de pointer events sin romper pan/drag/creación — shift+click ya cubre el caso principal.
 - **Target**: sin asignar.
 
 ---

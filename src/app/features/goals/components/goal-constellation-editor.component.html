@@ -125,6 +125,7 @@
     [attr.aria-label]="t('goals.editor.canvasAria')"
     (click)="onCanvasClick($event)"
     (keydown.enter)="onCanvasKey($event)"
+    (keydown.escape)="onEscape()"
   >
     <defs>
       <radialGradient id="mc-goal-star-glow" cx="50%" cy="50%" r="50%">
@@ -158,6 +159,7 @@
         [class.done]="star.done"
         [class.popover-open]="popoverId() === star.id"
         [class.dragging]="dragPos()?.id === star.id"
+        [class.selected]="selection.isSelected(star.id)"
         [attr.transform]="'translate(' + star.x + ' ' + star.y + ')'"
         [attr.aria-label]="star.title || t('goals.steps.placeholder')"
         role="button"
@@ -182,6 +184,15 @@
       </g>
     }
   </svg>
+
+  @if (selection.count(); as selCount) {
+    <mc-goal-selection-toolbar
+      [count]="selCount"
+      (toggleDone)="onSelectionToggleDone()"
+      (deleteSelected)="onSelectionDelete()"
+      (clearSelection)="selection.clear()"
+    />
+  }
 
   @if (goal().steps.length === 0 && !creating()) {
     <p class="canvas-hint" aria-hidden="true">

@@ -116,6 +116,25 @@ export const deriveProgressFromSteps = (steps: readonly GoalStep[]): number | nu
   return Math.round((done / steps.length) * 100);
 };
 
+// why: batch actions (§13 — multi-select de pasos, docs/deferred/reminders-goals.md).
+//      "Toggle" on a mixed selection would be ambiguous per-step; instead it
+//      flips the whole selection together — done if any are pending, else
+//      pending — so the result is predictable regardless of which steps
+//      were selected (mirrors Gmail-style "select all, archive").
+export const batchToggleStepsDone = (
+  steps: readonly GoalStep[],
+  ids: ReadonlySet<string>,
+): readonly GoalStep[] => {
+  const selected = steps.filter((s) => ids.has(s.id));
+  const target = !(selected.length > 0 && selected.every((s) => s.done));
+  return steps.map((s) => (ids.has(s.id) ? { ...s, done: target } : s));
+};
+
+export const removeSteps = (
+  steps: readonly GoalStep[],
+  ids: ReadonlySet<string>,
+): readonly GoalStep[] => steps.filter((s) => !ids.has(s.id));
+
 export interface GoalSummary {
   readonly id: string;
   readonly title: string;

@@ -1,0 +1,47 @@
+<div
+  class="selection-toolbar"
+  role="toolbar"
+  [attr.aria-label]="t('goals.editor.selectionToolbarAria')"
+>
+  <span class="selection-count">{{
+    t('goals.editor.selectionCount').replace('{n}', '' + count())
+  }}</span>
+
+  @if (!confirmingDelete()) {
+    <button
+      type="button"
+      class="sel-btn"
+      [attr.aria-label]="t('goals.editor.selectionToggleDone')"
+      (click)="toggleDone.emit()"
+    >
+      <mc-icon name="check" aria-hidden="true" />
+      <span>{{ t('goals.editor.selectionToggleDone') }}</span>
+    </button>
+    <button
+      type="button"
+      class="sel-btn danger"
+      [attr.aria-label]="t('goals.editor.selectionDelete')"
+      (click)="onDeleteClick()"
+    >
+      <mc-icon name="trash" aria-hidden="true" />
+      <span>{{ t('goals.editor.selectionDelete') }}</span>
+    </button>
+  } @else {
+    <span class="confirm-text">{{ t('goals.editor.selectionDeleteConfirm') }}</span>
+    <button type="button" class="sel-btn danger" (click)="onDeleteClick()">
+      {{ t('goals.confirm.delete.confirm') }}
+    </button>
+    <button type="button" class="sel-btn" (click)="onCancelDelete()">
+      {{ t('goals.confirm.cancel') }}
+    </button>
+  }
+
+  <button
+    type="button"
+    class="sel-btn ghost"
+    [attr.aria-label]="t('goals.editor.selectionClear')"
+    (click)="onClearClick()"
+  >
+    <mc-icon name="x" aria-hidden="true" />
+  </button>
+</div>

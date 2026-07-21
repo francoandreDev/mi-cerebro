@@ -14,18 +14,22 @@ import { AutofocusDirective } from '@shared/forms/autofocus.directive';
 import { IconComponent } from '@shared/icon/icon.component';
 import type { IconName } from '@shared/icon/icons.data';
 import { McDatePipe } from '@shared/pipes/mc-date.pipe';
+import { createMultiSelect } from '@shared/utils/multi-select';
 
 import { stepOffset } from '../containers/goal-wall-layout.utils';
 import {
   GOAL_PRIORITIES,
+  batchToggleStepsDone,
   deriveProgressFromSteps,
   goalDeadlineInstant,
   isValidTimeOfDay,
   newGoalStep,
+  removeSteps,
   type Goal,
   type GoalPriority,
   type GoalStep,
 } from '../models/goal.types';
+import { GoalSelectionToolbarComponent } from './goal-selection-toolbar.component';
 
 export type SaveStatus = 'saved' | 'saving' | 'unsaved';
 
@@ -40,7 +44,7 @@ interface StarVm {
 @Component({
   selector: 'mc-goal-constellation-editor',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent, McDatePipe, AutofocusDirective],
+  imports: [IconComponent, McDatePipe, AutofocusDirective, GoalSelectionToolbarComponent],
   templateUrl: './goal-constellation-editor.component.html',
   styleUrl: './goal-constellation-editor.component.css',
 })
@@ -70,6 +74,10 @@ export class GoalConstellationEditorComponent {
   protected readonly renamingTitle = signal<boolean>(false);
   protected readonly titleDraft = signal<string>('');
   protected readonly hintDismissed = signal<boolean>(false);
+  // why: shift+click multi-select — see docs/deferred/reminders-goals.md
+  //      "Multi-select de pasos para acciones por lote". Ephemeral UI-only
+  //      state, not persisted on the goal.
+  protected readonly selection = createMultiSelect();
 
   // why: drag de estrellas. dragPos es la posición en vivo durante el arrastre;
   //      stars() la mergea para que el render y los links MST reaccionen.
@@ -180,6 +188,13 @@ export class GoalConstellationEditorComponent {
       this.suppressCanvasClick = false;
       return;
     }
+    // why: a stray click on empty canvas while a selection is active only
+    //      dismisses the selection — it must not also seed a new step in
+    //      the same click.
+    if (this.selection.count() > 0) {
+      this.selection.clear();
+      return;
+    }
     if (this.popoverId() || this.renamingId() || this.creating()) {
       this.closeAllOverlays();
       return;
@@ -275,7 +290,10 @@ export class GoalConstellationEditorComponent {
       return;
     }
     if (ev.shiftKey) {
-      this.popoverId.set(this.popoverId() === star.id ? null : star.id);
+      // why: shift+click now toggles multi-select membership instead of the
+      //      old "open popover" shortcut — the popover is still reachable
+      //      via right-click (onStarContextMenu), so nothing is lost.
+      this.selection.toggle(star.id);
       return;
     }
     this.toggleStep(star.id);
@@ -292,6 +310,20 @@ export class GoalConstellationEditorComponent {
     this.stepsChange.emit(
       this.goal().steps.map((s) => (s.id === id ? { ...s, done: !s.done } : s)),
     );
+  }
+
+  protected onSelectionToggleDone(): void {
+    this.stepsChange.emit(batchToggleStepsDone(this.goal().steps, this.selection.selectedIds()));
+    this.selection.clear();
+  }
+
+  protected onSelectionDelete(): void {
+    this.stepsChange.emit(removeSteps(this.goal().steps, this.selection.selectedIds()));
+    this.selection.clear();
+  }
+
+  protected onEscape(): void {
+    if (this.selection.count() > 0) this.selection.clear();
   }
 
   protected onRenameStart(id: string): void {
