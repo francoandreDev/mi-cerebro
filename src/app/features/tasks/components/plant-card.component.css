@@ -123,6 +123,42 @@
   transform: scale(1.1);
 }
 
+.transplant-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 10;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--mc-bg-elevated);
+  border: 1px solid var(--mc-border-default);
+  border-radius: var(--mc-radius-md);
+  box-shadow: var(--mc-shadow-md);
+  padding: var(--mc-space-2);
+  cursor: default;
+}
+
+.transplant-menu .menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+  background: transparent;
+  border: 0;
+  border-radius: var(--mc-radius-sm);
+  padding: var(--mc-space-2);
+  color: var(--mc-fg-primary);
+  font-size: var(--mc-font-size-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.transplant-menu .menu-item:hover,
+.transplant-menu .menu-item:focus-visible {
+  background: var(--mc-bg-hover);
+}
+
 .card--watered {
   animation: plant-splash 480ms ease-out;
 }

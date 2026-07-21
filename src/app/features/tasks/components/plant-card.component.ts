@@ -1,4 +1,15 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  HostListener,
+  computed,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { DomSanitizer, type SafeHtml } from '@angular/platform-browser';
 
 import { I18nService } from '@core/i18n/i18n.service';
@@ -34,6 +45,23 @@ export class PlantCardComponent {
 
   private readonly i18n = inject(I18nService);
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  protected readonly transplantOptions = signal<readonly { label: string; action: () => void }[]>(
+    [],
+  );
+  protected readonly transplantMenuOpen = computed(() => this.transplantOptions().length > 0);
+
+  constructor() {
+    effect(() => {
+      if (!this.transplantMenuOpen()) return;
+      queueMicrotask(() =>
+        this.host.nativeElement
+          .querySelector<HTMLButtonElement>('.transplant-menu .menu-item')
+          ?.focus(),
+      );
+    });
+  }
 
   protected readonly displayTitle = computed(
     () => this.entry().summary.title || this.untitledLabel(),
@@ -95,6 +123,7 @@ export class PlantCardComponent {
     // why: Enter abre el selector "trasplantar" (a11y vía teclado, regla doc).
     //      Si está en HOY, ofrecemos cosechar como primera opción.
     event.preventDefault();
+    if (this.transplantMenuOpen()) return;
     const id = this.entry().summary.id;
     const bucket = this.entry().bucket;
     const options: { label: string; action: () => void }[] = [];
@@ -120,11 +149,27 @@ export class PlantCardComponent {
       label: this.t('tasks.garden.harvestAction'),
       action: () => this.harvest.emit(id),
     });
-    const prompt = options.map((o, i) => `${i + 1}. ${o.label}`).join('\n');
-    const raw = window.prompt(this.t('tasks.garden.transplantPrompt') + '\n' + prompt, '1');
-    const choice = Number(raw);
-    if (!Number.isInteger(choice) || choice < 1 || choice > options.length) return;
-    options[choice - 1]!.action();
+    this.transplantOptions.set(options);
+  }
+
+  protected onTransplantOption(option: { label: string; action: () => void }): void {
+    this.transplantOptions.set([]);
+    option.action();
+  }
+
+  protected closeTransplantMenu(): void {
+    this.transplantOptions.set([]);
+  }
+
+  @HostListener('document:keydown.escape')
+  protected onTransplantMenuEscape(): void {
+    if (this.transplantMenuOpen()) this.closeTransplantMenu();
+  }
+
+  @HostListener('document:click', ['$event'])
+  protected onTransplantMenuDocClick(event: MouseEvent): void {
+    if (!this.transplantMenuOpen()) return;
+    if (!this.host.nativeElement.contains(event.target as Node)) this.closeTransplantMenu();
   }
 
   protected onDeleteClick(event: MouseEvent): void {

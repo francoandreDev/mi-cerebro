@@ -34,4 +34,18 @@
       💧
     </button>
   }
+  @if (transplantMenuOpen()) {
+    <div class="transplant-menu" role="menu" [attr.aria-label]="t('tasks.garden.transplantPrompt')">
+      @for (opt of transplantOptions(); track opt.label) {
+        <button
+          type="button"
+          class="menu-item"
+          role="menuitem"
+          (click)="onTransplantOption(opt); $event.stopPropagation()"
+        >
+          {{ opt.label }}
+        </button>
+      }
+    </div>
+  }
 </article>
