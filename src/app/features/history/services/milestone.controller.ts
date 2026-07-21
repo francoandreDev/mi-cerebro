@@ -17,6 +17,13 @@ import { facetOf, type Facet } from './facet';
 import { HistoryService } from './history.service';
 import type { MilestoneEntry } from './history.types';
 
+export interface MilestoneCollision {
+  readonly existing: MilestoneEntry;
+  readonly targetOid: string;
+  readonly attemptedName: string;
+  readonly facet: Facet | null;
+}
+
 @Injectable()
 export class MilestoneController {
   private readonly milestoneService = inject(MilestoneService);
@@ -32,26 +39,23 @@ export class MilestoneController {
   //      el <mc-confirm-dialog> en su propia plantilla.
   readonly confirm = new ConfirmController();
 
-  async mark(oid: string, message: string): Promise<void> {
+  // why: name/rename/collision inputs are collected inline in
+  //      HistoryContainer's own template (no native prompt()) — this signal
+  //      is what drives that inline collision panel; container reads it and
+  //      calls resolveUseOther/resolveMoveHere/cancelCollision.
+  private readonly collisionSignal = signal<MilestoneCollision | null>(null);
+  readonly collision = this.collisionSignal.asReadonly();
+
+  async mark(oid: string, message: string, name: string, description?: string): Promise<void> {
     if (this.busySignal()) return;
-    const name = window.prompt(this.i18n.t('versioning.history.milestone.namePrompt'));
-    if (name === null) return;
     const trimmed = name.trim();
     if (!trimmed) return;
-    const description = window.prompt(
-      this.i18n.t('versioning.history.milestone.descriptionPrompt'),
-    );
-    await this.attemptCreate(oid, trimmed, description ?? undefined, facetOf(message));
+    await this.attemptCreate(oid, trimmed, description?.trim() || undefined, facetOf(message));
   }
 
-  async rename(m: MilestoneEntry): Promise<void> {
+  async rename(m: MilestoneEntry, nextName: string): Promise<void> {
     if (this.busySignal()) return;
-    const next = window.prompt(
-      this.i18n.t('versioning.history.milestone.renamePrompt', { name: m.name }),
-      m.name,
-    );
-    if (next === null) return;
-    const trimmed = next.trim();
+    const trimmed = nextName.trim();
     if (!trimmed || trimmed === m.name) return;
     this.busySignal.set(true);
     try {
@@ -60,13 +64,58 @@ export class MilestoneController {
         await this.history.refreshMilestones();
         return;
       }
-      await this.resolveCollision(result.existing, m.oid, trimmed, null);
+      this.collisionSignal.set({
+        existing: result.existing,
+        targetOid: m.oid,
+        attemptedName: trimmed,
+        facet: null,
+      });
+    } catch (e) {
+      this.errors.report(e);
+    } finally {
+      this.busySignal.set(false);
+    }
+  }
+
+  async resolveUseOther(newName: string): Promise<void> {
+    const c = this.collisionSignal();
+    if (!c) return;
+    const trimmed = newName.trim();
+    if (!trimmed) return;
+    this.collisionSignal.set(null);
+    // why: mark → compact, rename → plain create (no facet context).
+    if (c.facet !== null) {
+      await this.attemptCreate(c.targetOid, trimmed, undefined, c.facet);
+      return;
+    }
+    this.busySignal.set(true);
+    try {
+      await this.milestoneService.create(c.targetOid, trimmed);
       await this.history.refreshMilestones();
     } catch (e) {
       this.errors.report(e);
     } finally {
       this.busySignal.set(false);
     }
+  }
+
+  async resolveMoveHere(): Promise<void> {
+    const c = this.collisionSignal();
+    if (!c) return;
+    this.collisionSignal.set(null);
+    this.busySignal.set(true);
+    try {
+      await this.milestoneService.moveTo(c.existing.name, c.targetOid);
+      await this.history.refreshMilestones();
+    } catch (e) {
+      this.errors.report(e);
+    } finally {
+      this.busySignal.set(false);
+    }
+  }
+
+  cancelCollision(): void {
+    this.collisionSignal.set(null);
   }
 
   delete(m: MilestoneEntry): void {
@@ -116,7 +165,12 @@ export class MilestoneController {
         }
         return;
       }
-      await this.resolveCollision(result.existing, oid, name, facet);
+      this.collisionSignal.set({
+        existing: result.existing,
+        targetOid: oid,
+        attemptedName: name,
+        facet,
+      });
     } catch (e) {
       this.errors.report(e);
     } finally {
@@ -134,43 +188,5 @@ export class MilestoneController {
           ? active.refs.draft
           : active.refs.comments;
     return stripHeadsPrefix(raw);
-  }
-
-  // Existing milestone with the requested name already points at some
-  // other commit. Offer three options: use a different name, move the
-  // existing milestone to the new target, or cancel.
-  private async resolveCollision(
-    existing: MilestoneEntry,
-    targetOid: string,
-    attemptedName: string,
-    facet: Facet | null,
-  ): Promise<void> {
-    const existingShort = existing.oid.slice(0, 7);
-    const choice = window.prompt(
-      `${this.i18n.t('versioning.history.milestone.collisionTitle', { name: attemptedName })}\n` +
-        `${this.i18n.t('versioning.history.milestone.collisionBody', { shortOid: existingShort })}\n\n` +
-        `1) ${this.i18n.t('versioning.history.milestone.collisionUseOther')}\n` +
-        `2) ${this.i18n.t('versioning.history.milestone.collisionMoveHere')}\n` +
-        `3) ${this.i18n.t('versioning.history.milestone.collisionCancel')}\n\n` +
-        '1 / 2 / 3:',
-    );
-    if (choice === null) return;
-    const trimmed = choice.trim();
-    if (trimmed === '1') {
-      const newName = window.prompt(this.i18n.t('versioning.history.milestone.namePrompt'));
-      if (newName === null) return;
-      const t = newName.trim();
-      if (!t) return;
-      // why: mark → compact, rename → plain create (no facet context).
-      if (facet !== null) {
-        await this.attemptCreate(targetOid, t, undefined, facet);
-      } else {
-        await this.milestoneService.create(targetOid, t);
-        await this.history.refreshMilestones();
-      }
-    } else if (trimmed === '2') {
-      await this.milestoneService.moveTo(existing.name, targetOid);
-      await this.history.refreshMilestones();
-    }
   }
 }

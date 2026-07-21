@@ -8,6 +8,11 @@
   (confirmed)="compactionConfirm.accept()"
   (cancelled)="compactionConfirm.cancel()"
 />
+<mc-confirm-dialog
+  [request]="restoreConfirm.request()"
+  (confirmed)="restoreConfirm.accept()"
+  (cancelled)="restoreConfirm.cancel()"
+/>
 <header class="head">
   <h2>
     <mc-icon name="clock-counter-clockwise" class="title-icon" />
@@ -733,6 +738,99 @@
   </aside>
 
   <section class="detail" aria-live="polite">
+    <ng-template #markMilestoneAction let-entry>
+      @if (milestonesFor(entry.oid).length === 0) {
+        @if (markingMilestone()) {
+          <form
+            class="milestone-mark-form"
+            (submit)="$event.preventDefault(); commitMarkMilestone()"
+          >
+            <input
+              #milestoneNameInput
+              type="text"
+              class="milestone-mark-input"
+              [value]="milestoneNameDraft()"
+              [placeholder]="i18n.t('versioning.history.milestone.namePrompt')"
+              (input)="milestoneNameDraft.set(asInput($event).value)"
+              (keydown.escape)="cancelMarkMilestone()"
+            />
+            <input
+              type="text"
+              class="milestone-mark-input"
+              [value]="milestoneDescDraft()"
+              [placeholder]="i18n.t('versioning.history.milestone.descriptionPrompt')"
+              (input)="milestoneDescDraft.set(asInput($event).value)"
+              (keydown.escape)="cancelMarkMilestone()"
+            />
+            <button type="submit" class="mc-hover-grow" [disabled]="!milestoneNameDraft().trim()">
+              {{ i18n.t('versioning.history.milestone.confirm.mark.confirm') }}
+            </button>
+            <button type="button" (click)="cancelMarkMilestone()">
+              {{ i18n.t('versioning.history.milestone.confirm.cancel') }}
+            </button>
+          </form>
+        } @else {
+          <button
+            type="button"
+            class="milestone-mark mc-hover-grow"
+            [disabled]="milestones.busy()"
+            (click)="startMarkMilestone()"
+          >
+            <mc-icon name="flag" />
+            <span>{{ i18n.t('versioning.history.milestone.mark') }}</span>
+          </button>
+        }
+      }
+    </ng-template>
+    <ng-template #restoreCommitAction let-entry>
+      @if (headOid() !== entry.oid) {
+        @if (restoreCommitDraft(); as draft) {
+          <form
+            class="restore-commit-form"
+            (submit)="$event.preventDefault(); confirmRestoreCommit()"
+          >
+            <p class="restore-commit-hint">
+              {{ i18n.t('versioning.history.restoreCommitPrompt', { shortOid: entry.shortOid }) }}
+            </p>
+            <input
+              type="text"
+              class="restore-commit-input"
+              [value]="draft"
+              (input)="
+                restoreCommitDraft.set(asInput($event).value); restoreCommitMismatch.set(false)
+              "
+              (keydown.escape)="cancelRestoreCommit()"
+            />
+            @if (restoreCommitMismatch()) {
+              <p class="restore-commit-mismatch">
+                {{ i18n.t('versioning.history.restoreCommitMismatch') }}
+              </p>
+            }
+            <button type="submit" class="mc-hover-grow" [disabled]="!draft.trim()">
+              {{ i18n.t('versioning.history.restoreCommit') }}
+            </button>
+            <button type="button" (click)="cancelRestoreCommit()">
+              {{ i18n.t('versioning.history.milestone.confirm.cancel') }}
+            </button>
+          </form>
+        } @else {
+          <button
+            type="button"
+            class="commit-restore mc-hover-grow"
+            [disabled]="restoringCommit() || restoringPath() !== null"
+            (click)="startRestoreCommit()"
+          >
+            @if (restoringCommit()) {
+              <mc-icon name="spinner-gap" class="mc-anim-spin" />
+              <span>{{ i18n.t('versioning.history.restoringCommit') }}</span>
+            } @else {
+              <mc-icon name="arrow-counter-clockwise" />
+              <span>{{ i18n.t('versioning.history.restoreCommit') }}</span>
+            }
+          </button>
+        }
+      }
+    </ng-template>
     <ng-template #entityRow let-d>
       <li class="entity entity-{{ d.status }}">
         <div class="entity-head-row">
@@ -1158,33 +1256,8 @@
           }
           <h3 class="mesa-polaroid-message">{{ selectedSubject() }}</h3>
           <div class="mesa-polaroid-actions">
-            @if (milestonesFor(entry.oid).length === 0) {
-              <button
-                type="button"
-                class="milestone-mark mc-hover-grow"
-                [disabled]="milestones.busy()"
-                (click)="markMilestone()"
-              >
-                <mc-icon name="flag" />
-                <span>{{ i18n.t('versioning.history.milestone.mark') }}</span>
-              </button>
-            }
-            @if (headOid() !== entry.oid) {
-              <button
-                type="button"
-                class="commit-restore mc-hover-grow"
-                [disabled]="restoringCommit() || restoringPath() !== null"
-                (click)="restoreWholeCommit()"
-              >
-                @if (restoringCommit()) {
-                  <mc-icon name="spinner-gap" class="mc-anim-spin" />
-                  <span>{{ i18n.t('versioning.history.restoringCommit') }}</span>
-                } @else {
-                  <mc-icon name="arrow-counter-clockwise" />
-                  <span>{{ i18n.t('versioning.history.restoreCommit') }}</span>
-                }
-              </button>
-            }
+            <ng-container *ngTemplateOutlet="markMilestoneAction; context: { $implicit: entry }" />
+            <ng-container *ngTemplateOutlet="restoreCommitAction; context: { $implicit: entry }" />
           </div>
           <div class="mesa-polaroid-annotations" aria-live="polite">
             @if (diffLoading()) {
@@ -1222,59 +1295,89 @@
         <div class="detail-head-top">
           <h3>{{ selectedSubject() }}</h3>
           <div class="detail-head-actions">
-            @if (milestonesFor(entry.oid).length === 0) {
-              <button
-                type="button"
-                class="milestone-mark mc-hover-grow"
-                [disabled]="milestones.busy()"
-                (click)="markMilestone()"
-              >
-                <mc-icon name="flag" />
-                <span>{{ i18n.t('versioning.history.milestone.mark') }}</span>
-              </button>
-            } @else {
+            <ng-container *ngTemplateOutlet="markMilestoneAction; context: { $implicit: entry }" />
+            @if (milestonesFor(entry.oid).length > 0) {
               @for (m of milestonesFor(entry.oid); track m.name) {
-                <span class="milestone-chip">
-                  <span class="milestone-chip-name">{{ m.name }}</span>
-                  <button
-                    type="button"
-                    class="milestone-chip-action"
-                    [attr.aria-label]="i18n.t('versioning.history.milestone.rename')"
-                    [title]="i18n.t('versioning.history.milestone.rename')"
-                    [disabled]="milestones.busy()"
-                    (click)="milestones.rename(m)"
+                @if (renamingMilestoneName() === m.name) {
+                  <form
+                    class="milestone-chip milestone-chip-rename"
+                    (submit)="$event.preventDefault(); commitRenameMilestone(m)"
                   >
-                    <mc-icon name="pencil-simple" />
-                  </button>
-                  <button
-                    type="button"
-                    class="milestone-chip-action"
-                    [attr.aria-label]="i18n.t('versioning.history.milestone.delete')"
-                    [title]="i18n.t('versioning.history.milestone.delete')"
-                    [disabled]="milestones.busy()"
-                    (click)="milestones.delete(m)"
-                  >
-                    <mc-icon name="x" />
-                  </button>
-                </span>
+                    <input
+                      #renameMilestoneInput
+                      type="text"
+                      class="milestone-chip-input"
+                      [value]="renameMilestoneDraft()"
+                      (input)="renameMilestoneDraft.set(asInput($event).value)"
+                      (keydown.escape)="cancelRenameMilestone()"
+                      (blur)="commitRenameMilestone(m)"
+                    />
+                  </form>
+                } @else {
+                  <span class="milestone-chip">
+                    <span class="milestone-chip-name">{{ m.name }}</span>
+                    <button
+                      type="button"
+                      class="milestone-chip-action"
+                      [attr.aria-label]="i18n.t('versioning.history.milestone.rename')"
+                      [title]="i18n.t('versioning.history.milestone.rename')"
+                      [disabled]="milestones.busy()"
+                      (click)="startRenameMilestone(m)"
+                    >
+                      <mc-icon name="pencil-simple" />
+                    </button>
+                    <button
+                      type="button"
+                      class="milestone-chip-action"
+                      [attr.aria-label]="i18n.t('versioning.history.milestone.delete')"
+                      [title]="i18n.t('versioning.history.milestone.delete')"
+                      [disabled]="milestones.busy()"
+                      (click)="milestones.delete(m)"
+                    >
+                      <mc-icon name="x" />
+                    </button>
+                  </span>
+                }
               }
             }
-            @if (headOid() !== entry.oid) {
-              <button
-                type="button"
-                class="commit-restore mc-hover-grow"
-                [disabled]="restoringCommit() || restoringPath() !== null"
-                (click)="restoreWholeCommit()"
-              >
-                @if (restoringCommit()) {
-                  <mc-icon name="spinner-gap" class="mc-anim-spin" />
-                  <span>{{ i18n.t('versioning.history.restoringCommit') }}</span>
-                } @else {
-                  <mc-icon name="arrow-counter-clockwise" />
-                  <span>{{ i18n.t('versioning.history.restoreCommit') }}</span>
-                }
-              </button>
+            @if (milestones.collision(); as collision) {
+              <div class="milestone-collision">
+                <p class="milestone-collision-body">
+                  {{
+                    i18n.t('versioning.history.milestone.collisionTitle', {
+                      name: collision.attemptedName,
+                    })
+                  }}
+                  {{
+                    i18n.t('versioning.history.milestone.collisionBody', {
+                      shortOid: collision.existing.oid.slice(0, 7),
+                    })
+                  }}
+                </p>
+                <form
+                  class="milestone-collision-form"
+                  (submit)="$event.preventDefault(); commitCollisionUseOther()"
+                >
+                  <input
+                    type="text"
+                    class="milestone-mark-input"
+                    [value]="collisionNameDraft()"
+                    [placeholder]="i18n.t('versioning.history.milestone.namePrompt')"
+                    (input)="collisionNameDraft.set(asInput($event).value)"
+                  />
+                  <button type="submit" [disabled]="!collisionNameDraft().trim()">
+                    {{ i18n.t('versioning.history.milestone.collisionUseOther') }}
+                  </button>
+                </form>
+                <button type="button" (click)="milestones.resolveMoveHere()">
+                  {{ i18n.t('versioning.history.milestone.collisionMoveHere') }}
+                </button>
+                <button type="button" (click)="milestones.cancelCollision()">
+                  {{ i18n.t('versioning.history.milestone.collisionCancel') }}
+                </button>
+              </div>
             }
+            <ng-container *ngTemplateOutlet="restoreCommitAction; context: { $implicit: entry }" />
           </div>
         </div>
         <div class="detail-meta">

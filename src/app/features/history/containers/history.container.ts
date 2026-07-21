@@ -256,6 +256,7 @@ export class HistoryContainer implements OnInit, OnDestroy {
   protected readonly suggestEnableCompaction =
     this.compactionScheduler.shouldSuggestEnableCompaction;
   protected readonly compactionConfirm = new ConfirmController();
+  protected readonly restoreConfirm = new ConfirmController();
   protected readonly compacting = signal(false);
   protected readonly milestones = inject(MilestoneController);
   private readonly errors = inject(ErrorService);
@@ -1477,7 +1478,7 @@ export class HistoryContainer implements OnInit, OnDestroy {
   private readonly restoringCommitSignal = signal(false);
   protected readonly restoringCommit = this.restoringCommitSignal.asReadonly();
 
-  protected async restoreEntity(d: EntityDiff, event: MouseEvent): Promise<void> {
+  protected restoreEntity(d: EntityDiff, event: MouseEvent): void {
     event.stopPropagation();
     const entry = this.selectedEntry();
     if (!entry) return;
@@ -1488,40 +1489,104 @@ export class HistoryContainer implements OnInit, OnDestroy {
         ? 'versioning.history.restoreEntityDeleteConfirm'
         : 'versioning.history.restoreEntityConfirm';
     const message = this.i18n.t(key, { path: d.filepath, shortOid: entry.shortOid });
-    // why: a confirm() is enough here — restore is reversible by selecting a
-    //      newer commit. Strong modal is reserved for the per-commit restore
-    //      that touches many entities at once.
-    if (!window.confirm(message)) return;
-    this.restoringPathSignal.set(d.filepath);
-    try {
-      await this.restore.restoreEntity(entry.oid, d.filepath, mode);
-      await this.reloadAll(true);
-    } catch (e) {
-      this.errors.report(e);
-    } finally {
-      this.restoringPathSignal.set(null);
-    }
+    this.restoreConfirm.ask(
+      {
+        title: this.i18n.t('versioning.history.confirm.restoreEntity.title'),
+        message,
+        confirmLabel: this.i18n.t('versioning.history.confirm.restoreEntity.confirm'),
+        cancelLabel: this.i18n.t('versioning.history.confirm.cancel'),
+        tone: mode === 'absent' ? 'danger' : 'default',
+      },
+      async () => {
+        this.restoringPathSignal.set(d.filepath);
+        try {
+          await this.restore.restoreEntity(entry.oid, d.filepath, mode);
+          await this.reloadAll(true);
+        } catch (e) {
+          this.errors.report(e);
+        } finally {
+          this.restoringPathSignal.set(null);
+        }
+      },
+    );
   }
 
-  protected markMilestone(): void {
-    const entry = this.selectedEntry();
-    if (!entry) return;
-    void this.milestones.mark(entry.oid, entry.message);
+  protected asInput(event: Event): HTMLInputElement {
+    return event.target as HTMLInputElement;
   }
 
-  protected async restoreWholeCommit(): Promise<void> {
+  protected readonly markingMilestone = signal(false);
+  protected readonly milestoneNameDraft = signal('');
+  protected readonly milestoneDescDraft = signal('');
+
+  protected startMarkMilestone(): void {
+    this.milestoneNameDraft.set('');
+    this.milestoneDescDraft.set('');
+    this.markingMilestone.set(true);
+  }
+
+  protected cancelMarkMilestone(): void {
+    this.markingMilestone.set(false);
+  }
+
+  protected commitMarkMilestone(): void {
     const entry = this.selectedEntry();
     if (!entry) return;
-    if (this.restoringCommitSignal()) return;
-    const prompt = this.i18n.t('versioning.history.restoreCommitPrompt', {
-      shortOid: entry.shortOid,
-    });
-    const typed = window.prompt(prompt);
-    if (typed === null) return;
+    const name = this.milestoneNameDraft();
+    if (!name.trim()) return;
+    this.markingMilestone.set(false);
+    void this.milestones.mark(entry.oid, entry.message, name, this.milestoneDescDraft());
+  }
+
+  protected readonly renamingMilestoneName = signal<string | null>(null);
+  protected readonly renameMilestoneDraft = signal('');
+
+  protected startRenameMilestone(m: MilestoneEntry): void {
+    this.renamingMilestoneName.set(m.name);
+    this.renameMilestoneDraft.set(m.name);
+  }
+
+  protected cancelRenameMilestone(): void {
+    this.renamingMilestoneName.set(null);
+  }
+
+  protected commitRenameMilestone(m: MilestoneEntry): void {
+    const draft = this.renameMilestoneDraft();
+    this.renamingMilestoneName.set(null);
+    if (!draft.trim() || draft.trim() === m.name) return;
+    void this.milestones.rename(m, draft);
+  }
+
+  protected readonly collisionNameDraft = signal('');
+
+  protected commitCollisionUseOther(): void {
+    const name = this.collisionNameDraft();
+    if (!name.trim()) return;
+    this.collisionNameDraft.set('');
+    void this.milestones.resolveUseOther(name);
+  }
+
+  protected readonly restoreCommitDraft = signal<string | null>(null);
+  protected readonly restoreCommitMismatch = signal(false);
+
+  protected startRestoreCommit(): void {
+    this.restoreCommitMismatch.set(false);
+    this.restoreCommitDraft.set('');
+  }
+
+  protected cancelRestoreCommit(): void {
+    this.restoreCommitDraft.set(null);
+  }
+
+  protected async confirmRestoreCommit(): Promise<void> {
+    const entry = this.selectedEntry();
+    const typed = this.restoreCommitDraft();
+    if (!entry || typed === null) return;
     if (typed.trim() !== entry.shortOid) {
-      window.alert(this.i18n.t('versioning.history.restoreCommitMismatch'));
+      this.restoreCommitMismatch.set(true);
       return;
     }
+    this.restoreCommitDraft.set(null);
     this.restoringCommitSignal.set(true);
     try {
       await this.restore.restoreCommit(entry.oid);

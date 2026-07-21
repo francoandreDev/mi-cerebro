@@ -5,6 +5,8 @@
 
 import { Injectable, computed, inject, signal } from '@angular/core';
 
+import { ErrorService } from '@core/errors/error.service';
+
 import { HistoryLoader } from './history-loader.service';
 import type {
   BucketId,
@@ -29,6 +31,7 @@ const BUCKET_ORDER: readonly BucketId[] = [
 @Injectable()
 export class HistoryService {
   private readonly loader = inject(HistoryLoader);
+  private readonly errors = inject(ErrorService);
   private readonly entriesSignal = signal<readonly CommitEntry[]>([]);
   private readonly milestonesSignal = signal<readonly MilestoneEntry[]>([]);
   private readonly loadingSignal = signal(false);
@@ -91,6 +94,7 @@ export class HistoryService {
       this.milestonesSignal.set(milestones);
       void this.loader.ensureOriginMap(depth).catch(() => undefined);
     } catch (e) {
+      this.errors.report(e);
       this.errorSignal.set(e instanceof Error ? e.message : String(e));
     } finally {
       this.loadingSignal.set(false);

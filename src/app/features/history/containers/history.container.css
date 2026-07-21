@@ -777,6 +777,92 @@
   cursor: not-allowed;
 }
 
+.milestone-mark-form,
+.restore-commit-form,
+.milestone-collision-form {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.milestone-mark-input,
+.restore-commit-input,
+.milestone-chip-input {
+  font: inherit;
+  font-size: 12px;
+  padding: 5px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--mc-border, rgba(0, 0, 0, 0.2));
+  background: var(--mc-bg-elevated, transparent);
+  color: var(--mc-fg-primary);
+  min-width: 0;
+}
+
+.milestone-mark-form button,
+.restore-commit-form button,
+.milestone-collision button,
+.milestone-collision-form button {
+  padding: 6px 10px;
+  background: transparent;
+  border: 1px solid var(--mc-border, rgba(0, 0, 0, 0.2));
+  border-radius: 4px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--mc-fg-primary);
+  cursor: pointer;
+}
+
+.milestone-mark-form button[type='submit']:disabled,
+.restore-commit-form button[type='submit']:disabled,
+.milestone-collision-form button[type='submit']:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.milestone-chip-rename {
+  display: inline-flex;
+}
+
+.milestone-chip-input {
+  width: 140px;
+}
+
+.restore-commit-form {
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.restore-commit-hint {
+  font-size: 12px;
+  color: var(--mc-fg-secondary, var(--mc-fg-primary));
+  white-space: pre-line;
+  margin: 0;
+}
+
+.restore-commit-mismatch {
+  font-size: 12px;
+  color: var(--mc-danger, #dc3c3c);
+  margin: 0;
+}
+
+.milestone-collision {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--mc-accent-primary);
+  border-radius: 6px;
+  width: 100%;
+}
+
+.milestone-collision-body {
+  font-size: 12px;
+  margin: 0;
+}
+
 /* Head del pane: barra de herramientas del explorador. Grid en 2 filas
  * cuando hay espacio — arriba back button + búsqueda, abajo filtros. En
  * anchos angostos se apila. Colores base por defecto; cada zoom lo pinta
