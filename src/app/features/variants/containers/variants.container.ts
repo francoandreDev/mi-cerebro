@@ -28,6 +28,8 @@ import { isDormant } from '@core/versioning/variants-activity';
 import { VariantsService } from '@core/versioning/variants.service';
 import { PRINCIPAL_VARIANT_ID, type Variant } from '@core/versioning/variants.types';
 
+import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
+import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
 import { IconComponent } from '@shared/icon/icon.component';
 
 import { VariantDrawerComponent } from '../components/variant-drawer.component';
@@ -37,11 +39,6 @@ import {
   type CreateVariantRequest,
 } from '../components/variants-create-modal.component';
 import { VariantsStatsService, type VariantOverview } from '../services/variants-stats.service';
-
-interface DeleteRequest {
-  readonly variant: Variant;
-  readonly unmerged: number;
-}
 
 @Component({
   selector: 'mc-variants-page',
@@ -53,6 +50,7 @@ interface DeleteRequest {
     VariantDrawerComponent,
     VariantsCreateModalComponent,
     IconComponent,
+    ConfirmDialogComponent,
   ],
   templateUrl: './variants.container.html',
   styleUrl: './variants.container.css',
@@ -94,7 +92,7 @@ export class VariantsContainer implements OnInit {
   protected readonly query = signal('');
   protected readonly renamingId = signal<string | null>(null);
   protected readonly renameValue = signal('');
-  protected readonly deleteRequest = signal<DeleteRequest | null>(null);
+  protected readonly confirm = new ConfirmController();
   protected readonly overviews = signal<Record<string, VariantOverview>>({});
   protected readonly showCreate = signal(false);
   protected readonly selectedId = signal<string | null>(null);
@@ -299,31 +297,36 @@ export class VariantsContainer implements OnInit {
     const v = this.selected();
     if (!v || this.isActive(v)) return;
     this.busy.set(true);
+    let unmerged: number;
     try {
-      const unmerged = await this.stats.unmergedAgainstPrincipal(v);
-      this.deleteRequest.set({ variant: v, unmerged });
+      unmerged = await this.stats.unmergedAgainstPrincipal(v);
     } finally {
       this.busy.set(false);
     }
-  }
-
-  protected cancelDelete(): void {
-    this.deleteRequest.set(null);
-  }
-
-  protected async confirmDelete(): Promise<void> {
-    const req = this.deleteRequest();
-    if (!req) return;
-    this.busy.set(true);
-    try {
-      await this.variants.delete(req.variant.id);
-      this.deleteRequest.set(null);
-      this.stats.invalidate();
-      await this.loadOverviews();
-    } catch (e) {
-      this.errors.report(e);
-    } finally {
-      this.busy.set(false);
-    }
+    const message =
+      unmerged > 0
+        ? `${this.t('variants.delete.confirm', { name: v.name })} ${this.t('variants.delete.unmerged.warning', { n: unmerged })}`
+        : this.t('variants.delete.confirm', { name: v.name });
+    this.confirm.ask(
+      {
+        title: this.t('variants.action.delete'),
+        message,
+        confirmLabel: this.t('variants.delete.confirm.button'),
+        cancelLabel: this.t('variants.form.cancel'),
+        tone: 'danger',
+      },
+      async () => {
+        this.busy.set(true);
+        try {
+          await this.variants.delete(v.id);
+          this.stats.invalidate();
+          await this.loadOverviews();
+        } catch (e) {
+          this.errors.report(e);
+        } finally {
+          this.busy.set(false);
+        }
+      },
+    );
   }
 }
