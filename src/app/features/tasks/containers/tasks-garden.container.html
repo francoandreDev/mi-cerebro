@@ -15,7 +15,7 @@
 <section class="garden" [class.garden--night]="night()" [class.garden--watering]="watering()">
   <header class="head">
     <h1 class="title">{{ t('tasks.garden.headerTitle') }}</h1>
-    <form class="compose" (submit)="onComposeSubmit($event)">
+    <form class="compose" data-tutorial="tasks-compose" (submit)="onComposeSubmit($event)">
       <input
         name="title"
         type="text"
@@ -121,7 +121,7 @@
     (manageFolder)="onManageFolder($event)"
   />
 
-  <div class="planters">
+  <div class="planters" data-tutorial="tasks-planters">
     <mc-planter
       stage="bloom"
       bucket="today"
@@ -150,7 +150,7 @@
           (dragend)="dnd.onDragEnd()"
         />
       }
-      <div basket class="basket-stack">
+      <div basket class="basket-stack" data-tutorial="tasks-basket">
         <mc-harvest-basket [harvested]="harvested()" />
         <button type="button" class="patio-link" (click)="onOpenPatio()">
           {{ t('tasks.garden.openPatio') }} →

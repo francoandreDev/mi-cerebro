@@ -188,6 +188,25 @@
   font-weight: 600;
 }
 
+.workflow-start {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+  margin-top: var(--mc-space-2);
+  padding: 0.4rem 0.9rem;
+  border-radius: var(--mc-radius-pill);
+  border: 1px solid var(--mc-border-default, var(--mc-border));
+  background: transparent;
+  color: var(--mc-accent-primary);
+  font-size: var(--mc-font-size-sm);
+  cursor: pointer;
+}
+
+.workflow-start:hover {
+  background: var(--mc-bg-hover);
+}
+
 .group {
   margin-bottom: var(--mc-space-7);
 }

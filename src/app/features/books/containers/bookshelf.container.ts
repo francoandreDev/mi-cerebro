@@ -31,6 +31,7 @@ import { BooksService } from '../services/books.service';
 import { readDragId, shelfDropTarget, slotDropTarget } from './bookshelf-dnd';
 import { DENSITY_KEY, loadDensity, wireBfcacheReset } from './bookshelf-prefs';
 import { buildBookTooltip, toCatalogShelves } from './bookshelf-projections';
+import { registerBooksTutorial } from './books.tutorial';
 
 interface SummaryView {
   readonly summary: BookSummary;
@@ -98,6 +99,7 @@ export class BookshelfContainer {
   );
 
   constructor() {
+    registerBooksTutorial();
     effect(() => localStorage.setItem(DENSITY_KEY, this.density()));
     inject(DestroyRef).onDestroy(
       wireBfcacheReset(() => {

@@ -36,6 +36,7 @@ import { PlanterComponent } from '../components/planter.component';
 import type { TaskSummary } from '../models/task.types';
 import { type Bucket, bucketTasks } from '../services/task-buckets';
 import { TasksService } from '../services/tasks.service';
+import { registerTasksTutorial } from './tasks.tutorial';
 
 const norm = (s: string): string => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 const STAGE_BY_BUCKET: Record<Bucket, PlantStage> = {
@@ -74,6 +75,10 @@ export class TasksGardenContainer {
   private readonly i18n = inject(I18nService);
   private readonly host = inject(ElementRef<HTMLElement>);
   private readonly sanitizer = inject(DomSanitizer);
+
+  constructor() {
+    registerTasksTutorial();
+  }
 
   protected readonly STAGE_BY_BUCKET = STAGE_BY_BUCKET;
   protected readonly tags = this.tagsService.tags;

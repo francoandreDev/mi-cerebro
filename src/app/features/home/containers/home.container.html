@@ -32,6 +32,10 @@
             <li>{{ t(step) }}</li>
           }
         </ol>
+        <button type="button" class="workflow-start" (click)="startWorkflow(flow)">
+          <mc-icon name="sparkle" aria-hidden="true" />
+          <span>{{ t('home.workflows.start') }}</span>
+        </button>
       </article>
     }
   </div>

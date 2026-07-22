@@ -26,6 +26,7 @@ import {
 import { CalendarTagFilterComponent } from '../components/tag-filter.component';
 import { CalendarToolbarComponent } from '../components/toolbar.component';
 import { CalendarYearGridComponent } from '../components/year-grid.component';
+import { registerCalendarTutorial } from './calendar.tutorial';
 import {
   MONTH_NAMES_ES,
   addDays,
@@ -65,6 +66,10 @@ export class CalendarContainer {
   private readonly router = inject(Router);
   private readonly i18n = inject(I18nService);
   private readonly errors = inject(ErrorService);
+
+  constructor() {
+    registerCalendarTutorial();
+  }
 
   protected readonly tags = this.tagsService.tags;
   protected readonly allEvents = this.events.events;

@@ -8,6 +8,7 @@ import { TagsAdminService } from '@core/tags/tags-admin.service';
 import { TagsService } from '@core/tags/tags.service';
 import { TAG_SWATCHES, tagHexFor } from '@core/theme/theme-palette';
 import { ThemeService } from '@core/theme/theme.service';
+import { registerTagsTutorial } from './tags.tutorial';
 import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
 import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
 import { BgColorDirective } from '@shared/directives/bg-color.directive';
@@ -56,6 +57,7 @@ export class TagsContainer {
   protected readonly noMatch = computed(() => !this.isEmpty() && this.rows().length === 0);
 
   constructor() {
+    registerTagsTutorial();
     void this.tagsService.refresh().catch((e: unknown) => this.errors.report(e));
   }
 

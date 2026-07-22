@@ -20,6 +20,7 @@
   </h2>
   <div
     class="zoom-control"
+    data-tutorial="history-zoom"
     role="group"
     [attr.aria-label]="i18n.t('versioning.history.zoom.label')"
   >
@@ -55,7 +56,12 @@
 </ul>
 
 <div class="split zoom-{{ zoom() }}" [class.zoom-detail-stack]="zoom() === 'detail'">
-  <aside class="timeline" aria-label="Timeline de commits" (scroll)="onTimelineScroll($event)">
+  <aside
+    class="timeline"
+    data-tutorial="history-timeline"
+    aria-label="Timeline de commits"
+    (scroll)="onTimelineScroll($event)"
+  >
     <div class="timeline-head">
       @if (zoomBackLabelKey(); as backKey) {
         <button
@@ -114,7 +120,7 @@
               </button>
             }
           </div>
-          <label class="only-milestones">
+          <label class="only-milestones" data-tutorial="history-milestones-filter">
             <input type="checkbox" [checked]="onlyMilestones()" (change)="toggleOnlyMilestones()" />
             {{ i18n.t('versioning.history.milestone.onlyMilestones') }}
           </label>

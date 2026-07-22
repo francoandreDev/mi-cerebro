@@ -51,11 +51,17 @@
 
   @if (empty()) {
     <div class="board-body solo">
-      <mc-chalk-new-entry [busy]="creating()" [hero]="true" (create)="onCreate($event)" />
+      <mc-chalk-new-entry
+        data-tutorial="lists-shelf-new"
+        [busy]="creating()"
+        [hero]="true"
+        (create)="onCreate($event)"
+      />
     </div>
   } @else {
     <div class="board-body">
       <mc-chalk-rail
+        data-tutorial="lists-shelf-rail"
         [axis]="axis()"
         [groups]="railGroups()"
         [activeKey]="activeKey()"
@@ -89,7 +95,11 @@
             </div>
           </section>
         }
-        <mc-chalk-new-entry [busy]="creating()" (create)="onCreate($event)" />
+        <mc-chalk-new-entry
+          data-tutorial="lists-shelf-new"
+          [busy]="creating()"
+          (create)="onCreate($event)"
+        />
         @if (hasQuery() && !anyMatch()) {
           <p class="no-match">{{ t('lists.board.noMatch') }}</p>
         }

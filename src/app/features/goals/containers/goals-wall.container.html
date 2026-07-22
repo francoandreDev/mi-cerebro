@@ -19,7 +19,7 @@
       {{ t('goals.title') }}
       <span class="count" aria-hidden="true">· {{ summaries().length }}</span>
     </h1>
-    <form class="new" (submit)="onCreateSubmit($event)">
+    <form class="new" data-tutorial="goals-create" (submit)="onCreateSubmit($event)">
       <mc-icon name="plus" class="new-icon" aria-hidden="true" />
       <input
         type="text"
@@ -113,7 +113,7 @@
   @if (empty()) {
     <p class="wall-empty">{{ t('goals.wall.emptyHint') }}</p>
   } @else {
-    <div class="sky" role="region" [attr.aria-label]="t('goals.title')">
+    <div class="sky" data-tutorial="goals-sky" role="region" [attr.aria-label]="t('goals.title')">
       <div class="sky-canvas">
         <svg
           class="sky-lines"

@@ -12,7 +12,7 @@ import { TagChipComponent } from '@shared/tags/tag-chip.component';
   imports: [IconComponent, TagChipComponent],
   template: `
     <div class="row">
-      <div class="search">
+      <div class="search" data-tutorial="notes-search">
         <mc-icon name="magnifying-glass" class="search-icon" aria-hidden="true" />
         <input
           type="search"

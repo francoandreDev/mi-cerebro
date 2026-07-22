@@ -22,6 +22,7 @@ import { DashboardRecentWidgetComponent } from '../components/dashboard-recent-w
 import { DashboardRemindersWidgetComponent } from '../components/dashboard-reminders-widget.component';
 import { DashboardResurfaceWidgetComponent } from '../components/dashboard-resurface-widget.component';
 import { DashboardTasksWidgetComponent } from '../components/dashboard-tasks-widget.component';
+import { registerDashboardTutorial } from './dashboard.tutorial';
 
 @Component({
   selector: 'mc-dashboard',
@@ -54,6 +55,7 @@ export class DashboardContainer {
   protected readonly availableTags = this.tagsService.tags;
 
   constructor() {
+    registerDashboardTutorial();
     // why: lazy-loads BooksService.chaptersIndex — only /dashboard pays the
     //      N x listChapters() cost, not app boot (see
     //      docs/deferred/dashboard-evolution.md decision log). Nothing else

@@ -22,6 +22,7 @@ import { McDatePipe } from '@shared/pipes/mc-date.pipe';
 import { TrashCardContentComponent } from '../components/trash-card-content.component';
 import { TrashCardComponent } from '../components/trash-card.component';
 import { TrashFilterBarComponent } from '../components/trash-filter-bar.component';
+import { registerTrashTutorial } from './trash.tutorial';
 import { TrashCoverUrlCache } from './trash-cover-url-cache';
 
 const KINDS: readonly TrashKind[] = [
@@ -95,6 +96,7 @@ export class TrashContainer {
   private readonly previewCache = signal<ReadonlyMap<string, CardState>>(new Map());
 
   constructor() {
+    registerTrashTutorial();
     void this.trash.refresh().catch((e: unknown) => this.errors.report(e));
     effect(() => {
       for (const entry of this.visible()) {

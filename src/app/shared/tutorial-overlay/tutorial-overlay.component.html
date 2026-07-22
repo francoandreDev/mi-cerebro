@@ -1,0 +1,46 @@
+@if (step(); as s) {
+  <div class="scrim" (keydown)="onKey($event)" tabindex="-1">
+    @if (rect(); as r) {
+      <div
+        class="spotlight"
+        [style.top.px]="r.top"
+        [style.left.px]="r.left"
+        [style.width.px]="r.width"
+        [style.height.px]="r.height"
+      ></div>
+    }
+    <div
+      class="card"
+      role="dialog"
+      [attr.aria-label]="t(s.titleKey)"
+      [style.left.px]="cardLeft()"
+      [style.top.px]="cardTop()"
+      [style.transform]="cardTransform()"
+      (keydown)="onKey($event)"
+      tabindex="0"
+    >
+      @if (position(); as p) {
+        <span class="step-count">{{
+          t('tutorial.nav.progress', { current: p.current, total: p.total })
+        }}</span>
+      }
+      <h3 class="title">{{ t(s.titleKey) }}</h3>
+      <p class="body">{{ t(s.bodyKey) }}</p>
+      <div class="actions">
+        <button type="button" class="ghost" (click)="skip()">{{ t('tutorial.nav.skip') }}</button>
+        <div class="nav">
+          @if (position(); as p) {
+            @if (p.current > 1) {
+              <button type="button" class="ghost" (click)="prev()">
+                {{ t('tutorial.nav.back') }}
+              </button>
+            }
+            <button type="button" class="primary" (click)="next()">
+              {{ p.current === p.total ? t('tutorial.nav.done') : t('tutorial.nav.next') }}
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+}

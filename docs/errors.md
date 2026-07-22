@@ -548,3 +548,11 @@ Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `d
 - **Causa típica:** no es un error — es la confirmación informativa de que la nota se guardó en la raíz de `/notes` sin salir de la sección actual. El toast incluye una acción "Abrir" para navegar directo a la nota.
 - **Cómo resolver:** no aplica.
 - **Recuperable:** no aplica (no es una falla).
+
+### MCB-UI-002 — Tutorial sin contenido para su `cardKey`
+
+- **Severidad:** fatal
+- **Cuándo:** `buildEntityTutorial(cardKey, ...)` no encuentra ningún `HomeCard` en `HOME_GROUPS` (`core/home-content/home-content.ts`) con ese `key`.
+- **Causa típica:** bug de desarrollo — un `*.tutorial.ts` nuevo pasó un `cardKey` que no existe (typo, o `home-content.ts` cambió sin actualizar el tutorial). Nunca debería dispararse en producción con el código actual.
+- **Cómo resolver:** revisar que el `cardKey` pasado a `buildEntityTutorial` coincide con un `key` real dentro de `HOME_GROUPS`.
+- **Recuperable:** no — es un error de configuración, no de datos del usuario.

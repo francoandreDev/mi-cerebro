@@ -30,6 +30,7 @@ import { ROOM_SIZE, orderItems } from '@shared/utils/museum-asymmetry';
 import { MuseumRoomComponent } from '../components/museum-room.component';
 import type { Gallery, GalleryImage, GallerySummary } from '../models/gallery.types';
 import { GalleriesService } from '../services/galleries.service';
+import { registerImagesTutorial } from './images.tutorial';
 import { formatAgoImages } from './format-ago-images';
 
 type SortKey = 'recent' | 'title';
@@ -152,6 +153,7 @@ export class GalleriesIndexContainer {
   });
 
   constructor() {
+    registerImagesTutorial();
     // why: keep activeRoomId in sync with the filtered list so the preview always
     //      shows something. If the active was filtered out, fall back to the first.
     effect(() => {

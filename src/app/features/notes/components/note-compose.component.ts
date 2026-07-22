@@ -17,7 +17,7 @@ import { IconComponent } from '@shared/icon/icon.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [IconComponent],
   template: `
-    <form class="carriage" (submit)="onSubmit($event)">
+    <form class="carriage" data-tutorial="notes-compose" (submit)="onSubmit($event)">
       <span class="margin-bar" aria-hidden="true"></span>
       <input
         #input

@@ -19,6 +19,7 @@
       <button
         type="button"
         class="primary icon-only mc-hover-grow"
+        data-tutorial="variants-create"
         (click)="openCreate()"
         [disabled]="busy()"
         [attr.aria-label]="t('variants.action.new')"
@@ -71,6 +72,7 @@
 
   <mc-variants-delta
     class="canvas"
+    data-tutorial="variants-canvas"
     [class.has-drawer]="!!selected()"
     [variants]="visibleVariants()"
     [overviews]="overviews()"

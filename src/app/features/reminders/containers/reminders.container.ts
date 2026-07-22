@@ -40,6 +40,7 @@ import { bucketOf, type BucketKey } from '../utils/buckets';
 import { recallPaloma } from '../utils/paloma-flight';
 import { parseQuickAdd } from '../utils/parse-due';
 import { MONDAY, SATURDAY, nextWeekdayAfter } from '../utils/snooze-presets';
+import { registerRemindersTutorial } from './reminders.tutorial';
 
 type RecurrencePreset = 'none' | RecurrenceUnit;
 
@@ -136,6 +137,7 @@ export class RemindersContainer {
       });
     });
     this.registerShortcuts();
+    registerRemindersTutorial();
   }
 
   protected readonly filteredActive = computed<readonly ReminderSummary[]>(() => {

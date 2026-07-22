@@ -3,7 +3,7 @@
     <h1>{{ t('dashboard.title') }}</h1>
     <p>{{ t('dashboard.subtitle') }}</p>
   </header>
-  <div class="grid">
+  <div class="grid" data-tutorial="dashboard-grid">
     <mc-dashboard-tasks-widget
       [tasks]="todayTasks()"
       [availableTags]="availableTags()"
@@ -24,6 +24,7 @@
       (open)="onOpenEntry($event)"
     />
     <mc-dashboard-resurface-widget
+      data-tutorial="dashboard-resurface"
       [entries]="resurfaceEntries()"
       [availableTags]="availableTags()"
       [mode]="resurfaceMode()"

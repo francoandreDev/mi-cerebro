@@ -368,6 +368,15 @@ export const es = {
   'versioning.history.zoom.shortcutIn': 'Zoom in en /historial',
   'versioning.history.zoom.shortcutOut': 'Zoom out en /historial',
   'versioning.history.zoom.shortcutUp': 'Salir del zoom actual (subir)',
+  'history.tutorial.zoom.title': 'Tres formas de mirar el historial',
+  'history.tutorial.zoom.body':
+    'Cordillera muestra todo el año de un vistazo, Estratos agrupa por bloques de commits, Cordel te deja ver commit por commit como polaroids. Clickeá cualquiera de los tres — la leyenda de abajo explica qué significa cada uno.',
+  'history.tutorial.timeline.title': 'Elegí un commit para ver el detalle',
+  'history.tutorial.timeline.body':
+    'Click en cualquier fila de acá abre su diff a la derecha. Doble click sobre un bucket entra un nivel de zoom más — siempre hay un botón equivalente si preferís no usar el mouse así.',
+  'history.tutorial.milestones.title': 'Marcá puntos importantes para filtrar el ruido',
+  'history.tutorial.milestones.body':
+    'Los autocommits se acumulan rápido. Nombrá un commit importante como milestone (botón "Marcar este punto" en el detalle) y después activá este filtro para ver solo esos hitos, sin el resto.',
   'versioning.history.zoom.legend.aria': 'Referencia de niveles de zoom',
   'versioning.history.zoom.legend.panorama': 'todo el año, un pico por día',
   'versioning.history.zoom.legend.strata': 'corte por bucket de commits',
@@ -584,6 +593,10 @@ export const es = {
   'tags.empty': 'Sin etiquetas.',
 
   'tags.page.title': 'Etiquetas',
+  'tags.tutorial.origin.body':
+    'Las etiquetas se crean desde cualquier entidad (notas, tareas, metas, etc), no desde acá. Esta pantalla es el listado centralizado de todas las que ya existen en tu workspace.',
+  'tags.tutorial.rowActions.body':
+    'Cuando tengas al menos una etiqueta, cada fila te deja recolorearla, renombrarla, fusionarla con otra o eliminarla — los cambios se aplican a todas las entidades que la usan.',
   'tags.page.filterPlaceholder': 'Filtrar etiquetas...',
   'tags.page.noMatch': 'Ninguna etiqueta coincide con el filtro.',
   'tags.page.usageCountOne': '{count} uso',
@@ -621,6 +634,15 @@ export const es = {
   'shortcuts.help.close': 'Cerrar ayuda',
   'shortcuts.group.global': 'Globales',
   'shortcuts.group.editableSafe': 'Fuera de campos de texto',
+  'shortcuts.group.page': 'De esta página',
+
+  'tutorial.control.open': 'Guía de la página',
+  'tutorial.control.shortcuts': 'Atajos de la página',
+  'tutorial.nav.next': 'Siguiente',
+  'tutorial.nav.back': 'Atrás',
+  'tutorial.nav.skip': 'Saltar',
+  'tutorial.nav.done': 'Listo',
+  'tutorial.nav.progress': '{current} de {total}',
   'shortcuts.palette': 'Abrir búsqueda global',
   'shortcuts.treeFilter': 'Foco al filtro del árbol',
   'shortcuts.create': 'Crear nueva entidad (según ruta)',
@@ -796,6 +818,16 @@ export const es = {
   'goals.editor.starToggle': 'Marcar/desmarcar',
   'goals.editor.starRemove': 'Quitar',
   'goals.editor.starOpenHint': 'Click: marcar · Shift+click: seleccionar · click derecho: menú',
+
+  'goals.tutorial.mark.title': 'Click marca un paso como hecho',
+  'goals.tutorial.mark.body':
+    'Cada estrella de la constelación es un paso de la meta. Click la marca hecha o pendiente — no hace falta entrar al editor para eso.',
+  'goals.tutorial.select.title': 'Shift+click selecciona varias a la vez',
+  'goals.tutorial.select.body':
+    'Mantené Shift y hacé click en varias estrellas para elegir un grupo — sirve para moverlas o borrarlas juntas. Click derecho sobre cualquiera abre el menú (renombrar, marcar, quitar).',
+  'goals.tutorial.move.title': 'Arrastrá para mover la constelación entera',
+  'goals.tutorial.move.body':
+    'Un drag desde cualquier estrella mueve el grupo completo por el cielo — la posición se guarda sola. Los pasos siguen la meta a la que pertenecen.',
   'goals.editor.selectionToolbarAria': 'Acciones por lote sobre pasos seleccionados',
   'goals.editor.selectionCount': '{n} seleccionados',
   'goals.editor.selectionToggleDone': 'Marcar/desmarcar',
@@ -917,6 +949,12 @@ export const es = {
   'lists.board.jumpTo': 'Saltar a {label}',
   'lists.board.untitledInitial': '#',
 
+  'lists.tutorial.toggle.title': 'Modo tiza dibuja sobre la lista',
+  'lists.tutorial.toggle.body':
+    'Este botón agrega una capa de dibujo libre encima del cuerpo de la lista — trazos, no texto. Con modo tiza apagado, los clicks van al editor normal.',
+  'lists.tutorial.tools.title': 'Al activarlo aparece un editor de capas completo',
+  'lists.tutorial.tools.body':
+    'Paleta de colores, tres grosores, deshacer/rehacer, capas nombradas que podés ocultar/bloquear/reordenar, y exportar a PNG o SVG. Todo vive acá, activalo cuando quieras probarlo.',
   'lists.chalk.toggle': 'Modo tiza',
   'lists.chalk.toggleAria': 'Activar o desactivar modo tiza',
   'lists.chalk.on': 'Tiza on',
@@ -1453,6 +1491,10 @@ export const es = {
 
   'dashboard.title': 'Panel',
   'dashboard.subtitle': 'Todo lo activo, de un vistazo.',
+  'dashboard.tutorial.widgets.body':
+    'Acá se juntan, en modo lectura, tus tareas de hoy, objetivos activos, recordatorios próximos y notas/escritos recientes. Click en cualquier entrada te lleva directo a su sección — el Panel no reemplaza la navegación por entidad, la resume.',
+  'dashboard.tutorial.resurface.body':
+    '"Redescubrí esto" muestra contenido viejo al azar (o relacionado con lo último que viste). El botón 🔀 sortea otra selección; el ✕ por entrada la descarta sin borrarla.',
   'dashboard.tasks.title': 'Tareas de hoy',
   'dashboard.tasks.empty': 'Sin tareas para hoy. Buen momento para respirar.',
   'dashboard.task.untitled': 'Sin título',
@@ -1889,6 +1931,8 @@ export const es = {
     'No se pudo conectar con el servicio de letras online. Verificá tu conexión y reintentá.',
   'errors.ui.001.title': 'Nota creada',
   'errors.ui.001.message': 'Se guardó en la raíz de tus notas.',
+  'errors.ui.002.title': 'Tutorial mal configurado',
+  'errors.ui.002.message': 'No se encontró contenido para esta guía. Probá recargar la página.',
 
   'settings.export.section.title': 'Exportar workspace',
   'settings.export.hint':
@@ -1992,6 +2036,7 @@ export const es = {
   'home.intro':
     'Tu segundo cerebro local. Cada sección tiene su propia metáfora visual — un jardín, un palomar, un muro de stickies, una estantería, un museo — pensada para que entiendas qué pasa con sólo mirar. Acá abajo, qué ves y cómo encadenar piezas.',
   'home.resume.button': 'Continuar donde quedaste ({route})',
+  'home.workflows.start': 'Recorrer este flujo',
   'home.workflows.title': 'Flujos típicos',
   'home.workflows.subtitle':
     'Recorridos cross-entity que ya funcionan end-to-end hoy. Sugerencias, no recetas.',

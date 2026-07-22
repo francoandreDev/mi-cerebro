@@ -33,6 +33,7 @@ import { ChalkRailComponent } from '../components/chalk-rail.component';
 import type { ChalkAxis, RailGroup } from '../components/chalk-rail.component';
 import type { ListSummary } from '../models/list.types';
 import { ListsService } from '../services/lists.service';
+import { registerListsShelfTutorial } from './lists-shelf.tutorial';
 
 interface Section {
   readonly key: string;
@@ -81,6 +82,10 @@ export class ListsShelfContainer {
   private readonly route = inject(ActivatedRoute);
   private readonly errors = inject(ErrorService);
   private readonly i18n = inject(I18nService);
+
+  constructor() {
+    registerListsShelfTutorial();
+  }
 
   protected readonly tags = this.tagsService.tags;
   protected readonly summaries = this.listsService.summaries;

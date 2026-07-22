@@ -45,6 +45,7 @@ import { FILE_KIND, displayLabel, type FileCollection } from '../models/file-col
 //      of the wall off-screen.
 const INLINE_ITEMS_THRESHOLD = 6;
 import { FilesService } from '../services/files.service';
+import { registerFilesTutorial } from './files.tutorial';
 
 @Component({
   selector: 'mc-files',
@@ -100,6 +101,7 @@ export class FilesContainer {
   protected readonly folderActionDialog = new FolderActionDialogController();
 
   constructor() {
+    registerFilesTutorial();
     effect(() => {
       const raw = this.id();
       const wanted = raw ? extractEntityId(raw) : undefined;

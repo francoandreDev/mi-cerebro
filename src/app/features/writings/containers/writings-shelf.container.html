@@ -88,10 +88,20 @@
   </ng-template>
 
   @if (empty()) {
-    <mc-new-writing-card [busy]="creating()" [hero]="true" (create)="onCreate($event)" />
+    <mc-new-writing-card
+      data-tutorial="writings-new"
+      [busy]="creating()"
+      [hero]="true"
+      (create)="onCreate($event)"
+    />
   } @else {
     <div class="new-sticky">
-      <mc-new-writing-card [busy]="creating()" [bar]="true" (create)="onCreate($event)" />
+      <mc-new-writing-card
+        data-tutorial="writings-new"
+        [busy]="creating()"
+        [bar]="true"
+        (create)="onCreate($event)"
+      />
     </div>
     @if (continueReading(); as cr) {
       <mc-continue-reading-card

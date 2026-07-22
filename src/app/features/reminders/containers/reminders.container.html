@@ -17,7 +17,12 @@
         [attr.aria-label]="t('reminders.searchPlaceholder')"
       />
     </label>
-    <div class="date-range" role="group" [attr.aria-label]="t('reminders.dateRange')">
+    <div
+      class="date-range"
+      data-tutorial="reminders-filters"
+      role="group"
+      [attr.aria-label]="t('reminders.dateRange')"
+    >
       <label class="date-field">
         <span>{{ t('reminders.dateFrom') }}</span>
         <input type="date" [value]="fromDate()" (input)="onFromDate(asInput($event).value)" />
@@ -130,7 +135,7 @@
       </div>
     </div>
 
-    <form class="quick-add" (submit)="onQuickAddSubmit($event)">
+    <form class="quick-add" data-tutorial="reminders-quick-add" (submit)="onQuickAddSubmit($event)">
       <mc-icon name="plus-circle" class="quick-plus" />
       <input
         #quickAddInput

@@ -15,7 +15,12 @@
 <div class="wall-wrap">
   <header class="wall-head">
     <h2>{{ t('files.title') }}</h2>
-    <button type="button" class="primary mc-hover-grow" (click)="onCreateCollection()">
+    <button
+      type="button"
+      class="primary mc-hover-grow"
+      data-tutorial="files-new"
+      (click)="onCreateCollection()"
+    >
       <mc-icon name="plus" />
       <span>{{ t('files.wall.newCollection') }}</span>
     </button>

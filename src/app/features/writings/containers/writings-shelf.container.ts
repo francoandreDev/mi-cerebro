@@ -30,6 +30,7 @@ import { WritingSpineComponent } from '../components/writing-spine.component';
 import type { WritingSummary } from '../models/writing.types';
 import { WritingsService } from '../services/writings.service';
 import { formatAgo } from './format-ago';
+import { registerWritingsTutorial } from './writings.tutorial';
 
 type SortKey = 'updated' | 'title' | 'wordCount';
 type ViewMode = 'shelf' | 'table' | 'list';
@@ -82,6 +83,10 @@ export class WritingsShelfContainer {
   private readonly route = inject(ActivatedRoute);
   private readonly errors = inject(ErrorService);
   private readonly i18n = inject(I18nService);
+
+  constructor() {
+    registerWritingsTutorial();
+  }
 
   protected readonly tags = this.tagsService.tags;
   protected readonly summaries = this.writingsService.summaries;

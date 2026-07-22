@@ -9,7 +9,7 @@
   </header>
 
   <div class="layout">
-    <nav class="nav" role="tablist" aria-orientation="vertical">
+    <nav class="nav" data-tutorial="settings-nav" role="tablist" aria-orientation="vertical">
       @for (s of sections; track s.id) {
         <button
           type="button"
@@ -51,6 +51,7 @@
               <button
                 type="button"
                 class="primary"
+                data-tutorial="settings-apply"
                 [disabled]="draft().trim() === state().timezone"
                 (click)="apply()"
               >

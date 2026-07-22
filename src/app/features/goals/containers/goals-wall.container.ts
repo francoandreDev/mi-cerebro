@@ -25,6 +25,7 @@ import { GoalPeekOverlayComponent } from '../components/goal-peek-overlay.compon
 import type { GoalSummary } from '../models/goal.types';
 import { GoalsService } from '../services/goals.service';
 import { GoalPeekController } from './goal-peek.controller';
+import { registerGoalsTutorial } from './goals.tutorial';
 import {
   buildConstellationLinks,
   buildStars,
@@ -56,6 +57,10 @@ export class GoalsWallContainer {
   private readonly errors = inject(ErrorService);
   private readonly i18n = inject(I18nService);
   private readonly settings = inject(SettingsService);
+
+  constructor() {
+    registerGoalsTutorial();
+  }
 
   protected readonly tags = this.tagsService.tags;
   protected readonly summaries = this.goalsService.summaries;

@@ -44,7 +44,12 @@
         }
       </select>
     }
-    <button type="button" class="primary mc-hover-grow" (click)="createGallery()">
+    <button
+      type="button"
+      class="primary mc-hover-grow"
+      data-tutorial="images-new"
+      (click)="createGallery()"
+    >
       <mc-icon name="plus" />
       <span>{{ t('images.new') }}</span>
     </button>

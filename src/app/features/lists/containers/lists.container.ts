@@ -20,6 +20,7 @@ import { ListEditorPaneComponent, type SaveStatus } from '../components/list-edi
 import type { ChalkLayer } from '../models/chalk.types';
 import { LIST_KIND, type List } from '../models/list.types';
 import { ListsService } from '../services/lists.service';
+import { registerListsTutorial } from './lists.tutorial';
 
 @Component({
   selector: 'mc-lists',
@@ -46,6 +47,7 @@ export class ListsContainer {
   protected readonly confirm = new ConfirmController();
 
   constructor() {
+    registerListsTutorial();
     effect(() => {
       const raw = this.id();
       const wanted = raw ? extractEntityId(raw) : undefined;

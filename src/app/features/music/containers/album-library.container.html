@@ -34,7 +34,7 @@
         }}</span>
       </button>
     </div>
-    <label class="primary mc-hover-grow">
+    <label class="primary mc-hover-grow" data-tutorial="music-upload">
       <mc-icon name="upload-simple" />
       <span>{{ t('music.upload') }}</span>
       <input type="file" accept="audio/mpeg,.mp3" multiple hidden (change)="onPickFiles($event)" />
@@ -44,6 +44,7 @@
 
 <div
   class="lib-zone"
+  data-tutorial="music-library"
   [class.drop-active]="dragOver()"
   (dragover)="onDragOver($event)"
   (dragleave)="onDragLeave($event)"

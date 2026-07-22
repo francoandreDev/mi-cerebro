@@ -37,6 +37,7 @@
       <button
         type="button"
         class="ghost mc-hover-grow"
+        data-tutorial="books-density"
         [class.active]="density() === 'compact'"
         [attr.aria-pressed]="density() === 'compact'"
         [attr.aria-label]="
@@ -61,7 +62,12 @@
     >
       <mc-icon [name]="mode() === 'shelf' ? 'list-bullets' : 'grid-four'" />
     </button>
-    <button type="button" class="primary mc-hover-grow" (click)="createBook()">
+    <button
+      type="button"
+      class="primary mc-hover-grow"
+      data-tutorial="books-new"
+      (click)="createBook()"
+    >
       <mc-icon name="plus" />
       <span>{{ t('books.new') }}</span>
     </button>

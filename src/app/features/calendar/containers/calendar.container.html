@@ -46,7 +46,7 @@
         <mc-icon name="caret-right" />
       </button>
     </div>
-    <div class="views">
+    <div class="views" data-tutorial="calendar-views">
       <button
         type="button"
         class="chip"
@@ -81,6 +81,7 @@
     <div class="grid-col">
       @if (view() === 'month') {
         <mc-calendar-light-table
+          data-tutorial="calendar-table"
           [year]="cursor().year"
           [month]="cursor().month"
           [selected]="cursor().day"

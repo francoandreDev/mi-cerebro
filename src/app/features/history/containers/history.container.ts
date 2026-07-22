@@ -27,8 +27,10 @@ import { McDatePipe } from '@shared/pipes/mc-date.pipe';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 
 import { ShortcutsService } from '@core/shortcuts/shortcuts.service';
+import { TutorialService } from '@core/tutorials/tutorial.service';
 
 import { BUCKET_LABEL_KEY } from '../services/bucket-labels';
+import { HISTORY_TUTORIAL } from './history.tutorial';
 import { HistoryDiffService } from '../services/diff.service';
 import type { EntityDiff } from '../services/diff.service';
 import {
@@ -253,6 +255,7 @@ export class HistoryContainer implements OnInit, OnDestroy {
   private readonly compactionScheduler = inject(CompactionSchedulerService);
   private readonly settings = inject(SettingsService);
   private readonly shortcuts = inject(ShortcutsService);
+  private readonly tutorials = inject(TutorialService);
   protected readonly suggestEnableCompaction =
     this.compactionScheduler.shouldSuggestEnableCompaction;
   protected readonly compactionConfirm = new ConfirmController();
@@ -1176,6 +1179,7 @@ export class HistoryContainer implements OnInit, OnDestroy {
   }
 
   private unregisterShortcuts: (() => void)[] = [];
+  private unregisterTutorial: (() => void) | null = null;
 
   ngOnInit(): void {
     void this.reloadAll(true);
@@ -1186,18 +1190,21 @@ export class HistoryContainer implements OnInit, OnDestroy {
         combo: '+',
         labelKey: 'versioning.history.zoom.shortcutIn',
         scope: 'editable-safe',
+        pageScope: 'history',
         handler: () => this.stepZoom(1),
       }),
       this.shortcuts.register({
         combo: '-',
         labelKey: 'versioning.history.zoom.shortcutOut',
         scope: 'editable-safe',
+        pageScope: 'history',
         handler: () => this.stepZoom(-1),
       }),
       this.shortcuts.register({
         combo: 'escape',
         labelKey: 'versioning.history.zoom.shortcutUp',
         scope: 'editable-safe',
+        pageScope: 'history',
         handler: () => this.stepZoom(-1),
       }),
       // why: '[' / ']' navegan milestone a milestone (o polaroid a polaroid
@@ -1207,15 +1214,20 @@ export class HistoryContainer implements OnInit, OnDestroy {
         combo: '[',
         labelKey: 'versioning.history.nav.shortcutPrev',
         scope: 'editable-safe',
+        pageScope: 'history',
         handler: () => this.navigateAdjacent(-1),
       }),
       this.shortcuts.register({
         combo: ']',
         labelKey: 'versioning.history.nav.shortcutNext',
         scope: 'editable-safe',
+        pageScope: 'history',
         handler: () => this.navigateAdjacent(1),
       }),
     );
+    this.unregisterTutorial = this.tutorials.register(HISTORY_TUTORIAL, {
+      autoStartIfUnseen: true,
+    });
   }
 
   ngOnDestroy(): void {
@@ -1225,6 +1237,8 @@ export class HistoryContainer implements OnInit, OnDestroy {
     this.cancelExplorerAnimation();
     for (const fn of this.unregisterShortcuts) fn();
     this.unregisterShortcuts = [];
+    this.unregisterTutorial?.();
+    this.unregisterTutorial = null;
   }
 
   private rebindStratumObserver(visibleIds: readonly BucketId[]): void {

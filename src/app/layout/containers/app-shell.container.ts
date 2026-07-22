@@ -14,6 +14,7 @@ import { WritingRemindersSyncService } from '@core/reminders/writing-reminders-s
 import { SettingsService } from '@core/settings/settings.service';
 import { KeyboardHelpDialogComponent } from '@core/shortcuts/keyboard-help-dialog.component';
 import { ThemeService } from '@core/theme/theme.service';
+import { registerHomeFlowTutorials } from '@core/tutorials/home-flows.tutorial';
 import { AutocommitService } from '@core/versioning/autocommit.service';
 import { AutoPushService } from '@core/versioning/auto-push.service';
 import { CompactionSchedulerService } from '@core/versioning/compaction-scheduler.service';
@@ -23,8 +24,10 @@ import { OnboardingContainer } from '@features/onboarding/containers/onboarding.
 import { ReminderToastContainer } from '@features/reminders/containers/reminder-toast.container';
 import { CommandPaletteContainer } from '@features/search/containers/command-palette.container';
 
+import { PageHelpControlComponent } from '@layout/components/page-help-control.component';
 import { RemoteDivergenceBannerComponent } from '@layout/components/remote-divergence-banner.component';
 import { QuickCaptureDialogComponent } from '@shared/quick-capture/quick-capture-dialog.component';
+import { TutorialOverlayComponent } from '@shared/tutorial-overlay/tutorial-overlay.component';
 
 import { VariantSwitchOverlayContainer } from './variant-switch-overlay.container';
 import { ErrorDisplayContainer } from './error-display.container';
@@ -46,6 +49,8 @@ import { WorkspaceSidebarContainer } from './workspace-sidebar.container';
     RemoteDivergenceBannerComponent,
     KeyboardHelpDialogComponent,
     QuickCaptureDialogComponent,
+    TutorialOverlayComponent,
+    PageHelpControlComponent,
   ],
   template: `
     @if (workspace.isReady()) {
@@ -62,6 +67,10 @@ import { WorkspaceSidebarContainer } from './workspace-sidebar.container';
       </div>
       <mc-command-palette />
       <mc-keyboard-help-dialog />
+      <mc-tutorial-overlay />
+      @if (!focusMode.active()) {
+        <mc-page-help-control />
+      }
       <mc-quick-capture-dialog
         [visible]="quickCapture.open()"
         (submitted)="quickCapture.capture($event)"
@@ -141,6 +150,7 @@ export class AppShellContainer {
   private readonly writingRemindersSync = inject(WritingRemindersSyncService);
 
   constructor() {
+    registerHomeFlowTutorials();
     this.continuity.start();
     this.dragAutoScroll.start();
     this.autoPush.start();
