@@ -76,6 +76,43 @@
     </div>
   </header>
 
+  <ul class="garden-legend" [attr.aria-label]="t('tasks.garden.legend.aria')">
+    <li class="garden-legend-item">
+      <span class="garden-legend-glyph" [innerHTML]="stageGlyph('seed')" aria-hidden="true"></span>
+      {{ t('tasks.garden.legend.seed') }}
+    </li>
+    <li class="garden-legend-item">
+      <span
+        class="garden-legend-glyph"
+        [innerHTML]="stageGlyph('sprout')"
+        aria-hidden="true"
+      ></span>
+      {{ t('tasks.garden.legend.sprout') }}
+    </li>
+    <li class="garden-legend-item">
+      <span class="garden-legend-glyph" [innerHTML]="stageGlyph('bloom')" aria-hidden="true"></span>
+      {{ t('tasks.garden.legend.bloom') }}
+    </li>
+    <li class="garden-legend-item">
+      <span
+        class="garden-legend-glyph"
+        [innerHTML]="stageGlyph('wilted')"
+        aria-hidden="true"
+      ></span>
+      {{ t('tasks.garden.legend.wilted') }}
+    </li>
+    <li class="garden-legend-sep" aria-hidden="true"></li>
+    <li class="garden-legend-item">
+      <span aria-hidden="true">❀</span> {{ t('tasks.garden.legend.countToday') }}
+    </li>
+    <li class="garden-legend-item">
+      <span aria-hidden="true">🌱</span> {{ t('tasks.garden.legend.countWeek') }}
+    </li>
+    <li class="garden-legend-item">
+      <span aria-hidden="true">⋄</span> {{ t('tasks.garden.legend.countBacklog') }}
+    </li>
+  </ul>
+
   <mc-folder-breadcrumb
     [currentPath]="currentFolder()"
     [allFolders]="allFolders()"

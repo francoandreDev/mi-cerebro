@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
+import { DomSanitizer, type SafeHtml } from '@angular/platform-browser';
 
 import { AutosaveService } from '@core/autosave/autosave.service';
 import { ErrorService } from '@core/errors/error.service';
@@ -30,8 +31,8 @@ import { createDndController } from '@shared/utils/dnd-controller';
 
 import { HarvestBasketComponent } from '../components/harvest-basket.component';
 import { PlantCardComponent } from '../components/plant-card.component';
+import { PLANT_GLYPHS, type PlantStage } from '../components/plant-glyphs';
 import { PlanterComponent } from '../components/planter.component';
-import type { PlantStage } from '../components/plant-glyphs';
 import type { TaskSummary } from '../models/task.types';
 import { type Bucket, bucketTasks } from '../services/task-buckets';
 import { TasksService } from '../services/tasks.service';
@@ -72,6 +73,7 @@ export class TasksGardenContainer {
   private readonly errors = inject(ErrorService);
   private readonly i18n = inject(I18nService);
   private readonly host = inject(ElementRef<HTMLElement>);
+  private readonly sanitizer = inject(DomSanitizer);
 
   protected readonly STAGE_BY_BUCKET = STAGE_BY_BUCKET;
   protected readonly tags = this.tagsService.tags;
@@ -144,6 +146,14 @@ export class TasksGardenContainer {
 
   protected t(key: TranslationKey): string {
     return this.i18n.t(key);
+  }
+
+  // why: la leyenda siempre visible (§4.13 accesibilidad — nada de significado
+  //      escondido detrás de hover/click) reusa los mismos glyphs SVG que
+  //      `PlantCardComponent` para que el ícono de la leyenda sea idéntico
+  //      al que el usuario ve en las cards, no una aproximación textual.
+  protected stageGlyph(key: PlantStage | 'wilted'): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(PLANT_GLYPHS[key]);
   }
 
   protected wiltDaysFor(s: TaskSummary): number {

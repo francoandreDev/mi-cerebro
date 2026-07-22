@@ -5,7 +5,7 @@
 
 .garden {
   display: grid;
-  grid-template-rows: auto auto 1fr;
+  grid-template-rows: auto auto auto 1fr;
   gap: var(--mc-space-3);
   padding: var(--mc-space-3);
   height: 100%;
@@ -135,6 +135,42 @@
   font-family: var(--mc-font-mono);
   font-size: var(--mc-font-size-xs);
   color: var(--mc-fg-muted);
+}
+
+/* Leyenda siempre visible de los símbolos del jardín — nunca detrás de un
+   hover/click (regla 29, accesibilidad). Reusa los mismos glyphs SVG que
+   las plant-cards para las etapas, y los símbolos textuales de
+   `tasks.garden.counts` para los tres contadores del header. */
+.garden-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mc-space-1) var(--mc-space-3);
+  margin: 0;
+  padding: 4px 2px;
+  list-style: none;
+  font-size: var(--mc-font-size-xs);
+  color: var(--mc-fg-muted);
+}
+
+.garden-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.garden-legend-glyph {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  color: var(--mc-garden-petal-default);
+}
+
+.garden-legend-sep {
+  width: 1px;
+  height: 12px;
+  background: var(--mc-border-default);
 }
 
 .planters {
