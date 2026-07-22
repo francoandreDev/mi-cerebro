@@ -24,6 +24,7 @@ import type { TranslationKey } from '@core/i18n/i18n.types';
 import { PlayerService } from '@core/music/player.service';
 import { entitySlugSegment } from '@core/routing/entity-slug';
 import { CommandPaletteService } from '@core/search/command-palette.service';
+import { KeyboardHelpService } from '@core/shortcuts/keyboard-help.service';
 import type { Tag } from '@core/tags/tag.types';
 import { TagsService } from '@core/tags/tags.service';
 import { SwitchVariantService } from '@core/versioning/switch-variant.service';
@@ -127,6 +128,7 @@ export class WorkspaceSidebarContainer {
   private readonly player = inject(PlayerService);
   private readonly treeState = inject(TreeStateService);
   private readonly creationIntent = inject(CreationIntentService);
+  private readonly keyboardHelp = inject(KeyboardHelpService);
 
   protected readonly folderActionDialog = new FolderActionDialogController();
 
@@ -455,6 +457,10 @@ export class WorkspaceSidebarContainer {
 
   protected openPalette(): void {
     this.palette.show();
+  }
+
+  protected openShortcutsHelp(): void {
+    this.keyboardHelp.openDialog();
   }
 
   protected readonly result = computed(() =>

@@ -1,15 +1,9 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  DestroyRef,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 
+import { KeyboardHelpService } from './keyboard-help.service';
 import { ShortcutsService } from './shortcuts.service';
 import type { ShortcutBinding, ShortcutScope } from './shortcuts.types';
 
@@ -28,8 +22,9 @@ interface Group {
 export class KeyboardHelpDialogComponent {
   private readonly shortcuts = inject(ShortcutsService);
   private readonly i18n = inject(I18nService);
+  private readonly help = inject(KeyboardHelpService);
 
-  protected readonly open = signal(false);
+  protected readonly open = this.help.open;
 
   protected readonly groups = computed<readonly Group[]>(() => {
     const all = this.shortcuts.bindings();
@@ -47,16 +42,6 @@ export class KeyboardHelpDialogComponent {
     return groups;
   });
 
-  constructor() {
-    const dispose = this.shortcuts.register({
-      combo: '?',
-      labelKey: 'shortcuts.help.open',
-      scope: 'editable-safe',
-      handler: () => this.open.set(true),
-    });
-    inject(DestroyRef).onDestroy(dispose);
-  }
-
   protected onKey(event: KeyboardEvent): void {
     if (event.key === 'Escape') {
       event.preventDefault();
@@ -69,6 +54,6 @@ export class KeyboardHelpDialogComponent {
   }
 
   protected close(): void {
-    this.open.set(false);
+    this.help.closeDialog();
   }
 }
