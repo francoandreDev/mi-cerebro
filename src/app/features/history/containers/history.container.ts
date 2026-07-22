@@ -1397,6 +1397,14 @@ export class HistoryContainer implements OnInit, OnDestroy {
     return `versioning.history.zoom.${z}` as TranslationKey;
   }
 
+  // why: la pill de zoom sólo nombraba el nivel ACTIVO (`zoom-current-label`)
+  //      — los otros dos niveles sólo se explicaban vía title/aria-label,
+  //      que exige hover/foco. La leyenda siempre visible debajo del header
+  //      nombra los tres niveles a la vez (audit UX 2026-07-22).
+  protected zoomLegendKey(z: HistoryZoom): TranslationKey {
+    return `versioning.history.zoom.legend.${z}` as TranslationKey;
+  }
+
   protected panoramaColumnTitle(dayStart: number, count: number): string {
     return this.i18n.t('versioning.history.panorama.columnTitle', {
       date: new Date(dayStart).toLocaleDateString(),

@@ -45,6 +45,15 @@
   </div>
 </header>
 
+<ul class="zoom-legend" [attr.aria-label]="i18n.t('versioning.history.zoom.legend.aria')">
+  @for (z of zoomOrder; track z) {
+    <li class="zoom-legend-item" [class.active]="zoom() === z">
+      <strong>{{ i18n.t(zoomLabelKey(z)) }}</strong>
+      <span>{{ i18n.t(zoomLegendKey(z)) }}</span>
+    </li>
+  }
+</ul>
+
 <div class="split zoom-{{ zoom() }}" [class.zoom-detail-stack]="zoom() === 'detail'">
   <aside class="timeline" aria-label="Timeline de commits" (scroll)="onTimelineScroll($event)">
     <div class="timeline-head">
