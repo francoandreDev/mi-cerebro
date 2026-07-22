@@ -232,6 +232,10 @@
   font-size: 2.5rem;
   opacity: 0.55;
 }
+.empty-hint {
+  font-size: var(--mc-font-size-sm);
+  opacity: 0.85;
+}
 
 .sala-nav {
   display: flex;

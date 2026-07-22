@@ -25,6 +25,7 @@
         <mc-icon name="image-square" class="empty-icon mc-anim-float" />
         <span>{{ t('images.museum.emptyRoom') }}</span>
         @if (editable() && !isPreview) {
+          <span class="empty-hint">{{ t('images.images.dropHint') }}</span>
           <button type="button" class="add ghost" (click)="onPick()">
             <mc-icon name="plus" />
             <span>{{ t('images.images.add') }}</span>
