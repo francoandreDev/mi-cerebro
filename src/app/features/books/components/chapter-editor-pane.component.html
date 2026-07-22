@@ -144,6 +144,34 @@
         <button
           type="button"
           class="list-toggle"
+          [disabled]="!hasCommentableSelection()"
+          [attr.aria-label]="t('books.editor.comment')"
+          [title]="
+            hasCommentableSelection()
+              ? t('books.editor.comment') + ' · Alt+C'
+              : t('books.editor.selectTextHint')
+          "
+          (click)="triggerComment()"
+        >
+          <mc-icon name="chat-circle" />
+        </button>
+        <button
+          type="button"
+          class="list-toggle"
+          [disabled]="!hasCommentableSelection()"
+          [attr.aria-label]="t('books.editor.propose')"
+          [title]="
+            hasCommentableSelection()
+              ? t('books.editor.propose') + ' · Alt+P'
+              : t('books.editor.selectTextHint')
+          "
+          (click)="triggerPropose()"
+        >
+          <mc-icon name="git-branch" />
+        </button>
+        <button
+          type="button"
+          class="list-toggle"
           [class.active]="typewriterMode.active()"
           [attr.aria-pressed]="typewriterMode.active()"
           [attr.aria-label]="t('editor.typewriter.button')"

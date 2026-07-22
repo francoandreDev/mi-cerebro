@@ -357,6 +357,15 @@ export class ChapterEditorPaneComponent {
   protected toggleTypewriterMode(): void {
     this.typewriterMode.toggle();
   }
+  protected triggerComment(): void {
+    this.editorRef()?.triggerComment();
+  }
+  protected triggerPropose(): void {
+    this.editorRef()?.triggerPropose();
+  }
+  protected hasCommentableSelection(): boolean {
+    return this.editorRef()?.hasCommentableSelection() ?? false;
+  }
 }
 
 interface FlipOpts {

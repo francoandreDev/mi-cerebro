@@ -176,6 +176,14 @@
   background: var(--mc-accent-primary);
   border-color: var(--mc-accent-primary);
 }
+.list-toggle:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.list-toggle:disabled:hover {
+  color: var(--mc-fg-muted);
+  border-color: var(--mc-border-default);
+}
 
 /* Libro abierto: alto fijo, clipping horizontal. Las columnas
    internas son las "páginas". */
