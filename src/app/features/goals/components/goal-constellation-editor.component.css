@@ -287,6 +287,15 @@
 .onboard-dismiss { background: transparent; border: 0; padding: 2px; color: rgba(200, 215, 245, 0.65); cursor: pointer; display: inline-flex; align-items: center; }
 .onboard-dismiss:hover { color: #fff; }
 
+.gesture-hint {
+  display: flex; align-items: center; gap: 6px; margin: 0;
+  padding-top: var(--mc-space-2, 6px);
+  border-top: 1px dashed rgba(170, 215, 255, 0.18);
+  color: rgba(220, 230, 250, 0.55);
+  font-size: var(--mc-font-size-xs, 0.72rem);
+}
+.gesture-hint-icon { flex: none; color: rgba(180, 220, 255, 0.55); }
+
 @keyframes mc-seed-pop { 0% { transform: scale(0.2); opacity: 0; } 60% { transform: scale(1.4); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
 @keyframes mc-pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
 @keyframes mc-fade-in { from { opacity: 0; transform: translate(-50%, 6px); } to { opacity: 1; transform: translate(-50%, 0); } }
