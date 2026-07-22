@@ -28,6 +28,7 @@ import { CommentsService } from '@core/versioning/comments.service';
 import type { Comment } from '@core/versioning/comments.types';
 import { DraftsService } from '@core/versioning/drafts.service';
 import type { DiffMark } from '@core/versioning/drafts.types';
+import { VariantsService } from '@core/versioning/variants.service';
 
 import { BubbleMenuComponent } from './bubble-menu.component';
 import { CommentPopoverComponent } from './comment-popover.component';
@@ -88,6 +89,7 @@ export class EditorComponent {
   private readonly i18n = inject(I18nService);
   private readonly drafts = inject(DraftsService);
   private readonly comments = inject(CommentsService);
+  private readonly variants = inject(VariantsService);
   protected readonly typewriterMode = inject(TypewriterModeService);
 
   protected readonly pickerOpen = signal(false);
@@ -124,6 +126,29 @@ export class EditorComponent {
   protected readonly commentPopover = this.commentsCoord.popover;
   private readonly draftMarks = signal<readonly DiffMark[]>([]);
   protected readonly commentsAvailable = computed(() => this.entityId().length > 0);
+  // why: names the real git branch the editor is about to commit to — see
+  //      variants.types.ts (family of 3 branches). Alt+P/Alt+C don't just
+  //      toggle a view, they write real commits onto draft/comments, and
+  //      before this the only place that said "branch" out loud was a
+  //      history tooltip. `branchWriteMode` + `activeVariantName` feed the
+  //      chrome badge that makes that explicit at the point of writing.
+  private readonly activeVariantName = computed(() => {
+    const file = this.variants.file();
+    return file.variants.find((v) => v.id === file.activeId)?.name ?? '';
+  });
+  protected readonly branchWriteMode = computed<'draft' | 'comment' | null>(() => {
+    if (this.draftSession.active()) return 'draft';
+    if (this.commentPopover() !== null) return 'comment';
+    return null;
+  });
+  protected readonly branchBadgeText = computed<string | null>(() => {
+    const mode = this.branchWriteMode();
+    if (!mode) return null;
+    const name = this.activeVariantName();
+    return mode === 'draft'
+      ? this.i18n.t('drafts.session.branchBadge', { name })
+      : this.i18n.t('comments.session.branchBadge', { name });
+  });
   protected readonly hasGalleries = computed(() => this.reader.summaries().length > 0);
   protected readonly showToolbar = computed(() => this.editable() || this.commentsAvailable());
   private editor: Editor | null = null;
@@ -160,7 +185,11 @@ export class EditorComponent {
   //      bubble only shows in `combined`). Same triggers also handle the
   //      bubble click path; refocus the editor afterwards because the
   //      bubble button stole focus.
-  protected triggerComment(): void {
+  // why: public so external toolbars (e.g. the book chapter pane's own
+  //      chrome, which mirrors mc-editor-toolbar since that's display:none
+  //      inside book pagination) can trigger the same comment/propose flow
+  //      that Alt+C/Alt+P already do internally.
+  triggerComment(): void {
     this.bubble.set(null);
     const ed = this.editor;
     if (!ed || !this.commentsAvailable() || !this.hasNonEmptySelection(ed)) return;
@@ -176,13 +205,20 @@ export class EditorComponent {
     );
   }
 
-  protected triggerPropose(): void {
+  triggerPropose(): void {
     this.bubble.set(null);
     const ed = this.editor;
     if (!ed || !this.commentsAvailable() || !this.hasNonEmptySelection(ed)) return;
     this.ensureCombined();
     this.draftSession.start();
     ed.commands.focus();
+  }
+
+  // why: toolbar buttons (unlike Alt+C/Alt+P, pressed while a selection is
+  //      naturally active) can be clicked with no selection — expose this
+  //      so callers can disable/hint instead of silently no-op'ing.
+  hasCommentableSelection(): boolean {
+    return this.bubble() !== null;
   }
 
   @HostListener('document:keydown', ['$event'])

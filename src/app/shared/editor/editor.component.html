@@ -30,6 +30,16 @@
     (toggleTypewriter)="toggleTypewriterMode()"
   />
 }
+@if (branchBadgeText(); as badge) {
+  <p
+    class="branch-badge"
+    [class.branch-badge-draft]="branchWriteMode() === 'draft'"
+    [class.branch-badge-comment]="branchWriteMode() === 'comment'"
+    data-testid="branch-badge"
+  >
+    {{ badge }}
+  </p>
+}
 <div class="shell" [class.has-popover]="commentsIndexOpen() || draftsIndexOpen()">
   <div
     #host

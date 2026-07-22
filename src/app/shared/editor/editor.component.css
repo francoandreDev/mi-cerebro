@@ -5,6 +5,27 @@
      the theme doesn't define the variable. */
   --comment-accent: var(--mc-fg-muted, #6b7280);
 }
+.branch-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mc-space-1, 4px);
+  margin: 0 0 var(--mc-space-2) 0;
+  padding: var(--mc-space-1, 4px) var(--mc-space-2);
+  border-radius: var(--mc-radius-sm, 4px);
+  font-size: 0.85em;
+  font-weight: 600;
+  width: fit-content;
+}
+.branch-badge-draft {
+  color: #d97706;
+  background: rgba(251, 191, 36, 0.12);
+  border: 1px solid rgba(217, 119, 6, 0.4);
+}
+.branch-badge-comment {
+  color: var(--comment-accent);
+  background: rgba(107, 114, 128, 0.12);
+  border: 1px solid var(--comment-accent);
+}
 .shell {
   position: relative;
   display: flex;
