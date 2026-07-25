@@ -18,6 +18,9 @@ export const GOALS_TUTORIAL: TutorialDefinition = {
       anchorSelector: '[data-tutorial="goals-create"]',
       titleKey: 'tree.type.goals',
       bodyKey: 'home.entity.goals.step.1',
+      // why: "escribís la meta... se imprime como poster" — practica el
+      // submit real del hero create en vez de solo leer sobre él.
+      action: { event: 'submit', icon: 'plus' },
     },
     {
       anchorSelector: '[data-tutorial="goals-create"]',

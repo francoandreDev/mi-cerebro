@@ -18,6 +18,13 @@ export class TutorialService {
 
   private readonly definitionsSignal = signal<readonly TutorialDefinition[]>([]);
   private readonly activeSignal = signal<TutorialActiveState | null>(null);
+  // why: a practiced action (e.g. clicking a real note card) can itself
+  // trigger real app navigation that destroys the page component the
+  // active tutorial was registered from — before the delayed next() call
+  // (see ACTION_ADVANCE_DELAY_MS in tutorial-overlay.component.ts) has run.
+  // Without this flag, register()'s disposer would null activeSignal as if
+  // the user had abandoned the tutorial by navigating away unrelatedly.
+  private practicedAdvancePending = false;
 
   readonly active = this.activeSignal.asReadonly();
 
@@ -46,10 +53,15 @@ export class TutorialService {
     }
     return () => {
       this.definitionsSignal.update((list) => list.filter((d) => d !== definition));
-      if (this.activeSignal()?.definition === definition) {
-        this.activeSignal.set(null);
-      }
+      if (this.activeSignal()?.definition !== definition) return;
+      if (this.practicedAdvancePending) return;
+      this.activeSignal.set(null);
     };
+  }
+
+  /** Marks that a step's action just matched and next() is about to run — see practicedAdvancePending. */
+  beginPracticedAdvance(): void {
+    this.practicedAdvancePending = true;
   }
 
   start(id: string): void {
@@ -59,6 +71,7 @@ export class TutorialService {
   }
 
   next(): void {
+    this.practicedAdvancePending = false;
     const state = this.activeSignal();
     if (!state) return;
     if (state.stepIndex + 1 >= state.definition.steps.length) {

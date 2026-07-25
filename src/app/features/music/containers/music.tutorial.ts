@@ -1,15 +1,47 @@
 import { DestroyRef, inject } from '@angular/core';
 
-import { buildEntityTutorial } from '@core/tutorials/entity-tutorial.builder';
 import { TutorialService } from '@core/tutorials/tutorial.service';
+import type { TutorialDefinition } from '@core/tutorials/tutorial.types';
 
-export const MUSIC_TUTORIAL = buildEntityTutorial('music', '[data-tutorial="music-upload"]', [
-  // step 2: "click en un álbum carga sus tracks en la cola" — la
-  // biblioteca de álbumes, no el botón de subir.
-  { step: 2, anchorSelector: '[data-tutorial="music-library"]' },
-  // step 3: "le das play: la superficie empieza a vibrar..."
-  { step: 3, anchorSelector: '[data-tutorial="music-surface"]' },
-]);
+// why: copy dedicado (no reciclado de home-content.ts). El mini-player
+//      global (`[data-tutorial="mini-player"]`, layout/) solo renderiza
+//      con un track cargado — no "siempre presente" (regla Fase 3) — así
+//      que ese step queda sin `action` y se degrada sin spotlight si no
+//      hay nada sonando todavía.
+export const MUSIC_TUTORIAL: TutorialDefinition = {
+  id: 'music',
+  steps: [
+    {
+      anchorSelector: '[data-tutorial="music-upload"]',
+      titleKey: 'music.tutorial.upload.title',
+      bodyKey: 'music.tutorial.upload.body',
+      action: { event: 'click', icon: 'upload-simple' },
+    },
+    {
+      anchorSelector: '[data-tutorial="music-library"]',
+      titleKey: 'music.tutorial.album.title',
+      bodyKey: 'music.tutorial.album.body',
+      action: { event: 'click', icon: 'music-notes' },
+    },
+    {
+      anchorSelector: '[data-tutorial="music-surface"]',
+      titleKey: 'music.tutorial.play.title',
+      bodyKey: 'music.tutorial.play.body',
+      action: { event: 'keydown', key: ' ', icon: 'play' },
+    },
+    {
+      anchorSelector: '[data-tutorial="music-library"]',
+      titleKey: 'music.tutorial.search.title',
+      bodyKey: 'music.tutorial.search.body',
+      action: { event: 'keydown', key: '/', icon: 'magnifying-glass' },
+    },
+    {
+      anchorSelector: '[data-tutorial="mini-player"]',
+      titleKey: 'music.tutorial.miniplayer.title',
+      bodyKey: 'music.tutorial.miniplayer.body',
+    },
+  ],
+};
 
 export function registerMusicTutorial(): void {
   const tutorials = inject(TutorialService);

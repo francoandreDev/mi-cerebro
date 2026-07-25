@@ -49,7 +49,11 @@
   </header>
 
   <div class="stage">
-    <div class="palomar" [class.has-selection]="selected() !== null">
+    <div
+      class="palomar"
+      data-tutorial="reminders-palomar"
+      [class.has-selection]="selected() !== null"
+    >
       <div class="roof" aria-hidden="true"></div>
       <div class="wall">
         @if (inNichos().length === 0 && onPerch().length === 0) {

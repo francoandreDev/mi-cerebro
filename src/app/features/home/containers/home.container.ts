@@ -56,7 +56,10 @@ export class HomeContainer {
 
   // why: capture/writing already play out entirely inside one page, so
   //      "Recorrer" for those just starts that page's own tutorial instead
-  //      of duplicating the same steps as a separate flow definition.
+  //      of duplicating the same steps as a separate flow definition. That
+  //      tutorial only registers itself while its page is mounted, so from
+  //      home we have to navigate there first — otherwise start() finds no
+  //      matching definition and silently no-ops (auditoría 2026-07-24).
   private readonly tutorials = inject(TutorialService);
   private static readonly WORKFLOW_TUTORIAL_ID: Readonly<Record<string, string>> = {
     capture: 'notes',
@@ -64,9 +67,18 @@ export class HomeContainer {
     project: 'flow-project',
     daily: 'flow-daily',
   };
+  private static readonly WORKFLOW_ROUTE: Readonly<Record<string, string>> = {
+    capture: '/notes',
+    writing: '/writings',
+  };
 
-  protected startWorkflow(workflow: HomeWorkflow): void {
+  protected async startWorkflow(workflow: HomeWorkflow): Promise<void> {
     const id = HomeContainer.WORKFLOW_TUTORIAL_ID[workflow.key];
-    if (id) this.tutorials.start(id);
+    if (!id) return;
+    const route = HomeContainer.WORKFLOW_ROUTE[workflow.key];
+    if (route && !this.router.url.startsWith(route)) {
+      await this.router.navigateByUrl(route);
+    }
+    this.tutorials.start(id);
   }
 }

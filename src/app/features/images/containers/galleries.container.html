@@ -35,6 +35,7 @@
       (removeTag)="onRemoveTag($event)"
     />
     <mc-museum-room
+      data-tutorial="images-room"
       [images]="currentCuarto()"
       [urls]="thumbUrls()"
       [cuartoIndex]="cuartoIndex()"
@@ -48,6 +49,7 @@
       (prevCuarto)="onPrevCuarto()"
     />
     <mc-room-minimap
+      data-tutorial="images-room-minimap"
       [cuartoSizes]="cuartoSizes()"
       [cuartoIndex]="cuartoIndex()"
       (jump)="onJumpCuarto($event)"

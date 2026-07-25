@@ -19,32 +19,198 @@
 .card {
   position: fixed;
   pointer-events: auto;
-  width: min(320px, 88vw);
+  width: min(260px, 84vw);
   background: var(--mc-bg-elevated);
   color: var(--mc-fg-primary);
   border: 1px solid var(--mc-border-default, var(--mc-border));
   border-radius: var(--mc-radius-md);
-  padding: var(--mc-space-4);
+  padding: var(--mc-space-3);
   box-shadow: var(--mc-shadow-lg, 0 12px 32px rgba(0, 0, 0, 0.4));
 }
-.step-count {
-  display: block;
-  font-family: var(--mc-font-mono, monospace);
-  font-size: 0.7rem;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--mc-fg-muted);
+.step-dots {
+  display: flex;
+  gap: 5px;
   margin-bottom: var(--mc-space-2);
 }
+.step-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--mc-border-default, var(--mc-border));
+}
+.step-dot--current {
+  background: var(--mc-accent-primary);
+  transform: scale(1.3);
+}
 .title {
-  margin: 0 0 var(--mc-space-2);
-  font-size: 1rem;
+  margin: 0 0 var(--mc-space-1);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--mc-fg-primary);
+  line-height: var(--mc-line-base, 1.3);
 }
 .body {
-  margin: 0 0 var(--mc-space-4);
-  font-size: 0.9rem;
+  margin: 0 0 var(--mc-space-2);
+  font-size: 0.85rem;
   color: var(--mc-fg-muted);
-  line-height: var(--mc-line-base, 1.5);
+  line-height: var(--mc-line-base, 1.4);
+}
+.keycap-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 0 var(--mc-space-2);
+}
+.keycap-row--done .keycap {
+  border-color: var(--mc-state-success, #2dbd6e);
+  color: var(--mc-state-success, #2dbd6e);
+  animation: none;
+}
+.keycap-icon--check {
+  color: var(--mc-state-success, #2dbd6e);
+}
+.keycap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.6em;
+  padding: 0.15em 0.5em;
+  border-radius: var(--mc-radius-sm);
+  border: 1px solid var(--mc-accent-primary);
+  background: var(--mc-bg-elevated);
+  color: var(--mc-accent-primary);
+  font-family: var(--mc-font-mono, monospace);
+  font-style: normal;
+  font-weight: 700;
+  font-size: 0.75rem;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--mc-accent-primary) 20%, transparent);
+  animation: mc-tutorial-keycap-pulse 1.6s ease-in-out infinite;
+}
+
+/* why: the exact click/drag target — measured separately from the
+   (possibly much larger) spotlighted anchor, see measureActionPoint().
+   Centered on the target via translate, pointer-events none so it never
+   blocks the real click underneath. Uses the user's configured accent
+   (--mc-accent-primary, same token the rest of the app themes with) so
+   the highlight matches whatever theme is active instead of a color the
+   custom-theme editor never controls. */
+.action-highlight {
+  position: fixed;
+  border-radius: var(--mc-radius-sm);
+  box-shadow:
+    0 0 0 3px var(--mc-accent-primary),
+    0 0 14px 3px color-mix(in srgb, var(--mc-accent-primary) 65%, transparent);
+  animation: mc-tutorial-glow 1.3s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1201;
+}
+.action-highlight--done {
+  box-shadow:
+    0 0 0 3px var(--mc-state-success, #2dbd6e),
+    0 0 14px 3px color-mix(in srgb, var(--mc-state-success, #2dbd6e) 65%, transparent);
+  animation: none;
+}
+
+/* why: a small tag pinned to the target's corner names *why* you're
+   clicking it — without covering the real button, which is what the user
+   should learn to recognize (see feedback: reference the actual elements
+   instead of a floating synthetic marker on top of them). */
+.action-tag {
+  position: fixed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  transform: translate(-60%, -40%);
+  border-radius: 50%;
+  background: var(--mc-accent-primary);
+  box-shadow: 0 0 0 2px #ffffff;
+  pointer-events: none;
+  z-index: 1202;
+}
+.action-tag--done {
+  background: var(--mc-state-success, #2dbd6e);
+}
+.action-tag--drag {
+  animation: mc-tutorial-drag 1.3s ease-in-out infinite;
+}
+.action-tag-icon {
+  color: var(--mc-accent-fg, #ffffff);
+  width: 13px;
+  height: 13px;
+  font-size: 13px;
+}
+
+/* why: a faint dashed thread from the card to the exact target — decorative
+   (aria-hidden) but load-bearing when the card lands far from the anchor,
+   so the eye never has to guess what the words are pointing at. */
+.connector {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 1199;
+}
+.connector line {
+  stroke: var(--mc-accent-primary);
+  stroke-width: 2;
+  stroke-dasharray: 5 5;
+  opacity: 0.65;
+}
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.1em;
+  padding: 0.4rem;
+}
+.keycap-icon {
+  color: var(--mc-accent-primary);
+  width: 1em;
+  height: 1em;
+  font-size: 0.9rem;
+}
+
+@keyframes mc-tutorial-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 3px var(--mc-accent-primary),
+      0 0 14px 3px color-mix(in srgb, var(--mc-accent-primary) 65%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 5px var(--mc-accent-primary),
+      0 0 22px 6px color-mix(in srgb, var(--mc-accent-primary) 85%, transparent);
+  }
+}
+@keyframes mc-tutorial-drag {
+  0%,
+  100% {
+    transform: translate(-60%, -40%);
+  }
+  50% {
+    transform: translate(calc(-60% + 10px), -40%);
+  }
+}
+@keyframes mc-tutorial-keycap-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--mc-accent-primary) 20%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--mc-accent-primary) 35%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .action-highlight,
+  .action-tag--drag,
+  .keycap {
+    animation: none;
+  }
 }
 .actions {
   display: flex;

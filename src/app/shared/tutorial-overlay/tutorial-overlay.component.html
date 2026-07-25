@@ -9,6 +9,35 @@
         [style.height.px]="r.height"
       ></div>
     }
+    @if (connector(); as c) {
+      <svg class="connector" aria-hidden="true">
+        <line [attr.x1]="c.x1" [attr.y1]="c.y1" [attr.x2]="c.x2" [attr.y2]="c.y2" />
+      </svg>
+    }
+    @if (s.action && s.action.event !== 'keydown' && actionRect(); as ar) {
+      <div
+        class="action-highlight"
+        [class.action-highlight--drag]="s.action.event === 'dragstart'"
+        [class.action-highlight--done]="actionDone()"
+        [style.top.px]="ar.top"
+        [style.left.px]="ar.left"
+        [style.width.px]="ar.width"
+        [style.height.px]="ar.height"
+        aria-hidden="true"
+      ></div>
+      @if (s.action.icon; as icon) {
+        <span
+          class="action-tag"
+          [class.action-tag--done]="actionDone()"
+          [class.action-tag--drag]="s.action.event === 'dragstart' && !actionDone()"
+          [style.left.px]="ar.left + ar.width"
+          [style.top.px]="ar.top"
+          aria-hidden="true"
+        >
+          <mc-icon [name]="actionDone() ? 'check' : icon" class="action-tag-icon" />
+        </span>
+      }
+    }
     <div
       class="card"
       role="dialog"
@@ -20,24 +49,76 @@
       tabindex="0"
     >
       @if (position(); as p) {
-        <span class="step-count">{{
-          t('tutorial.nav.progress', { current: p.current, total: p.total })
-        }}</span>
+        <span
+          class="step-dots"
+          [attr.aria-label]="t('tutorial.nav.progress', { current: p.current, total: p.total })"
+        >
+          @for (i of dotRange(p.total); track i) {
+            <span class="step-dot" [class.step-dot--current]="i === p.current"></span>
+          }
+        </span>
       }
-      <h3 class="title">{{ t(s.titleKey) }}</h3>
+      <p class="title">{{ t(s.titleKey) }}</p>
       <p class="body">{{ t(s.bodyKey) }}</p>
+      @if (actionKeys().length) {
+        <span class="keycap-row" [class.keycap-row--done]="actionDone()">
+          @if (s.action?.icon; as icon) {
+            <mc-icon [name]="icon" class="keycap-icon" />
+          }
+          @for (k of actionKeys(); track $index) {
+            <span class="keycap">{{ k }}</span>
+          }
+          @if (actionDone()) {
+            <mc-icon name="check" class="keycap-icon keycap-icon--check" />
+          }
+        </span>
+      }
       <div class="actions">
-        <button type="button" class="ghost" (click)="skip()">{{ t('tutorial.nav.skip') }}</button>
+        <button
+          type="button"
+          class="ghost icon-btn"
+          (click)="skip()"
+          [attr.aria-label]="t('tutorial.nav.skip')"
+        >
+          <mc-icon name="x" />
+        </button>
         <div class="nav">
           @if (position(); as p) {
             @if (p.current > 1) {
-              <button type="button" class="ghost" (click)="prev()">
-                {{ t('tutorial.nav.back') }}
+              <button
+                type="button"
+                class="ghost icon-btn"
+                (click)="prev()"
+                [attr.aria-label]="t('tutorial.nav.back')"
+              >
+                <mc-icon name="arrow-left" />
               </button>
             }
-            <button type="button" class="primary" (click)="next()">
-              {{ p.current === p.total ? t('tutorial.nav.done') : t('tutorial.nav.next') }}
-            </button>
+            @if (s.action && !actionDone()) {
+              <button
+                type="button"
+                class="ghost icon-btn"
+                (click)="next()"
+                [attr.aria-label]="t('tutorial.nav.skipStep')"
+              >
+                <mc-icon name="skip-forward" />
+              </button>
+            } @else {
+              <button
+                type="button"
+                class="primary icon-btn"
+                (click)="next()"
+                [attr.aria-label]="
+                  p.current === p.total ? t('tutorial.nav.done') : t('tutorial.nav.next')
+                "
+              >
+                @if (p.current === p.total) {
+                  <mc-icon name="check" />
+                } @else {
+                  <mc-icon name="arrow-right" />
+                }
+              </button>
+            }
           }
         </div>
       </div>

@@ -34,7 +34,7 @@
     (manageFolder)="onManageFolder($event)"
   />
 
-  <div class="wall-board">
+  <div class="wall-board" data-tutorial="files-wall">
     @if (visibleCollections().length === 0) {
       <div class="wall-empty">
         <p>{{ t('files.wall.empty') }}</p>

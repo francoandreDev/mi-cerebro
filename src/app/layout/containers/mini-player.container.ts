@@ -12,7 +12,7 @@ import { IconComponent } from '@shared/icon/icon.component';
   imports: [IconComponent],
   template: `
     @if (player.currentTrack(); as track) {
-      <div class="bar">
+      <div class="bar" data-tutorial="mini-player">
         <button type="button" class="title" (click)="goToMusic()" [title]="t('music.openLibrary')">
           <mc-icon name="music-note" /> {{ track.originalName }}
         </button>

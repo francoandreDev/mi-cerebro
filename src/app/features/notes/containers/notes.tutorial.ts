@@ -1,13 +1,48 @@
 import { DestroyRef, inject } from '@angular/core';
 
-import { buildEntityTutorial } from '@core/tutorials/entity-tutorial.builder';
 import { TutorialService } from '@core/tutorials/tutorial.service';
+import type { TutorialDefinition } from '@core/tutorials/tutorial.types';
 
-export const NOTES_TUTORIAL = buildEntityTutorial('notes', '[data-tutorial="notes-compose"]', [
-  // step 4: "la encontrás con Ctrl+K o los chips de filtro arriba" — el
-  // buscador/filtro real vive en la filter bar, no en la compose bar.
-  { step: 4, anchorSelector: '[data-tutorial="notes-search"]' },
-]);
+// why: copy dedicado por paso (no reciclado de home-content.ts) — cada
+//      step describe un único gesto concreto, con acción real donde el
+//      gesto ocurre en esta misma página. Tags/formato viven en
+//      /notes/:id (otra ruta, gateada a que exista una nota), así que esos
+//      dos steps quedan sin `action` — se practican después de abrir una
+//      nota, no acá.
+export const NOTES_TUTORIAL: TutorialDefinition = {
+  id: 'notes',
+  steps: [
+    {
+      anchorSelector: '[data-tutorial="notes-compose"]',
+      titleKey: 'notes.tutorial.compose.title',
+      bodyKey: 'notes.tutorial.compose.body',
+      action: { event: 'submit', icon: 'plus' },
+    },
+    {
+      anchorSelector: '[data-tutorial="notes-wall"]',
+      titleKey: 'notes.tutorial.format.title',
+      bodyKey: 'notes.tutorial.format.body',
+      action: {
+        event: 'click',
+        selector: '[data-tutorial="notes-wall"] article.slip',
+        icon: 'note',
+      },
+      skipIfMissing: true,
+    },
+    {
+      anchorSelector: '[data-tutorial="notes-tag-picker"]',
+      titleKey: 'notes.tutorial.tags.title',
+      bodyKey: 'notes.tutorial.tags.body',
+      skipIfMissing: true,
+    },
+    {
+      anchorSelector: '[data-tutorial="notes-search"]',
+      titleKey: 'notes.tutorial.search.title',
+      bodyKey: 'notes.tutorial.search.body',
+      action: { event: 'keydown', key: 'k', ctrlOrMeta: true, icon: 'magnifying-glass' },
+    },
+  ],
+};
 
 export function registerNotesTutorial(): void {
   const tutorials = inject(TutorialService);

@@ -53,14 +53,19 @@ export const DAILY_FLOW_TUTORIAL: TutorialDefinition = {
       bodyKey: 'home.flow.daily.step.2',
     },
     {
+      // why: step copy describe el cantero "floración" (hoy) y cosechar,
+      // no crear una tarea nueva — tasks-planters/tasks-basket son los
+      // anchors reales que tasks.tutorial.ts ya usa para lo mismo.
       route: '/tasks',
-      anchorSelector: '[data-tutorial="tasks-compose"]',
+      anchorSelector: '[data-tutorial="tasks-planters"]',
       titleKey: 'home.flow.daily.title',
       bodyKey: 'home.flow.daily.step.3',
     },
     {
+      // why: "palomas asomadas... las despachás" describe el palomar, no
+      // el form de creación.
       route: '/reminders',
-      anchorSelector: '[data-tutorial="reminders-quick-add"]',
+      anchorSelector: '[data-tutorial="reminders-palomar"]',
       titleKey: 'home.flow.daily.title',
       bodyKey: 'home.flow.daily.step.4',
     },

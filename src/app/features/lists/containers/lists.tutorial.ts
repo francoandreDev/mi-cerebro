@@ -15,6 +15,9 @@ export const LISTS_TUTORIAL: TutorialDefinition = {
       titleKey: 'lists.tutorial.toggle.title',
       bodyKey: 'lists.tutorial.toggle.body',
       placement: 'bottom',
+      // why: practica el click real del toggle en vez de solo leer sobre
+      // él — antes de activarlo, el toggle es lo único clickeable ahí.
+      action: { event: 'click', icon: 'paint-brush' },
     },
     {
       anchorSelector: '[data-tutorial="lists-chalk-bar"]',

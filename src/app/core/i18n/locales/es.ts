@@ -442,6 +442,21 @@ export const es = {
   'variants.action.merge': 'Mergear',
   'variants.action.merge.disabled': 'Mergeo disponible en 13b-iv',
   'variants.action.new': 'Nueva variante',
+  'variants.tutorial.create.title': '"Nueva variante" abre el formulario',
+  'variants.tutorial.create.body':
+    'Elegí un nombre, un color, y desde qué variante partir (por defecto, la original).',
+  'variants.tutorial.confirm.title': 'Ctrl+Enter confirma, Escape cancela',
+  'variants.tutorial.confirm.body':
+    'Probalo: con el formulario abierto, Ctrl+Enter (o Cmd+Enter) crea la variante sin soltar el teclado.',
+  'variants.tutorial.select.title': 'Click en una variante abre su detalle',
+  'variants.tutorial.select.body':
+    'El delta muestra las variantes como brazos bifurcados. Click en cualquiera abre un panel con sus opciones.',
+  'variants.tutorial.switch.title': 'Desde el detalle la activás para editar ahí',
+  'variants.tutorial.switch.body':
+    'El botón de activar (▶) en el panel te cambia a esa rama — todo lo que edites de ahí en más queda en esa variante. Activá "main" para volver a la original.',
+  'variants.tutorial.merge.title': 'Mergeás los cambios o borrás la variante',
+  'variants.tutorial.merge.body':
+    'El botón de mergear te lleva a la pantalla de merge contra la original. El de borrar (con confirmación) descarta la variante entera si no la necesitás más.',
   'variants.form.title': 'Nueva variante',
   'variants.form.name': 'Nombre',
   'variants.form.name.placeholder': 'ej. experimento-2026',
@@ -576,6 +591,19 @@ export const es = {
   'notes.wall.openAria': 'Abrir nota {title}',
   'notes.wall.deleteAria': 'Eliminar nota {title}',
 
+  'notes.tutorial.compose.title': 'Escribí y mandá: así nace una nota',
+  'notes.tutorial.compose.body':
+    'Escribí lo que se te ocurra acá arriba y apretá Enter (o el botón →). No hace falta título ni elegir carpeta — se imprime como un sticky nuevo arriba del muro.',
+  'notes.tutorial.format.title': 'Al abrir la nota tenés negrita, listas y links',
+  'notes.tutorial.format.body':
+    'Click en cualquier sticky del muro te lleva a su editor completo, con una barra mínima de formato — nada de Markdown crudo a la vista. "Volver a notas" te trae de vuelta al muro.',
+  'notes.tutorial.tags.title': 'Le sumás tags al abrir la nota',
+  'notes.tutorial.tags.body':
+    'Adentro del editor (click en un sticky) elegís uno o más tags para esa nota. De vuelta acá, los chips que aparecen sobre el buscador filtran el muro por esos tags al tocarlos.',
+  'notes.tutorial.search.title': 'Ctrl+K la encuentra sin scrollear',
+  'notes.tutorial.search.body':
+    'Probalo: Ctrl+K (o Cmd+K) abre la búsqueda global desde cualquier pantalla, no solo acá. Escribí y aparece mezclada con el resto de tus notas, tareas y demás.',
+
   'tree.filter.placeholder': 'Filtrar...',
   'tree.filter.placeholderIn': 'Filtrar en {kind}...',
   'tree.noMatches': 'Sin coincidencias.',
@@ -643,6 +671,9 @@ export const es = {
   'tutorial.nav.skip': 'Saltar',
   'tutorial.nav.done': 'Listo',
   'tutorial.nav.progress': '{current} de {total}',
+  'tutorial.nav.actionHint': 'Probalo en la página — avanza solo cuando lo hacés.',
+  'tutorial.nav.actionDone': '¡Bien! Avanzando…',
+  'tutorial.nav.skipStep': 'Saltar este paso',
   'shortcuts.palette': 'Abrir búsqueda global',
   'shortcuts.treeFilter': 'Foco al filtro del árbol',
   'shortcuts.create': 'Crear nueva entidad (según ruta)',
@@ -764,6 +795,19 @@ export const es = {
   'tasks.garden.legend.seed': 'Semilla · backlog',
   'tasks.garden.legend.sprout': 'Brote · esta semana',
   'tasks.garden.legend.bloom': 'Floración · hoy',
+
+  'tasks.tutorial.compose.title': 'Escribí y enviá: plantá una tarea',
+  'tasks.tutorial.compose.body':
+    'Escribí el título acá arriba y apretá Enter (o "+ sembrar"). Sin fecha, nace en el cantero Semilla — tu backlog.',
+  'tasks.tutorial.date.title': 'Al abrirla, le ponés una fecha',
+  'tasks.tutorial.date.body':
+    'Click en una tarea abre su detalle. Con fecha puesta se ubica sola en Floración (hoy) o Brote (esta semana), y aparece también en /calendar.',
+  'tasks.tutorial.transplant.title': 'Shift+→ la trasplanta al cantero siguiente',
+  'tasks.tutorial.transplant.body':
+    'Probalo: con una tarea enfocada, Shift+→ la mueve un cantero a la derecha, Shift+← a la izquierda. También podés arrastrarla con el mouse entre canteros.',
+  'tasks.tutorial.harvest.title': 'Enter abre el menú — "Cosechar" la completa',
+  'tasks.tutorial.harvest.body':
+    'Con la tarea enfocada, Enter abre un menú con los canteros y, al final, "Cosechar". Al cosechar cae acá, a la cesta, y el cambio queda commiteado al historial.',
   'tasks.garden.legend.wilted': 'Marchita · días sin completarse',
   'tasks.garden.legend.countToday': 'tareas para hoy',
   'tasks.garden.legend.countWeek': 'tareas para esta semana',
@@ -926,6 +970,12 @@ export const es = {
   'lists.lock.evicted.message':
     'Otra pestaña empezó a editar esta lista. Tu vista quedó en modo lectura.',
   'lists.lock.evicted.dismiss': 'Entendido',
+  'lists.tutorial.create.title': 'Escribí y enviá: arma una lista nueva',
+  'lists.tutorial.create.body':
+    'Escribí un nombre acá y apretá Enter. Se suma al directorio A–Z de la izquierda, lista para abrir.',
+  'lists.tutorial.rail.title': 'El rail A–Z salta directo a una lista',
+  'lists.tutorial.rail.body':
+    'Probalo: click en cualquier letra o nombre del rail te lleva directo a esa sección, sin scrollear la pizarra entera.',
   'lists.board.searchPlaceholder': 'Buscar en la pizarra...',
   'lists.board.searchAria': 'Buscar listas',
   'lists.board.searchClear': 'Limpiar búsqueda',
@@ -1010,6 +1060,18 @@ export const es = {
   'lists.chalk.confirm.remove.confirm': 'Sí, eliminar',
 
   'writings.title': 'Escritos',
+  'writings.tutorial.create.title': 'Escribí un título y enviá: nace el escrito',
+  'writings.tutorial.create.body':
+    'Podés dejarlo sin título ("Sin título") y ponerlo después. Al enviar entrás directo al editor.',
+  'writings.tutorial.editor.title': 'El editor es full-bleed: solo vos y el texto',
+  'writings.tutorial.editor.body':
+    'Sin paneles laterales, ancho de lectura cómodo. La barra de arriba tiene el título, la fecha límite opcional, tags, y el estado del guardado.',
+  'writings.tutorial.autosave.title': 'Autosave cada ~2.5 segundos, sin que hagas nada',
+  'writings.tutorial.autosave.body':
+    'El indicador de la barra superior pasa de "Sin guardar" a "Guardando..." a "Guardado" solo. Nunca hace falta guardar a mano.',
+  'writings.tutorial.focus.title': 'Alt+Shift+F oculta todo lo demás',
+  'writings.tutorial.focus.body':
+    'Es un atajo global de la app (funciona en cualquier editor): activa el modo foco, que esconde la barra superior y deja solo el texto en pantalla.',
   'writings.new': 'Nuevo escrito',
   'writings.untitledTitle': 'Sin título',
   'writings.empty': 'Sin escritos todavía. Empezá con "Nuevo escrito".',
@@ -1134,6 +1196,28 @@ export const es = {
   'books.reader.notesTitle': 'Notas',
   'books.reader.notesPlaceholder':
     'Sin notas todavía. Próximamente vas a poder anotar mientras leés.',
+  'books.tutorial.upload.title': 'Subís un libro arrastrándolo o con "Nuevo libro"',
+  'books.tutorial.upload.body':
+    'Arrastralo directo a la estantería, o probá el botón "Nuevo libro" de arriba. Aparece como lomo + portada en el estante actual.',
+  'books.tutorial.organize.title': 'Arrastrá un lomo para moverlo de estante',
+  'books.tutorial.organize.body':
+    'Tomá cualquier libro del estante y soltalo en otro — así los organizás por tema (Filosofía, Pendientes, lo que quieras).',
+  'books.tutorial.density.title': 'Este toggle ajusta cuántos libros ves por fila',
+  'books.tutorial.density.body':
+    'Probalo: alterná entre vista normal y compacta para ver más o menos libros por fila sin scrollear tanto.',
+  'books.tutorial.open.title': 'Click en el lomo abre el lector',
+  'books.tutorial.open.body': 'Cualquier libro del estante se abre con un flip 3D real al tocarlo.',
+  'books.tutorial.readerPaging.title': 'PageDown pasa página',
+  'books.tutorial.readerPaging.body':
+    'Probalo: PageDown avanza, PageUp retrocede — sin tocar el mouse.',
+  'books.tutorial.readerChapterNav.title': 'Alt+→ salta al siguiente capítulo',
+  'books.tutorial.readerChapterNav.body': 'Probalo: Alt+→ avanza de capítulo, Alt+← retrocede.',
+  'books.tutorial.readerFocus.title': 'Ctrl+. activa el modo foco',
+  'books.tutorial.readerFocus.body':
+    'Probalo: esconde todo lo que no sea el texto — mismo atajo para volver.',
+  'books.tutorial.readerToc.title': 'Este ícono abre el índice de capítulos',
+  'books.tutorial.readerToc.body':
+    "Probalo: también se abre con Ctrl+' desde cualquier lado del lector.",
   'books.shortcuts.prevChapter': 'Libros · Capítulo anterior',
   'books.shortcuts.nextChapter': 'Libros · Capítulo siguiente',
   'books.shortcuts.toggleIndex': 'Libros · Mostrar/ocultar índice de capítulos',
@@ -1297,6 +1381,18 @@ export const es = {
   'images.editedAgo.days': 'hace {n} d',
   'images.editedAgo.months': 'hace {n} meses',
   'images.editedAgo.years': 'hace {n} años',
+  'images.tutorial.create.title': '"Nueva galería" te da una sala',
+  'images.tutorial.create.body':
+    'Cada galería es una sala nueva en el plano del museo, lista para colgar imágenes.',
+  'images.tutorial.upload.title': 'Adentro, arrastrás o pegás las imágenes',
+  'images.tutorial.upload.body':
+    'Soltá archivos acá o pegá con Ctrl+V — se cuelgan solas en la pared. Si son muchas, la sala se auto-pagina en cuartos.',
+  'images.tutorial.navigate.title': 'Click selecciona, doble click entra',
+  'images.tutorial.navigate.body':
+    'Desde el plano del museo, un click en una sala la previsualiza acá abajo; doble click te mete adentro.',
+  'images.tutorial.minimap.title': 'El mini-mapa salta entre cuartos',
+  'images.tutorial.minimap.body':
+    'Cuando la sala tiene varios cuartos (se auto-pagina al subir muchas imágenes), el mini-mapa del pie te lleva directo a cualquiera, sin scrollear toda la pared.',
   'images.museum.planLabel': 'Planta del museo',
   'images.museum.activeSala': 'Sala activa',
   'images.museum.cuarto': 'Cuarto {n} de {total}',
@@ -1336,6 +1432,18 @@ export const es = {
   'files.items.deleteConfirm': '¿Eliminar el archivo "{name}"? No se manda a papelera.',
   'files.confirm.deleteItem.title': 'Eliminar archivo',
   'files.confirm.deleteItem.confirm': 'Sí, eliminar',
+  'files.tutorial.upload.title': '"Nueva colección" te da un casillero',
+  'files.tutorial.upload.body':
+    'Cada colección de archivos ocupa un casillero numerado en la pared. Después le agregás los archivos sueltos que quieras.',
+  'files.tutorial.open.title': 'Click en un casillero lo abre',
+  'files.tutorial.open.body':
+    'Se abre inline si hay pocas colecciones, o en overlay si hay muchas. Ahí arrastrás archivos nuevos o usás "Agregar archivos".',
+  'files.tutorial.tags.title': 'El primer tag pinta el frente del casillero',
+  'files.tutorial.tags.body':
+    'Con el casillero abierto, agregale un tag desde la barra superior. El color del primer tag queda pintado en el frente, para identificarlo de un vistazo en la pared.',
+  'files.tutorial.download.title': 'Cada archivo se descarga por separado',
+  'files.tutorial.download.body':
+    'Adentro del casillero, cada archivo tiene su propio botón de descarga — no hace falta bajar la colección entera.',
   'files.items.moveUp': 'Subir',
   'files.items.moveDown': 'Bajar',
   'files.items.delete': 'Eliminar',
@@ -1370,6 +1478,15 @@ export const es = {
 
   'trash.title': 'Papelera',
   'trash.empty': 'Vaciar papelera',
+  'trash.tutorial.appears.title': 'Borrar algo lo trae acá, no lo destruye',
+  'trash.tutorial.appears.body':
+    'Notas, tareas, libros, lo que sea que borres aparece acá con preview de su contenido real. Nada se pierde del disco todavía.',
+  'trash.tutorial.search.title': 'Buscá por nombre cuando hay mucho acumulado',
+  'trash.tutorial.search.body':
+    'Probalo: escribí acá arriba, o filtrá por tipo de entidad con los chips que aparecen debajo (notas, tareas, etc).',
+  'trash.tutorial.restore.title': 'Restaurás, purgás, o esperás 30 días',
+  'trash.tutorial.restore.body':
+    'Cada card tiene botones para restaurar (vuelve a donde estaba) o purgar (borra en serio, pide confirmación). Si no hacés nada, se purga sola a los 30 días — el countdown se ve en la card. "Vaciar" arriba borra todo de una.',
   'trash.emptyState': 'La papelera está vacía.',
   'trash.restore': 'Restaurar',
   'trash.purge': 'Borrar',
@@ -1537,6 +1654,18 @@ export const es = {
   'calendar.kind.note': 'Notas',
   'calendar.day.newNote': 'Nueva nota',
   'calendar.view.week': 'Semana',
+  'calendar.tutorial.views.title': 'Tres formas de mirar el tiempo',
+  'calendar.tutorial.views.body':
+    'Probalo: cambiá entre mes, semana y año desde acá. Mes te da el detalle día a día, año te muestra los doce meses de un vistazo.',
+  'calendar.tutorial.day.title': 'Click en un día abre todo lo que tiene',
+  'calendar.tutorial.day.body':
+    'Tareas, recordatorios y demás con esa fecha aparecen en un modal, agrupados por tipo. Filtrás por tipo desde ahí mismo.',
+  'calendar.tutorial.create.title': 'Desde el modal creás algo nuevo con esa fecha',
+  'calendar.tutorial.create.body':
+    'El modal del día te lleva a crear una tarea o un recordatorio que ya nace con esa fecha puesta — no hace falta asignarla después a mano.',
+  'calendar.tutorial.filter.title': 'El wallboard de la derecha filtra por tipo',
+  'calendar.tutorial.filter.body':
+    'Probalo: click en el encabezado de cualquier card (tareas, metas, recordatorios) prende o apaga ese tipo en la vista completa.',
   'calendar.day.openBook': 'Ver en la agenda',
   'calendar.book.close': 'Cerrar libro',
   'calendar.book.emptyDay': 'Página en blanco.',
@@ -1612,6 +1741,18 @@ export const es = {
   'reminders.dateClear': 'Limpiar fechas',
   'reminders.emptyPalomar': 'El palomar está en silencio. Soltá una paloma con un papelito.',
   'reminders.repisaEmpty': 'La repisa está vacía — ninguna paloma cansada.',
+  'reminders.tutorial.compose.title': 'Escribí y enviá: soltá una paloma',
+  'reminders.tutorial.compose.body':
+    'Escribí el recordatorio y enviá el formulario. Se enrolla en un papelito y una paloma nueva ocupa una jaula — anillo de color si es recurrente, transparente si es puntual.',
+  'reminders.tutorial.open.title': 'Click en una paloma abre el detalle',
+  'reminders.tutorial.open.body':
+    'Ahí editás el texto, la posponés (1 hora, 1 día, el lunes que viene, o el finde), la duplicás o la borrás.',
+  'reminders.tutorial.states.title': 'La puerta se abre sola cuando se acerca la hora',
+  'reminders.tutorial.states.body':
+    'Los vencidos sin atender se acumulan en la repisa, abajo. Al sonar, la paloma vuela por la pantalla y pica el ícono del rail — no hace falta que tengas la página abierta para notarlo.',
+  'reminders.tutorial.filters.title': 'Filtrá por fecha cuando hay muchas',
+  'reminders.tutorial.filters.body':
+    'Probalo: elegí un rango "desde"/"hasta" acá. Solo quedan visibles las palomas de ese rango — "Limpiar fechas" vuelve a mostrarlas todas.',
   'reminders.detailTitle': 'Papelito',
   'reminders.dueAtLabel': 'Cuándo vuela',
   'reminders.recurrenceLabel': 'Anillo',
@@ -1637,6 +1778,18 @@ export const es = {
   'common.off': 'Desactivado',
 
   'settings.title': 'Configuración',
+  'settings.tutorial.open.title': 'El engranaje del rail te trae acá',
+  'settings.tutorial.open.body':
+    'Desde cualquier pantalla, el ícono de engranaje al pie del rail lateral te trae a /settings.',
+  'settings.tutorial.nav.title': 'Cada tab tiene su propia sección',
+  'settings.tutorial.nav.body':
+    'Probalo: click en General, Tema, Sync, Versionado, Variantes, Exportar, Recordatorios, Objetivos o Autor — el panel de la derecha cambia a esa sección.',
+  'settings.tutorial.apply.title': 'General necesita "Aplicar" — cambiá el valor primero',
+  'settings.tutorial.apply.body':
+    'Editá la zona horaria en el campo de arriba — el botón se habilita solo cuando el valor cambió. Click en "Aplicar" (o Enter en el campo) lo guarda.',
+  'settings.tutorial.instant.title': 'Tema y Sync aplican al toque, sin botón',
+  'settings.tutorial.instant.body':
+    'A diferencia de General, en Tema el color/tono/acento cambian apenas los tocás — no hay nada que confirmar. Versionado, Variantes, Objetivos y Autor sí tienen su propio botón "Aplicar", como General.',
   'settings.soon': 'Próximamente',
   'settings.section.general': 'General',
   'settings.section.versioning': 'Versionado',
@@ -1783,6 +1936,21 @@ export const es = {
   'music.lyrics.searching': 'Buscando…',
   'music.lyrics.searchError': 'No se pudo conectar con lyrics.ovh. Probá de nuevo.',
   'music.lyrics.searchEmpty': 'No se encontró letra para ese artista/título. Probá ajustarlos.',
+  'music.tutorial.upload.title': 'Subís MP3s y se organizan solos',
+  'music.tutorial.upload.body':
+    'Elegí archivos o arrastralos a la biblioteca. La app lee los tags ID3 y arma los álbumes — los tracks sin tag caen en "Sin álbum", sin inventar nada.',
+  'music.tutorial.album.title': 'Click en un álbum carga sus tracks en la cola',
+  'music.tutorial.album.body':
+    'Expandí cualquier álbum de la izquierda — sus tracks se suman a la cola de la derecha, lista para reproducir en orden.',
+  'music.tutorial.play.title': 'Espacio reproduce o pausa, desde cualquier lado',
+  'music.tutorial.play.body':
+    'Probalo: la barra espaciadora reproduce/pausa incluso si no tenés foco en un control — la membrana central empieza a vibrar con el audio real (FFT), no una animación de relleno.',
+  'music.tutorial.search.title': '"/" enfoca la búsqueda de la biblioteca',
+  'music.tutorial.search.body':
+    'Probalo: la tecla "/" lleva el foco directo al buscador, sin tener que clickearlo primero.',
+  'music.tutorial.miniplayer.title': 'Los controles te siguen a todas las secciones',
+  'music.tutorial.miniplayer.body':
+    'Si salís de /music, la mini-barra de abajo sigue mostrando el track actual con play/pausa, siguiente/anterior y avance de 10 segundos. Click en el título vuelve a la membrana.',
   'music.shortcuts.playPause': 'Reproducir / pausar',
   'music.shortcuts.newPlaylist': 'Nueva playlist',
   'music.shortcuts.focusSearch': 'Buscar en la biblioteca',

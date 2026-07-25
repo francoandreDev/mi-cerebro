@@ -39,7 +39,12 @@
 
   <mc-note-compose [busy]="creating()" (create)="onCreate($event)" />
 
-  <div class="roll" [attr.aria-label]="t('notes.wall.tickerLabel')" role="list">
+  <div
+    class="roll"
+    data-tutorial="notes-wall"
+    [attr.aria-label]="t('notes.wall.tickerLabel')"
+    role="list"
+  >
     @for (note of visible(); track note.id) {
       <mc-note-slip
         role="listitem"

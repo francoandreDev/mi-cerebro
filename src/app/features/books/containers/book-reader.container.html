@@ -43,6 +43,7 @@
       <button
         type="button"
         class="ghost"
+        data-tutorial="books-reader-toc"
         [class.active]="indexOpen()"
         [attr.aria-label]="indexOpen() ? t('books.reader.indexClose') : t('books.reader.indexOpen')"
         [title]="indexOpen() ? t('books.reader.indexClose') : t('books.reader.indexOpen')"
@@ -68,6 +69,7 @@
     @if (chapter(); as ch) {
       <mc-chapter-editor-pane
         class="pane"
+        data-tutorial="books-reader-pane"
         [chapter]="ch"
         [status]="chapterStatus()"
         [editable]="lock.editable()"
@@ -106,7 +108,7 @@
   </div>
 
   @if (!focusMode() && chapter()) {
-    <footer class="nav">
+    <footer class="nav" data-tutorial="books-reader-nav">
       @if (prev(); as p) {
         <button
           type="button"

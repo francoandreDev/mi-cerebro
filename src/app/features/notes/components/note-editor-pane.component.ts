@@ -68,6 +68,7 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
         }
       </div>
       <mc-tag-picker
+        data-tutorial="notes-tag-picker"
         [availableTags]="availableTags()"
         [selectedIds]="note().tags"
         [editable]="editable()"

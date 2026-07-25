@@ -80,7 +80,7 @@
   </p>
 } @else {
   <section class="planta" [attr.aria-label]="t('images.museum.planLabel')">
-    <div class="planta-grid">
+    <div class="planta-grid" data-tutorial="images-plan">
       @for (cell of cells(); track cell.summary.id) {
         <button
           type="button"
