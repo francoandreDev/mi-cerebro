@@ -674,6 +674,8 @@ export const es = {
   'tutorial.nav.actionHint': 'Probalo en la página — avanza solo cuando lo hacés.',
   'tutorial.nav.actionDone': '¡Bien! Avanzando…',
   'tutorial.nav.skipStep': 'Saltar este paso',
+  'tutorial.nav.moreDetail': 'Ver más detalle',
+  'tutorial.nav.lessDetail': 'Ver menos',
   'shortcuts.palette': 'Abrir búsqueda global',
   'shortcuts.treeFilter': 'Foco al filtro del árbol',
   'shortcuts.create': 'Crear nueva entidad (según ruta)',

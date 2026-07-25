@@ -55,6 +55,36 @@
   color: var(--mc-fg-muted);
   line-height: var(--mc-line-base, 1.4);
 }
+.more-detail-toggle {
+  background: none;
+  border: none;
+  padding: 0 0 var(--mc-space-2);
+  color: var(--mc-accent-primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.more-detail-toggle:hover {
+  text-decoration: underline;
+}
+.more-detail-body {
+  margin: 0 0 var(--mc-space-2);
+  padding: var(--mc-space-2);
+  border-radius: var(--mc-radius-sm);
+  background: var(--mc-bg-subtle, rgba(127, 127, 127, 0.08));
+  font-size: 0.8rem;
+  color: var(--mc-fg-muted);
+  line-height: var(--mc-line-base, 1.4);
+}
+.more-detail-title {
+  margin: 0 0 4px;
+  font-weight: 700;
+  color: var(--mc-fg-primary);
+}
+.more-detail-body p {
+  margin: 0;
+}
 .keycap-row {
   display: flex;
   align-items: center;

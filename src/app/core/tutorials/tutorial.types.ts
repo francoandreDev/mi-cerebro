@@ -46,6 +46,21 @@ export interface TutorialStep {
    * created yet (a note, a writing, a book, a gallery).
    */
   readonly skipIfMissing?: boolean;
+  /**
+   * A power-user gesture, keyboard shortcut, or action not required for a
+   * first real use of the page. Absent = `'basico'`. `start(id, 'auto')`
+   * filters these out; `start(id, 'manual')` (the default, used by the
+   * "Guía de la página" button and cross-page flows) runs the full sequence.
+   */
+  readonly tier?: 'basico' | 'avanzado';
+  /**
+   * Optional deeper content on the *same* anchor as this step — for a
+   * gesture that already has its own step but deserves more explanation
+   * (e.g. what each button in a toolbar does) without fragmenting into a
+   * new step or moving the spotlight. Use a new step instead when the
+   * extra content lives on a *different* element.
+   */
+  readonly moreDetail?: { readonly titleKey?: TranslationKey; readonly bodyKey: TranslationKey };
 }
 
 export interface TutorialDefinition {

@@ -67,6 +67,11 @@ export class TutorialOverlayComponent {
   protected readonly actionDone = this.actionDoneSignal.asReadonly();
   private actionListenerCleanup: (() => void) | null = null;
 
+  // why: expanded in-place on the step's own card, not a new step — see
+  //      TutorialStep.moreDetail. Collapses whenever the step changes.
+  private readonly moreDetailOpenSignal = signal(false);
+  protected readonly moreDetailOpen = this.moreDetailOpenSignal.asReadonly();
+
   // why: the real DOM box of what to click/drag — highlighted directly
   //      (outline hugging the actual element) instead of a synthetic marker
   //      floating on top of it, so the user learns to recognize the real
@@ -161,6 +166,7 @@ export class TutorialOverlayComponent {
     effect(() => {
       const s = this.step();
       this.actionDoneSignal.set(false);
+      this.moreDetailOpenSignal.set(false);
       this.teardownAction();
       setTimeout(() => {
         this.measure();
@@ -265,5 +271,9 @@ export class TutorialOverlayComponent {
 
   protected skip(): void {
     this.tutorials.skip();
+  }
+
+  protected toggleMoreDetail(): void {
+    this.moreDetailOpenSignal.update((open) => !open);
   }
 }

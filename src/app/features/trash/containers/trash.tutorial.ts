@@ -25,6 +25,10 @@ export const TRASH_TUTORIAL: TutorialDefinition = {
       anchorSelector: '[data-tutorial="trash-bar"]',
       titleKey: 'trash.tutorial.restore.title',
       bodyKey: 'trash.tutorial.restore.body',
+      // why: validates the tier filter end-to-end (see roadmap-26-tutoriales.md
+      //      item 8.1) — retention detail is a power-user fact, not required
+      //      for a first real use of the page.
+      tier: 'avanzado',
     },
   ],
 };

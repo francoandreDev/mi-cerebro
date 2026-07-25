@@ -60,6 +60,19 @@
       }
       <p class="title">{{ t(s.titleKey) }}</p>
       <p class="body">{{ t(s.bodyKey) }}</p>
+      @if (s.moreDetail; as detail) {
+        <button type="button" class="more-detail-toggle" (click)="toggleMoreDetail()">
+          {{ t(moreDetailOpen() ? 'tutorial.nav.lessDetail' : 'tutorial.nav.moreDetail') }}
+        </button>
+        @if (moreDetailOpen()) {
+          <div class="more-detail-body">
+            @if (detail.titleKey) {
+              <p class="more-detail-title">{{ t(detail.titleKey) }}</p>
+            }
+            <p>{{ t(detail.bodyKey) }}</p>
+          </div>
+        }
+      }
       @if (actionKeys().length) {
         <span class="keycap-row" [class.keycap-row--done]="actionDone()">
           @if (s.action?.icon; as icon) {

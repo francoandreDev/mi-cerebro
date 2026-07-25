@@ -49,11 +49,14 @@ export class TutorialService {
     // why: a page's own auto-start must not steal the overlay from a
     //      cross-page flow that's mid-navigation through that same page.
     if (options?.autoStartIfUnseen && !hasSeenTutorial(definition.id) && !this.activeSignal()) {
-      this.start(definition.id);
+      this.start(definition.id, 'auto');
     }
     return () => {
       this.definitionsSignal.update((list) => list.filter((d) => d !== definition));
-      if (this.activeSignal()?.definition !== definition) return;
+      // why: mode: 'auto' starts a filtered clone of the definition (see
+      //      start()), so comparing by reference always fails here — compare
+      //      by id instead.
+      if (this.activeSignal()?.definition.id !== definition.id) return;
       if (this.practicedAdvancePending) return;
       this.activeSignal.set(null);
     };
@@ -64,10 +67,21 @@ export class TutorialService {
     this.practicedAdvancePending = true;
   }
 
-  start(id: string): void {
+  /**
+   * `mode: 'auto'` (used internally when `autoStartIfUnseen` triggers) runs
+   * only `tier !== 'avanzado'` steps. `mode: 'manual'` (default — the ✨
+   * "Guía de la página" button and cross-page flows) runs the full sequence,
+   * básico + avanzado, in original order.
+   */
+  start(id: string, mode: 'auto' | 'manual' = 'manual'): void {
     const definition = this.definitionsSignal().find((d) => d.id === id);
     if (!definition || definition.steps.length === 0) return;
-    void this.goToStep(definition, 0);
+    const effective: TutorialDefinition =
+      mode === 'auto'
+        ? { ...definition, steps: definition.steps.filter((s) => s.tier !== 'avanzado') }
+        : definition;
+    if (effective.steps.length === 0) return;
+    void this.goToStep(effective, 0);
   }
 
   next(): void {

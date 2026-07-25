@@ -259,36 +259,293 @@ concreto por step.
 - Verificado: `bun run typecheck` limpio, `bun run test` 548/548 verde, `ng lint` sin errores
   nuevos.
 
-**Fase 8 — cuatro huecos frente al estándar de onboarding, propuesta.** _Pendiente, sin empezar._
-Disparado por revisar el diseño actual contra un framework externo de onboarding para plataformas
-complejas (visitas guiadas interactivas, progressive disclosure, checklist inicial, empty states
-educativos, salida siempre disponible, micro-aprendizaje, activadores inteligentes, centro de
-ayuda accesible). De esos 8 puntos, 5 ya están cubiertos (tours con acción real desde la Fase 5,
-salida con Escape/skip desde la Fase 1, activadores inteligentes vía `autoStartIfUnseen`, micro-pasos
-de un gesto por step desde la Fase 6/7, centro de ayuda vía el botón ✨ "Guía de la página").
-Quedan 4 sin cubrir, más un quinto encontrado en la misma conversación (cobertura incompleta):
+**Fase 8 — cuatro huecos frente al estándar de onboarding, diseño cerrado.** _Pendiente de
+ejecución — este bloque es el hand-off completo para el chat que la implemente, no hace falta
+releer la conversación de diseño (2026-07-25) para retomarla._ Disparado por revisar el diseño
+actual contra un framework externo de onboarding para plataformas complejas (visitas guiadas
+interactivas, progressive disclosure, checklist inicial, empty states educativos, salida siempre
+disponible, micro-aprendizaje, activadores inteligentes, centro de ayuda accesible). De esos 8
+puntos, 5 ya están cubiertos (tours con acción real desde la Fase 5, salida con Escape/skip desde
+la Fase 1, activadores inteligentes vía `autoStartIfUnseen`, micro-pasos de un gesto por step
+desde la Fase 6/7, centro de ayuda vía el botón ✨ "Guía de la página"). Quedan 4 puntos,
+investigados con 19 sub-agentes de exploración (uno por sección: las 17 con tutorial + Command
+Palette + Sync) y luego discutidos y decididos en el chat de diseño. Onboarding (`features/onboarding/`,
+el wizard de arranque) y Dev (`features/dev/`, herramienta interna) quedan fuera del conteo de
+cobertura — no ameritan tutorial sobre sí mismos.
 
-1. **Progressive disclosure**: hoy no existe la noción de "usuario que ya domina lo básico" — un
-   tutorial muestra siempre los mismos steps a un usuario en su primera visita y a uno que ya lo
-   completó 20 veces (más allá de `hasSeenTutorial`, que solo decide si auto-arranca, no qué
-   steps mostrar). Requiere decidir qué significa "básico" vs. "avanzado" por sección antes de
-   tocar código — es una decisión de producto, no solo de engine.
-2. **Onboarding checklist**: no existe ningún equivalente a una barra de progreso de 3-4 tareas
-   para el arranque del workspace (ej. "creá tu primera nota", "elegí un tema", "armá tu primer
-   libro"). Haría falta un componente nuevo (persistencia de qué tareas están hechas, dónde vive
-   la barra — candidato natural: la home, cerca de las cards de "Flujos típicos") y una lista
-   corta y explícita de qué 3-4 tareas cuentan.
-3. **Empty states educativos**: sin auditar todavía cuáles de los estados vacíos actuales
-   (galería sin imágenes, tablero sin tareas, papelera vacía, etc.) tienen un CTA real +
-   explicación de cómo generar ese contenido, y cuáles son solo texto pasivo. Primer paso al
-   retomar esta fase: recorrer las páginas y clasificar cada empty state encontrado.
-4. **Cobertura incompleta**: no todas las funcionalidades tienen tutorial hoy. De
-   `src/app/features/`, tres quedan sin `*.tutorial.ts`: **Command Palette** (`features/search/`,
-   Ctrl+K), **Sync** (`features/sync/`) y **Onboarding** (`features/onboarding/`, el propio wizard
-   de arranque — dudoso que necesite un tutorial sobre sí mismo). `Dev` (`features/dev/`) es
-   herramienta interna, no una sección de usuario final — se propone excluirla explícitamente del
-   conteo de cobertura. Falta decidir si Command Palette/Sync entran en esta fase o si abren su
-   propio ítem.
+Redefinición clave surgida en la discusión: "cobertura" no es solo "¿existe `*.tutorial.ts`?" —
+es que **todo lo enseñable de una página quede consultable por tutorial**, aunque no se
+auto-dispare. Progressive disclosure y cobertura exhaustiva son la misma estructura de datos
+vista desde dos ángulos: el tour corto (auto-arranque, solo lo básico) y la referencia completa
+(re-lanzada a demanda, básico + avanzado) usan el mismo `TutorialDefinition`, no dos definiciones
+separadas.
 
-Sin diseño ni código todavía — esta entrada solo fija el alcance para cuando se retome. Ver
-conversación del 2026-07-25 para el framework externo que originó los primeros 3 puntos.
+**Subdividido en 17 ítems (8.1-8.17), pensados para un chat de ejecución por ítem.** Cada uno
+lista su prerequisito explícito — la mayoría de los ítems de contenido por página solo necesitan
+8.1 cerrado antes de poder usar `tier`/`moreDetail`; el resto no depende de nada. No hace falta
+ejecutarlos en orden salvo que un ítem lo pida.
+
+### 8.1 — Engine: `tier`, `moreDetail`, `start(id, mode)` — _Cerrado._
+
+_Prereq: ninguno. Desbloquea: 8.8-8.17 (cualquier ítem que use `tier`/`moreDetail`)._
+
+**Cambios de engine** (`core/tutorials/`):
+
+- **`TutorialStep.tier?: 'basico' | 'avanzado'`** (`tutorial.types.ts`). Ausente = `'basico'`
+  (no hace falta anotar los steps que no cambian). Un step "avanzado" es un gesto de poder,
+  atajo de teclado, o acción no necesaria para el primer uso real de la página — el mismo
+  criterio que ya usó cada uno de los 19 reportes de investigación al clasificar sus steps
+  (ver 8.8-8.15 para el detalle por página).
+- **`TutorialStep.moreDetail?: { titleKey?: TranslationKey; bodyKey: TranslationKey }`**
+  (`tutorial.types.ts`). Contenido opcional, más profundo, sobre el **mismo anchor** del step —
+  para cubrir un gesto que ya tiene step propio pero merece más explicación (ej. qué hace cada
+  botón de la toolbar de tiza) sin fragmentar en steps nuevos ni mover el spotlight.
+  `TutorialOverlayComponent` suma un toggle "Ver más detalle" en la tarjeta que expande
+  `moreDetail.bodyKey` in-place; colapsa de nuevo al cambiar de step. Esto es distinto de un
+  step nuevo: un step nuevo hace falta cuando el gesto vive en **otro elemento** (otro anchor);
+  `moreDetail` alcanza cuando es el mismo elemento con más para decir.
+- **`TutorialService.start(id: string, mode: 'auto' | 'manual' = 'manual')`** (`tutorial.service.ts`).
+  `mode: 'auto'` (llamado internamente desde `register()` cuando `autoStartIfUnseen` dispara)
+  filtra `definition.steps` a solo `tier !== 'avanzado'` antes de arrancar. `mode: 'manual'`
+  (default) corre la secuencia completa, básico + avanzado, en su orden original — es el modo
+  que usa el botón ✨ "Guía de la página" (`page-help-control.component.ts:95`, ya no necesita
+  cambio porque el default cubre el caso) y "Recorrer este flujo" (`home.container.ts:82`, mismo
+  motivo). Implementación: construir un `TutorialDefinition` filtrado (mismo `id`, `steps`
+  recortado) y guardarlo en `activeSignal` — **gotcha real**: el disposer de `register()` hoy
+  compara `this.activeSignal()?.definition !== definition` por referencia (`tutorial.service.ts:56`);
+  con un clon filtrado esa igualdad se rompe siempre. Cambiar la comparación a
+  `activeSignal()?.definition.id !== definition.id` como parte de este mismo cambio.
+- Los 2 tutoriales cross-página (`home-flows.tutorial.ts`) no usan `tier` — se lanzan siempre en
+  modo `'manual'` (completos) porque no tienen auto-arranque (`autoStartIfUnseen: false`).
+
+_Definition of done: `tier`/`moreDetail` existen en `tutorial.types.ts`, `start(id, mode)` filtra
+correctamente, el disposer compara por `id`, y al menos un tutorial existente (elegir uno chico,
+ej. Trash) queda anotado con 1 step `avanzado` de prueba para validar el filtro end-to-end._
+
+**Implementado:** `TutorialStep.tier?: 'basico' | 'avanzado'` y
+`TutorialStep.moreDetail?: { titleKey?; bodyKey }` en `tutorial.types.ts`.
+`TutorialService.start(id, mode: 'auto' | 'manual' = 'manual')`: `'auto'` (llamado desde
+`register()` cuando `autoStartIfUnseen` dispara) construye un clon filtrado
+(`steps.filter(s => s.tier !== 'avanzado')`) y lo pasa a `goToStep`; `'manual'` (default, usado por
+`page-help-control.component.ts:95` y `home.container.ts:82`, ninguno de los dos necesitó cambio)
+corre la secuencia completa. El disposer de `register()` pasó de comparar
+`activeSignal()?.definition !== definition` a `activeSignal()?.definition.id !== definition.id`
+para sobrevivir al clon filtrado. `TutorialOverlayComponent` suma un toggle "Ver más detalle" /
+"Ver menos" (nuevo estado `moreDetailOpenSignal`, colapsa al cambiar de step) que expande
+`moreDetail.bodyKey` (+ `titleKey` opcional) in-place sobre la misma tarjeta, sin mover el
+spotlight — nuevas claves `tutorial.nav.moreDetail`/`tutorial.nav.lessDetail` en `es.ts`. Validado
+end-to-end en `trash.tutorial.ts`: el step `restore` quedó anotado `tier: 'avanzado'`.
+Verificado: `bun run typecheck` limpio, `bun run test` 548/548 verde.
+
+### 8.2 — Bug: Goals steps 5-6 describen un gesto que no existe en `/goals`
+
+_Prereq: ninguno (no depende de `tier`, es un fix de copy/anchor)._
+
+`goals.tutorial.ts` steps 5-6 describen Shift+click multi-selección + drag de **toda la
+constelación**, un gesto que no existe en `/goals` — vive en
+`goal-constellation-editor.component.ts`, ruta `/goals/:id`. `goals-wall.container.ts:174-250`
+confirma que `onStarTap`/`onStarDown` mueven una sola estrella y navegan, no hay `contextmenu`
+handler en la wall. Corregir copy + anchor para describir el gesto real de `/goals`, o mover esos
+dos steps a `route: '/goals/:id'` si el gesto multi-select vale la pena enseñarlo ahí.
+
+### 8.3 — Bug: Music `mini-player` step sin `skipIfMissing`
+
+_Prereq: ninguno._
+
+`music.tutorial.ts`, step `mini-player`: anchor `[data-tutorial="mini-player"]` solo existe con
+un track cargado (`mini-player.container.ts:14`, `@if (player.currentTrack())`) pero el step no
+tiene `skipIfMissing: true` — reproduce el bug de "tarjeta flotando en (0,0)" documentado en la
+Fase 4, para cualquier usuario sin nada sonando. Agregar `skipIfMissing: true`.
+
+### 8.4 — Empty state roto: Calendar wallboard sin bloque `@empty`
+
+_Prereq: ninguno._
+
+`calendar.container.html:128`, wallboard `.cards-col`/`wallGroups()`: no tiene ni bloque `@empty`
+— filtrar a cero no muestra nada, ni siquiera texto. Peor que "pasivo": es invisible. Agregar el
+bloque `@empty` y un CTA "Limpiar filtro".
+
+### 8.5 — Empty state que miente: Notes `/notes/:id` sin nota seleccionada
+
+_Prereq: ninguno._
+
+`notes.container.html:48`: el texto dice "Elegí una nota o creá una nueva" pero no hay ningún
+control que cree una — viola la regla del proyecto de que la UI no debe mentir. Agregar un botón
+real de crear, o cambiar el copy para no prometer una acción que no existe.
+
+### 8.6 — Empty states: resto del pase (Goals, Lists, Writings, Tags, Music, Files)
+
+_Prereq: ninguno. Se puede hacer en un solo chat porque son cambios chicos y del mismo tipo
+(agregar un CTA dentro de un bloque de empty state ya existente), o partirse por página si un
+chat se queda corto de contexto._
+
+Todos pasan de texto pasivo a un CTA real (botón/link accionable dentro del propio bloque del
+empty state, no solo un control adyacente):
+
+- **Goals** (`goals-wall.container.html:220`, `noMatch`): agregar CTA "Limpiar filtro".
+- **Lists** (`lists.container.html:46-49`, detalle sin lista seleccionada; `chalk-entry.component.ts:101`,
+  card de lista vacía): el primero sin botón (solo "Volver"); evaluar agregar acceso directo a
+  crear. El segundo depende del click en la card entera — aceptable, no requiere cambio si el
+  click-through ya funciona (confirmar al ejecutar).
+  Nota: `lists-shelf.container.html:52` (sin listas, sin filtro) y
+  `chalk-layers-panel.component.html:25-27` (sin capas) **ya tienen CTA real** — no tocar.
+- **Writings** (`writings-shelf.container.html:262-264`, `noMatch`): agregar CTA "Limpiar
+  filtros" (el botón existe en otra parte de la página pero no dentro de este bloque).
+- **Tags** (`tags.container.html:23`, `tags.empty`; más `tags.detail.empty`): ambos texto puro,
+  sin explicar que los tags nacen de etiquetar contenido en otras páginas. Agregar esa explicación
+  como mínimo; un link a Notes/Tasks es opcional.
+- **Music** (`playlists-panel.container.html:12-16`, sin playlists): agregar CTA "Crear playlist"
+  — falta pese a ser obvio.
+- **Files** (`files.container.html:38-41` y `file-grid.component.html:21-41`): ambos ya tienen
+  copy que referencia un botón, pero el botón vive en el toolbar exterior, no dentro del bloque
+  del empty state — mover o duplicar el CTA adentro.
+
+**No tocar** (ya son CTA real, o son pasivos correctamente por diseño): Books shelf, Images index/
+room, Sync not-configured, Lists shelf, Goals wall (primer empty), Trash (ambos — un trash vacío
+no debe tener CTA, es correcto que sea pasivo), History (no hay acción de "crear un commit" que
+ofrecer), Settings (no tiene empty states).
+
+### 8.7 — Checklist de onboarding en Home
+
+_Prereq: ninguno._
+
+Ubicación confirmada: `home.container.html`, entre el hero y la sección `.workflows` ("Flujos
+típicos") — como primer beat, no mezclado en la lista de cards. Nuevo componente dumb
+`features/home/components/onboarding-checklist.component.ts` + servicio nuevo
+`core/onboarding/onboarding-checklist.service.ts` + `core/onboarding/onboarding.types.ts` (un
+`core/` nuevo porque `features/home/` no puede importar de `features/notes|goals|...` — regla 10;
+mismo motivo que ya forzó `dashboard.types.ts` a existir). Persistencia de qué se completó:
+patrón try/catch sobre `localStorage`, mismo molde que `dashboard-resurface-storage.ts`.
+
+**4 ítems**, los 4 con señal ya detectable sin inventar estado nuevo salvo uno:
+
+1. **"Creá tu primera nota"** — `NotesService.summaries().length >= 1`.
+2. **"Elegí un tema"** — `SettingsService.state().theme` distinto del default (`override !== 'auto'`
+   o cualquiera de `customBgHue`/`customBgSatLevel`/`customAccentId` definido) — único ítem que
+   necesita leer un signal existente con una condición nueva, no un flag nuevo.
+3. **"Armá tu primer objetivo"** — `GoalsService.summaries().length >= 1`.
+4. **"Recorré un flujo típico"** — gratis: ya lo trackea `hasSeenTutorial()` para
+   `PROJECT_FLOW_TUTORIAL`/`DAILY_FLOW_TUTORIAL` (`core/tutorials/home-flows.tutorial.ts`, ids
+   `'project-flow'`/`'daily-flow'` — confirmar ids exactos al implementar), cero señal nueva.
+
+### 8.8 — Notes: cobertura completa
+
+_Prereq: 8.1 (usa `tier`)._
+
+Steps nuevos a escribir, cada uno con su propio anchor/`data-tutorial` donde no exista todavía:
+sistema de carpetas (crear/renombrar/mover, breadcrumbs), scheduling de nota, toolbar completa
+del editor (`shared/editor/editor-toolbar.component.ts` — bold/italic/headings/blockquote/listas/
+scene-break/highlight/insertar imagen/focus mode — candidato a varios steps, es mucho contenido),
+panel de comentarios/drafts, TTS/bookmarks, banner de lock por edición concurrente (§4.16).
+Marcar básico lo que ya cubre el tutorial actual (crear/abrir/tags/buscar) y avanzado lo nuevo,
+salvo que algún ítem nuevo sea de uso tan inmediato que merezca básico (a criterio de quien
+ejecute). Ver también 8.5 (empty state de esta misma página, mismo archivo de trabajo).
+
+### 8.9 — Tasks: cobertura completa
+
+_Prereq: 8.1._
+
+Steps nuevos: vista patio (`/tasks/patio`, archivo mensual de cosecha), mecánica de riego/
+marchitamiento (`onWater()`, estado `wilted`), el "cómo" del selector de fecha, editor de tarea
+completo (`/tasks/:id` — recordatorios, tags, foco, borrar), drag-and-drop de trasplante por
+mouse (hoy solo se enseña el atajo Shift+→), el gesto de cosecha en sí (solo se enseña el
+resultado/canasta).
+
+### 8.10 — Settings: cobertura completa
+
+_Prereq: 8.1._
+
+9 tabs (general/remoto/versionado/variantes/recordatorios/objetivos/autor/tema/export) — el
+tutorial actual (4 steps) solo enseña la mecánica de navegación genérica, ningún tab explica su
+propio contenido. Un step por tab con `tier: 'avanzado'` salvo General y Tema (uso más
+inmediato, quedan básico).
+
+### 8.11 — Variants: cobertura completa
+
+_Prereq: 8.1._
+
+Steps nuevos: renombrar, color picker, diálogo de confirmación de borrado (con warning de
+cambios sin mergear), pills de parent/milestone/HEAD, pill de ahead/behind, filtro de búsqueda,
+refresh de actividad, popover de leyenda. El único gesto real destructivo (borrar) hoy no tiene
+step — el tutorial actual solo llega hasta merge; priorizar ese step.
+
+### 8.12 — Files: cobertura moderada
+
+_Prereq: 8.1._
+
+Steps nuevos: gestión de subcarpetas, drag-and-drop de subida/reorden, renombrar ítem, editar/
+borrar título de colección, el gesto real de agregar/quitar tags (el step existe pero sin
+`action`, nunca demuestra el gesto — completar con `action` en vez de crear un step nuevo).
+
+### 8.13 — Tags: split del step `rowActions`
+
+_Prereq: 8.1._
+
+El step `rowActions` empaqueta 4 gestos (recolor/rename/merge/eliminar) en un solo step — viola
+la propia regla de "un gesto por step" (§4.6.15b). Separar en steps propios: recolor/rename como
+básico, merge/eliminar como avanzado. Nota aparte: merge no tiene diálogo de confirmación pese a
+ser irreversible — bug de UX real; si se corrige acá, documentarlo como tal en el commit (no es
+parte del framework de onboarding, es un hallazgo colateral más).
+
+### 8.14 — Lists: `moreDetail` para la barra de tiza
+
+_Prereq: 8.1 (usa `moreDetail`)._
+
+El step `tools` (chalk) nombra paleta/grosores/deshacer/capas/exportar todo junto — en vez de
+fragmentarlo en steps nuevos (todos viven en el mismo control, la barra de tiza), usar
+`moreDetail` para el detalle expandible de cada herramienta sobre el mismo anchor.
+
+### 8.15 — Dashboard + Music: ajustes menores
+
+_Prereq: 8.1 (si se anota `tier`; el contenido en sí no depende de nada)._
+
+- **Dashboard**: falta mencionar el toggle de modo related/random del resurface en
+  `dashboard.tutorial.resurface.body`.
+- **Music**: `playlist-editor` no tiene step propio — agregar uno.
+
+### 8.16 — Command Palette: tutorial nuevo + capacidad de engine "anclar dentro de overlay"
+
+_Prereq: 8.1. Recomendado ejecutar después de tener 2-3 páginas ya migradas a `tier` (8.8-8.12),
+para no ser el primer tutorial que valide el engine nuevo en simultáneo con contenido nuevo._
+
+No tiene `*.tutorial.ts`. Problema estructural: su contenido solo existe montado
+condicionalmente (`@if (open())`) — no hay precedente en el código de "una acción abre un overlay
+→ el siguiente step ancla adentro de ese overlay recién montado". Abrir desde el botón
+persistente `.search-btn` en `workspace-sidebar.container.html:176-183` (siempre en el DOM, a
+diferencia del propio diálogo) con `action: { event: 'click' }` o `keydown Ctrl+K`, después
+anclar steps con `skipIfMissing: true` sobre el input/resultados ya montados. Contenido: búsqueda
+libre + navegación por teclado + lista de recientes (básico), sintaxis `tag:<label>` (avanzado —
+hoy solo se enseña con un hint estático, `command-palette.container.html:128`). Dos empty states
+encontrados en esta página, ambos texto pasivo — evaluar si entran en el mismo commit o se suman
+a 8.6.
+
+### 8.17 — Sync: tutorial nuevo + gating por `isConfigured()`
+
+_Prereq: 8.1 y, idealmente, 8.16 (comparten el patrón de engine "overlay/contenido condicional",
+mejor no ser los dos primeros en validarlo a la vez)._
+
+No tiene `*.tutorial.ts`. Problema más agudo que Command Palette: **todo** `.layout` (los 5
+anchors candidatos: consola de estado, push, fetch, auto-push/throttle, timestamp) vive detrás de
+`@if (isConfigured())`, así que un usuario sin configurar no puede ver el tutorial en absoluto,
+no solo un step. Registrar el tutorial condicionado a `isConfigured()`, con un step 0 sobre
+`.not-configured` (`sync.container.html:7-18`) que linkea a `/settings` (ya tiene CTA real, no
+necesita fix). Contenido básico: push, fetch, lectura de la consola de estado. Avanzado:
+resolución de divergencia/merge, toggle de auto-push, tuning de throttle. Excluido del checklist
+de onboarding (8.7) — depende de un PAT externo de GitHub, no es acción de día uno.
+
+### Páginas sin ítem propio en esta fase
+
+Books, Images, Calendar (fuera del fix puntual de 8.4), Reminders, History, Writings, Trash: el
+audit de los 19 agentes no encontró en ellas un gap grande o moderado — quedan con su cobertura
+actual. Nota igual: ningún tutorial de la app cubre el 100% literal de su página (ninguno de los
+19 reportes encontró una sección "completa" en sentido estricto); estas 7 quedan fuera del scope
+inicial porque el gap restante es marginal comparado con los ítems de arriba, no porque estén
+terminadas. Abren su propio ítem si al cerrar 8.1-8.17 queda apetito de seguir.
+
+### Orden sugerido (no estricto)
+
+8.1 primero (desbloquea el resto). 8.2-8.6 (bugs + empty states) y 8.7 (checklist) no dependen de
+nada, se pueden intercalar en cualquier momento, incluso en paralelo a 8.1 si se prefiere no
+bloquear. 8.8-8.15 (contenido por página) en el orden de impacto ya reflejado en su numeración
+(Notes → Tasks → Settings → Variants → Files → Tags → Lists → Dashboard/Music). 8.16-8.17
+(Command Palette, Sync) al final, por la capacidad de engine nueva que ejercitan.
