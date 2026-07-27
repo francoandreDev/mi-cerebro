@@ -11,6 +11,7 @@ import type { TutorialDefinition } from '@core/tutorials/tutorial.types';
 //      nota, no acá.
 export const NOTES_TUTORIAL: TutorialDefinition = {
   id: 'notes',
+  pageId: 'notes',
   steps: [
     {
       anchorSelector: '[data-tutorial="notes-compose"]',

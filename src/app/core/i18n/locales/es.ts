@@ -618,7 +618,8 @@ export const es = {
 
   'tags.placeholder': 'Agregar etiqueta...',
   'tags.createPrefix': 'Crear',
-  'tags.empty': 'Sin etiquetas.',
+  'tags.empty':
+    'Sin etiquetas todavía. Se crean desde cualquier entidad — notas, tareas, metas, etc. — no desde acá.',
 
   'tags.page.title': 'Etiquetas',
   'tags.tutorial.origin.body':
@@ -642,7 +643,8 @@ export const es = {
 
   'tags.detail.back': 'Volver a etiquetas',
   'tags.detail.notFound': 'Esta etiqueta ya no existe.',
-  'tags.detail.empty': 'Nada tiene esta etiqueta todavía.',
+  'tags.detail.empty':
+    'Nada tiene esta etiqueta todavía. Etiquetá una nota, tarea u otra entidad para que aparezca acá.',
 
   'palette.label': 'Búsqueda global',
   'palette.openButton': 'Abrir búsqueda global',
@@ -868,12 +870,12 @@ export const es = {
   'goals.tutorial.mark.title': 'Click marca un paso como hecho',
   'goals.tutorial.mark.body':
     'Cada estrella de la constelación es un paso de la meta. Click la marca hecha o pendiente — no hace falta entrar al editor para eso.',
-  'goals.tutorial.select.title': 'Shift+click selecciona varias a la vez',
-  'goals.tutorial.select.body':
-    'Mantené Shift y hacé click en varias estrellas para elegir un grupo — sirve para moverlas o borrarlas juntas. Click derecho sobre cualquiera abre el menú (renombrar, marcar, quitar).',
-  'goals.tutorial.move.title': 'Arrastrá para mover la constelación entera',
+  'goals.tutorial.openDetail.title': 'Shift+click abre la meta entera',
+  'goals.tutorial.openDetail.body':
+    'Shift+click en cualquier estrella te lleva directo al editor de esa meta, con todos sus pasos — un atajo para saltear el peek rápido y entrar de una al detalle.',
+  'goals.tutorial.move.title': 'Arrastrá una estrella para mover toda su meta',
   'goals.tutorial.move.body':
-    'Un drag desde cualquier estrella mueve el grupo completo por el cielo — la posición se guarda sola. Los pasos siguen la meta a la que pertenecen.',
+    'Un drag desde cualquier estrella mueve la constelación completa de esa meta por el cielo — la posición se guarda sola. Sus pasos se reacomodan juntos, pegados entre sí.',
   'goals.editor.selectionToolbarAria': 'Acciones por lote sobre pasos seleccionados',
   'goals.editor.selectionCount': '{n} seleccionados',
   'goals.editor.selectionToggleDone': 'Marcar/desmarcar',
@@ -962,6 +964,7 @@ export const es = {
   'lists.status.saving': 'Guardando...',
   'lists.status.unsaved': 'Sin guardar',
   'lists.selectOne': 'Elegí una lista o creá una nueva.',
+  'lists.createNew': 'Crear lista nueva',
   'lists.backToIndex': 'Volver a listas',
   'lists.lock.foreign.title': 'Esta lista está abierta en otra pestaña',
   'lists.lock.foreign.message':
@@ -1644,6 +1647,8 @@ export const es = {
   'calendar.filters.kind': 'Tipo',
   'calendar.filters.tag': 'Tag',
   'calendar.filters.clear': 'Limpiar tags',
+  'calendar.wallboard.empty': 'Ningún evento visible con los filtros actuales.',
+  'calendar.wallboard.clearFilter': 'Limpiar filtros',
   'calendar.kind.task': 'Tareas',
   'calendar.kind.goal': 'Metas',
   'calendar.day.heading': 'Día {date}',
@@ -2206,6 +2211,17 @@ export const es = {
   'home.intro':
     'Tu segundo cerebro local. Cada sección tiene su propia metáfora visual — un jardín, un palomar, un muro de stickies, una estantería, un museo — pensada para que entiendas qué pasa con sólo mirar. Acá abajo, qué ves y cómo encadenar piezas.',
   'home.resume.button': 'Continuar donde quedaste ({route})',
+  'home.onboarding.title': 'Primeros pasos',
+  'home.onboarding.progress': '{done} de {total} listos',
+  'home.onboarding.dismiss': 'Ocultar',
+  'home.onboarding.note.title': 'Creá tu primera nota',
+  'home.onboarding.note.description': 'Todo empieza con una idea capturada en algún lado.',
+  'home.onboarding.theme.title': 'Elegí un tema',
+  'home.onboarding.theme.description': 'Personalizá colores y fondo desde Configuración.',
+  'home.onboarding.goal.title': 'Armá tu primer objetivo',
+  'home.onboarding.goal.description': 'Definí hacia dónde vas, aunque sea chico.',
+  'home.onboarding.flow.title': 'Recorré un flujo típico',
+  'home.onboarding.flow.description': 'Un tutorial guiado te muestra cómo encadenar piezas.',
   'home.workflows.start': 'Recorrer este flujo',
   'home.workflows.title': 'Flujos típicos',
   'home.workflows.subtitle':

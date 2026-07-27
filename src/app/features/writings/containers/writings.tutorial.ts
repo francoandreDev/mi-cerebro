@@ -8,6 +8,7 @@ import type { TutorialDefinition } from '@core/tutorials/tutorial.types';
 //      que exista un escrito), así que esos steps quedan sin `action`.
 export const WRITINGS_TUTORIAL: TutorialDefinition = {
   id: 'writings',
+  pageId: 'writings',
   steps: [
     {
       anchorSelector: '[data-tutorial="writings-new"]',

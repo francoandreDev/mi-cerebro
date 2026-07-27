@@ -440,8 +440,15 @@
   filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.22));
 }
 .shelf-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--mc-space-3);
   margin: 0;
   color: var(--mc-fg-muted);
   text-align: center;
   padding: var(--mc-space-5);
+}
+.shelf-empty p {
+  margin: 0;
 }

@@ -9,7 +9,7 @@ import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { EntityLockController } from '@core/locks/entity-lock.controller';
-import { extractEntityId } from '@core/routing/entity-slug';
+import { entitySlugSegment, extractEntityId } from '@core/routing/entity-slug';
 import { TagsService } from '@core/tags/tags.service';
 import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
 import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
@@ -45,6 +45,7 @@ export class ListsContainer {
   protected readonly status = signal<SaveStatus>('saved');
   protected readonly lock = new EntityLockController(LIST_KIND, this.active);
   protected readonly confirm = new ConfirmController();
+  protected readonly creating = signal(false);
 
   constructor() {
     registerListsTutorial();
@@ -67,6 +68,20 @@ export class ListsContainer {
 
   protected async onBackToIndex(): Promise<void> {
     await this.router.navigate(['/lists']);
+  }
+
+  protected async onCreateNew(): Promise<void> {
+    if (this.creating()) return;
+    this.creating.set(true);
+    try {
+      await this.workspace.ensureWritable();
+      const list = await this.listsService.create();
+      await this.router.navigate(['/lists', entitySlugSegment(list.title, list.id)]);
+    } catch (e) {
+      this.errors.report(this.withReauthIfNeeded(e));
+    } finally {
+      this.creating.set(false);
+    }
   }
 
   protected onTitleChange(title: string): void {

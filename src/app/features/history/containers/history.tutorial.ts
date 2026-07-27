@@ -8,6 +8,7 @@ import type { TutorialDefinition } from '@core/tutorials/tutorial.types';
 //      leyenda no puede: CÓMO se navega entre ellos.
 export const HISTORY_TUTORIAL: TutorialDefinition = {
   id: 'history',
+  pageId: 'history',
   steps: [
     {
       anchorSelector: '[data-tutorial="history-zoom"]',

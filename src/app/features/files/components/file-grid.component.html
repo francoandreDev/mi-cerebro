@@ -37,6 +37,10 @@
       <p>{{ t('files.items.empty') }}</p>
       @if (editable()) {
         <span class="empty-hint">{{ t('files.items.dropHint') }}</span>
+        <button type="button" class="primary mc-hover-grow" (click)="onPick()">
+          <mc-icon name="plus" />
+          <span>{{ t('files.items.add') }}</span>
+        </button>
       }
     </div>
   } @else {

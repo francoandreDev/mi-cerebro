@@ -10,6 +10,7 @@ import type { TutorialDefinition } from '@core/tutorials/tutorial.types';
 //      step queda sin `action`.
 export const CALENDAR_TUTORIAL: TutorialDefinition = {
   id: 'calendar',
+  pageId: 'calendar',
   steps: [
     {
       anchorSelector: '[data-tutorial="calendar-views"]',

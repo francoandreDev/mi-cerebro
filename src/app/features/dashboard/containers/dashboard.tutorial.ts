@@ -11,6 +11,7 @@ import type { TutorialDefinition } from '@core/tutorials/tutorial.types';
 //      salvo click-through y el shuffle/dismiss del último.
 export const DASHBOARD_TUTORIAL: TutorialDefinition = {
   id: 'dashboard',
+  pageId: 'dashboard',
   steps: [
     {
       anchorSelector: '[data-tutorial="dashboard-grid"]',

@@ -9,6 +9,7 @@ import type { TutorialDefinition } from '@core/tutorials/tutorial.types';
 //      los 3 steps reusan ese anchor.
 export const TRASH_TUTORIAL: TutorialDefinition = {
   id: 'trash',
+  pageId: 'trash',
   steps: [
     {
       anchorSelector: '[data-tutorial="trash-bar"]',

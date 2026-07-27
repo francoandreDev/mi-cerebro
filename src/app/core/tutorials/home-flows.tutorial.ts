@@ -9,6 +9,10 @@ import type { TutorialDefinition } from './tutorial.types';
 //      esa página (cero anchors nuevos). Ver roadmap-26-tutoriales.md.
 export const PROJECT_FLOW_TUTORIAL: TutorialDefinition = {
   id: 'flow-project',
+  // why: cross-page flows never appear in a per-page picker (only Home's
+  //      "Recorrer este flujo" button starts them) — pageId === id keeps
+  //      them out of every real page's tutorialsForPage() group.
+  pageId: 'flow-project',
   steps: [
     {
       route: '/goals',
@@ -39,6 +43,7 @@ export const PROJECT_FLOW_TUTORIAL: TutorialDefinition = {
 
 export const DAILY_FLOW_TUTORIAL: TutorialDefinition = {
   id: 'flow-daily',
+  pageId: 'flow-daily',
   steps: [
     {
       route: '/calendar',

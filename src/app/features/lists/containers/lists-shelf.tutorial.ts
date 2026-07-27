@@ -9,6 +9,7 @@ import type { TutorialDefinition } from '@core/tutorials/tutorial.types';
 //      cuál esté vivo. Copy dedicado, no reciclado de home-content.ts.
 export const LISTS_SHELF_TUTORIAL: TutorialDefinition = {
   id: 'lists',
+  pageId: 'lists',
   steps: [
     {
       anchorSelector: '[data-tutorial="lists-shelf-new"]',

@@ -46,6 +46,10 @@
     <div class="empty">
       <mc-icon name="note" class="empty-icon mc-anim-float" />
       <p>{{ t('notes.selectOne') }}</p>
+      <button type="button" class="create" [disabled]="creating()" (click)="onCreateNote()">
+        <mc-icon name="plus" />
+        <span>{{ t('notes.new') }}</span>
+      </button>
     </div>
   }
 </div>

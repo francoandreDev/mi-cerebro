@@ -119,6 +119,34 @@
   overflow-y: auto;
   padding-right: var(--mc-space-1);
 }
+.wallboard-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--mc-space-2);
+  padding: var(--mc-space-4) var(--mc-space-2);
+  color: var(--mc-fg-muted);
+  font-size: var(--mc-font-size-sm);
+}
+.wallboard-empty p {
+  margin: 0;
+}
+.wallboard-empty .clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: 1px solid var(--mc-border-default);
+  border-radius: var(--mc-radius-sm);
+  color: var(--mc-fg-secondary);
+  cursor: pointer;
+  font-size: var(--mc-font-size-sm);
+  padding: 4px 8px;
+}
+.wallboard-empty .clear:focus-visible {
+  outline: 2px solid var(--mc-focus-ring, var(--mc-accent-primary));
+  outline-offset: 2px;
+}
 @media (max-width: 900px) {
   .wall {
     grid-template-columns: 1fr;

@@ -8,6 +8,7 @@ import type { TutorialDefinition } from '@core/tutorials/tutorial.types';
 //      ya se haya subido algo — así que quedan sin `action`.
 export const FILES_TUTORIAL: TutorialDefinition = {
   id: 'files',
+  pageId: 'files',
   steps: [
     {
       anchorSelector: '[data-tutorial="files-new"]',

@@ -45,9 +45,10 @@
   margin: 0;
   padding: var(--mc-space-2);
   font-size: var(--mc-font-size-sm);
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--mc-space-2);
 }
 .empty-icon {
   color: var(--mc-accent-primary);

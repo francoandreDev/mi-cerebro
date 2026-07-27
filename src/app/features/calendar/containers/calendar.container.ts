@@ -154,7 +154,8 @@ export class CalendarContainer {
   protected readonly wallGroups = computed<readonly WallGroup[]>(() => {
     const prefix = this.periodPrefix();
     const inPeriod = this.tagFilteredEvents().filter((e) => e.date.startsWith(prefix));
-    return ALL_CALENDAR_KINDS.map((kind) => ({
+    const kinds = this.kindFilter();
+    return ALL_CALENDAR_KINDS.filter((kind) => kinds.has(kind)).map((kind) => ({
       kind,
       events: inPeriod.filter((e) => e.kind === kind),
     }));
@@ -306,6 +307,15 @@ export class CalendarContainer {
 
   protected onClearTags(): void {
     this.tagFilter.set(new Set());
+  }
+
+  // why: the only recovery path once every kind gets toggled off (their
+  //      cards, toggle button included, vanish from wallGroups() — see
+  //      roadmap §8.4) — resets both filters instead of just tags so the
+  //      wallboard is never a dead end.
+  protected onResetWallFilters(): void {
+    this.tagFilter.set(new Set());
+    this.kindFilter.set(new Set(ALL_CALENDAR_KINDS));
   }
 
   protected onCreateForKind(kind: CalendarEventKind): void {

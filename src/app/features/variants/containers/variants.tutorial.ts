@@ -8,6 +8,7 @@ import type { TutorialDefinition } from '@core/tutorials/tutorial.types';
 //      anchor propio) — quedan sin `action`, describen el gesto real.
 export const VARIANTS_TUTORIAL: TutorialDefinition = {
   id: 'variants',
+  pageId: 'variants',
   steps: [
     {
       anchorSelector: '[data-tutorial="variants-create"]',

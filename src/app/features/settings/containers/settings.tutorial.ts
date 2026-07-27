@@ -9,6 +9,7 @@ import type { TutorialDefinition } from '@core/tutorials/tutorial.types';
 //      de "lo hiciste" distinta de simplemente estar en la página.
 export const SETTINGS_TUTORIAL: TutorialDefinition = {
   id: 'settings',
+  pageId: 'settings',
   steps: [
     {
       anchorSelector: '[data-tutorial="settings-rail-icon"]',

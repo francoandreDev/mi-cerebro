@@ -10,13 +10,17 @@ import {
 import type { HomeCard, HomeGroup, HomeWorkflow } from '@core/home-content/home-content';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import { OnboardingChecklistService } from '@core/onboarding/onboarding-checklist.service';
+import type { OnboardingStep } from '@core/onboarding/onboarding.types';
 import { TutorialService } from '@core/tutorials/tutorial.service';
 import { IconComponent } from '@shared/icon/icon.component';
+
+import { OnboardingChecklistComponent } from '../components/onboarding-checklist.component';
 
 @Component({
   selector: 'mc-home',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent],
+  imports: [IconComponent, OnboardingChecklistComponent],
   templateUrl: './home.container.html',
   styleUrl: './home.container.css',
 })
@@ -24,6 +28,7 @@ export class HomeContainer {
   private readonly i18n = inject(I18nService);
   private readonly continuity = inject(ContinuityService);
   private readonly router = inject(Router);
+  protected readonly onboarding = inject(OnboardingChecklistService);
 
   protected readonly groups: readonly HomeGroup[] = HOME_GROUPS;
   protected readonly workflowsToday: readonly HomeWorkflow[] = HOME_WORKFLOWS_TODAY;
@@ -52,6 +57,10 @@ export class HomeContainer {
   protected resume(): void {
     const route = this.resumeRoute();
     if (route) void this.router.navigateByUrl(route);
+  }
+
+  protected onOnboardingItemClick(item: OnboardingStep): void {
+    void this.router.navigateByUrl(item.route);
   }
 
   // why: capture/writing already play out entirely inside one page, so

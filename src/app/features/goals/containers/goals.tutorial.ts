@@ -9,10 +9,20 @@ import type { TutorialDefinition } from '@core/tutorials/tutorial.types';
 //      goals.editor.starOpenHint ya resume los gestos en una línea dentro
 //      del editor de una meta puntual (/goals/:id), pero el wall (/goals)
 //      —donde primero se topan— no repite ni ese resumen. Los pasos 4-6
-//      cubren la secuencia completa (marcar, seleccionar, menú, mover),
-//      no solo el significado de un símbolo.
+//      cubren la secuencia completa (marcar, abrir el detalle, mover), todos
+//      gestos reales de la wall — no del editor de una meta puntual. Fix
+//      2026-07-25 (roadmap §8.2): el paso "select" original describía
+//      shift+click multi-selección + menú click-derecho, un gesto que solo
+//      existe en goal-constellation-editor.component.ts (/goals/:id) — en
+//      la wall, shift+click navega directo a esa ruta (ver
+//      goals-wall.container.ts onStarTap) y no hay contextmenu handler.
+//      "move" sí describe un gesto real de la wall (confirmado en
+//      goals-wall.container.ts: dragCenter/wallCenter mueven la
+//      constelación completa de una meta, no una sola estrella), así que
+//      solo se corrigió "select" — no hacía falta mover nada a otra ruta.
 export const GOALS_TUTORIAL: TutorialDefinition = {
   id: 'goals',
+  pageId: 'goals',
   steps: [
     {
       anchorSelector: '[data-tutorial="goals-create"]',
@@ -40,8 +50,8 @@ export const GOALS_TUTORIAL: TutorialDefinition = {
     },
     {
       anchorSelector: '[data-tutorial="goals-sky"]',
-      titleKey: 'goals.tutorial.select.title',
-      bodyKey: 'goals.tutorial.select.body',
+      titleKey: 'goals.tutorial.openDetail.title',
+      bodyKey: 'goals.tutorial.openDetail.body',
       placement: 'bottom',
     },
     {

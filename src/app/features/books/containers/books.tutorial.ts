@@ -12,6 +12,7 @@ import type { TutorialDefinition } from '@core/tutorials/tutorial.types';
 //      y practicable con su atajo.
 export const BOOKS_TUTORIAL: TutorialDefinition = {
   id: 'books',
+  pageId: 'books',
   steps: [
     {
       anchorSelector: '[data-tutorial="books-shelf"]',

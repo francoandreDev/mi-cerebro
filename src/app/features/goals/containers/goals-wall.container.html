@@ -217,7 +217,13 @@
         }
       </div>
       @if (hasFilter() && allDim()) {
-        <p class="sky-empty">{{ t('goals.wall.noMatch') }}</p>
+        <div class="sky-empty">
+          <p>{{ t('goals.wall.noMatch') }}</p>
+          <button type="button" class="clear mc-hover-wiggle" (click)="onClearFilters()">
+            <mc-icon name="x" />
+            <span>{{ t('goals.wall.filtersClear') }}</span>
+          </button>
+        </div>
       }
     </div>
   }

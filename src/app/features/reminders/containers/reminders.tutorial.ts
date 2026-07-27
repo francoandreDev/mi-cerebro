@@ -8,6 +8,7 @@ import type { TutorialDefinition } from '@core/tutorials/tutorial.types';
 //      repisa) es pasivo/temporal, así que ese step queda sin `action`.
 export const REMINDERS_TUTORIAL: TutorialDefinition = {
   id: 'reminders',
+  pageId: 'reminders',
   steps: [
     {
       anchorSelector: '[data-tutorial="reminders-quick-add"]',

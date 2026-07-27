@@ -11,6 +11,7 @@ import type { TutorialDefinition } from '@core/tutorials/tutorial.types';
 //      puede no existir todavía.
 export const TAGS_TUTORIAL: TutorialDefinition = {
   id: 'tags',
+  pageId: 'tags',
   steps: [
     {
       anchorSelector: '[data-tutorial="tags-header"]',

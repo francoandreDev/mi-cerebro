@@ -10,10 +10,14 @@
 </header>
 
 @if (summaries().length === 0) {
-  <p class="empty">
+  <div class="empty">
     <mc-icon name="star" class="empty-icon mc-anim-float" />
     <span>{{ t('music.modal.playlists.empty') }}</span>
-  </p>
+    <button type="button" class="primary mc-hover-grow" (click)="onCreate()">
+      <mc-icon name="plus" />
+      <span>{{ t('music.newPlaylist') }}</span>
+    </button>
+  </div>
 } @else {
   <ul class="pl-list">
     @for (p of summaries(); track p.id) {

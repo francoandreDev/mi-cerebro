@@ -64,8 +64,21 @@ export interface TutorialStep {
 }
 
 export interface TutorialDefinition {
-  /** Page id — matches the route slug this tutorial belongs to (see routePageId). */
+  /** Unique key for this flow — used for start(id) and seen-tracking. */
   readonly id: string;
+  /**
+   * Groups definitions for the page-help picker — matches the route slug
+   * (see routePageId). Distinct from `id` because a page can register
+   * several flows (one per tab, one cross-tab, etc.); most pages today
+   * still have exactly one definition, where `pageId === id`.
+   */
+  readonly pageId: string;
+  /**
+   * Short name shown in the picker when a page has more than one
+   * definition. Unused (and safe to omit) when `pageId` has a single
+   * registered definition — the ✨ button starts it directly, no picker.
+   */
+  readonly labelKey?: TranslationKey;
   readonly steps: readonly TutorialStep[];
 }
 

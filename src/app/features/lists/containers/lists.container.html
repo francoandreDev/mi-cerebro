@@ -46,6 +46,10 @@
     <div class="empty">
       <mc-icon name="list-bullets" class="empty-icon mc-anim-float" />
       <p>{{ t('lists.selectOne') }}</p>
+      <button type="button" class="create" [disabled]="creating()" (click)="onCreateNew()">
+        <mc-icon name="plus" />
+        <span>{{ t('lists.createNew') }}</span>
+      </button>
     </div>
   }
 </div>

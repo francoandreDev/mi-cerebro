@@ -10,6 +10,7 @@ import type { TutorialDefinition } from '@core/tutorials/tutorial.types';
 //      hay nada sonando todavía.
 export const MUSIC_TUTORIAL: TutorialDefinition = {
   id: 'music',
+  pageId: 'music',
   steps: [
     {
       anchorSelector: '[data-tutorial="music-upload"]',
@@ -39,6 +40,7 @@ export const MUSIC_TUTORIAL: TutorialDefinition = {
       anchorSelector: '[data-tutorial="mini-player"]',
       titleKey: 'music.tutorial.miniplayer.title',
       bodyKey: 'music.tutorial.miniplayer.body',
+      skipIfMissing: true,
     },
   ],
 };

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, startWith } from 'rxjs';
@@ -9,6 +9,8 @@ import { KeyboardHelpService } from '@core/shortcuts/keyboard-help.service';
 import { TutorialService } from '@core/tutorials/tutorial.service';
 import { IconComponent } from '@shared/icon/icon.component';
 
+import { TutorialPickerMenuComponent } from './tutorial-picker-menu.component';
+
 // why: single fixed entry point for "guía de la página" + "atajos de la
 //      página", mounted once in the shell — replaces the old situation
 //      where '?' was the only way in, with zero visible affordance
@@ -16,8 +18,15 @@ import { IconComponent } from '@shared/icon/icon.component';
 @Component({
   selector: 'mc-page-help-control',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent],
+  imports: [IconComponent, TutorialPickerMenuComponent],
   template: `
+    @if (pickerOpen()) {
+      <mc-tutorial-picker-menu
+        [flows]="pageFlows()"
+        (pick)="startFlow($event)"
+        (dismiss)="pickerOpen.set(false)"
+      />
+    }
     <div class="wrap">
       @if (canGuide()) {
         <button
@@ -85,14 +94,28 @@ export class PageHelpControlComponent {
     { initialValue: routePageId(this.router.url) },
   );
 
-  protected readonly canGuide = computed(() => {
+  protected readonly pageFlows = computed(() => {
     const id = this.currentPageId();
-    return id !== null && this.tutorials.hasTutorialFor(id);
+    return id ? this.tutorials.tutorialsForPage(id) : [];
   });
 
+  protected readonly canGuide = computed(() => this.pageFlows().length > 0);
+
+  protected readonly pickerOpen = signal(false);
+
   protected openGuide(): void {
-    const id = this.currentPageId();
-    if (id) this.tutorials.start(id);
+    const flows = this.pageFlows();
+    const only = flows.length === 1 ? flows[0] : undefined;
+    if (only) {
+      this.tutorials.start(only.id);
+      return;
+    }
+    if (flows.length > 1) this.pickerOpen.set(true);
+  }
+
+  protected startFlow(id: string): void {
+    this.pickerOpen.set(false);
+    this.tutorials.start(id);
   }
 
   protected openShortcuts(): void {

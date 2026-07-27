@@ -38,6 +38,10 @@
     @if (visibleCollections().length === 0) {
       <div class="wall-empty">
         <p>{{ t('files.wall.empty') }}</p>
+        <button type="button" class="primary mc-hover-grow" (click)="onCreateCollection()">
+          <mc-icon name="plus" />
+          <span>{{ t('files.wall.newCollection') }}</span>
+        </button>
       </div>
     } @else {
       <ul class="wall-grid">

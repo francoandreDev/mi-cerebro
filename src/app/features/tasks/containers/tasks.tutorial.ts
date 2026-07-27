@@ -8,6 +8,7 @@ import type { TutorialDefinition } from '@core/tutorials/tutorial.types';
 //      ruta), así que ese step queda sin `action`.
 export const TASKS_TUTORIAL: TutorialDefinition = {
   id: 'tasks',
+  pageId: 'tasks',
   steps: [
     {
       anchorSelector: '[data-tutorial="tasks-compose"]',

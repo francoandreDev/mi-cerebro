@@ -9,6 +9,7 @@ import type { TutorialDefinition } from '@core/tutorials/tutorial.types';
 //      que ancla ambos pasos aunque el usuario todavía no haya tocado nada.
 export const LISTS_TUTORIAL: TutorialDefinition = {
   id: 'lists',
+  pageId: 'lists',
   steps: [
     {
       anchorSelector: '[data-tutorial="lists-chalk-bar"]',

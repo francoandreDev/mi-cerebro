@@ -193,8 +193,10 @@
 
 .wall-empty {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: var(--mc-space-3);
   min-height: 240px;
   color: rgba(255, 255, 255, 0.85);
   text-align: center;

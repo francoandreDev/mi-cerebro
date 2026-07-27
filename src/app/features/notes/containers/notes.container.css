@@ -26,6 +26,28 @@
   color: var(--mc-accent-primary);
   opacity: 0.55;
 }
+.create {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: var(--mc-space-2);
+  padding: 8px 16px;
+  border: 0;
+  border-radius: var(--mc-radius-sm);
+  background: var(--mc-accent-primary);
+  color: var(--mc-accent-on-primary, #fff);
+  font-size: var(--mc-font-size-sm);
+  cursor: pointer;
+}
+.create:hover,
+.create:focus-visible {
+  filter: brightness(1.08);
+  outline: none;
+}
+.create:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
 .topbar {
   display: flex;
   align-items: center;

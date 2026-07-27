@@ -9,7 +9,7 @@ import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { EntityLockController } from '@core/locks/entity-lock.controller';
-import { extractEntityId } from '@core/routing/entity-slug';
+import { entitySlugSegment, extractEntityId } from '@core/routing/entity-slug';
 import { TagsService } from '@core/tags/tags.service';
 import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
 import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
@@ -41,6 +41,7 @@ export class NotesContainer {
   protected readonly tags = this.tagsService.tags;
   protected readonly active = signal<Note | null>(null);
   protected readonly status = signal<SaveStatus>('saved');
+  protected readonly creating = signal(false);
   protected readonly lock = new EntityLockController(NOTE_KIND, this.active);
   protected readonly confirm = new ConfirmController();
 
@@ -64,6 +65,20 @@ export class NotesContainer {
 
   protected async onBackToIndex(): Promise<void> {
     await this.router.navigate(['/notes']);
+  }
+
+  protected async onCreateNote(): Promise<void> {
+    if (this.creating()) return;
+    this.creating.set(true);
+    try {
+      await this.workspace.ensureWritable();
+      const note = await this.notesService.create();
+      await this.router.navigate(['/notes', entitySlugSegment(note.title, note.id)]);
+    } catch (e) {
+      this.errors.report(this.withReauthIfNeeded(e));
+    } finally {
+      this.creating.set(false);
+    }
   }
 
   protected onTitleChange(title: string): void {

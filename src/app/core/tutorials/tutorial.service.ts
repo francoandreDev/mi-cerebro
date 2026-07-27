@@ -41,7 +41,12 @@ export class TutorialService {
   });
 
   hasTutorialFor(pageId: string): boolean {
-    return this.definitionsSignal().some((d) => d.id === pageId);
+    return this.definitionsSignal().some((d) => d.pageId === pageId);
+  }
+
+  /** All flows registered for a page — the page-help control shows a picker when this has more than one entry. */
+  tutorialsForPage(pageId: string): readonly TutorialDefinition[] {
+    return this.definitionsSignal().filter((d) => d.pageId === pageId);
   }
 
   register(definition: TutorialDefinition, options?: RegisterTutorialOptions): () => void {

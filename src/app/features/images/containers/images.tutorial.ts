@@ -10,6 +10,7 @@ import type { TutorialDefinition } from '@core/tutorials/tutorial.types';
 //      `images-new`/`images-plan`, elementos que ya no existen tras crear.
 export const IMAGES_TUTORIAL: TutorialDefinition = {
   id: 'images',
+  pageId: 'images',
   steps: [
     {
       anchorSelector: '[data-tutorial="images-new"]',

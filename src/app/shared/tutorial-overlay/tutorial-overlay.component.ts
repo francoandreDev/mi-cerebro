@@ -38,6 +38,27 @@ const ACTION_ADVANCE_DELAY_MS = 700;
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(Math.max(value, min), max);
 
+// why: connector used to run center-to-center, cutting straight through both
+//      boxes — this clips each end to where the center-to-center ray exits
+//      its own box, so the dashed line visibly starts/ends at the nearest
+//      border instead of the middle of the card/target.
+const edgePoint = (
+  cx: number,
+  cy: number,
+  halfWidth: number,
+  halfHeight: number,
+  towardX: number,
+  towardY: number,
+): { x: number; y: number } => {
+  const dx = towardX - cx;
+  const dy = towardY - cy;
+  if (dx === 0 && dy === 0) return { x: cx, y: cy };
+  const scaleX = dx === 0 ? Infinity : halfWidth / Math.abs(dx);
+  const scaleY = dy === 0 ? Infinity : halfHeight / Math.abs(dy);
+  const scale = Math.min(scaleX, scaleY);
+  return { x: cx + dx * scale, y: cy + dy * scale };
+};
+
 // why: a single overlay mounted once in the app shell (like the mini-player)
 //      reads whatever TutorialService says is active — features never
 //      render their own overlay, they only register step definitions.
@@ -139,9 +160,11 @@ export class TutorialOverlayComponent {
     const s = this.step();
     if (!r || !s) return null;
     const ar = this.actionRectSignal();
-    const target = ar
-      ? { cx: ar.left + ar.width / 2, cy: ar.top + ar.height / 2 }
-      : { cx: r.left + r.width / 2, cy: r.top + r.height / 2 };
+    const targetBox = ar ?? r;
+    const target = {
+      cx: targetBox.left + targetBox.width / 2,
+      cy: targetBox.top + targetBox.height / 2,
+    };
     const box = this.cardBox();
     const placement = s.placement ?? 'bottom';
     // why: cardBox() gives the CSS top/left *before* the placement transform
@@ -156,7 +179,23 @@ export class TutorialOverlayComponent {
         : placement === 'left'
           ? { x: box.left - CARD_WIDTH / 2, y: box.top + CARD_HEIGHT_ESTIMATE / 2 }
           : { x: box.left + CARD_WIDTH / 2, y: box.top + CARD_HEIGHT_ESTIMATE / 2 };
-    return { x1: cardCenter.x, y1: cardCenter.y, x2: target.cx, y2: target.cy };
+    const cardEdge = edgePoint(
+      cardCenter.x,
+      cardCenter.y,
+      CARD_WIDTH / 2,
+      CARD_HEIGHT_ESTIMATE / 2,
+      target.cx,
+      target.cy,
+    );
+    const targetEdge = edgePoint(
+      target.cx,
+      target.cy,
+      targetBox.width / 2,
+      targetBox.height / 2,
+      cardCenter.x,
+      cardCenter.y,
+    );
+    return { x1: cardEdge.x, y1: cardEdge.y, x2: targetEdge.x, y2: targetEdge.y };
   });
 
   constructor() {

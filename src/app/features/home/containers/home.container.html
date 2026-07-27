@@ -12,6 +12,16 @@
   }
 </header>
 
+@if (onboarding.visible() && !onboarding.allDone()) {
+  <mc-onboarding-checklist
+    [items]="onboarding.items()"
+    [completedCount]="onboarding.completedCount()"
+    [total]="onboarding.items().length"
+    (itemClick)="onOnboardingItemClick($event)"
+    (dismiss)="onboarding.dismiss()"
+  />
+}
+
 <section class="workflows">
   <header class="section-head">
     <h2 class="section-title">{{ t('home.workflows.title') }}</h2>

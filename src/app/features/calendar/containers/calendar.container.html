@@ -134,6 +134,14 @@
           (openEvent)="onOpenEvent($event)"
           (create)="onCreateForKind(group.kind)"
         />
+      } @empty {
+        <div class="wallboard-empty">
+          <p>{{ t('calendar.wallboard.empty') }}</p>
+          <button type="button" class="clear mc-hover-wiggle" (click)="onResetWallFilters()">
+            <mc-icon name="x" />
+            <span>{{ t('calendar.wallboard.clearFilter') }}</span>
+          </button>
+        </div>
       }
     </aside>
   </div>

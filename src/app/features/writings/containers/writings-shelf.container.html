@@ -260,7 +260,13 @@
         <div class="lib-body">
           <ng-container [ngTemplateOutlet]="groupsTpl" />
           @if (noMatch()) {
-            <p class="shelf-empty">{{ t('writings.shelf.noMatch') }}</p>
+            <div class="shelf-empty">
+              <p>{{ t('writings.shelf.noMatch') }}</p>
+              <button type="button" class="clear mc-hover-wiggle" (click)="onClearFilters()">
+                <mc-icon name="x" />
+                <span>{{ t('writings.shelf.filtersClear') }}</span>
+              </button>
+            </div>
           }
         </div>
       </div>
