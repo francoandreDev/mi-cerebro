@@ -428,80 +428,180 @@ patrón try/catch sobre `localStorage`, mismo molde que `dashboard-resurface-sto
    `PROJECT_FLOW_TUTORIAL`/`DAILY_FLOW_TUTORIAL` (`core/tutorials/home-flows.tutorial.ts`, ids
    `'project-flow'`/`'daily-flow'` — confirmar ids exactos al implementar), cero señal nueva.
 
-### 8.8 — Notes: cobertura completa
+### 8.8 — Notes: cobertura completa, multi-flujo (re-scoped por 8.85)
 
-_Prereq: 8.1 (usa `tier`)._
+_Prereq: 8.1 (usa `tier`), 8.18 (usa `pageId`/picker)._
 
-Steps nuevos a escribir, cada uno con su propio anchor/`data-tutorial` donde no exista todavía:
-sistema de carpetas (crear/renombrar/mover, breadcrumbs), scheduling de nota, toolbar completa
-del editor (`shared/editor/editor-toolbar.component.ts` — bold/italic/headings/blockquote/listas/
-scene-break/highlight/insertar imagen/focus mode — candidato a varios steps, es mucho contenido),
-panel de comentarios/drafts, TTS/bookmarks, banner de lock por edición concurrente (§4.16).
-Marcar básico lo que ya cubre el tutorial actual (crear/abrir/tags/buscar) y avanzado lo nuevo,
-salvo que algún ítem nuevo sea de uso tan inmediato que merezca básico (a criterio de quien
-ejecute). Ver también 8.5 (empty state de esta misma página, mismo archivo de trabajo).
+Re-scoped bajo el modelo multi-flujo: los gaps pasan el criterio de 8.85 (independientes,
+3+ steps, nombrables), así que se reparten en **4 `TutorialDefinition` con `pageId: 'notes'`** en
+vez de engordar el flujo único actual:
 
-### 8.9 — Tasks: cobertura completa
+1. **`notes` — "Notas: lo esencial"** (existente, sin cambios de fondo, `autoStartIfUnseen: true`):
+   crear/abrir/tags/buscar.
+2. **`notes-folders` — "Organizar en carpetas"** (nuevo, manual): crear/renombrar/mover carpeta,
+   breadcrumbs, + scheduling de nota como step `tier: 'avanzado'` (misma familia temática:
+   organizar la nota en el tiempo/espacio).
+3. **`notes-editor-advanced` — "Editor: formato avanzado"** (nuevo, manual, `route: '/notes/:id'`):
+   toolbar de `shared/editor/editor-toolbar.component.ts` agrupada en 2-3 steps por categoría
+   (texto: bold/italic/headings/blockquote/listas; estructura y media: scene-break/highlight/
+   insertar imagen/focus mode) — no un step por botón, usar `moreDetail` para el detalle exhaustivo
+   de cada grupo.
+4. **`notes-drafts` — "Comentarios, borradores y voz"** (nuevo, manual, `route: '/notes/:id'`):
+   panel de comentarios/drafts + TTS/bookmarks (misma "familia": contenido de apoyo a la lectura/
+   escritura). El banner de lock por edición concurrente (§4.16) va acá como step `tier: 'avanzado'`
+   (es informativo, no un gesto que se practique).
 
-_Prereq: 8.1._
+Ver también 8.5 (empty state de esta misma página, mismo archivo de trabajo).
 
-Steps nuevos: vista patio (`/tasks/patio`, archivo mensual de cosecha), mecánica de riego/
-marchitamiento (`onWater()`, estado `wilted`), el "cómo" del selector de fecha, editor de tarea
-completo (`/tasks/:id` — recordatorios, tags, foco, borrar), drag-and-drop de trasplante por
-mouse (hoy solo se enseña el atajo Shift+→), el gesto de cosecha en sí (solo se enseña el
-resultado/canasta).
+### 8.9 — Tasks: cobertura completa, multi-flujo (re-scoped por 8.85)
 
-### 8.10 — Settings: cobertura completa
+_Prereq: 8.1, 8.18._
 
-_Prereq: 8.1._
+Re-scoped: patio y editor completo son independientes y sustanciales (3+ steps propios, viven en
+otra ruta/vista) → flujos propios. Drag-and-drop de trasplante y el "cómo" del date-picker son
+gestos únicos sobre anchors ya cubiertos → se quedan dentro del flujo existente.
 
-9 tabs (general/remoto/versionado/variantes/recordatorios/objetivos/autor/tema/export) — el
-tutorial actual (4 steps) solo enseña la mecánica de navegación genérica, ningún tab explica su
-propio contenido. Un step por tab con `tier: 'avanzado'` salvo General y Tema (uso más
-inmediato, quedan básico).
+1. **`tasks` — "Tareas: lo esencial"** (existente, `autoStartIfUnseen: true`): lo que ya cubre hoy
+   - drag-and-drop de trasplante por mouse como step nuevo `tier: 'avanzado'` (hoy solo se enseña
+     el atajo Shift+→) + `moreDetail` sobre el step del selector de fecha explicando el "cómo".
+2. **`tasks-patio` — "Patio: cosecha y riego"** (nuevo, manual, `route: '/tasks/patio'`): archivo
+   mensual, mecánica de riego/marchitamiento (`onWater()`, estado `wilted`), el gesto de cosecha en
+   sí (hoy solo se enseña el resultado/canasta en el flujo esencial — mover esa explicación acá).
+3. **`tasks-editor` — "Editor de tarea completo"** (nuevo, manual, `route: '/tasks/:id'`):
+   recordatorios, tags, foco, borrar.
 
-### 8.11 — Variants: cobertura completa
+### 8.10 — Settings: cobertura completa, multi-flujo (re-scoped por 8.85)
 
-_Prereq: 8.1._
+_Prereq: 8.1, 8.18._
 
-Steps nuevos: renombrar, color picker, diálogo de confirmación de borrado (con warning de
-cambios sin mergear), pills de parent/milestone/HEAD, pill de ahead/behind, filtro de búsqueda,
-refresh de actividad, popover de leyenda. El único gesto real destructivo (borrar) hoy no tiene
-step — el tutorial actual solo llega hasta merge; priorizar ese step.
+9 tabs es el caso límite que 8.85 usó para estresar el diseño del picker: un flujo por tab daría
+9 entradas (10 con el de navegación), por encima del techo blando de ~5-6 antes de necesitar
+categorías. Solución: agrupar tabs afines por tema en vez de por tab 1:1 — 4 flujos de contenido
+en vez de 9, quedando la página en 5 entradas totales:
 
-### 8.12 — Files: cobertura moderada
+1. **`settings` — "Settings: navegación"** (existente, `autoStartIfUnseen: true`): mecánica
+   genérica de cambiar de tab (sin cambios).
+2. **`settings-remote-versioning` — "Remoto y versionado"** (nuevo, manual): tabs Remoto +
+   Versionado + Variantes (las 3 tocan el mismo tema, backup/historial).
+3. **`settings-reminders-goals` — "Recordatorios, objetivos y autor"** (nuevo, manual): tabs
+   Recordatorios + Objetivos + Autor (config liviana, mismo patrón de toggles/campos simples).
+4. **`settings-theme-export` — "Tema y export"** (nuevo, manual): tabs Tema (editor de tema
+   custom) + Export.
+5. **General** se suma como step nuevo al flujo `settings` existente (uso inmediato, no amerita
+   flujo propio — es la tab que ya se ve al entrar).
 
-_Prereq: 8.1._
+Un tab por step dentro de cada flujo agrupado, `tier: 'avanzado'` salvo que algún campo sea de uso
+tan inmediato que amerite básico (a criterio de quien ejecute). Si al escribir el contenido real
+alguno de estos grupos resulta tener más profundidad de la esperada (ej. Versionado solo ya
+justifica 4-5 steps), está bien partirlo en su propio flujo — el agrupamiento de arriba es el punto
+de partida, no una regla rígida.
 
-Steps nuevos: gestión de subcarpetas, drag-and-drop de subida/reorden, renombrar ítem, editar/
-borrar título de colección, el gesto real de agregar/quitar tags (el step existe pero sin
-`action`, nunca demuestra el gesto — completar con `action` en vez de crear un step nuevo).
+### 8.11 — Variants: cobertura completa, multi-flujo (re-scoped por 8.85)
 
-### 8.13 — Tags: split del step `rowActions`
+_Prereq: 8.1, 8.18._
 
-_Prereq: 8.1._
+Segundo pase de 8.85 encontró dos zonas independientes que el mapeo original no había recorrido:
+el drawer de detalle de una variante (rename/color/borrar/navegación por historial) y la página de
+merge entera (`/variants/merge`, ruta propia, hoy totalmente fuera del `pageId: 'variants'`) — las
+dos pasan el criterio (independientes, 3+ steps, nombrables) → flujos propios. El resto (filtro,
+refresh, leyenda) son gestos sueltos sobre el canvas ya cubierto:
+
+1. **`variants` — "Variantes: lo esencial"** (existente, `autoStartIfUnseen: true`): crear/
+   seleccionar en canvas (sin cambios) + filtro de búsqueda y refresh de actividad como `moreDetail`
+   sobre el step de canvas; popover de leyenda como **mención de existencia** (step sin `action`,
+   demasiado situacional para practicarse).
+2. **`variants-drawer` — "Editar y navegar una variante"** (nuevo, manual): rename inline, color
+   picker, eliminar (con diálogo de confirmación y warning de cambios sin mergear — el único gesto
+   destructivo real, hoy sin step), click en pills parent/milestone/HEAD/ahead-behind para navegar
+   el historial.
+3. **`variants-merge` — "Resolver un merge"** (nuevo, manual, `route: '/variants/merge'`): selector
+   from/into, swap, aplicar-todo-de-un-lado, elegir por archivo, aplicar merge, reintentar/saltar en
+   fallo parcial (8+ gestos propios, ruta dedicada — el candidato más claro de toda la auditoría).
+
+### 8.12 — Files: cobertura moderada, multi-flujo (re-scoped por 8.85)
+
+_Prereq: 8.1, 8.18._
+
+Gestión de subcarpetas es el mismo patrón que Notes 8.8 (crear/renombrar/mover, breadcrumbs — 3+
+steps, independiente del flujo principal) → flujo propio, por consistencia con la misma decisión
+tomada ahí. El resto son gestos puntuales sobre anchors del flujo esencial, no ameritan flujo propio:
+
+1. **`files` — "Files: lo esencial"** (existente, `autoStartIfUnseen: true`): + drag-and-drop de
+   subida/reorden, renombrar ítem, editar/borrar título de colección como steps nuevos
+   `tier: 'avanzado'`; completar el step de tags existente con `action` real (agrega/quita un tag)
+   en vez de crear un step nuevo.
+2. **`files-folders` — "Organizar en subcarpetas"** (nuevo, manual): crear/renombrar/mover
+   subcarpeta, breadcrumbs.
+
+### 8.13 — Tags: split del step `rowActions`, multi-flujo condicional (re-scoped por 8.85)
+
+_Prereq: 8.1, 8.18._
 
 El step `rowActions` empaqueta 4 gestos (recolor/rename/merge/eliminar) en un solo step — viola
-la propia regla de "un gesto por step" (§4.6.15b). Separar en steps propios: recolor/rename como
-básico, merge/eliminar como avanzado. Nota aparte: merge no tiene diálogo de confirmación pese a
-ser irreversible — bug de UX real; si se corrige acá, documentarlo como tal en el commit (no es
-parte del framework de onboarding, es un hallazgo colateral más).
+la propia regla de "un gesto por step" (§4.6.15b). Segundo pase de 8.85: como las filas de tags
+solo existen si hay datos, este split funciona mejor como un **segundo flujo condicional** en vez
+de steps sueltos en el flujo principal — evita que el flujo esencial dependa de que ya existan tags
+para completarse:
 
-### 8.14 — Lists: `moreDetail` para la barra de tiza
+1. **`tags` — "Tags: lo esencial"** (existente, `autoStartIfUnseen: true`): filtro de texto como
+   `moreDetail`; tag-detail (navegación por entidades agrupadas) como **mención de existencia**.
+2. **`tags-organize` — "Organizar tags"** (nuevo, manual, solo se ofrece en el picker si
+   `rows().length > 0`): recolor (básico), rename (básico), merge con selector de destino
+   (avanzado), eliminar con contador de uso (avanzado) — los 4 con `action` real.
 
-_Prereq: 8.1 (usa `moreDetail`)._
+Nota aparte: merge no tiene diálogo de confirmación pese a ser irreversible — bug de UX real; si se
+corrige acá, documentarlo como tal en el commit (no es parte del framework de onboarding, es un
+hallazgo colateral más).
 
-El step `tools` (chalk) nombra paleta/grosores/deshacer/capas/exportar todo junto — en vez de
-fragmentarlo en steps nuevos (todos viven en el mismo control, la barra de tiza), usar
-`moreDetail` para el detalle expandible de cada herramienta sobre el mismo anchor.
+### 8.14 — Lists: multi-flujo, tiza + organización (re-scoped por 8.85)
 
-### 8.15 — Dashboard + Music: ajustes menores
+_Prereq: 8.1, 8.18._
 
-_Prereq: 8.1 (si se anota `tier`; el contenido en sí no depende de nada)._
+El plan original (`moreDetail` sobre el step `tools`) se quedaba corto: segundo pase de 8.85
+encontró que "modo tiza" es una superficie completa (dibujar/borrar, color/grosor, undo/redo,
+atajos de teclado `b`/`e`/`[`/`]`/1-5/Ctrl+Shift+T, panel de capas con agregar/renombrar/ocultar/
+bloquear/reordenar/borrar, exportar PNG/SVG, limpiar pizarra) — sobra para su propio flujo, no solo
+un `moreDetail`. Carpetas del shelf (mismo patrón que Notes/Files) también aparece sin cubrir:
 
-- **Dashboard**: falta mencionar el toggle de modo related/random del resurface en
-  `dashboard.tutorial.resurface.body`.
-- **Music**: `playlist-editor` no tiene step propio — agregar uno.
+1. **`lists` — "Listas: lo esencial"** (existente en `/lists/:id`, `autoStartIfUnseen: true`):
+   activar modo tiza (sin cambios) + búsqueda/cambio de eje alpha-tag/borrar lista del shelf como
+   `moreDetail`/steps nuevos.
+2. **`lists-chalk` — "Herramientas del tablero de tiza"** (nuevo, manual): dibujar/borrar con
+   `action`, elegir color/grosor, undo/redo, atajos de teclado (mención con `action: keydown` donde
+   aplique), panel de capas, exportar, limpiar pizarra (`tier: 'avanzado'`, destructivo).
+3. **`lists-folders` — "Organizar en carpetas"** (nuevo, manual, shelf): crear/renombrar/mover
+   carpeta, breadcrumbs — mismo patrón que Notes (8.8) y Files (8.12); ver nota transversal en
+   8.86 sobre no duplicar este flujo 5 veces si el volumen de contenido termina siendo idéntico
+   entre páginas.
+
+### 8.15 — Dashboard: ajuste menor. Music: multi-flujo (re-scoped por 8.85)
+
+_Prereq: 8.1, 8.18._
+
+**Dashboard** no cambia de forma: toggle related/random del resurface se plegó como `action` sobre
+el step existente (falta mencionarlo en `dashboard.tutorial.resurface.body`) — un solo gesto sobre
+un anchor ya cubierto, no amerita flujo propio.
+
+**Music** sí se amplía: segundo pase de 8.85 encontró que "playlist-editor no tiene step propio"
+se quedaba corto — es una superficie entera (crear/reproducir/shuffle/eliminar playlist, favorito,
+reordenar tracks por drag, agregar tracks vía picker con búsqueda) más una función totalmente
+aparte (descarga por YouTube URL) y una selección masiva con bulk actions:
+
+1. **`music` — "Music: lo esencial"** (existente, `autoStartIfUnseen: true`): upload/álbum/play-
+   pause/buscar (sin cambios) + `skipIfMissing: true` en el step `mini-player` (bug 8.3) + seek en
+   waveform como `action` sobre el step de reproducir + drag&drop de tracks a playlist y cola de
+   reproducción (jump-to/clear) como `moreDetail`.
+2. **`music-playlists` — "Armar y curar playlists"** (nuevo, manual): crear/reproducir/shuffle/
+   eliminar playlist, favorito, reordenar tracks por drag, agregar vía picker con búsqueda.
+3. **`music-youtube` — "Traer música de YouTube"** (nuevo, manual): input de URL, estado de
+   descarga — flujo chico pero autocontenido y muy distinto en naturaleza del resto (trae contenido
+   externo en vez de organizar el existente), nombrable con claridad.
+4. **Selección múltiple + bulk delete/agregar-a-playlist**: 3+ gestos propios pero comparten anchor
+   y contexto con el flujo esencial (es un modo del mismo listado de álbum) — se pliegan ahí como
+   steps `tier: 'avanzado'` en vez de flujo aparte.
+5. **Letras** (toggle + búsqueda externa por artista/título): 3 steps posibles pero muy chico y
+   secundario — queda como `moreDetail` dentro de `music-playlists` en vez de flujo propio; atajos
+   `n`/`p` como **mención de existencia** (ya cubiertos por el diálogo global de shortcuts).
 
 ### 8.16 — Command Palette: tutorial nuevo + capacidad de engine "anclar dentro de overlay"
 
@@ -513,11 +613,15 @@ condicionalmente (`@if (open())`) — no hay precedente en el código de "una ac
 → el siguiente step ancla adentro de ese overlay recién montado". Abrir desde el botón
 persistente `.search-btn` en `workspace-sidebar.container.html:176-183` (siempre en el DOM, a
 diferencia del propio diálogo) con `action: { event: 'click' }` o `keydown Ctrl+K`, después
-anclar steps con `skipIfMissing: true` sobre el input/resultados ya montados. Contenido: búsqueda
-libre + navegación por teclado + lista de recientes (básico), sintaxis `tag:<label>` (avanzado —
-hoy solo se enseña con un hint estático, `command-palette.container.html:128`). Dos empty states
-encontrados en esta página, ambos texto pasivo — evaluar si entran en el mismo commit o se suman
-a 8.6.
+anclar steps con `skipIfMissing: true` sobre el input/resultados ya montados. Un solo flujo alcanza
+(confirmado en 8.85 — todo es parte de un mismo gesto continuo "buscar y navegar", no hay sub-zona
+independiente): abrir con Ctrl+K, escribir, navegar resultados con flechas, Enter para abrir,
+Escape para cerrar (básico); sintaxis `tag:<label>` y modo dual recientes/resultados como
+`moreDetail` (avanzado — hoy solo se enseña con un hint estático,
+`command-palette.container.html:128`); "olvidar" una query reciente y ver un tag directo desde el
+resultado quedan como **mención de existencia** (gestos secundarios, bajo impacto). Dos empty
+states encontrados en esta página, ambos texto pasivo — evaluar si entran en el mismo commit o se
+suman a 8.6.
 
 ### 8.17 — Sync: tutorial nuevo + gating por `isConfigured()`
 
@@ -529,23 +633,287 @@ anchors candidatos: consola de estado, push, fetch, auto-push/throttle, timestam
 `@if (isConfigured())`, así que un usuario sin configurar no puede ver el tutorial en absoluto,
 no solo un step. Registrar el tutorial condicionado a `isConfigured()`, con un step 0 sobre
 `.not-configured` (`sync.container.html:7-18`) que linkea a `/settings` (ya tiene CTA real, no
-necesita fix). Contenido básico: push, fetch, lectura de la consola de estado. Avanzado:
-resolución de divergencia/merge, toggle de auto-push, tuning de throttle. Excluido del checklist
-de onboarding (8.7) — depende de un PAT externo de GitHub, no es acción de día uno.
+necesita fix). Un solo flujo alcanza (confirmado en 8.85): básico: push, fetch, lectura de la
+consola de estado. Avanzado (`moreDetail`/steps `tier: 'avanzado'`): toggle auto-push + throttle,
+leer un "tubo" divergente y saltar a `/variants/merge` desde ahí — **cross-reference, no duplicar
+contenido**: el paso a paso de cómo resolver el merge en sí vive en `variants-merge` (8.11), acá
+solo se enseña el punto de entrada. Excluido del checklist de onboarding (8.7) — depende de un PAT
+externo de GitHub, no es acción de día uno.
 
-### Páginas sin ítem propio en esta fase
+### 8.18 — Engine: selector de tutorial (múltiples flujos por página) — _Cerrado._
 
-Books, Images, Calendar (fuera del fix puntual de 8.4), Reminders, History, Writings, Trash: el
-audit de los 19 agentes no encontró en ellas un gap grande o moderado — quedan con su cobertura
-actual. Nota igual: ningún tutorial de la app cubre el 100% literal de su página (ninguno de los
-19 reportes encontró una sección "completa" en sentido estricto); estas 7 quedan fuera del scope
-inicial porque el gap restante es marginal comparado con los ítems de arriba, no porque estén
-terminadas. Abren su propio ítem si al cerrar 8.1-8.17 queda apetito de seguir.
+_Prereq: ninguno. Desbloquea: contenido multi-flujo por página (ver "Contenido pendiente" abajo)._
+
+Disparado por feedback directo tras cerrar 8.2-8.7: el modelo de "un flujo por página" sub-cubre
+la realidad — cada página enseña varios flujos, no uno, y las páginas con tabs (Settings: 9,
+Music: 2) necesitan como mínimo un flujo por tab más uno cross-tab. Investigado antes de tocar
+código (dos hallazgos clave): solo Settings y Music tienen tabs reales hoy (`activeSection`/
+`leftView`, ambos client-state sin URL, resto de las 15 páginas sin sub-vistas); y cambiar de tab
+no pide capacidad nueva de engine — un step con `action: { event: 'click', selector:
+'[data-tutorial="..."]' }` sobre el botón de la tab ya resuelve "practicá cambiar de tab" (mismo
+mecanismo que cualquier gesto real), con `skipIfMissing: true` en el step siguiente por si el
+usuario avanza sin practicar el click.
+
+**Implementado:** `TutorialDefinition` suma `pageId: string` (agrupa definiciones para el picker;
+en las 17 definiciones existentes `pageId === id`, sin renombrar nada — cero riesgo para
+`hasSeenTutorial`/`start(id)`) y `labelKey?: TranslationKey` (nombre corto en el picker, sin uso
+mientras la página tenga una sola definición). `TutorialService.hasTutorialFor` pasa a comparar
+por `pageId`; nuevo `tutorialsForPage(pageId)` devuelve todas las definiciones de una página.
+`PageHelpControlComponent.openGuide()`: si hay una sola definición, arranca directo (cero cambio
+visible en las 16 páginas que se quedan con un flujo); si hay más de una, abre
+`layout/components/tutorial-picker-menu.component.ts` (popover nuevo, dumb) listando cada
+`labelKey`. Solo la definición pensada como flujo principal debe registrarse con
+`autoStartIfUnseen: true` — el resto, manuales, solo descubribles desde el picker.
+De paso: se aclaró que `lists.tutorial.ts`/`lists-shelf.tutorial.ts` comparten `id: 'lists'` a
+propósito (rutas mutuamente excluyentes, nunca montadas a la vez) — no era el bug que parecía a
+primera vista, se dejó como estaba, solo se les sumó `pageId: 'lists'` por consistencia.
+Verificado: `bun run typecheck` y `bun run test` limpios.
+
+**Contenido pendiente (no escrito en este ítem):** ver ítem 8.85 — antes de escribir flujos nuevos
+para ninguna página, hace falta afinar el diseño de 8.18 para que el modelo fluya bien aplicado a
+las 17 sin excepción, no solo a las 2 con tabs.
+
+### 8.85 — Investigación + diseño: afinar 8.18 para que el multi-flujo fluya en las 17 páginas — _Cerrado._
+
+_Prereq: 8.18 (el engine del picker, cerrado). Desbloquea: 8.8/8.9/8.10/8.12 re-scoped (ver abajo)._
+
+**Esto fue un chat de investigación + diseño, sin tocar código.** Auditoría: `tutorial.types.ts`,
+`tutorial.service.ts` y las 18 `*.tutorial.ts` existentes (conteo de steps por archivo), más
+relectura de los gaps ya mapeados en 8.8-8.17 (que asumían el modelo viejo, un flujo lineal con
+`tier`). Conclusiones:
+
+**1. El modelo de 8.18 alcanza tal cual — no hace falta tocar el engine.** El picker sigue siendo
+una lista plana usable mientras ningún página supere ~5-6 entradas; con el re-scope de abajo
+(Settings agrupando tabs afines) ninguna de las 17 llega a superarlo, así que categorías/agrupación
+visual en el popover quedan sin construir (YAGNI, regla 19) — se reconsidera solo si una página
+concreta llega a necesitar más de 6, no antes. La regla de "un solo flujo con
+`autoStartIfUnseen: true`" tampoco cambia: ese flujo es siempre el que ya existe hoy como tutorial
+por defecto de la página (el que cubre el circuito CRUD central, lo que un usuario nuevo hace el
+día uno); los flujos nuevos que salgan de 8.8-8.17 se registran todos con
+`autoStartIfUnseen: false`, descubribles solo desde el picker. No hace falta un criterio nuevo de
+"cuál es el principal" — ya existe implícitamente (es el que nunca dejó de ser el default).
+
+**2. Criterio para separar un sub-flujo en su propio `TutorialDefinition`** (en vez de
+`tier`/`moreDetail` dentro del flujo existente) — los tres deben cumplirse:
+
+- **Independiente**: un usuario que solo quiere aprender ese sub-flujo no necesita haber hecho los
+  steps de otro flujo antes (no hay estado ni contexto compartido más allá de estar en la página/
+  ruta correcta).
+- **Sustancial**: al menos 3 steps propios. Un gesto de 1-2 steps no amerita entrada de picker
+  propia — va como step nuevo (si es otro anchor) o `moreDetail` (si es el mismo anchor) dentro del
+  flujo que ya cubre esa zona de la página.
+- **Nombrable**: se le puede poner un `labelKey` corto y distinto del resto de los flujos de esa
+  página (si el nombre termina siendo casi el mismo que el del flujo principal, es señal de que en
+  realidad es el mismo flujo).
+- Vivir en una tab/sub-ruta distinta (Settings, Music) refuerza el caso pero no es requisito — el
+  audit de abajo encuentra candidatos igual de válidos en páginas sin tabs (Notes, Tasks, Files).
+
+**2b. Tercera categoría, aparte de "flujo propio" y "step plegado en un flujo existente": mención
+de existencia, sin flujo estructurado.** No usa capacidad de engine nueva — es simplemente un
+`TutorialStep` sin `action` (el mecanismo ya existe desde la Fase 1) colgado del flujo que ya cubre
+esa zona de la página. Se usa para funciones reales pero **demasiado versátiles/situacionales para
+tener una secuencia clara que enseñar** — no hay "el" gesto correcto a practicar, o el gesto
+depende tanto del contexto del usuario que forzar un `action` sería inventar un caso de uso. Señal
+de que algo cae acá: al intentar describir "practicá X" no sale una sola frase con sentido para
+todos los casos (ej. "elegí qué agrupar/ordenar" en un buscador con muchas combinaciones válidas).
+**No todo lo que se audita tiene que terminar en flujo ni en gesto practicado** — el audit de abajo
+etiqueta explícitamente cada hallazgo con una de las 3 categorías (flujo propio / plegado con o sin
+`action` / mención de existencia) para que quien escriba el contenido no tenga que re-derivar el
+criterio página por página.
+
+**3. Relación con 8.8-8.17 — re-interpretados donde corresponde, confirmados como estaban donde no**:
+
+- **Notes (8.8), Tasks (8.9), Settings (8.10), Files (8.12)**: sus gaps mapeados sí describen
+  sub-flujos independientes — re-scoped abajo en sus propias entradas con el desglose de flujos.
+- **Corrección tras un segundo pase, más exhaustivo** (mismo día, sesión 8.85 extendida): el primer
+  pase de esta sesión reusó el mapeo de gaps de la auditoría de 19 agentes (Fase 3), que buscaba
+  "¿qué le falta al tutorial actual de esta página?" sin releer todo el código de la feature de
+  cero. Encargo explícito del usuario: releer cada una de las 17 páginas función por función —
+  no solo lo ya mapeado — para no dejar gestos reales sin clasificar. Ese segundo pase (4 agentes
+  en paralelo, cada uno auditando containers/componentes completos contra su(s) `*.tutorial.ts`)
+  encontró **flujos independientes enteros que el primer pase no había visto** porque vivían en una
+  ruta/editor anidado que el mapeo original no recorrió: el editor de constelación de Goals
+  (`/goals/:id`, sin tutorial hoy), la página de merge de Variants (`/variants/merge`, ruta propia),
+  el editor de playlist y la descarga por YouTube de Music, el editor de capítulo + TTS de Books,
+  el modal de biblioteca de Writings, el modo semana de Calendar, el menú de posponer de Reminders,
+  y más — el detalle completo, página por página, está en las entradas de abajo. Conclusión
+  revisada: **Variants, Tags, Music, Goals (nunca tuvo ítem propio pese al bug 8.2), y las 7
+  páginas que la Fase 3 había dado por "sin gap grande" (Books, Images, Calendar, Reminders,
+  History, Writings, Trash) sí tienen flujos propios legítimos** — se re-scopean en sus propias
+  entradas (8.11, 8.13, 8.15, y los ítems nuevos 8.86 en adelante). Lists
+  (8.14) se amplía también: el audit encontró que la barra de tiza tiene mucho más que `moreDetail`
+  (atajos, panel de capas, export) — pasa a multi-flujo igual que las demás. Command Palette
+  (8.16) y Sync (8.17) se confirman como estaban (un flujo cada uno alcanza, ver su detalle).
+
+### 8.86 — Transversal: carpetas se repite en 5+ páginas — ¿un flujo por página o contenido compartido?
+
+_Prereq: ninguno (decisión de diseño, no bloquea el resto)._
+
+El primer agente del audit de 8.85 marcó el patrón: Notes (8.8), Files (8.12) y Lists (8.14) ya
+tienen un flujo `*-folders`/`*-organize` propio con el mismo contenido genérico (crear/renombrar/
+mover carpeta, navegar breadcrumbs); Tasks, Goals y Books lo repiten también. **Decisión**: no vale
+la pena una abstracción de contenido compartido (viola YAGNI si el ahorro es solo de texto) — cada
+página igual necesita su `TutorialDefinition`/`labelKey`/anchors propios porque el selector real
+(`[data-tutorial="..."]`) y la ruta cambian por feature, así que no hay mecanismo de reuso limpio
+sin acoplar features entre sí (regla 10, una feature nunca importa de otra). Lo que sí conviene
+compartir: **el copy base** — al escribir el `bodyKey` de cada flujo `*-folders`, empezar del mismo
+texto genérico ("creá una carpeta, arrastrá para mover, hacé click en el breadcrumb para volver")
+y particularizar solo donde la entidad difiera (ej. Books permite soltar un libro sobre una
+subcarpeta desde el estante, gesto que Notes no tiene). Evita que 6 personas distintas escribiendo
+6 flujos terminen con 6 tonos distintos para el mismo gesto. Sin ítem de código propio — es una
+convención para quien escriba cada flujo `*-folders`, ya anotada en 8.8/8.12/8.14 y a repetir en
+8.87 (Tasks/Goals) y 8.90 (Books) de abajo.
+
+### 8.87 — Goals: cobertura completa, multi-flujo (nunca tuvo ítem propio)
+
+_Prereq: 8.1, 8.18. Corrige además el bug 8.2 (steps que describen un gesto inexistente en `/goals`)
+como parte del mismo trabajo, en vez de arreglarlo aislado — están en el mismo archivo._
+
+Gap más grande de toda la auditoría: el editor de constelación (`/goals/:id`,
+`goal-constellation-editor.component.ts`) **no tiene ningún tutorial**, y es donde vive el gesto
+que el bug 8.2 describía por error en el wall (shift+click multi-selección + drag). El wall en sí
+también tiene gaps menores.
+
+1. **`goals` — "Objetivos: lo esencial"** (existente, `autoStartIfUnseen: true`): crear (sin
+   cambios) + filtros de la wall (búsqueda, tag toggle, ocultar completadas) como `moreDetail`;
+   completar el peek overlay (rename inline, completed toggle, deadline, prioridad, delete, "abrir
+   mapa") con `action` real en el step `openDetail` en vez de dejarlo solo mencionado.
+2. **`goals-constellation` — "Mapa de la constelación"** (nuevo, manual, `route: '/goals/:id'`):
+   crear paso (click canvas), arrastrar, toggle done, renombrar (click derecho→popover), borrar,
+   multi-selección shift+click + toolbar de lote (el gesto real del bug 8.2, corregido acá con
+   anchor y copy correctos), deadline+hora, prioridad, recordatorio (enabled/lead/dormant).
+3. **`goals-folders` — "Organizar en carpetas"** (nuevo, manual): mismo patrón que 8.86.
+
+### 8.88 — Calendar: multi-flujo, agenda semanal
+
+_Prereq: 8.1, 8.18. Independiente del fix 8.4 (empty state del wallboard), se puede hacer en el
+mismo commit o por separado._
+
+Vista semanal ("leather book") es una zona independiente y sustancial que el audit original no
+había recorrido (navegación prev/next semana, click día, 4 botones de creación rápida por tipo,
+cerrar) → flujo propio. El resto son gestos sueltos sobre el header/tabla ya cubiertos.
+
+1. **`calendar` — "Calendario: lo esencial"** (existente, `autoStartIfUnseen: true`): + búsqueda
+   del toolbar, date-picker "ir a fecha", drag-and-drop de tareas para reprogramar, toggle activo/
+   crear por tipo en las kind-cards — todos como steps/`moreDetail` `tier: 'avanzado'` sobre los
+   anchors `calendar-views`/`calendar-table`/`filter` ya existentes; botón "Hoy" y selects de mes/
+   año como **mención de existencia**.
+2. **`calendar-week` — "Agenda semanal"** (nuevo, manual): nav prev/next, click día, creación
+   rápida por tipo, cerrar. "Abrir libro" desde el modal de día como **mención de existencia**
+   dentro de este flujo (es el punto de entrada, no un gesto a practicar aparte).
+
+### 8.89 — Reminders: multi-flujo, atajos + posponer
+
+_Prereq: 8.1, 8.18._
+
+Dos zonas autocontenidas que el tutorial actual no menciona: el sistema completo de atajos de
+teclado, y el menú de posponer/gestionar (`⋮` overflow) — ambas con 3+ gestos propios y nombrables.
+
+1. **`reminders` — "Recordatorios: lo esencial"** (existente, `autoStartIfUnseen: true`): + búsqueda
+   por nombre con `action` (misma zona que el filtro de fecha ya cubierto); edición de recurrencia
+   y toggle de pausa con `action` real en el step `states` (hoy solo mencionado); toast de undo y
+   registro de "papelitos tomados" como **mención de existencia**.
+2. **`reminders-shortcuts` — "Atajos de teclado"** (nuevo, manual): navegar con j/k, abrir con e,
+   marcar/borrar con espacio/Delete, nueva paloma con N.
+3. **`reminders-snooze` — "Posponer y gestionar un recordatorio"** (nuevo, manual): snooze 1h/1d/
+   lunes/finde, duplicar, eliminar desde el menú `⋮`.
+
+### 8.90 — Books: cobertura completa, la superficie más grande de la auditoría
+
+_Prereq: 8.1, 8.18._
+
+El lector de libros concentra casi tanto contenido sin cubrir como Notes+Settings juntos: toolbar
+de editor completa, TTS, índice de capítulos, y comentarios/propose son 4 zonas independientes.
+
+1. **`books` — "Books: lo esencial"** (existente, `autoStartIfUnseen: true`): + búsqueda/filtro y
+   toggle grid↔lista de la estantería como `moreDetail`; flip de portada a sinopsis/autor e ir al
+   marcador como **mención de existencia** plegada en el step de abrir libro; menú `⋯` (eliminar/
+   duplicar/exportar) y catálogo global como **mención de existencia**.
+2. **`books-folders` — "Organizar en carpetas"** (nuevo, manual): mismo patrón que 8.86, más el
+   gesto propio de soltar un libro sobre una subcarpeta desde el estante.
+3. **`books-chapter-index` — "Editar el índice de capítulos"** (nuevo, manual): agregar, reordenar,
+   eliminar capítulo.
+4. **`books-editor-advanced` — "Formato del editor"** (nuevo, manual, `route: '/books/:id/...'`):
+   toolbar completa (negrita/itálica/headings/cita/listas/scene break/insertar imagen), typewriter
+   mode, stats popover — agrupar por categoría igual que `notes-editor-advanced` (8.8), es la misma
+   toolbar compartida (`shared/editor/`).
+5. **`books-collab` — "Comentarios y propuestas"** (nuevo, manual): Alt+C/Alt+P — si para cuando se
+   ejecute este ítem ya existe un flujo equivalente en Notes/Writings (comparten el mismo
+   componente de comentarios), cross-reference en vez de duplicar contenido.
+6. **`books-tts` — "Lectura en voz alta"** (nuevo, manual): Ctrl+Alt+R, controles de TTS, bookmark
+   toggle dentro del editor, export de capítulo a markdown.
+
+### 8.91 — Images: ajustes menores, sin flujo nuevo
+
+_Prereq: 8.1._
+
+A diferencia de Books/Goals, acá el audit no encontró una zona independiente sustancial — todo se
+pliega en el flujo `images` existente: abrir imagen + lightbox (Escape cierra) y eliminar imagen/
+galería (destructivo, `tier: 'avanzado'`) como steps nuevos con `action`; drag-and-drop de archivos
+como `moreDetail` sobre el step de subida (que hoy solo practica Ctrl+V); botón "Recorrer"/next-
+prev cuarto como `moreDetail`; búsqueda, orden, filtro por tag, título/tags de galería y carpetas
+como **mención de existencia** (demasiado situacionales para practicarse uno por uno).
+
+### 8.92 — Writings: flujo nuevo para el modal de biblioteca
+
+_Prereq: 8.1, 8.18._
+
+El modal "Biblioteca" (buscar, filtrar por tag, cambiar vista estante/tabla/lista, agrupar por
+carpeta, ordenar) es 5 gestos cohesivos e independientes del flujo de creación/edición → flujo
+propio. El resto se pliega:
+
+1. **`writings` — "Writings: lo esencial"** (existente, `autoStartIfUnseen: true`): + fecha límite/
+   recordatorio y tag picker del editor como steps/`moreDetail`; borrar escrito como
+   `tier: 'avanzado'`; typewriter mode como **mención de existencia** (infraestructura compartida
+   del editor, no propia de Writings).
+2. **`writings-library` — "Explorar la biblioteca"** (nuevo, manual): abrir biblioteca, buscar,
+   cambiar vista, agrupar/ordenar, cerrar con Escape.
+
+### 8.93 — History: flujo nuevo para restaurar
+
+_Prereq: 8.1, 8.18._
+
+Ningún step actual tiene `action` (los 3 steps existentes son solo mención). Restaurar (commit
+completo o entidad individual, con confirmación tipeada) es la única zona con 3+ pasos propios y
+consecuencia real (irreversible) → flujo propio, el resto se pliega con `action` real donde hoy
+falta:
+
+1. **`history` — "Historial: lo esencial"** (existente, `autoStartIfUnseen: true`): agregar
+   `action: keydown` a los atajos `+`/`-`/`[`/`]`/Esc en el step de zoom existente; marcar/renombrar/
+   borrar hito como steps `tier: 'avanzado'` junto al filtro de milestones ya cubierto; sintaxis de
+   búsqueda `facet:`/`since:`/`sha:`, chips de faceta, compactar diff, agrupar por tipo, colapsar
+   timeline y banner "compactar ahora" como **mención de existencia** (`moreDetail` sobre el step
+   `history-timeline`).
+2. **`history-restore` — "Restaurar una versión"** (nuevo, manual): elegir commit, elegir alcance
+   (completo vs. entidad individual), confirmar (con el input de confirmación tipeada).
+
+### 8.94 — Trash: ajustes menores, sin flujo nuevo
+
+_Prereq: 8.1._
+
+Página más chica de la auditoría — todo se pliega en el flujo `trash` existente: filtro por tipo de
+entidad y ver detalle (modal preview) como steps nuevos con `action`; purgar individual y vaciar
+papelera completa como `tier: 'avanzado'` junto al step de restore ya cubierto (ninguno de los dos
+amerita flujo propio, son gestos únicos aunque destructivos); Escape cierra modal como **mención de
+existencia**.
 
 ### Orden sugerido (no estricto)
 
-8.1 primero (desbloquea el resto). 8.2-8.6 (bugs + empty states) y 8.7 (checklist) no dependen de
-nada, se pueden intercalar en cualquier momento, incluso en paralelo a 8.1 si se prefiere no
-bloquear. 8.8-8.15 (contenido por página) en el orden de impacto ya reflejado en su numeración
-(Notes → Tasks → Settings → Variants → Files → Tags → Lists → Dashboard/Music). 8.16-8.17
-(Command Palette, Sync) al final, por la capacidad de engine nueva que ejercitan.
+8.1 y 8.18 primero (desbloquean el resto — el segundo en particular a todo ítem multi-flujo, que ya
+asume el picker). 8.2-8.6 (bugs + empty states) y 8.7 (checklist) no dependen de nada, se pueden
+intercalar en cualquier momento. 8.86 (decisión de copy compartido para `*-folders`) conviene
+resolverlo antes de escribir el primero de esos flujos (8.8), aunque no bloquea nada técnicamente.
+
+Contenido por página, multi-flujo (2+ `TutorialDefinition`): **8.8 Notes, 8.9 Tasks, 8.10 Settings,
+8.11 Variants, 8.12 Files, 8.13 Tags, 8.14 Lists, 8.15 Music, 8.87 Goals, 8.88 Calendar, 8.89
+Reminders, 8.90 Books, 8.92 Writings, 8.93 History** — 14 de las 17 páginas. Orden sugerido dentro
+de este grupo: por tamaño de gap (Books 8.90 y Notes 8.8 primero — la mayor superficie sin cubrir
+de toda la auditoría — después Settings 8.10 y Goals 8.87, el resto sin orden estricto).
+
+Contenido de un solo flujo, sin split (gap ya cabe en `tier`/`moreDetail`): **8.15 Dashboard, 8.91
+Images, 8.94 Trash**. Se pueden hacer en cualquier momento, incluso antes que el grupo multi-flujo
+— son los más chicos de toda la fase.
+
+8.16-8.17 (Command Palette, Sync) al final: son los únicos que siguen ejercitando la capacidad de
+engine "anclar dentro de overlay condicional" (no el picker), y 8.17 depende del `route` de merge
+que 8.11 debería dejar ya nombrado (`variants-merge`) para el cross-reference.
