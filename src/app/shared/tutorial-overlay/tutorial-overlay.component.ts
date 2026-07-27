@@ -70,7 +70,6 @@ const edgePoint = (
   styleUrl: './tutorial-overlay.component.css',
   host: {
     '(window:resize)': 'measure()',
-    '(window:scroll)': 'measure()',
     '(document:keydown)': 'onKey($event)',
   },
 })
@@ -87,6 +86,26 @@ export class TutorialOverlayComponent {
   private readonly actionDoneSignal = signal(false);
   protected readonly actionDone = this.actionDoneSignal.asReadonly();
   private actionListenerCleanup: (() => void) | null = null;
+
+  // why: which way the user was navigating when a step's anchor turns out
+  //      to be missing — measure() uses this to skip a `skipIfMissing` step
+  //      in the same direction the user was already going, instead of
+  //      always skipping forward. Without this, pressing "Atrás" out of a
+  //      step that sits right after a skipped one just bounces back onto
+  //      itself: prev() lands on the skipped step, finds no anchor, and the
+  //      old unconditional `next()` here undid the very prev() the user
+  //      just asked for.
+  private skipDirection: 'forward' | 'backward' = 'forward';
+  private lastDefinitionId: string | null = null;
+
+  // why: scroll events don't bubble, so a bare `(window:scroll)` binding
+  //      never sees scrolling inside one of this app's many internal
+  //      `overflow: auto` panes — the spotlight rect (viewport-relative via
+  //      getBoundingClientRect) went stale and visibly drifted from the
+  //      real element. A capture-phase listener on `document` still catches
+  //      scroll on any descendant, since capture propagates root-to-target
+  //      regardless of bubbling.
+  private readonly scrollHandler = (): void => this.measure();
 
   // why: expanded in-place on the step's own card, not a new step — see
   //      TutorialStep.moreDetail. Collapses whenever the step changes.
@@ -204,6 +223,14 @@ export class TutorialOverlayComponent {
     //      setTimeout(0) lets that render settle before we measure it.
     effect(() => {
       const s = this.step();
+      const active = this.tutorials.active();
+      // why: a fresh tutorial (different id from whatever ran last) always
+      //      starts by skipping forward, regardless of which direction the
+      //      previous tutorial happened to leave skipDirection in.
+      if (active && active.definition.id !== this.lastDefinitionId) {
+        this.lastDefinitionId = active.definition.id;
+        this.skipDirection = 'forward';
+      }
       this.actionDoneSignal.set(false);
       this.moreDetailOpenSignal.set(false);
       this.teardownAction();
@@ -212,7 +239,11 @@ export class TutorialOverlayComponent {
         if (s?.action) this.setupAction(s.action, s.anchorSelector);
       }, 0);
     });
-    inject(DestroyRef).onDestroy(() => this.teardownAction());
+    document.addEventListener('scroll', this.scrollHandler, true);
+    inject(DestroyRef).onDestroy(() => {
+      this.teardownAction();
+      document.removeEventListener('scroll', this.scrollHandler, true);
+    });
   }
 
   // why: lets a step ask the user to actually perform the gesture it
@@ -251,7 +282,8 @@ export class TutorialOverlayComponent {
       // skip it instead of leaving the card floating at (0,0) (see Fase 4
       // of roadmap-26-tutoriales.md, "tarjeta flotando en la esquina").
       if (s.skipIfMissing) {
-        this.tutorials.next();
+        if (this.skipDirection === 'backward') this.tutorials.prev();
+        else this.tutorials.next();
         return;
       }
     } else {
@@ -301,10 +333,12 @@ export class TutorialOverlayComponent {
   }
 
   protected next(): void {
+    this.skipDirection = 'forward';
     this.tutorials.next();
   }
 
   protected prev(): void {
+    this.skipDirection = 'backward';
     this.tutorials.prev();
   }
 
