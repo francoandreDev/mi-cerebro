@@ -13,7 +13,7 @@
     (removeGoal)="removeGoal.emit()"
   />
 
-  <section class="meta reminder">
+  <section class="meta reminder" data-tutorial="goal-reminder-enabled">
     <mc-icon name="bell" class="meta-icon" />
     <label class="reminder-toggle">
       <input
@@ -32,7 +32,7 @@
   </section>
 
   @if (goal().reminder.enabled) {
-    <section class="meta reminder">
+    <section class="meta reminder" data-tutorial="goal-reminder-lead">
       <mc-icon name="hourglass-medium" class="meta-icon" />
       <label class="reminder-toggle">
         <span>{{ t('goals.reminder.leadLabel') }}</span>
@@ -60,7 +60,7 @@
     </section>
   }
 
-  <section class="meta reminder">
+  <section class="meta reminder" data-tutorial="goal-reminder-dormant">
     <mc-icon name="moon" class="meta-icon" />
     <label class="reminder-toggle">
       <input

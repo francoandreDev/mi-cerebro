@@ -48,6 +48,7 @@
       <button
         type="button"
         class="deadline-chip"
+        data-tutorial="goal-deadline-chip"
         [attr.aria-label]="t('goals.editor.deadlineAria')"
         [disabled]="!editable()"
         (click)="onHorizonClick()"
@@ -118,6 +119,7 @@
 
   <svg
     class="canvas"
+    data-tutorial="goal-constellation-canvas"
     viewBox="0 0 100 100"
     preserveAspectRatio="none"
     role="application"
@@ -156,6 +158,7 @@
            nuevo (o cerraba el popover recién abierto por shift+click). -->
       <g
         class="star"
+        data-tutorial="goal-star"
         [class.done]="star.done"
         [class.popover-open]="popoverId() === star.id"
         [class.dragging]="dragPos()?.id === star.id"
@@ -250,6 +253,7 @@
         type="button"
         class="pop-item danger"
         role="menuitem"
+        data-tutorial="goal-star-popover-delete"
         (click)="onRemoveStep(star.id, $event)"
       >
         <mc-icon name="trash" /><span>{{ t('goals.editor.starRemove') }}</span>
@@ -291,7 +295,12 @@
 </div>
 
 <div class="controls">
-  <div class="priority-stars" role="radiogroup" [attr.aria-label]="t('goals.editor.priorityAria')">
+  <div
+    class="priority-stars"
+    data-tutorial="goal-priority"
+    role="radiogroup"
+    [attr.aria-label]="t('goals.editor.priorityAria')"
+  >
     @for (p of priorities; track p) {
       <button
         type="button"

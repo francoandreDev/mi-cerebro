@@ -12,6 +12,7 @@ import type { TutorialDefinition } from '@core/tutorials/tutorial.types';
 export const NOTES_TUTORIAL: TutorialDefinition = {
   id: 'notes',
   pageId: 'notes',
+  labelKey: 'notes.tutorial.flow.essentials',
   steps: [
     {
       anchorSelector: '[data-tutorial="notes-compose"]',

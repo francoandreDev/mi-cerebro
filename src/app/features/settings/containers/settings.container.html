@@ -19,6 +19,7 @@
           [attr.aria-selected]="activeSection() === s.id"
           [attr.aria-controls]="'sect-' + s.id"
           [attr.aria-label]="t(s.labelKey)"
+          [attr.data-tutorial]="'settings-tab-' + s.id"
           [title]="t(s.labelKey)"
           (click)="selectSection(s.id)"
         >
@@ -30,7 +31,12 @@
 
     <div class="panel">
       @if (activeSection() === 'general') {
-        <section class="group" id="sect-general" role="tabpanel">
+        <section
+          class="group"
+          id="sect-general"
+          role="tabpanel"
+          data-tutorial="settings-section-general"
+        >
           <h3>{{ t('settings.section.general') }}</h3>
 
           <label class="field">

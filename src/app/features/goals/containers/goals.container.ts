@@ -26,6 +26,7 @@ import { IconComponent } from '@shared/icon/icon.component';
 import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
 
 import { GoalEditorPaneComponent, type SaveStatus } from '../components/goal-editor-pane.component';
+import { registerGoalsConstellationTutorial } from './goals-constellation.tutorial';
 import {
   GOAL_KIND,
   clampReminderLeadMinutes,
@@ -77,6 +78,7 @@ export class GoalsContainer {
   });
 
   constructor() {
+    registerGoalsConstellationTutorial();
     effect(() => {
       const raw = this.id();
       const wanted = raw ? extractEntityId(raw) : undefined;

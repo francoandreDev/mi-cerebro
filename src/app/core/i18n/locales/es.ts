@@ -604,6 +604,61 @@ export const es = {
   'notes.tutorial.search.body':
     'Probalo: Ctrl+K (o Cmd+K) abre la búsqueda global desde cualquier pantalla, no solo acá. Escribí y aparece mezclada con el resto de tus notas, tareas y demás.',
 
+  'notes.tutorial.flow.essentials': 'Notas: lo esencial',
+  'notes.tutorial.flow.folders': 'Organizar en carpetas',
+  'notes.tutorial.flow.editorAdvanced': 'Editor: formato avanzado',
+  'notes.tutorial.flow.drafts': 'Comentarios y borradores',
+
+  'notes.tutorial.folders.create.title': 'Este botón crea una subcarpeta',
+  'notes.tutorial.folders.create.body':
+    'Creá una carpeta para agrupar notas por tema. El breadcrumb te muestra dónde estás parado dentro del árbol.',
+  'notes.tutorial.folders.open.title': 'Click en una carpeta la abre',
+  'notes.tutorial.folders.open.body':
+    'Entrás a esa subcarpeta y el muro muestra solo las notas que viven ahí adentro.',
+  'notes.tutorial.folders.manage.title': 'El ⋮ de cada carpeta la renombra, mueve o elimina',
+  'notes.tutorial.folders.manage.body':
+    'Abrí este menú sobre cualquier subcarpeta para renombrarla, moverla dentro de otra, o eliminarla.',
+  'notes.tutorial.folders.manage.moreDetail':
+    'Notas no tiene arrastrar-y-soltar hacia una carpeta — mover una nota se hace desde este mismo menú.',
+  'notes.tutorial.folders.navigate.title': 'El breadcrumb te devuelve a cualquier nivel',
+  'notes.tutorial.folders.navigate.body':
+    'Click en "Raíz" o en cualquier carpeta intermedia del breadcrumb salta directo a ese nivel, sin ir carpeta por carpeta.',
+  'notes.tutorial.folders.schedule.title': 'Esta fecha programa la nota',
+  'notes.tutorial.folders.schedule.body':
+    'Elegí una fecha para que la nota aparezca en el calendario ese día — misma idea que organizarla en carpetas, pero en el tiempo en vez de en el espacio.',
+
+  'notes.tutorial.editorAdvanced.format.title': 'Negrita e itálica dan énfasis al texto',
+  'notes.tutorial.editorAdvanced.format.body': 'Seleccioná texto y probá el botón de negrita.',
+  'notes.tutorial.editorAdvanced.format.moreDetail':
+    'Al lado tenés itálica, tres niveles de heading, cita, y listas con viñetas o numeradas.',
+  'notes.tutorial.editorAdvanced.structure.title': 'Este botón inserta un separador de escena',
+  'notes.tutorial.editorAdvanced.structure.body':
+    'Marca un corte visual dentro de la nota, sin crear una nota nueva.',
+  'notes.tutorial.editorAdvanced.structure.moreDetail':
+    'El pincel resalta texto en varios colores, y Alt+Shift+F activa el modo foco (oculta todo salvo el editor).',
+  'notes.tutorial.editorAdvanced.image.title': 'Este botón inserta una imagen de tu galería',
+  'notes.tutorial.editorAdvanced.image.body':
+    'Abre el selector de imágenes ya subidas a tu galería para insertarlas en el texto.',
+
+  'notes.tutorial.drafts.comment.title': 'Alt+C comenta la selección',
+  'notes.tutorial.drafts.comment.body':
+    'Seleccioná texto y probá Alt+C — deja un comentario anclado a esa selección, sin modificar el texto.',
+  'notes.tutorial.drafts.propose.title': 'Alt+P propone un cambio',
+  'notes.tutorial.drafts.propose.body':
+    'Seleccioná texto y probá Alt+P — abre un borrador de reemplazo que podés aceptar o descartar después, a diferencia del comentario que no toca el texto.',
+  'notes.tutorial.drafts.combinedView.title':
+    'La vista "combinada" muestra comentarios y borradores',
+  'notes.tutorial.drafts.combinedView.body':
+    'Cambiá de "limpia" a "combinada" para ver las nubes de comentarios y las marcas de borrador superpuestas al texto.',
+  'notes.tutorial.drafts.index.title': 'Este botón lista todos los comentarios',
+  'notes.tutorial.drafts.index.body':
+    'Abre un panel con todos los comentarios de la nota, activos y huérfanos, para saltar directo a cualquiera.',
+  'notes.tutorial.drafts.index.moreDetail':
+    'El botón de al lado hace lo mismo con los borradores pendientes de aceptar o descartar.',
+  'notes.tutorial.drafts.lock.title': 'Otra pestaña puede estar editando esta misma nota',
+  'notes.tutorial.drafts.lock.body':
+    'Si abrís la misma nota en dos pestañas, la segunda ve este aviso: puede quedarse en modo lectura o tomar control (lo que cierra la primera pestaña).',
+
   'tree.filter.placeholder': 'Filtrar...',
   'tree.filter.placeholderIn': 'Filtrar en {kind}...',
   'tree.noMatches': 'Sin coincidencias.',
@@ -867,15 +922,101 @@ export const es = {
   'goals.editor.starRemove': 'Quitar',
   'goals.editor.starOpenHint': 'Click: marcar · Shift+click: seleccionar · click derecho: menú',
 
+  'goals.tutorial.flow.essentials': 'Objetivos: lo esencial',
+  'goals.tutorial.flow.constellation': 'Mapa de la constelación',
+  'goals.tutorial.flow.folders': 'Organizar en carpetas',
+
   'goals.tutorial.mark.title': 'Click marca un paso como hecho',
   'goals.tutorial.mark.body':
     'Cada estrella de la constelación es un paso de la meta. Click la marca hecha o pendiente — no hace falta entrar al editor para eso.',
+  'goals.tutorial.openPeek.title': 'Click en una estrella abre su vista rápida',
+  'goals.tutorial.openPeek.body':
+    'El primer click sobre cualquier estrella de una meta abre un peek flotante ahí mismo, sin salir de la wall: título, plazo, prioridad y progreso, todo editable.',
+  'goals.tutorial.peekRename.title': 'Renombrá la meta desde el peek',
+  'goals.tutorial.peekRename.body':
+    'Click en el título del peek lo vuelve editable — escribí el nuevo nombre y confirmá con Enter.',
+  'goals.tutorial.peekCompleted.title': 'Marcá la meta entera como completada',
+  'goals.tutorial.peekCompleted.body':
+    'El check junto al título completa la meta entera de una, sin tener que marcar paso por paso.',
+  'goals.tutorial.peekDeadline.title': 'Definí el plazo desde el peek',
+  'goals.tutorial.peekDeadline.body':
+    'Click en el chip de plazo abre un selector de fecha — sin plazo no hay recordatorio posible.',
+  'goals.tutorial.peekDeadline.moreDetail':
+    'Justo debajo tenés la prioridad (baja/media/alta) con los mismos tres botones que el editor completo.',
+  'goals.tutorial.peekPriority.title': 'Elegí la prioridad de la meta',
+  'goals.tutorial.peekPriority.body':
+    'Los tres botones marcan baja, media o alta prioridad — se reflejan en el brillo de la estrella en la wall.',
+  'goals.tutorial.peekDelete.title': 'Borrá la meta desde el peek',
+  'goals.tutorial.peekDelete.body':
+    'El tacho manda la meta entera a la papelera, con confirmación — no hace falta abrir el editor para borrar.',
+  'goals.tutorial.peekDelete.moreDetail':
+    '"Abrir mapa" (arriba del tacho) te lleva al editor completo de la constelación, con todos los pasos.',
   'goals.tutorial.openDetail.title': 'Shift+click abre la meta entera',
   'goals.tutorial.openDetail.body':
     'Shift+click en cualquier estrella te lleva directo al editor de esa meta, con todos sus pasos — un atajo para saltear el peek rápido y entrar de una al detalle.',
+  'goals.tutorial.filters.title': 'Buscá, filtrá por etiqueta u ocultá completadas',
+  'goals.tutorial.filters.body':
+    'El botón "Ocultar completadas" saca del cielo las metas ya terminadas para que el foco quede en lo activo.',
+  'goals.tutorial.filters.moreDetail':
+    'La búsqueda de arriba filtra por título, y los chips de etiquetas (si hay) filtran por tag — ambos se combinan entre sí y con "ocultar completadas".',
   'goals.tutorial.move.title': 'Arrastrá una estrella para mover toda su meta',
   'goals.tutorial.move.body':
     'Un drag desde cualquier estrella mueve la constelación completa de esa meta por el cielo — la posición se guarda sola. Sus pasos se reacomodan juntos, pegados entre sí.',
+
+  'goals.tutorial.constellation.create.title': 'Click en el lienzo siembra un paso nuevo',
+  'goals.tutorial.constellation.create.body':
+    'Click en cualquier punto vacío del lienzo abre un campo de texto ahí mismo — escribí el paso y confirmá con Enter, o Escape para cancelar.',
+  'goals.tutorial.constellation.drag.title': 'Arrastrá una estrella para reubicar ese paso',
+  'goals.tutorial.constellation.drag.body':
+    'Tomá cualquier estrella y soltala en otro punto del lienzo — su posición se guarda sola, y las líneas que la conectan se recalculan solas.',
+  'goals.tutorial.constellation.toggleDone.title': 'Click marca el paso como hecho',
+  'goals.tutorial.constellation.toggleDone.body':
+    'Un click simple (sin arrastrar) sobre una estrella la marca hecha o pendiente.',
+  'goals.tutorial.constellation.rename.title': 'Click derecho abre el menú del paso',
+  'goals.tutorial.constellation.rename.body':
+    'Click derecho sobre una estrella abre un menú con renombrar, marcar/desmarcar y quitar — sin salir del lienzo.',
+  'goals.tutorial.constellation.delete.title': 'Quitá un paso desde su menú',
+  'goals.tutorial.constellation.delete.body':
+    'Dentro del menú de click derecho, "Quitar" borra ese paso de la constelación.',
+  'goals.tutorial.constellation.multiSelect.title': 'Shift+click selecciona varias estrellas',
+  'goals.tutorial.constellation.multiSelect.body':
+    'Shift+click va sumando estrellas a una selección múltiple — click normal en el lienzo vacío la cancela.',
+  'goals.tutorial.constellation.batchToolbar.title':
+    'Actuá sobre todos los pasos seleccionados a la vez',
+  'goals.tutorial.constellation.batchToolbar.body':
+    'Con una selección activa aparece una barra flotante: marcá/desmarcá o eliminá todos los pasos seleccionados de una sola vez.',
+  'goals.tutorial.constellation.batchToolbar.moreDetail':
+    'El botón "x" de la barra cancela la selección sin tocar los pasos.',
+  'goals.tutorial.constellation.deadline.title': 'Definí el plazo (y la hora) de la meta',
+  'goals.tutorial.constellation.deadline.body':
+    'Click en el chip de plazo abre un selector de fecha; con fecha elegida aparece también un campo de hora.',
+  'goals.tutorial.constellation.deadline.moreDetail':
+    'Sin hora definida, el plazo vence a las 23:59 del día elegido.',
+  'goals.tutorial.constellation.priority.title': 'Elegí la prioridad de la meta',
+  'goals.tutorial.constellation.priority.body':
+    'Los tres botones (baja/media/alta) debajo del lienzo marcan qué tan urgente es esta meta.',
+  'goals.tutorial.constellation.reminderEnabled.title': 'Activá el recordatorio de la meta',
+  'goals.tutorial.constellation.reminderEnabled.body':
+    'Con un plazo definido, este toggle activa avisos para esta meta puntual.',
+  'goals.tutorial.constellation.reminderLead.title': 'Elegí cuándo empezar a avisar',
+  'goals.tutorial.constellation.reminderLead.body':
+    'Este selector reemplaza, solo para esta meta, el tiempo de anticipación global configurado en Ajustes.',
+  'goals.tutorial.constellation.reminderDormant.title': 'Avisos si la meta se duerme',
+  'goals.tutorial.constellation.reminderDormant.body':
+    'Este toggle te avisa aparte si esta meta lleva mucho tiempo sin progreso — "dormida" según el umbral de Ajustes.',
+
+  'goals.tutorial.folders.create.title': 'Creá una carpeta',
+  'goals.tutorial.folders.create.body':
+    'El ícono de carpeta con "+" crea una subcarpeta dentro de donde estés parado — le ponés nombre y confirmás.',
+  'goals.tutorial.folders.open.title': 'Entrá a una carpeta con click',
+  'goals.tutorial.folders.open.body':
+    'Click en cualquier carpeta del breadcrumb te lleva adentro — las metas de esa carpeta pasan a mostrarse en el cielo.',
+  'goals.tutorial.folders.manage.title': 'Renombrá, moví o borrá una carpeta',
+  'goals.tutorial.folders.manage.body':
+    'Los tres puntos junto a cada carpeta abren renombrar, mover o borrar.',
+  'goals.tutorial.folders.navigate.title': 'Volvé a la raíz con un click',
+  'goals.tutorial.folders.navigate.body':
+    'El primer ícono del breadcrumb siempre vuelve a la carpeta raíz, sin importar cuán hondo estés.',
   'goals.editor.selectionToolbarAria': 'Acciones por lote sobre pasos seleccionados',
   'goals.editor.selectionCount': '{n} seleccionados',
   'goals.editor.selectionToggleDone': 'Marcar/desmarcar',
@@ -1201,6 +1342,12 @@ export const es = {
   'books.reader.notesTitle': 'Notas',
   'books.reader.notesPlaceholder':
     'Sin notas todavía. Próximamente vas a poder anotar mientras leés.',
+  'books.tutorial.flow.essentials': 'Books: lo esencial',
+  'books.tutorial.flow.folders': 'Organizar en carpetas',
+  'books.tutorial.flow.chapterIndex': 'Editar el índice de capítulos',
+  'books.tutorial.flow.editorAdvanced': 'Formato del editor',
+  'books.tutorial.flow.collab': 'Comentarios y propuestas',
+  'books.tutorial.flow.tts': 'Lectura en voz alta',
   'books.tutorial.upload.title': 'Subís un libro arrastrándolo o con "Nuevo libro"',
   'books.tutorial.upload.body':
     'Arrastralo directo a la estantería, o probá el botón "Nuevo libro" de arriba. Aparece como lomo + portada en el estante actual.',
@@ -1210,8 +1357,15 @@ export const es = {
   'books.tutorial.density.title': 'Este toggle ajusta cuántos libros ves por fila',
   'books.tutorial.density.body':
     'Probalo: alterná entre vista normal y compacta para ver más o menos libros por fila sin scrollear tanto.',
+  'books.tutorial.density.moreDetail':
+    'Al lado también tenés el buscador (filtra por título al tipear) y el toggle grid↔lista, que cambia el estante por una tabla compacta.',
+  'books.tutorial.catalog.title': 'Este volumen abre el catálogo completo',
+  'books.tutorial.catalog.body':
+    'A diferencia del estante (que sólo muestra la carpeta actual), el catálogo lista todos tus libros de todos los estantes para saltar a cualquiera sin navegar carpeta por carpeta.',
   'books.tutorial.open.title': 'Click en el lomo abre el lector',
   'books.tutorial.open.body': 'Cualquier libro del estante se abre con un flip 3D real al tocarlo.',
+  'books.tutorial.open.moreDetail':
+    'Ya adentro, el botón de flip (↻) da vuelta la tapa y muestra sinopsis + biografía del autor; si dejaste un marcador puesto, una cinta al costado te lleva directo ahí. El menú "⋯" de la barra superior elimina, duplica o exporta el libro a Markdown.',
   'books.tutorial.readerPaging.title': 'PageDown pasa página',
   'books.tutorial.readerPaging.body':
     'Probalo: PageDown avanza, PageUp retrocede — sin tocar el mouse.',
@@ -1223,6 +1377,73 @@ export const es = {
   'books.tutorial.readerToc.title': 'Este ícono abre el índice de capítulos',
   'books.tutorial.readerToc.body':
     "Probalo: también se abre con Ctrl+' desde cualquier lado del lector.",
+  'books.tutorial.folders.create.title': 'Este botón crea una subcarpeta',
+  'books.tutorial.folders.create.body':
+    'Creá una carpeta para agrupar libros por tema. Arrastrá un libro para moverlo entre carpetas, y hacé click en el breadcrumb para volver a una carpeta anterior.',
+  'books.tutorial.folders.drop.title': 'Soltá un libro sobre una subcarpeta para moverlo ahí',
+  'books.tutorial.folders.drop.body':
+    'Arrastrá cualquier libro del estante y soltalo sobre una de las carpetas hijas del breadcrumb — se mueve directo, sin tener que abrir esa carpeta primero.',
+  'books.tutorial.folders.manage.title': 'El ⋮ de cada carpeta la renombra, mueve o elimina',
+  'books.tutorial.folders.manage.body':
+    'Abrí este menú sobre cualquier subcarpeta para renombrarla, moverla dentro de otra, o eliminarla.',
+  'books.tutorial.folders.navigate.title': 'El breadcrumb te devuelve a cualquier nivel',
+  'books.tutorial.folders.navigate.body':
+    'Click en "Raíz" o en cualquier carpeta intermedia del breadcrumb salta directo a ese nivel, sin ir carpeta por carpeta.',
+  'books.tutorial.chapterIndex.add.title': 'Este botón agrega un capítulo nuevo',
+  'books.tutorial.chapterIndex.add.body':
+    'Suma un capítulo en blanco al final del índice y te lleva directo a escribirlo.',
+  'books.tutorial.chapterIndex.reorder.title': 'Las flechas ↑↓ reordenan capítulos',
+  'books.tutorial.chapterIndex.reorder.body':
+    'Subí o bajá un capítulo en el orden del libro — cambia dónde aparece en el índice y en la navegación del lector.',
+  'books.tutorial.chapterIndex.delete.title': 'La ✕ elimina un capítulo',
+  'books.tutorial.chapterIndex.delete.body':
+    'Pide confirmación antes de borrar — el capítulo completo, con todo su texto, se pierde.',
+  'books.tutorial.editorAdvanced.format.title': 'Negrita e itálica dan énfasis al texto',
+  'books.tutorial.editorAdvanced.format.body': 'Seleccioná texto y probá el botón de negrita.',
+  'books.tutorial.editorAdvanced.format.moreDetail':
+    'Al lado, el botón de itálica hace lo mismo con cursiva.',
+  'books.tutorial.editorAdvanced.heading.title': 'Los headings estructuran el capítulo',
+  'books.tutorial.editorAdvanced.heading.body': 'Probá convertir una línea en heading de nivel 2.',
+  'books.tutorial.editorAdvanced.heading.moreDetail':
+    'Los botones vecinos dan heading de nivel 3 y 4, para subsecciones más chicas.',
+  'books.tutorial.editorAdvanced.citation.title': 'Este botón marca una cita',
+  'books.tutorial.editorAdvanced.citation.body':
+    'Da formato de bloque de cita al párrafo seleccionado.',
+  'books.tutorial.editorAdvanced.list.title': 'Este botón arma una lista con viñetas',
+  'books.tutorial.editorAdvanced.list.body': 'Convierte la selección en una lista con viñetas.',
+  'books.tutorial.editorAdvanced.list.moreDetail':
+    'El botón de al lado hace lo mismo pero numerada.',
+  'books.tutorial.editorAdvanced.sceneBreak.title': 'Este botón inserta un separador de escena',
+  'books.tutorial.editorAdvanced.sceneBreak.body':
+    'Marca un corte visual entre escenas dentro del mismo capítulo, sin crear un capítulo nuevo.',
+  'books.tutorial.editorAdvanced.image.title': 'Este botón inserta una imagen de tu galería',
+  'books.tutorial.editorAdvanced.image.body':
+    'Abre el selector de imágenes ya subidas a tu galería para insertarlas en el texto.',
+  'books.tutorial.editorAdvanced.typewriter.title': 'El modo typewriter centra la línea activa',
+  'books.tutorial.editorAdvanced.typewriter.body':
+    'Mantiene la línea donde estás escribiendo siempre a media pantalla, como una máquina de escribir.',
+  'books.tutorial.editorAdvanced.stats.title': 'Este ícono abre las estadísticas de escritura',
+  'books.tutorial.editorAdvanced.stats.body':
+    'Muestra palabras y tiempo de lectura del capítulo, del libro entero, y tu total acumulado.',
+  'books.tutorial.collab.comment.title': 'Alt+C comenta la selección',
+  'books.tutorial.collab.comment.body':
+    'Seleccioná texto y probá Alt+C — deja un comentario anclado a esa selección, sin modificar el texto.',
+  'books.tutorial.collab.propose.title': 'Alt+P propone un cambio',
+  'books.tutorial.collab.propose.body':
+    'Seleccioná texto y probá Alt+P — abre un borrador de reemplazo que podés aceptar o descartar después, a diferencia del comentario que no toca el texto.',
+  'books.tutorial.tts.toggle.title': 'Ctrl+Alt+R lee el capítulo en voz alta',
+  'books.tutorial.tts.toggle.body':
+    'Arranca la lectura en voz alta desde donde estás. El mismo atajo pausa y reanuda.',
+  'books.tutorial.tts.controls.title': 'Estos controles ajustan la lectura en voz alta',
+  'books.tutorial.tts.controls.body': 'Abrí el panel de configuración de la lectura.',
+  'books.tutorial.tts.controls.moreDetail':
+    'Ahí elegís voz y velocidad; al lado, el botón ✕ corta la lectura por completo.',
+  'books.tutorial.tts.bookmark.title': 'Pasá el mouse sobre un párrafo para marcarlo',
+  'books.tutorial.tts.bookmark.body':
+    'Aparece un pin — marcalo como tu página guardada. La próxima vez que abras el libro, la cinta del marcador te lleva directo ahí.',
+  'books.tutorial.tts.export.title': 'Esta flecha exporta el capítulo a Markdown',
+  'books.tutorial.tts.export.body':
+    'Descarga el capítulo actual como archivo .md, con las imágenes resueltas.',
   'books.shortcuts.prevChapter': 'Libros · Capítulo anterior',
   'books.shortcuts.nextChapter': 'Libros · Capítulo siguiente',
   'books.shortcuts.toggleIndex': 'Libros · Mostrar/ocultar índice de capítulos',
@@ -1797,6 +2018,47 @@ export const es = {
   'settings.tutorial.instant.title': 'Tema y Sync aplican al toque, sin botón',
   'settings.tutorial.instant.body':
     'A diferencia de General, en Tema el color/tono/acento cambian apenas los tocás — no hay nada que confirmar. Versionado, Variantes, Objetivos y Autor sí tienen su propio botón "Aplicar", como General.',
+  'settings.tutorial.flow.navigation': 'Settings: navegación',
+  'settings.tutorial.general.title': 'General: la tab que ves al entrar',
+  'settings.tutorial.general.body':
+    'Zona horaria (usada por fechas y recordatorios) y el botón de reindexar la búsqueda si notás resultados desactualizados.',
+
+  'settings.tutorial.flow.remoteVersioning': 'Remoto y versionado',
+  'settings.tutorial.remoteVersioning.remote.title': 'Remoto: backup a un repo Git privado',
+  'settings.tutorial.remoteVersioning.remote.body':
+    'Click en la tab "Remoto" — ahí configurás URL y token de un repo Git privado (GitHub u otro) para respaldar tu workspace fuera del disco local.',
+  'settings.tutorial.remoteVersioning.remote.moreDetail':
+    '"Guardar" valida y guarda la config, "Push" sube el estado actual, "Limpiar" borra la config guardada. El toggle "compactar con push" combina la compactación de historial con cada push, y el link "Ir a Sync" te lleva al panel dedicado de sincronización.',
+  'settings.tutorial.remoteVersioning.versioning.title':
+    'Versionado: cada cuánto se guarda tu historial',
+  'settings.tutorial.remoteVersioning.versioning.body':
+    'Click en la tab "Versionado" — ahí controlás cada cuántos minutos se hace un commit automático de tus cambios, y cuándo se compacta el historial.',
+  'settings.tutorial.remoteVersioning.versioning.moreDetail':
+    'El umbral de compactación es la cantidad de commits acumulados antes de que el historial se comprima automáticamente — subilo si querés conservar más granularidad, bajalo si el repo local está creciendo demasiado.',
+  'settings.tutorial.remoteVersioning.variants.title': 'Variantes: cuándo se marcan inactivas',
+  'settings.tutorial.remoteVersioning.variants.body':
+    'Click en la tab "Variantes" — ahí definís después de cuántos días sin edición una variante se considera "dormida" en su vista dedicada.',
+
+  'settings.tutorial.flow.remindersGoals': 'Recordatorios, objetivos y autor',
+  'settings.tutorial.remindersGoals.reminders.title': 'Recordatorios: cuánto antes te avisan',
+  'settings.tutorial.remindersGoals.reminders.body':
+    'Click en la tab "Recordatorios" — elegís cuántos minutos antes de la hora programada querés que aparezca el aviso.',
+  'settings.tutorial.remindersGoals.goals.title': 'Objetivos: cuándo se marcan dormidos',
+  'settings.tutorial.remindersGoals.goals.body':
+    'Click en la tab "Objetivos" — mismo patrón que Variantes: después de cuántos días sin actividad un objetivo pasa a "dormido".',
+  'settings.tutorial.remindersGoals.author.title': 'Autor: tu bio para exports y firmas',
+  'settings.tutorial.remindersGoals.author.body':
+    'Click en la tab "Autor" — un texto libre que se usa como firma en exports y donde la app necesite identificarte como autor.',
+
+  'settings.tutorial.flow.themeExport': 'Tema y export',
+  'settings.tutorial.themeExport.theme.title': 'Tema: colores custom, claro y oscuro',
+  'settings.tutorial.themeExport.theme.body':
+    'Click en la tab "Tema" — elegís claro/oscuro/automático y ajustás el color de fondo y de acento a tu gusto, con feedback de contraste en vivo.',
+  'settings.tutorial.themeExport.theme.moreDetail':
+    'El slider de tono y los botones de saturación ajustan el fondo; la grilla de swatches elige el color de acento. El indicador de contraste (AA/AAA) te avisa si la combinación es difícil de leer, sin bloquearte. "Restablecer" vuelve todo al tema por defecto.',
+  'settings.tutorial.themeExport.export.title': 'Export: snapshot ZIP de tu workspace',
+  'settings.tutorial.themeExport.export.body':
+    'Click en la tab "Exportar" — genera un ZIP descargable con tus datos, con opción de incluir todas las variantes o solo la rama activa, y de incluir los archivos adjuntos (imágenes, etc).',
   'settings.soon': 'Próximamente',
   'settings.section.general': 'General',
   'settings.section.versioning': 'Versionado',

@@ -10,6 +10,7 @@ import type { TutorialDefinition } from '@core/tutorials/tutorial.types';
 export const SETTINGS_TUTORIAL: TutorialDefinition = {
   id: 'settings',
   pageId: 'settings',
+  labelKey: 'settings.tutorial.flow.navigation',
   steps: [
     {
       anchorSelector: '[data-tutorial="settings-rail-icon"]',
@@ -21,6 +22,14 @@ export const SETTINGS_TUTORIAL: TutorialDefinition = {
       titleKey: 'settings.tutorial.nav.title',
       bodyKey: 'settings.tutorial.nav.body',
       action: { event: 'click', icon: 'caret-right' },
+    },
+    // why: General es la tab activa por default al entrar (readStoredSection()
+    //      cae a 'general'), así que su anchor ya existe sin necesitar click
+    //      previo — uso inmediato, tier básico (§8.10 roadmap).
+    {
+      anchorSelector: '[data-tutorial="settings-section-general"]',
+      titleKey: 'settings.tutorial.general.title',
+      bodyKey: 'settings.tutorial.general.body',
     },
     {
       anchorSelector: '[data-tutorial="settings-apply"]',

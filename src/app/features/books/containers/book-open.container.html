@@ -164,7 +164,12 @@
                 <header class="index-head">
                   <h3>{{ t('books.index.title') }}</h3>
                   @if (lock.editable()) {
-                    <button type="button" class="primary tiny" (click)="onAddChapter()">
+                    <button
+                      type="button"
+                      class="primary tiny"
+                      data-tutorial="books-index-add"
+                      (click)="onAddChapter()"
+                    >
                       + {{ t('books.chapters.new') }}
                     </button>
                   }
@@ -206,7 +211,12 @@
                 <header class="index-head">
                   <h3>{{ t('books.index.title') }}</h3>
                   @if (lock.editable()) {
-                    <button type="button" class="primary tiny" (click)="onAddChapter()">
+                    <button
+                      type="button"
+                      class="primary tiny"
+                      data-tutorial="books-index-add"
+                      (click)="onAddChapter()"
+                    >
                       + {{ t('books.chapters.new') }}
                     </button>
                   }

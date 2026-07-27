@@ -13,6 +13,7 @@
   @if (active(); as note) {
     @if (lock.showForeign()) {
       <mc-lock-banner
+        data-tutorial="notes-lock-banner"
         kind="foreign"
         [title]="t('notes.lock.foreign.title')"
         [message]="t('notes.lock.foreign.message')"
@@ -23,6 +24,7 @@
       />
     } @else if (lock.showEvicted()) {
       <mc-lock-banner
+        data-tutorial="notes-lock-banner"
         kind="evicted"
         [title]="t('notes.lock.evicted.title')"
         [message]="t('notes.lock.evicted.message')"

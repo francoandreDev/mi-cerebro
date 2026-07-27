@@ -17,6 +17,7 @@
       <button
         type="button"
         class="list-toggle"
+        data-tutorial="books-editor-stats"
         [class.active]="statsOpen()"
         [attr.aria-pressed]="statsOpen()"
         [attr.aria-label]="t('stats.open')"
@@ -36,6 +37,7 @@
         <button
           type="button"
           class="list-toggle"
+          data-tutorial="books-editor-insert-image"
           [attr.aria-label]="t('editor.insertImage')"
           [title]="t('editor.insertImage')"
           (click)="openImagePicker()"
@@ -47,6 +49,7 @@
         <button
           type="button"
           class="list-toggle"
+          data-tutorial="books-editor-format"
           [class.active]="boldActive()"
           [attr.aria-pressed]="boldActive()"
           [attr.aria-label]="t('editor.mark.bold')"
@@ -69,6 +72,7 @@
         <button
           type="button"
           class="list-toggle"
+          data-tutorial="books-editor-heading"
           [class.active]="headingLevelActive(2)"
           [attr.aria-pressed]="headingLevelActive(2)"
           [attr.aria-label]="t('editor.heading.level2')"
@@ -102,6 +106,7 @@
         <button
           type="button"
           class="list-toggle"
+          data-tutorial="books-editor-citation"
           [class.active]="citationActive()"
           [attr.aria-pressed]="citationActive()"
           [attr.aria-label]="t('editor.citation')"
@@ -113,6 +118,7 @@
         <button
           type="button"
           class="list-toggle"
+          data-tutorial="books-editor-list"
           [class.active]="bulletListActive()"
           [attr.aria-pressed]="bulletListActive()"
           [attr.aria-label]="t('editor.list.bullet')"
@@ -135,6 +141,7 @@
         <button
           type="button"
           class="list-toggle"
+          data-tutorial="books-editor-scene-break"
           [attr.aria-label]="t('editor.sceneBreak')"
           [title]="t('editor.sceneBreak')"
           (click)="insertSceneBreak()"
@@ -144,6 +151,7 @@
         <button
           type="button"
           class="list-toggle"
+          data-tutorial="books-editor-comment"
           [disabled]="!hasCommentableSelection()"
           [attr.aria-label]="t('books.editor.comment')"
           [title]="
@@ -158,6 +166,7 @@
         <button
           type="button"
           class="list-toggle"
+          data-tutorial="books-editor-propose"
           [disabled]="!hasCommentableSelection()"
           [attr.aria-label]="t('books.editor.propose')"
           [title]="
@@ -172,6 +181,7 @@
         <button
           type="button"
           class="list-toggle"
+          data-tutorial="books-editor-typewriter"
           [class.active]="typewriterMode.active()"
           [attr.aria-pressed]="typewriterMode.active()"
           [attr.aria-label]="t('editor.typewriter.button')"
@@ -181,7 +191,11 @@
           <mc-icon name="target" />
         </button>
       }
-      <mc-tts-controls [state]="ttsState()" (action)="ttsAction.emit($event)" />
+      <mc-tts-controls
+        data-tutorial="books-editor-tts"
+        [state]="ttsState()"
+        (action)="ttsAction.emit($event)"
+      />
       <button
         type="button"
         class="focus-toggle"

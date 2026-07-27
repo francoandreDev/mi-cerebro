@@ -13,6 +13,7 @@ import type { TutorialDefinition } from '@core/tutorials/tutorial.types';
 export const BOOKS_TUTORIAL: TutorialDefinition = {
   id: 'books',
   pageId: 'books',
+  labelKey: 'books.tutorial.flow.essentials',
   steps: [
     {
       anchorSelector: '[data-tutorial="books-shelf"]',
@@ -31,12 +32,23 @@ export const BOOKS_TUTORIAL: TutorialDefinition = {
       titleKey: 'books.tutorial.density.title',
       bodyKey: 'books.tutorial.density.body',
       action: { event: 'click', icon: 'rows' },
+      moreDetail: { bodyKey: 'books.tutorial.density.moreDetail' },
+    },
+    // why: mención de existencia — el catálogo/índice global es demasiado
+    //      versátil (buscar por cualquier estante) para tener un gesto
+    //      único a practicar, así que se menciona sin `action` (§8.85 2b).
+    {
+      anchorSelector: '[data-tutorial="books-catalog"]',
+      titleKey: 'books.tutorial.catalog.title',
+      bodyKey: 'books.tutorial.catalog.body',
+      tier: 'avanzado',
     },
     {
       anchorSelector: '[data-tutorial="books-shelf"]',
       titleKey: 'books.tutorial.open.title',
       bodyKey: 'books.tutorial.open.body',
       action: { event: 'click', icon: 'arrow-square-out' },
+      moreDetail: { bodyKey: 'books.tutorial.open.moreDetail' },
     },
     {
       anchorSelector: '[data-tutorial="books-reader-pane"]',

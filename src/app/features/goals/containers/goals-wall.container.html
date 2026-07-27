@@ -40,7 +40,7 @@
         <mc-icon name="arrow-right" />
       </button>
     </form>
-    <div class="wall-controls">
+    <div class="wall-controls" data-tutorial="goals-filters">
       <div class="search">
         <mc-icon name="magnifying-glass" class="search-icon" aria-hidden="true" />
         <input
@@ -65,6 +65,7 @@
       <button
         type="button"
         class="toggle"
+        data-tutorial="goals-hide-completed"
         [class.active]="hideCompleted()"
         [attr.aria-pressed]="hideCompleted()"
         (click)="onToggleHideCompleted()"

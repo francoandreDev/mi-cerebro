@@ -47,6 +47,7 @@ const HIGHLIGHT_SWATCH_LABELS: Record<string, TranslationKey> = {
         <button
           type="button"
           class="ghost"
+          data-tutorial="editor-toolbar-insert-image"
           (click)="openPicker.emit()"
           [attr.aria-label]="t('editor.insertImage')"
         >
@@ -57,6 +58,7 @@ const HIGHLIGHT_SWATCH_LABELS: Record<string, TranslationKey> = {
         <button
           type="button"
           class="ghost"
+          data-tutorial="editor-toolbar-format"
           [attr.aria-pressed]="boldActive()"
           [attr.aria-label]="t('editor.mark.bold')"
           (click)="toggleBold.emit()"
@@ -129,6 +131,7 @@ const HIGHLIGHT_SWATCH_LABELS: Record<string, TranslationKey> = {
         <button
           type="button"
           class="ghost"
+          data-tutorial="editor-toolbar-structure"
           [attr.aria-label]="t('editor.sceneBreak')"
           (click)="insertSceneBreak.emit()"
         >
@@ -199,6 +202,7 @@ const HIGHLIGHT_SWATCH_LABELS: Record<string, TranslationKey> = {
           </button>
           <button
             type="button"
+            data-tutorial="editor-toolbar-view-combined"
             [class.active]="view() === 'combined'"
             [attr.aria-pressed]="view() === 'combined'"
             [attr.aria-label]="t('editor.view.combined.aria')"
@@ -212,6 +216,7 @@ const HIGHLIGHT_SWATCH_LABELS: Record<string, TranslationKey> = {
         <button
           type="button"
           class="ghost"
+          data-tutorial="editor-toolbar-comments-index"
           (click)="toggleCommentsIndex.emit()"
           [attr.aria-pressed]="commentsIndexOpen()"
           [attr.aria-label]="t('editor.index.comments.aria')"
@@ -221,6 +226,7 @@ const HIGHLIGHT_SWATCH_LABELS: Record<string, TranslationKey> = {
         <button
           type="button"
           class="ghost"
+          data-tutorial="editor-toolbar-drafts-index"
           (click)="toggleDraftsIndex.emit()"
           [attr.aria-pressed]="draftsIndexOpen()"
           [attr.aria-label]="t('editor.index.drafts.aria')"

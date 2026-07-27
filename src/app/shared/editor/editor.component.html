@@ -46,6 +46,7 @@
     class="editor-host"
     [class.draft-session]="draftSession.active()"
     data-testid="editor-host"
+    data-tutorial="editor-host"
   ></div>
   @if (bubble(); as b) {
     <mc-bubble-menu [position]="b" (propose)="triggerPropose()" (comment)="triggerComment()" />

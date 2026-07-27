@@ -36,6 +36,7 @@ import type { ChapterSummary } from '../models/book.types';
         <button
           type="button"
           class="ghost"
+          data-tutorial="books-index-reorder"
           [disabled]="first()"
           (click)="moveUp.emit()"
           [attr.aria-label]="t('books.chapters.moveUp')"
@@ -56,6 +57,7 @@ import type { ChapterSummary } from '../models/book.types';
         <button
           type="button"
           class="ghost"
+          data-tutorial="books-index-delete"
           (click)="remove.emit()"
           [attr.aria-label]="t('books.chapters.delete')"
           [title]="t('books.chapters.delete')"

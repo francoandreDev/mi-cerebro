@@ -32,6 +32,9 @@ import {
   reportContrast,
 } from '@core/theme/theme-palette';
 import { ThemeService } from '@core/theme/theme.service';
+import { registerSettingsRemindersGoalsTutorial } from './settings-reminders-goals.tutorial';
+import { registerSettingsRemoteVersioningTutorial } from './settings-remote-versioning.tutorial';
+import { registerSettingsThemeExportTutorial } from './settings-theme-export.tutorial';
 import { registerSettingsTutorial } from './settings.tutorial';
 import { isValidRemoteUrl } from '@core/versioning/remote.config.io';
 import { RemoteService } from '@core/versioning/remote.service';
@@ -140,6 +143,9 @@ export class SettingsContainer {
 
   constructor() {
     registerSettingsTutorial();
+    registerSettingsRemoteVersioningTutorial();
+    registerSettingsRemindersGoalsTutorial();
+    registerSettingsThemeExportTutorial();
     // why: keep the input synced when the timezone changes from elsewhere
     //      (workspace file load, future cross-tab sync).
     effect(() => this.draft.set(this.state().timezone));

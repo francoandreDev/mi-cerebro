@@ -14,7 +14,11 @@
   [style.top.%]="anchorY()"
 >
   <div class="head">
-    <label class="done-toggle" [attr.aria-label]="t('goals.completed.label')">
+    <label
+      class="done-toggle"
+      data-tutorial="goal-peek-completed"
+      [attr.aria-label]="t('goals.completed.label')"
+    >
       <input type="checkbox" [checked]="summary().completed" (change)="onCompletedToggle($event)" />
       <mc-icon
         [name]="summary().completed ? 'check-square' : 'target'"
@@ -37,6 +41,7 @@
       <button
         type="button"
         class="title-button"
+        data-tutorial="goal-peek-rename"
         [class.done]="summary().completed"
         (click)="onTitleEditStart()"
       >
@@ -58,6 +63,7 @@
     <button
       type="button"
       class="deadline-chip"
+      data-tutorial="goal-peek-deadline"
       [attr.aria-label]="t('goals.editor.deadlineAria')"
       (click)="onDeadlineClick()"
     >
@@ -103,7 +109,12 @@
     </div>
   </div>
 
-  <div class="priority-stars" role="radiogroup" [attr.aria-label]="t('goals.editor.priorityAria')">
+  <div
+    class="priority-stars"
+    data-tutorial="goal-peek-priority"
+    role="radiogroup"
+    [attr.aria-label]="t('goals.editor.priorityAria')"
+  >
     @for (p of priorities; track p) {
       <button
         type="button"
@@ -121,7 +132,12 @@
   </div>
 
   <div class="actions">
-    <button type="button" class="open-map" (click)="onOpenMapClick($event)">
+    <button
+      type="button"
+      class="open-map"
+      data-tutorial="goal-peek-openmap"
+      (click)="onOpenMapClick($event)"
+    >
       <mc-icon name="sparkle" />
       <span>{{ t('goals.wall.peekOpenMap') }}</span>
       <mc-icon name="arrow-right" />
@@ -129,6 +145,7 @@
     <button
       type="button"
       class="delete-btn mc-hover-wiggle"
+      data-tutorial="goal-peek-delete"
       [attr.aria-label]="t('goals.delete')"
       (click)="onDeleteClick($event)"
     >

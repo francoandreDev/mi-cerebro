@@ -42,6 +42,9 @@ import {
 } from '../services/book-export.util';
 import { BooksService } from '../services/books.service';
 import { registerReaderShortcuts } from './book-reader.shortcuts';
+import { registerBooksCollabTutorial } from './books-collab.tutorial';
+import { registerBooksEditorAdvancedTutorial } from './books-editor-advanced.tutorial';
+import { registerBooksTtsTutorial } from './books-tts.tutorial';
 
 @Component({
   selector: 'mc-book-reader',
@@ -115,6 +118,9 @@ export class BookReaderContainer {
   });
 
   constructor() {
+    registerBooksEditorAdvancedTutorial();
+    registerBooksCollabTutorial();
+    registerBooksTtsTutorial();
     registerReaderShortcuts({
       prevChapter: () => this.gotoSibling('prev'),
       nextChapter: () => this.gotoSibling('next'),

@@ -23,6 +23,7 @@ import { folderCrumbs, folderLeafName, immediateChildFolders } from './folder-ch
       <button
         type="button"
         class="crumb"
+        data-tutorial="folder-breadcrumb-root"
         [class.current]="currentPath() === ''"
         (click)="navigate.emit('')"
       >
@@ -43,6 +44,7 @@ import { folderCrumbs, folderLeafName, immediateChildFolders } from './folder-ch
       <button
         type="button"
         class="add-subfolder mc-hover-wiggle"
+        data-tutorial="folder-breadcrumb-add"
         [attr.aria-label]="t('folders.addSubfolder')"
         (click)="createSubfolder.emit()"
       >
@@ -55,6 +57,7 @@ import { folderCrumbs, folderLeafName, immediateChildFolders } from './folder-ch
           <div
             class="child"
             role="listitem"
+            data-tutorial="folder-breadcrumb-child"
             [class.drag-over]="dragOverChild() === child"
             (dragover)="onChildDragOver(child, $event)"
             (dragleave)="onChildDragLeave(child)"
@@ -67,6 +70,7 @@ import { folderCrumbs, folderLeafName, immediateChildFolders } from './folder-ch
             <button
               type="button"
               class="child-manage"
+              data-tutorial="folder-breadcrumb-child-manage"
               [attr.aria-label]="t('folders.actions')"
               (click)="manageFolder.emit(child)"
             >

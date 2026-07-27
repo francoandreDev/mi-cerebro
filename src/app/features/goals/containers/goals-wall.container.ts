@@ -25,6 +25,7 @@ import { GoalPeekOverlayComponent } from '../components/goal-peek-overlay.compon
 import type { GoalSummary } from '../models/goal.types';
 import { GoalsService } from '../services/goals.service';
 import { GoalPeekController } from './goal-peek.controller';
+import { registerGoalsFoldersTutorial } from './goals-folders.tutorial';
 import { registerGoalsTutorial } from './goals.tutorial';
 import {
   buildConstellationLinks,
@@ -60,6 +61,7 @@ export class GoalsWallContainer {
 
   constructor() {
     registerGoalsTutorial();
+    registerGoalsFoldersTutorial();
   }
 
   protected readonly tags = this.tagsService.tags;

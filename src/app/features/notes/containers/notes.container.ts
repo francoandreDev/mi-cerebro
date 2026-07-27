@@ -19,6 +19,8 @@ import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
 import { NoteEditorPaneComponent, type SaveStatus } from '../components/note-editor-pane.component';
 import { NOTE_KIND, type Note } from '../models/note.types';
 import { NotesService } from '../services/notes.service';
+import { registerNotesDraftsTutorial } from './notes-drafts.tutorial';
+import { registerNotesEditorAdvancedTutorial } from './notes-editor-advanced.tutorial';
 
 @Component({
   selector: 'mc-notes',
@@ -46,6 +48,8 @@ export class NotesContainer {
   protected readonly confirm = new ConfirmController();
 
   constructor() {
+    registerNotesEditorAdvancedTutorial();
+    registerNotesDraftsTutorial();
     effect(() => {
       const raw = this.id();
       const wanted = raw ? extractEntityId(raw) : undefined;

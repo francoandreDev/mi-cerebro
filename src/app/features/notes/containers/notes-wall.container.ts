@@ -24,6 +24,7 @@ import { NoteSlipComponent } from '../components/note-slip.component';
 import { NotesFilterBarComponent } from '../components/notes-filter-bar.component';
 import type { NoteSummary } from '../models/note.types';
 import { NotesService } from '../services/notes.service';
+import { registerNotesFoldersTutorial } from './notes-folders.tutorial';
 import { registerNotesTutorial } from './notes.tutorial';
 
 const norm = (s: string): string => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
@@ -56,6 +57,7 @@ export class NotesWallContainer {
 
   constructor() {
     registerNotesTutorial();
+    registerNotesFoldersTutorial();
   }
 
   protected readonly tags = this.tagsService.tags;

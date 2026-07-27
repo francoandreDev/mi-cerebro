@@ -23,6 +23,7 @@ import type { TutorialDefinition } from '@core/tutorials/tutorial.types';
 export const GOALS_TUTORIAL: TutorialDefinition = {
   id: 'goals',
   pageId: 'goals',
+  labelKey: 'goals.tutorial.flow.essentials',
   steps: [
     {
       anchorSelector: '[data-tutorial="goals-create"]',
@@ -48,11 +49,80 @@ export const GOALS_TUTORIAL: TutorialDefinition = {
       bodyKey: 'goals.tutorial.mark.body',
       placement: 'bottom',
     },
+    // why: §8.87 item 1 — el primer click sobre cualquier estrella de una
+    //      meta abre el peek, gesto real que ningún step anterior cubría
+    //      (mark/openDetail sólo hablaban del 2do click y de shift+click).
+    //      skipIfMissing porque requiere al menos una meta con estrella.
+    {
+      anchorSelector: '[data-tutorial="goals-sky"]',
+      titleKey: 'goals.tutorial.openPeek.title',
+      bodyKey: 'goals.tutorial.openPeek.body',
+      placement: 'bottom',
+      action: { event: 'click', selector: '[data-tutorial="goals-sky"] .star', icon: 'sparkle' },
+      skipIfMissing: true,
+    },
+    {
+      anchorSelector: '[data-tutorial="goal-peek-rename"]',
+      titleKey: 'goals.tutorial.peekRename.title',
+      bodyKey: 'goals.tutorial.peekRename.body',
+      action: { event: 'click', icon: 'pencil-simple' },
+      skipIfMissing: true,
+    },
+    {
+      anchorSelector: '[data-tutorial="goal-peek-completed"]',
+      titleKey: 'goals.tutorial.peekCompleted.title',
+      bodyKey: 'goals.tutorial.peekCompleted.body',
+      action: { event: 'click', icon: 'check' },
+      skipIfMissing: true,
+    },
+    {
+      anchorSelector: '[data-tutorial="goal-peek-deadline"]',
+      titleKey: 'goals.tutorial.peekDeadline.title',
+      bodyKey: 'goals.tutorial.peekDeadline.body',
+      action: { event: 'click', icon: 'calendar-blank' },
+      skipIfMissing: true,
+      moreDetail: { bodyKey: 'goals.tutorial.peekDeadline.moreDetail' },
+    },
+    {
+      anchorSelector: '[data-tutorial="goal-peek-priority"]',
+      titleKey: 'goals.tutorial.peekPriority.title',
+      bodyKey: 'goals.tutorial.peekPriority.body',
+      action: { event: 'click', selector: '[data-tutorial="goal-peek-priority"] .prio-btn' },
+      skipIfMissing: true,
+    },
+    {
+      anchorSelector: '[data-tutorial="goal-peek-delete"]',
+      titleKey: 'goals.tutorial.peekDelete.title',
+      bodyKey: 'goals.tutorial.peekDelete.body',
+      action: { event: 'click', icon: 'trash' },
+      skipIfMissing: true,
+      moreDetail: { bodyKey: 'goals.tutorial.peekDelete.moreDetail' },
+    },
     {
       anchorSelector: '[data-tutorial="goals-sky"]',
       titleKey: 'goals.tutorial.openDetail.title',
       bodyKey: 'goals.tutorial.openDetail.body',
       placement: 'bottom',
+      // why: §8.87 item 1 — este step ya describía el gesto real (shift+click
+      //      navega directo al editor completo, distinto de abrir el peek);
+      //      lo único que le faltaba era el `action` para practicarlo.
+      action: {
+        event: 'click',
+        selector: '[data-tutorial="goals-sky"] .star',
+        shiftKey: true,
+        icon: 'arrow-right',
+      },
+      skipIfMissing: true,
+    },
+    // why: §8.87 item 1 — búsqueda y tags son "mención de existencia" (§8.85
+    //      2b: demasiadas combinaciones válidas para un único gesto a
+    //      practicar), sólo "ocultar completadas" es un click concreto.
+    {
+      anchorSelector: '[data-tutorial="goals-filters"]',
+      titleKey: 'goals.tutorial.filters.title',
+      bodyKey: 'goals.tutorial.filters.body',
+      action: { event: 'click', selector: '[data-tutorial="goals-hide-completed"]', icon: 'eye' },
+      moreDetail: { bodyKey: 'goals.tutorial.filters.moreDetail' },
     },
     {
       anchorSelector: '[data-tutorial="goals-sky"]',

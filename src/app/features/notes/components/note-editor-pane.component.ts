@@ -46,7 +46,7 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
           </button>
         }
       </header>
-      <div class="schedule-row">
+      <div class="schedule-row" data-tutorial="notes-schedule">
         <mc-icon [name]="note().scheduledFor ? 'calendar-check' : 'calendar-blank'" />
         <input
           type="date"

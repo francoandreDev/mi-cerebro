@@ -1,5 +1,6 @@
 <div
   class="selection-toolbar"
+  data-tutorial="goal-selection-toolbar"
   role="toolbar"
   [attr.aria-label]="t('goals.editor.selectionToolbarAria')"
 >
@@ -11,6 +12,7 @@
     <button
       type="button"
       class="sel-btn"
+      data-tutorial="goal-selection-toggle-done"
       [attr.aria-label]="t('goals.editor.selectionToggleDone')"
       (click)="toggleDone.emit()"
     >

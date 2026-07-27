@@ -428,7 +428,7 @@ patrón try/catch sobre `localStorage`, mismo molde que `dashboard-resurface-sto
    `PROJECT_FLOW_TUTORIAL`/`DAILY_FLOW_TUTORIAL` (`core/tutorials/home-flows.tutorial.ts`, ids
    `'project-flow'`/`'daily-flow'` — confirmar ids exactos al implementar), cero señal nueva.
 
-### 8.8 — Notes: cobertura completa, multi-flujo (re-scoped por 8.85)
+### 8.8 — Notes: cobertura completa, multi-flujo (re-scoped por 8.85) — _Cerrado._
 
 _Prereq: 8.1 (usa `tier`), 8.18 (usa `pageId`/picker)._
 
@@ -451,7 +451,36 @@ vez de engordar el flujo único actual:
    escritura). El banner de lock por edición concurrente (§4.16) va acá como step `tier: 'avanzado'`
    (es informativo, no un gesto que se practique).
 
-Ver también 8.5 (empty state de esta misma página, mismo archivo de trabajo).
+Ver también 8.5 (empty state de esta misma página, mismo archivo de trabajo — ya estaba resuelto:
+`notes.container.html` ya tenía un botón real de "Nueva nota" en el empty state al momento de
+implementar esto, sin cambios necesarios).
+
+**Deviaciones al implementar:**
+
+- **Sin `route: '/notes/:id'` en `notes-editor-advanced`/`notes-drafts`.** Un `TutorialStep.route`
+  se navega literal con `router.navigateByUrl(step.route)` — `'/notes/:id'` no es una ruta real
+  (no hay id fijo para poner ahí), así que estos dos flujos se registran directo en
+  `NotesContainer` (montado sólo cuando hay una nota abierta) sin `route`, igual que
+  `books-editor-advanced`/`books-collab`/`books-tts` (que tampoco lo llevan pese a vivir en
+  `/books/:id`).
+- **`notes-folders` sin gesto de arrastrar-y-soltar.** A diferencia de Books, `notes-wall.container.html`
+  no cablea `(childDragOver)`/`(childDrop)` de `mc-folder-breadcrumb` — Notas no tiene forma de
+  soltar una nota sobre una subcarpeta. Ese step se reemplaza por "abrir una carpeta con click"; el
+  step de gestionar (⋮) cubre mover/renombrar/eliminar vía diálogo.
+- **Step de scheduling con `skipIfMissing`, sin `route`.** Vive físicamente en `/notes/:id`
+  (`notes-schedule` en `note-editor-pane.component.ts`), pero `notes-folders` se registra en el
+  muro (`/notes`) sin id fijo para navegar. Queda `tier: 'avanzado'` + `skipIfMissing: true`: si se
+  corre el flujo sin una nota abierta, ese último step se salta solo en vez de romper.
+- **`notes-drafts` sin TTS ni bookmarks — el nombre dropea "y voz".** Auditado: `TtsService` sólo lo
+  consume `book-reader.container.ts`, y el input `bookmarkable` de `mc-editor` es opt-in (sólo
+  seteado por Books) — Notas no tiene ninguna de las dos funciones. Labelkey quedó
+  `notes.tutorial.flow.drafts` = "Comentarios y borradores" en vez de "Comentarios, borradores y
+  voz", para no prometer una función inexistente.
+- **Anchors del toolbar compartido (`editor-toolbar-format`/`-structure`/`-insert-image`/
+  `-view-combined`/`-comments-index`/`-drafts-index`) y `editor-host` se agregaron a
+  `shared/editor/editor-toolbar.component.ts`/`editor.component.html` sin prefijo `notes-`** —
+  son genéricos porque cualquier feature que use `mc-editor` los hereda (a diferencia de Books, que
+  tiene su propio toolbar y no toca este archivo compartido).
 
 ### 8.9 — Tasks: cobertura completa, multi-flujo (re-scoped por 8.85)
 
@@ -470,9 +499,20 @@ gestos únicos sobre anchors ya cubiertos → se quedan dentro del flujo existen
 3. **`tasks-editor` — "Editor de tarea completo"** (nuevo, manual, `route: '/tasks/:id'`):
    recordatorios, tags, foco, borrar.
 
-### 8.10 — Settings: cobertura completa, multi-flujo (re-scoped por 8.85)
+### 8.10 — Settings: cobertura completa, multi-flujo (re-scoped por 8.85) — _Cerrado._
 
 _Prereq: 8.1, 8.18._
+
+Implementado tal cual el plan: 4 flujos de contenido + General absorbido como step nuevo en
+`settings` (existente). Ningún grupo resultó lo bastante profundo como para justificar partirse en
+más flujos — Tema (la tab más cargada, con override, hue/sat/acento y contraste) se resolvió con
+`moreDetail` sobre un único step, sin fragmentar. Un desvío de implementación (no de scope): dado
+que el contenido de cada tab solo existe en el DOM una vez esa tab está activa, anclar un step ahí
+directamente lo dejaría sujeto a `skipIfMissing` y el motor lo saltearía antes de mostrar la acción
+que activa la tab (ver `tutorial-overlay.component.ts#measure`) — así que cada step de tab ancla en
+el botón de la tab misma (`[data-tutorial="settings-tab-<id>"]`, agregado dinámicamente vía
+`[attr.data-tutorial]` en el `@for` del nav) con `action: { event: 'click' }`, y el contenido real
+de la tab se explica en `bodyKey`/`moreDetail` en vez de spotlightearse.
 
 9 tabs es el caso límite que 8.85 usó para estresar el diseño del picker: un flujo por tab daría
 9 entradas (10 con el de navegación), por encima del techo blando de ~5-6 antes de necesitar
@@ -764,7 +804,7 @@ subcarpeta desde el estante, gesto que Notes no tiene). Evita que 6 personas dis
 convención para quien escriba cada flujo `*-folders`, ya anotada en 8.8/8.12/8.14 y a repetir en
 8.87 (Tasks/Goals) y 8.90 (Books) de abajo.
 
-### 8.87 — Goals: cobertura completa, multi-flujo (nunca tuvo ítem propio)
+### 8.87 — Goals: cobertura completa, multi-flujo (nunca tuvo ítem propio) — _Cerrado._
 
 _Prereq: 8.1, 8.18. Corrige además el bug 8.2 (steps que describen un gesto inexistente en `/goals`)
 como parte del mismo trabajo, en vez de arreglarlo aislado — están en el mismo archivo._
@@ -783,6 +823,38 @@ también tiene gaps menores.
    multi-selección shift+click + toolbar de lote (el gesto real del bug 8.2, corregido acá con
    anchor y copy correctos), deadline+hora, prioridad, recordatorio (enabled/lead/dormant).
 3. **`goals-folders` — "Organizar en carpetas"** (nuevo, manual): mismo patrón que 8.86.
+
+**Implementado 2026-07-27, con desvíos respecto al texto de arriba:**
+
+- **Sin `route: '/goals/:id'`.** No hay un id fijo para deep-linkear un flujo manual iniciado desde
+  la wall. Resuelto igual que `books-tts`/`books-collab`/`books-editor-advanced` (registradas en
+  `BookReaderContainer`, montado sólo en `/books/:id/:chapterId`, sin `route`): `goals-constellation`
+  se registra desde `GoalsContainer` (`goals.container.ts`, montado sólo en `/goals/:id`), así que
+  sólo aparece en el picker "Guía de la página" una vez que el usuario ya está parado en una meta
+  concreta — `pageId: 'goals'` matchea `/goals` y `/goals/:id` por igual (`routePageId` sólo mira el
+  primer segmento), sin necesitar navegación explícita del engine.
+- **`openDetail` no cambió de gesto** (sigue siendo shift+click → navega directo al editor completo,
+  la corrección real del bug 8.2, ya aplicada 2026-07-25) — sólo ganó `action`. El peek overlay
+  (rename/completed/deadline/prioridad/delete/"abrir mapa") se cubrió con 6 steps nuevos propios
+  (`openPeek` + 5 controles), no metidos dentro de `openDetail`, porque el gatillo real del peek es
+  un click simple (sin shift) — un gesto distinto que ningún step anterior describía, y cramear los 6
+  controles en un solo step violaba §4.6.15b.
+- **`goals-folders` sigue el patrón de Notes, no el de Books**: verificado en `goals-wall.container.
+ts`/`.html` que las estrellas de la wall no son `draggable` y el container no cablea `(childDragOver)`/
+  `(childDrop)` hacia `<mc-folder-breadcrumb>` — no hay gesto de "soltar sobre una subcarpeta", así
+  que ese step es "abrir subcarpeta con click" en vez de drop.
+- Click derecho (`contextmenu`) no es un evento soportado por `TutorialStepAction` (sólo
+  click/submit/keydown/dragstart) — el step "renombrar (click derecho→popover)" queda descriptivo,
+  sin `action`, igual que cualquier otro gesto no detectable por el engine.
+- Anchors nuevos: `goal-constellation-canvas`, `goal-star`, `goal-star-popover-delete`,
+  `goal-selection-toolbar`, `goal-selection-toggle-done`, `goal-deadline-chip`, `goal-priority`,
+  `goal-reminder-enabled`, `goal-reminder-lead`, `goal-reminder-dormant` (en
+  `goal-constellation-editor.component.html`, `goal-selection-toolbar.component.html`,
+  `goal-editor-pane.component.html`), `goal-peek-rename`, `goal-peek-completed`, `goal-peek-deadline`,
+  `goal-peek-priority`, `goal-peek-delete`, `goal-peek-openmap` (`goal-peek-overlay.component.html`),
+  `goals-filters`, `goals-hide-completed` (`goals-wall.container.html`). Reusados sin cambios:
+  `folder-breadcrumb-add`/`-child`/`-child-manage`/`-root` (`shared/folder-breadcrumb/`).
+- `bun run typecheck` limpio.
 
 ### 8.88 — Calendar: multi-flujo, agenda semanal
 
@@ -818,9 +890,26 @@ teclado, y el menú de posponer/gestionar (`⋮` overflow) — ambas con 3+ gest
 3. **`reminders-snooze` — "Posponer y gestionar un recordatorio"** (nuevo, manual): snooze 1h/1d/
    lunes/finde, duplicar, eliminar desde el menú `⋮`.
 
-### 8.90 — Books: cobertura completa, la superficie más grande de la auditoría
+### 8.90 — Books: cobertura completa, la superficie más grande de la auditoría — _Cerrado._
 
 _Prereq: 8.1, 8.18._
+
+**Deviaciones al implementar:** (1) el índice de capítulos (agregar/reordenar/eliminar) vive en
+`book-open.container.ts` (la tapa abierta, `/books/:id`), no en `book-reader.container.ts` como
+suponía el guess inicial del ítem — `books-chapter-index` se registra ahí. (2)
+`books-editor-advanced`/`books-collab`/`books-tts` se registran sin `route` explícito: como
+`pageId: 'books'` ya agrupa las 3 sub-rutas (`routePageId` sólo mira el primer segmento) y el
+picker sólo lista flujos de contenedores actualmente montados (`TutorialService.tutorialsForPage`
+lee `definitionsSignal` en vivo), cada flujo nuevo aparece en el picker únicamente cuando su propia
+página está montada — mismo mecanismo implícito que ya usaba el flujo `books` existente para sus
+steps del lector (`skipIfMissing` + navegación real practicada), sin necesitar un `route` estático
+que de todos modos no podría resolver un id de libro concreto. (3) los anchors de crear/mover/
+gestionar subcarpeta se agregaron a `shared/folder-breadcrumb/` (componente reusado por varias
+features) con nombres genéricos (`folder-breadcrumb-*`) en vez de anchors por-feature — sólo hay
+una instancia montada por ruta a la vez, así que no hay colisión; se prioriza no duplicar el
+componente sobre el "selector cambia por feature" literal de §8.86. (4) el toggle de bookmark
+dentro del editor no tiene gesto único practicable (aparece al hover sobre cualquier párrafo) — va
+como mención de existencia sin `action`, igual que el catálogo global y el menú `⋯`.
 
 El lector de libros concentra casi tanto contenido sin cubrir como Notes+Settings juntos: toolbar
 de editor completa, TTS, índice de capítulos, y comentarios/propose son 4 zonas independientes.

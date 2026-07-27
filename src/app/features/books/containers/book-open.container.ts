@@ -33,6 +33,7 @@ import { ChapterIndexCardComponent } from '../components/chapter-index-card.comp
 import { BOOK_KIND, type Book, type ChapterSummary } from '../models/book.types';
 import { bookToMarkdown, buildImageResolver, markdownFilename } from '../services/book-export.util';
 import { BooksService } from '../services/books.service';
+import { registerBooksChapterIndexTutorial } from './books-chapter-index.tutorial';
 
 interface IndexPage {
   readonly kind: 'index';
@@ -146,6 +147,7 @@ export class BookOpenContainer {
   });
 
   constructor() {
+    registerBooksChapterIndexTutorial();
     effect(() => {
       const raw = this.id();
       const wanted = raw ? extractEntityId(raw) : undefined;
