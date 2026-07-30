@@ -10,6 +10,7 @@ import type { TutorialDefinition } from '@core/tutorials/tutorial.types';
 export const LISTS_TUTORIAL: TutorialDefinition = {
   id: 'lists',
   pageId: 'lists',
+  labelKey: 'lists.tutorial.flow.essentials',
   steps: [
     {
       anchorSelector: '[data-tutorial="lists-chalk-bar"]',

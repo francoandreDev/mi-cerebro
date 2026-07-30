@@ -23,6 +23,7 @@
         type="button"
         class="tool"
         role="radio"
+        data-tutorial="lists-chalk-tool-chalk"
         [attr.aria-checked]="tool() === 'chalk'"
         [class.sel]="tool() === 'chalk'"
         [title]="t('lists.chalk.tool.chalk')"
@@ -34,6 +35,7 @@
         type="button"
         class="tool"
         role="radio"
+        data-tutorial="lists-chalk-tool-eraser"
         [attr.aria-checked]="tool() === 'eraser'"
         [class.sel]="tool() === 'eraser'"
         [title]="t('lists.chalk.tool.eraser')"
@@ -43,7 +45,12 @@
       </button>
     </div>
 
-    <div class="group palette" role="radiogroup" [attr.aria-label]="t('lists.chalk.colorAria')">
+    <div
+      class="group palette"
+      data-tutorial="lists-chalk-palette"
+      role="radiogroup"
+      [attr.aria-label]="t('lists.chalk.colorAria')"
+    >
       @for (c of palette; track c.id) {
         <button
           type="button"
@@ -58,7 +65,12 @@
       }
     </div>
 
-    <div class="group sizes" role="radiogroup" [attr.aria-label]="t('lists.chalk.sizeAria')">
+    <div
+      class="group sizes"
+      data-tutorial="lists-chalk-sizes"
+      role="radiogroup"
+      [attr.aria-label]="t('lists.chalk.sizeAria')"
+    >
       @for (s of sizes; track s) {
         <button
           type="button"
@@ -79,6 +91,7 @@
       <button
         type="button"
         class="tool"
+        data-tutorial="lists-chalk-undo"
         [disabled]="!canUndo()"
         [attr.aria-label]="t('lists.chalk.undoAria')"
         [title]="t('lists.chalk.undo')"
@@ -89,6 +102,7 @@
       <button
         type="button"
         class="tool mirror"
+        data-tutorial="lists-chalk-redo"
         [disabled]="!canRedo()"
         [attr.aria-label]="t('lists.chalk.redoAria')"
         [title]="t('lists.chalk.redo')"
@@ -101,6 +115,7 @@
     <button
       type="button"
       class="ghost"
+      data-tutorial="lists-chalk-clear"
       [disabled]="!canClear()"
       [title]="t('lists.chalk.clear')"
       (click)="onClear()"
@@ -112,6 +127,7 @@
     <button
       type="button"
       class="ghost"
+      data-tutorial="lists-chalk-layers-toggle"
       [class.on]="layersOpen()"
       [attr.aria-pressed]="layersOpen()"
       [title]="t('lists.chalk.layers')"
@@ -123,6 +139,7 @@
 
     <mc-menu-button
       variant="ghost"
+      data-tutorial="lists-chalk-export"
       [label]="t('lists.chalk.export')"
       [options]="exportOptions"
       (choose)="onExportChoice($event)"
