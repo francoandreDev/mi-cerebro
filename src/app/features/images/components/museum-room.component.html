@@ -47,6 +47,7 @@
             <button
               type="button"
               class="frame-btn"
+              data-tutorial="images-frame-open"
               [attr.aria-label]="frame.label"
               (click)="onOpen(frame.image.id)"
             >
@@ -63,6 +64,7 @@
               <button
                 type="button"
                 class="frame-del"
+                data-tutorial="images-frame-delete"
                 [attr.aria-label]="t('images.images.delete')"
                 (click)="onRemove($event, frame.image.id)"
               >

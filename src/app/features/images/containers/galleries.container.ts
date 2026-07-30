@@ -35,6 +35,7 @@ import { RoomMinimapComponent } from '../components/room-minimap.component';
 import { IMAGE_KIND, type Gallery, type GalleryImage } from '../models/gallery.types';
 import { GalleriesService } from '../services/galleries.service';
 import { GalleryUrlCache } from './gallery-url-cache';
+import { registerImagesTutorial } from './images.tutorial';
 
 @Component({
   selector: 'mc-galleries',
@@ -94,6 +95,17 @@ export class GalleriesContainer {
   protected readonly cuartosCount = computed<number>(() => this.cuartos().length);
 
   constructor() {
+    // why: IMAGES_TUTORIAL se registra también acá (mismo id, mismo
+    //      TutorialDefinition, no un flujo nuevo) porque la mitad de sus
+    //      steps ancla en elementos de esta página (`images-room`,
+    //      `images-room-minimap`, `images-gallery-menu`), no del índice
+    //      (`GalleriesIndexContainer`, `/images`). Sin este segundo
+    //      register(), "Guía de la página" desaparece por completo en
+    //      cuanto el usuario entra a una sala ya existente (no vía el
+    //      gesto "crear"), porque `hasTutorialFor('images')` depende de
+    //      que alguna instancia esté montada — las dos rutas son
+    //      mutuamente excluyentes, así que nunca hay doble registro real.
+    registerImagesTutorial();
     effect(() => {
       const raw = this.id();
       const wanted = raw ? extractEntityId(raw) : undefined;
