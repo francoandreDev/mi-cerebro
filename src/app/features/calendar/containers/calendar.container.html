@@ -1,5 +1,6 @@
 <section class="page">
   <mc-calendar-toolbar
+    data-tutorial="calendar-toolbar"
     [allEvents]="allEvents()"
     [selectedDay]="cursor().day"
     (pickResult)="onSearchPick($event)"
@@ -68,6 +69,7 @@
       <button
         type="button"
         class="chip"
+        data-tutorial="calendar-view-week"
         [class.active]="view() === 'week'"
         (click)="setView('week')"
       >
@@ -93,6 +95,7 @@
         />
       } @else if (view() === 'week') {
         <mc-calendar-leather-book
+          data-tutorial="calendar-book"
           [weekStart]="weekStart()"
           [selected]="cursor().day"
           [events]="weekEvents()"
