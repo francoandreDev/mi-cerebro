@@ -30,6 +30,7 @@ import { ShortcutsService } from '@core/shortcuts/shortcuts.service';
 import { TutorialService } from '@core/tutorials/tutorial.service';
 
 import { BUCKET_LABEL_KEY } from '../services/bucket-labels';
+import { HISTORY_RESTORE_TUTORIAL } from './history-restore.tutorial';
 import { HISTORY_TUTORIAL } from './history.tutorial';
 import { HistoryDiffService } from '../services/diff.service';
 import type { EntityDiff } from '../services/diff.service';
@@ -1179,7 +1180,7 @@ export class HistoryContainer implements OnInit, OnDestroy {
   }
 
   private unregisterShortcuts: (() => void)[] = [];
-  private unregisterTutorial: (() => void) | null = null;
+  private unregisterTutorials: (() => void)[] = [];
 
   ngOnInit(): void {
     void this.reloadAll(true);
@@ -1225,9 +1226,13 @@ export class HistoryContainer implements OnInit, OnDestroy {
         handler: () => this.navigateAdjacent(1),
       }),
     );
-    this.unregisterTutorial = this.tutorials.register(HISTORY_TUTORIAL, {
-      autoStartIfUnseen: true,
-    });
+    this.unregisterTutorials.push(
+      this.tutorials.register(HISTORY_TUTORIAL, { autoStartIfUnseen: true }),
+      // why (8.93): flujo manual — solo se arranca desde el picker "Guía
+      //      de la página", nunca solo, para no exponer un usuario nuevo
+      //      a la restauración antes de que la página tenga sentido.
+      this.tutorials.register(HISTORY_RESTORE_TUTORIAL, { autoStartIfUnseen: false }),
+    );
   }
 
   ngOnDestroy(): void {
@@ -1237,8 +1242,8 @@ export class HistoryContainer implements OnInit, OnDestroy {
     this.cancelExplorerAnimation();
     for (const fn of this.unregisterShortcuts) fn();
     this.unregisterShortcuts = [];
-    this.unregisterTutorial?.();
-    this.unregisterTutorial = null;
+    for (const fn of this.unregisterTutorials) fn();
+    this.unregisterTutorials = [];
   }
 
   private rebindStratumObserver(visibleIds: readonly BucketId[]): void {

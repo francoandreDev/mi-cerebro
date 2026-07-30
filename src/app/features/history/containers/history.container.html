@@ -788,6 +788,7 @@
           <button
             type="button"
             class="milestone-mark mc-hover-grow"
+            data-tutorial="history-milestone-mark"
             [disabled]="milestones.busy()"
             (click)="startMarkMilestone()"
           >
@@ -802,6 +803,7 @@
         @if (restoreCommitDraft(); as draft) {
           <form
             class="restore-commit-form"
+            data-tutorial="history-restore-confirm"
             (submit)="$event.preventDefault(); confirmRestoreCommit()"
           >
             <p class="restore-commit-hint">
@@ -832,6 +834,7 @@
           <button
             type="button"
             class="commit-restore mc-hover-grow"
+            data-tutorial="history-restore-commit-button"
             [disabled]="restoringCommit() || restoringPath() !== null"
             (click)="startRestoreCommit()"
           >
@@ -866,6 +869,7 @@
           <button
             type="button"
             class="entity-restore"
+            data-tutorial="history-restore-entity-button"
             [disabled]="restoringPath() !== null"
             (click)="restoreEntity(d, $event)"
           >
