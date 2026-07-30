@@ -1981,6 +1981,56 @@ export const es = {
   'reminders.tutorial.filters.title': 'Filtrá por fecha cuando hay muchas',
   'reminders.tutorial.filters.body':
     'Probalo: elegí un rango "desde"/"hasta" acá. Solo quedan visibles las palomas de ese rango — "Limpiar fechas" vuelve a mostrarlas todas.',
+  'reminders.tutorial.flow.essentials': 'Recordatorios: lo esencial',
+  'reminders.tutorial.flow.shortcuts': 'Atajos de teclado',
+  'reminders.tutorial.flow.snooze': 'Posponer y gestionar un recordatorio',
+  'reminders.tutorial.recurrence.title': 'Repetición automática',
+  'reminders.tutorial.recurrence.body':
+    'Elegí cada cuántos días/semanas/meses/años se repite. Al cumplirse, la paloma vuelve a soltarse sola con la próxima fecha calculada.',
+  'reminders.tutorial.pause.title': 'Pausar sin borrar',
+  'reminders.tutorial.pause.body':
+    'Probalo: tildá "En pausa". La paloma sigue en su jaula pero no vuela ni avisa hasta que la destildes.',
+  'reminders.tutorial.search.title': 'Buscá por nombre',
+  'reminders.tutorial.search.body':
+    'Probalo: hacé click acá y escribí. El palomar se filtra a las palomas cuyo papelito contiene ese texto.',
+  'reminders.tutorial.existence.title': 'Lo que no se ve queda registrado',
+  'reminders.tutorial.existence.body':
+    'Al borrar una paloma aparece un aviso abajo con "Deshacer" por unos segundos. Y las que marcás como hechas no desaparecen: quedan acá, en el registro de papelitos tomados.',
+  'reminders.tutorial.shortcuts.next.title': 'J — fila siguiente',
+  'reminders.tutorial.shortcuts.next.body':
+    'Probalo: apretá J. El foco de teclado baja a la próxima paloma del palomar, nichos primero y después la repisa de vencidas.',
+  'reminders.tutorial.shortcuts.prev.title': 'K — fila anterior',
+  'reminders.tutorial.shortcuts.prev.body': 'Probalo: apretá K. El foco sube a la paloma anterior.',
+  'reminders.tutorial.shortcuts.open.title': 'E — abrir la paloma enfocada',
+  'reminders.tutorial.shortcuts.open.body':
+    'Probalo: apretá E. Abre el detalle de la paloma que tiene el foco de teclado, sin necesidad de hacer click.',
+  'reminders.tutorial.shortcuts.toggleDone.title': 'Espacio — marcar/desmarcar hecho',
+  'reminders.tutorial.shortcuts.toggleDone.body':
+    'Probalo: apretá Espacio sobre la fila enfocada. Alterna entre pendiente y hecho, igual que el botón del detalle.',
+  'reminders.tutorial.shortcuts.delete.title': 'Supr — borrar la paloma enfocada',
+  'reminders.tutorial.shortcuts.delete.body':
+    'Probalo: apretá Supr. Borra la paloma enfocada directo, sin abrir el detalle — con el mismo aviso de "Deshacer" de siempre.',
+  'reminders.tutorial.shortcuts.new.title': 'N — nuevo recordatorio',
+  'reminders.tutorial.shortcuts.new.body':
+    'Probalo: apretá N desde cualquier lado de la página. El cursor salta directo al campo de "nuevo recordatorio".',
+  'reminders.tutorial.snooze.openDetail.title': 'Abrí una paloma para posponerla o gestionarla',
+  'reminders.tutorial.snooze.openDetail.body':
+    'Todo lo que sigue vive en el menú ⋮ del detalle: posponer, duplicar o eliminar.',
+  'reminders.tutorial.snooze.openOverflow.title': 'Abrí el menú ⋮',
+  'reminders.tutorial.snooze.openOverflow.body':
+    'Probalo: hacé click en los tres puntos. Se despliega el menú de posponer y gestionar.',
+  'reminders.tutorial.snooze.options.title': '4 formas rápidas de posponer',
+  'reminders.tutorial.snooze.options.body':
+    '"1 hora", "1 día", "el próximo lunes" o "el fin de semana" — cada una suma ese tiempo (o salta a ese día) sobre la fecha actual del recordatorio.',
+  'reminders.tutorial.snooze.duplicate.title': 'Duplicar',
+  'reminders.tutorial.snooze.duplicate.body':
+    'Probalo: hacé click en "Duplicar". Crea una copia idéntica (mismo título, fecha y repetición) como paloma nueva.',
+  'reminders.tutorial.snooze.reopenOverflow.title': 'El menú se cierra solo — reabrilo',
+  'reminders.tutorial.snooze.reopenOverflow.body':
+    'Cada click del menú ⋮ lo cierra automáticamente. Volvé a abrirlo para la próxima acción.',
+  'reminders.tutorial.snooze.delete.title': 'Eliminar',
+  'reminders.tutorial.snooze.delete.body':
+    'Probalo: hacé click en "Eliminar". Borra la paloma con el mismo aviso de "Deshacer" de siempre.',
   'reminders.detailTitle': 'Papelito',
   'reminders.dueAtLabel': 'Cuándo vuela',
   'reminders.recurrenceLabel': 'Anillo',
