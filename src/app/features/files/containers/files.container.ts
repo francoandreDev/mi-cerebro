@@ -45,6 +45,7 @@ import { FILE_KIND, displayLabel, type FileCollection } from '../models/file-col
 //      of the wall off-screen.
 const INLINE_ITEMS_THRESHOLD = 6;
 import { FilesService } from '../services/files.service';
+import { registerFilesFoldersTutorial } from './files-folders.tutorial';
 import { registerFilesTutorial } from './files.tutorial';
 
 @Component({
@@ -102,6 +103,7 @@ export class FilesContainer {
 
   constructor() {
     registerFilesTutorial();
+    registerFilesFoldersTutorial();
     effect(() => {
       const raw = this.id();
       const wanted = raw ? extractEntityId(raw) : undefined;

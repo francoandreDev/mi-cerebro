@@ -558,7 +558,7 @@ refresh, leyenda) son gestos sueltos sobre el canvas ya cubierto:
    from/into, swap, aplicar-todo-de-un-lado, elegir por archivo, aplicar merge, reintentar/saltar en
    fallo parcial (8+ gestos propios, ruta dedicada — el candidato más claro de toda la auditoría).
 
-### 8.12 — Files: cobertura moderada, multi-flujo (re-scoped por 8.85)
+### 8.12 — Files: cobertura moderada, multi-flujo (re-scoped por 8.85) — _Cerrado._
 
 _Prereq: 8.1, 8.18._
 
@@ -572,6 +572,31 @@ tomada ahí. El resto son gestos puntuales sobre anchors del flujo esencial, no 
    en vez de crear un step nuevo.
 2. **`files-folders` — "Organizar en subcarpetas"** (nuevo, manual): crear/renombrar/mover
    subcarpeta, breadcrumbs.
+
+**Implementado:** (1) el step de tags pasó de anclar en `files-wall` (la pared, sin el picker
+visible) a anclar directo en `[data-tutorial="files-tag-picker"]` (el `mc-tag-picker` de
+`file-collection-meta-bar.component.ts`), con `action: click` sobre su `input` —"agregar un tag"
+requiere escribir texto libre, gesto que el engine no puede detectar, así que el click que abre el
+picker es el gesto concreto practicable (mismo criterio ya usado en `goal-peek-rename`: el click
+que entra al modo edición cuenta como la práctica, no hace falta completar el gesto entero).
+`skipIfMissing: true` por si el picker no está montado (colección no abierta). (2) "editar/borrar
+título de colección" se separó en 2 steps, no 1 — cada uno es un gesto distinto (editar el título
+vs. eliminar la colección), y §4.6.15b pide un gesto por step: `files.tutorial.editTitle` (click en
+`[data-tutorial="files-title-input"]`) y `files.tutorial.deleteCollection` (click en el ítem
+"Eliminar" de `[data-tutorial="files-collection-menu"]`, el `mc-menu-button` de la meta-bar). (3)
+"drag-and-drop de subida/reorden" quedó como un solo step (`files.tutorial.reorder`) con
+`action: dragstart` sobre `[data-tutorial="files-item-board"]` — mismo criterio que
+`books.tutorial.organize`: el drop de archivos externos desde el SO no es un evento que el engine
+soporte (no hay `drop` en `TutorialStepAction['event']`), así que solo el reorder interno
+(`dragstart` nativo en cada `.slot`) es el gesto detectable; el copy menciona ambos gestos, la
+`action` solo practica el segundo. (4) "renombrar ítem" ancla en
+`[data-tutorial="file-artifact-rename"]` (el botón lápiz de `file-artifact.component.html`), click.
+(5) Confirmado contra el código: `FilesContainer` no cablea `(childDragOver)`/`(childDrop)` en su
+`<mc-folder-breadcrumb>` — sin gesto de "soltar sobre subcarpeta", así que `files-folders` abre
+subcarpeta con click igual que `goals-folders`, no con drag. (6) todos los anchors nuevos de
+`shared/folder-breadcrumb/` ya existían (reusados de Goals/Notes, sin duplicar el componente, según
+§8.86). (7) `FILES_TUTORIAL` sumó `labelKey: 'files.tutorial.flow.essentials'` al pasar a
+multi-flujo (antes no lo necesitaba con un solo flujo registrado en la página).
 
 ### 8.13 — Tags: split del step `rowActions`, multi-flujo condicional (re-scoped por 8.85)
 
