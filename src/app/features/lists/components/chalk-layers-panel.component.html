@@ -3,7 +3,7 @@
   (confirmed)="confirm.accept()"
   (cancelled)="confirm.cancel()"
 />
-<aside class="panel">
+<aside class="panel" data-tutorial="lists-chalk-layers-panel">
   <header>
     <h3>{{ t('lists.chalk.layers') }}</h3>
     <button
@@ -17,7 +17,12 @@
     </button>
   </header>
 
-  <button type="button" class="add" (click)="addLayer.emit()">
+  <button
+    type="button"
+    class="add"
+    data-tutorial="lists-chalk-layers-add"
+    (click)="addLayer.emit()"
+  >
     <mc-icon name="plus" />
     <span>{{ t('lists.chalk.addLayer') }}</span>
   </button>
@@ -53,6 +58,7 @@
         <input
           type="text"
           class="name"
+          data-tutorial="lists-chalk-layer-rename"
           [value]="layer.name"
           [attr.aria-label]="t('lists.chalk.layerName')"
           (input)="onRenameInput(layer.id, $event)"
@@ -61,6 +67,7 @@
         <button
           type="button"
           class="icon"
+          data-tutorial="lists-chalk-layer-visibility"
           [attr.aria-label]="layer.visible ? t('lists.chalk.hide') : t('lists.chalk.show')"
           [title]="layer.visible ? t('lists.chalk.hide') : t('lists.chalk.show')"
           (click)="toggleVisible.emit(layer.id)"
@@ -70,6 +77,7 @@
         <button
           type="button"
           class="icon"
+          data-tutorial="lists-chalk-layer-lock"
           [attr.aria-label]="layer.locked ? t('lists.chalk.unlock') : t('lists.chalk.lock')"
           [title]="layer.locked ? t('lists.chalk.unlock') : t('lists.chalk.lock')"
           (click)="toggleLocked.emit(layer.id)"
@@ -79,6 +87,7 @@
         <button
           type="button"
           class="icon"
+          data-tutorial="lists-chalk-layer-reorder"
           [disabled]="i === 0"
           [attr.aria-label]="t('lists.chalk.moveUp')"
           [title]="t('lists.chalk.moveUp')"
@@ -99,6 +108,7 @@
         <button
           type="button"
           class="icon danger"
+          data-tutorial="lists-chalk-layer-remove"
           [attr.aria-label]="t('lists.chalk.removeLayer')"
           [title]="t('lists.chalk.removeLayer')"
           (click)="onRemove(layer)"

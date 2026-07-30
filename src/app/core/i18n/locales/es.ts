@@ -1205,6 +1205,77 @@ export const es = {
   'lists.chalk.confirm.remove.title': 'Eliminar capa',
   'lists.chalk.confirm.remove.confirm': 'Sí, eliminar',
 
+  'lists.tutorial.flow.essentials': 'Listas: lo esencial',
+  'lists.tutorial.flow.chalk': 'Herramientas del tablero de tiza',
+  'lists.tutorial.flow.folders': 'Organizar en carpetas',
+
+  'lists.tutorial.search.title': 'Buscá dentro de la pizarra',
+  'lists.tutorial.search.body':
+    'Filtra por título y por el contenido de los ítems a la vez — resalta las coincidencias en cada card.',
+  'lists.tutorial.axis.title': 'Cambiá el eje del índice lateral',
+  'lists.tutorial.axis.body':
+    'A-Z agrupa alfabéticamente; Tags agrupa por etiqueta (con "Sin etiqueta" al final). El rail salta directo al grupo elegido.',
+  'lists.tutorial.deleteEntry.title': 'Borrá una lista desde el estante',
+  'lists.tutorial.deleteEntry.body':
+    'El tacho que aparece al pasar el mouse sobre una card la manda a la papelera (se puede restaurar después).',
+  'lists.tutorial.deleteEntry.moreDetail':
+    'Pide confirmación antes de moverla — nunca borra directo sin ese paso.',
+
+  'lists.tutorial.chalkIntro.title': 'El tablero de tiza tiene su propia caja de herramientas',
+  'lists.tutorial.chalkIntro.body':
+    'Si el modo tiza no está activo, prendelo con el botón "Tiza" de la barra antes de seguir — el resto de este recorrido vive adentro de esa barra.',
+  'lists.tutorial.chalkDraw.title': 'Elegí tiza y dibujá un trazo',
+  'lists.tutorial.chalkDraw.body':
+    'Con la tiza seleccionada, clickeá y arrastrá sobre el tablero para trazar una línea con textura de grano.',
+  'lists.tutorial.chalkErase.title': 'La goma borra por donde pasa',
+  'lists.tutorial.chalkErase.body':
+    'Cambia el puntero a modo borrado — arrastrá sobre un trazo existente para eliminarlo por partes.',
+  'lists.tutorial.chalkColor.title': 'Elegí uno de los 5 colores de tiza',
+  'lists.tutorial.chalkColor.body':
+    'Blanca, amarilla, rosa, celeste o verde — el color activo se usa para el próximo trazo.',
+  'lists.tutorial.chalkSize.title': 'Elegí el grosor del trazo',
+  'lists.tutorial.chalkSize.body': 'Fino, medio o grueso — se aplica al trazo que sigue.',
+  'lists.tutorial.chalkUndo.title': 'Deshacer el último trazo o cambio de capa',
+  'lists.tutorial.chalkUndo.body':
+    'Retrocede una acción a la vez — dibujar, borrar, o cualquier cambio del panel de capas.',
+  'lists.tutorial.chalkRedo.title': 'Rehacer lo último deshecho',
+  'lists.tutorial.chalkRedo.body': 'El botón espejo de deshacer — vuelve a aplicar la acción.',
+  'lists.tutorial.chalkShortcuts.title': 'Atajos de teclado del tablero',
+  'lists.tutorial.chalkShortcuts.body':
+    'B elige tiza, E elige goma, [ deshace, ] rehace, 1-5 eligen color — todos inertes mientras escribís en un campo de texto. Ctrl+Shift+T alterna el modo tiza (probalo ahora).',
+  'lists.tutorial.chalkLayersOpen.title': 'Abrí el panel de capas',
+  'lists.tutorial.chalkLayersOpen.body':
+    'Cada capa agrupa sus propios trazos — podés mostrarlas, ocultarlas o reordenarlas por separado.',
+  'lists.tutorial.chalkLayersAdd.title': 'Sumá una capa nueva',
+  'lists.tutorial.chalkLayersAdd.body':
+    'El primer trazo que hacés ya crea una capa sola; este botón agrega una capa adicional en blanco.',
+  'lists.tutorial.chalkLayersManage.title': 'Cada fila tiene sus propios controles',
+  'lists.tutorial.chalkLayersManage.body':
+    'Click en el nombre para renombrar, el ojo oculta/muestra, el candado bloquea (evita dibujar encima), las flechas reordenan, y el tacho elimina la capa completa.',
+  'lists.tutorial.chalkLayersManage.moreDetail':
+    'Bloquear una capa no la oculta — solo impide que un trazo nuevo caiga ahí por accidente mientras dibujás en otra.',
+  'lists.tutorial.chalkExport.title': 'Exportá el tablero como imagen',
+  'lists.tutorial.chalkExport.body':
+    'PNG para compartir como imagen plana, SVG para conservar los trazos como vectores editables.',
+  'lists.tutorial.chalkClear.title': 'Limpiar pizarra borra todos los trazos de la capa activa',
+  'lists.tutorial.chalkClear.body':
+    'Solo afecta la capa seleccionada, no las demás — pide confirmación porque no se puede deshacer con undo una vez cerrada la lista.',
+  'lists.tutorial.chalkClear.moreDetail':
+    'Si querés vaciar todo el tablero, repetí la acción en cada capa por separado — no hay un "vaciar todas" de un solo click.',
+
+  'lists.tutorial.folders.create.title': 'Creá una carpeta',
+  'lists.tutorial.folders.create.body':
+    'El ícono de carpeta con "+" crea una subcarpeta dentro de donde estés parado — le ponés nombre y confirmás.',
+  'lists.tutorial.folders.open.title': 'Entrá a una carpeta con click',
+  'lists.tutorial.folders.open.body':
+    'Click en cualquier carpeta del breadcrumb te lleva adentro — las listas de esa carpeta pasan a mostrarse en el estante.',
+  'lists.tutorial.folders.manage.title': 'Renombrá, moví o borrá una carpeta',
+  'lists.tutorial.folders.manage.body':
+    'Los tres puntos junto a cada carpeta abren renombrar, mover o borrar.',
+  'lists.tutorial.folders.navigate.title': 'Volvé a la raíz con un click',
+  'lists.tutorial.folders.navigate.body':
+    'El primer ícono del breadcrumb siempre vuelve a la carpeta raíz, sin importar cuán hondo estés.',
+
   'writings.title': 'Escritos',
   'writings.tutorial.create.title': 'Escribí un título y enviá: nace el escrito',
   'writings.tutorial.create.body':

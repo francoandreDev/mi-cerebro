@@ -33,6 +33,7 @@ import { ChalkRailComponent } from '../components/chalk-rail.component';
 import type { ChalkAxis, RailGroup } from '../components/chalk-rail.component';
 import type { ListSummary } from '../models/list.types';
 import { ListsService } from '../services/lists.service';
+import { registerListsFoldersTutorial } from './lists-folders.tutorial';
 import { registerListsShelfTutorial } from './lists-shelf.tutorial';
 
 interface Section {
@@ -85,6 +86,7 @@ export class ListsShelfContainer {
 
   constructor() {
     registerListsShelfTutorial();
+    registerListsFoldersTutorial();
   }
 
   protected readonly tags = this.tagsService.tags;

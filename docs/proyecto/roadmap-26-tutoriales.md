@@ -593,7 +593,7 @@ Nota aparte: merge no tiene diálogo de confirmación pese a ser irreversible �
 corrige acá, documentarlo como tal en el commit (no es parte del framework de onboarding, es un
 hallazgo colateral más).
 
-### 8.14 — Lists: multi-flujo, tiza + organización (re-scoped por 8.85)
+### 8.14 — Lists: multi-flujo, tiza + organización (re-scoped por 8.85) — _Cerrado._
 
 _Prereq: 8.1, 8.18._
 
@@ -613,6 +613,54 @@ un `moreDetail`. Carpetas del shelf (mismo patrón que Notes/Files) también apa
    carpeta, breadcrumbs — mismo patrón que Notes (8.8) y Files (8.12); ver nota transversal en
    8.86 sobre no duplicar este flujo 5 veces si el volumen de contenido termina siendo idéntico
    entre páginas.
+
+**Implementado 2026-07-27, con desvíos respecto al texto de arriba:**
+
+- **La ampliación del ítem 1 se hizo en `lists-shelf.tutorial.ts`, no en `lists.tutorial.ts`.**
+  Ambos archivos comparten `id: 'lists'` a propósito (rutas mutuamente excluyentes: detalle
+  `/lists/:id` vs. shelf `/lists`), pero búsqueda/eje/borrar son gestos del shelf — viven en
+  `lists-shelf.container.html`, no en el editor de detalle. Se sumaron como 3 steps nuevos (no
+  `moreDetail`): búsqueda es mención sin `action` (mismo motivo que `goals.tutorial.filters.body`
+  §8.87 — demasiadas combinaciones de texto para un solo gesto), cambio de eje sí lleva `action`
+  (click en cualquiera de los 2 botones del grupo), y borrar lista sigue el patrón
+  `goal-peek-delete` (`action` + `skipIfMissing` + `moreDetail` explicando el confirm dialog).
+  Ambos archivos ganaron `labelKey: 'lists.tutorial.flow.essentials'` porque `pageId: 'lists'` ahora
+  agrupa 2 definiciones a la vez en cada ruta (el picker se activa).
+- **`lists-chalk` requirió un step inicial sin `action` y `skipIfMissing: true` en casi todos los
+  demás.** Es un flujo manual (nunca autostart), así que no puede asumir que el modo tiza ya está
+  activo — casi todo el contenido de `chalk-toolbar.component.html` vive dentro de un
+  `@if (active())`. El primer step sólo avisa "prendé modo tiza si no lo está" (sin `action`, para no
+  arriesgar apagarlo de nuevo con un click forzado si ya estaba prendido); el resto de los steps que
+  dependen de ese `@if` llevan `skipIfMissing: true` para no quedar con el spotlight flotando si el
+  usuario no lo activó. `Ctrl+Shift+T` sí tiene `action: keydown` real (anchor siempre presente,
+  atajo funciona sin importar el estado). Los otros 5 atajos (`b`/`e`/`[`/`]`/1-5) quedan
+  mencionados en el mismo step que Ctrl+Shift+T, sin `action` propio cada uno — empaquetarlos en 6
+  steps separados violaba la relación costo/beneficio del flujo sin aportar nada que el texto no
+  cubra ya. "Limpiar pizarra" quedó sin `action` pese a tener anchor: forzar el click abre un
+  confirm dialog `danger` que el tutorial no puede cancelar por el usuario, y el botón está
+  deshabilitado hasta que la capa activa tenga trazos (`canClear`) — se documentó tal cual en el
+  `why` del archivo.
+- **Confirmado con el código real**: los atajos de `chalk-shortcuts.ts` se registran vía
+  `ShortcutsService` con `scope: 'editable-safe'` — no son un listener local del `<svg>` del
+  tablero, son globales de página pero inertes con foco en inputs/contentEditable y sin efecto
+  salvo que el modo tiza esté activo (los handlers no-opean si no). Ninguno de los 6 combos
+  (`b`/`e`/`[`/`]`/1-5/Ctrl+Shift+T) colisiona con un atajo de otra feature.
+- **`lists-folders` sigue el patrón de Notes/Goals, no el de Books**: verificado en
+  `chalk-entry.component.ts`/`lists-shelf.container.html` que las cards del shelf no son
+  `draggable` y el container no cablea `(childDragOver)`/`(childDrop)` hacia
+  `<mc-folder-breadcrumb>` — no hay gesto de "soltar una lista sobre una subcarpeta", así que ese
+  step es "abrir subcarpeta con click" en vez de drop, igual que Notes y Goals.
+- Anchors nuevos: `lists-chalk-board` (`chalk-board.component.html`), `lists-chalk-tool-chalk`,
+  `lists-chalk-tool-eraser`, `lists-chalk-palette`, `lists-chalk-sizes`, `lists-chalk-undo`,
+  `lists-chalk-redo`, `lists-chalk-layers-toggle`, `lists-chalk-clear`, `lists-chalk-export`
+  (`chalk-toolbar.component.html`), `lists-chalk-layers-panel`, `lists-chalk-layers-add`,
+  `lists-chalk-layer-rename`, `lists-chalk-layer-visibility`, `lists-chalk-layer-lock`,
+  `lists-chalk-layer-reorder` (`chalk-layers-panel.component.html`), `lists-shelf-search`
+  (`lists-shelf.container.html`), `lists-shelf-axis` (`chalk-rail.component.ts`), `lists-shelf-entry`
+  (`chalk-entry.component.ts`). Reusados sin cambios: `lists-chalk-bar` (ya existía),
+  `lists-shelf-new`/`lists-shelf-rail` (ya existían), `folder-breadcrumb-add`/`-child`/
+  `-child-manage`/`-root` (`shared/folder-breadcrumb/`).
+- `bun run typecheck` limpio (ver commit). `bun run test`/`bun run lint` sin errores nuevos.
 
 ### 8.15 — Dashboard: ajuste menor. Music: multi-flujo (re-scoped por 8.85)
 
