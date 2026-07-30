@@ -16,6 +16,7 @@ import type { TutorialDefinition } from '@core/tutorials/tutorial.types';
 export const HISTORY_TUTORIAL: TutorialDefinition = {
   id: 'history',
   pageId: 'history',
+  labelKey: 'history.tutorial.flow.essentials',
   steps: [
     {
       anchorSelector: '[data-tutorial="history-zoom"]',

@@ -385,6 +385,7 @@ export const es = {
   'history.tutorial.milestoneMark.title': 'Marcar este commit como hito',
   'history.tutorial.milestoneMark.body':
     'Nombrá este commit para que quede fijo en el filtro de hitos y sea fácil de encontrar más adelante. Podés agregar una descripción opcional.',
+  'history.tutorial.flow.essentials': 'Historial: lo esencial',
   'history.tutorial.flow.restore': 'Restaurar una versión',
   'history.tutorial.restore.pick.title': 'Elegí la versión a restaurar',
   'history.tutorial.restore.pick.body':
@@ -965,6 +966,7 @@ export const es = {
   'tasks.tutorial.water.body':
     'Una tarea que lleva más de 3 días en Floración empieza a marchitarse (glyph distinto). Activá el riego acá arriba y tocá la gotita de una tarea en Brote o Semilla para subirla de posición antes de que le toque Floración.',
 
+  'tasks.tutorial.flow.essentials': 'Tareas: lo esencial',
   'tasks.tutorial.flow.patio': 'Patio: archivo de cosechas',
   'tasks.tutorial.patio.intro.title': 'El patio archiva lo que ya cosechaste',
   'tasks.tutorial.patio.intro.body':
@@ -2169,6 +2171,7 @@ export const es = {
   'calendar.book.close': 'Cerrar libro',
   'calendar.book.emptyDay': 'Página en blanco.',
   'calendar.book.weekHeading': 'Semana del {date}',
+  'calendar.tutorial.flow.essentials': 'Calendario: lo esencial',
   'calendar.tutorial.flow.week': 'Agenda semanal',
   'calendar.tutorial.week.enter.title': 'La vista semana abre el libro de cuero',
   'calendar.tutorial.week.enter.body':

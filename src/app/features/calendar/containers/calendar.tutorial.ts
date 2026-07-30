@@ -24,6 +24,7 @@ import type { TutorialDefinition } from '@core/tutorials/tutorial.types';
 export const CALENDAR_TUTORIAL: TutorialDefinition = {
   id: 'calendar',
   pageId: 'calendar',
+  labelKey: 'calendar.tutorial.flow.essentials',
   steps: [
     {
       anchorSelector: '[data-tutorial="calendar-views"]',

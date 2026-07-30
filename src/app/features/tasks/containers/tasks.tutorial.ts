@@ -9,6 +9,7 @@ import type { TutorialDefinition } from '@core/tutorials/tutorial.types';
 export const TASKS_TUTORIAL: TutorialDefinition = {
   id: 'tasks',
   pageId: 'tasks',
+  labelKey: 'tasks.tutorial.flow.essentials',
   steps: [
     {
       anchorSelector: '[data-tutorial="tasks-compose"]',
