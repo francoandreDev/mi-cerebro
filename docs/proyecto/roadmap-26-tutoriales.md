@@ -644,7 +644,7 @@ subcarpeta con click igual que `goals-folders`, no con drag. (6) todos los ancho
 §8.86). (7) `FILES_TUTORIAL` sumó `labelKey: 'files.tutorial.flow.essentials'` al pasar a
 multi-flujo (antes no lo necesitaba con un solo flujo registrado en la página).
 
-### 8.13 — Tags: split del step `rowActions`, multi-flujo condicional (re-scoped por 8.85)
+### 8.13 — Tags: split del step `rowActions`, multi-flujo condicional (re-scoped por 8.85) — _Cerrado._
 
 _Prereq: 8.1, 8.18._
 
@@ -663,6 +663,27 @@ para completarse:
 Nota aparte: merge no tiene diálogo de confirmación pese a ser irreversible — bug de UX real; si se
 corrige acá, documentarlo como tal en el commit (no es parte del framework de onboarding, es un
 hallazgo colateral más).
+
+**Implementado:** el split es exactamente el planteado, con dos desvíos. (1) La condición real del
+gate en `TagsContainer` (`tags.container.ts`) es `!isEmpty()` (`tagsService.tags().length === 0`),
+no `rows().length > 0` como decía el guess inicial de este ítem — `rows()` es el listado ya
+_filtrado_ por el input de texto, así que gatear sobre él hacía que `tags-organize` desapareciera
+del picker en cuanto el usuario tipeaba un filtro sin coincidencias, aunque siguieran existiendo
+tags. Se prioriza la señal semánticamente correcta ("¿hay al menos un tag?") sobre la literal del
+roadmap. (2) `tags-organize` no se auto-registra ni se auto-descarta vía `DestroyRef` como el resto
+de flujos secundarios (que siempre están montados junto a su página) — acá un `effect()` en el
+constructor de `TagsContainer` llama a `registerTagsOrganizeTutorial()`/dispara su disposer cada vez
+que `!isEmpty()` cruza de `false` a `true` y viceversa; el `effect` solo lee la señal (nunca la
+escribe), así que no aplica la restricción de §4.1.3b. `tags-organize.tutorial.ts` expone
+`registerTagsOrganizeTutorial(tutorials: TutorialService)` recibiendo el servicio ya inyectado en
+vez de auto-inyectarlo, porque `inject()` no es válido dentro del cuerpo del `effect`.
+
+**Hallazgo colateral corregido:** el bug de merge sin confirmación (mencionado en el ítem original)
+se arregló en el mismo commit — `mergeInto()` en `tags.container.ts` ahora pasa por el mismo
+`ConfirmController` que ya usaba `deleteTag()` (mismo tono `danger`) antes de llamar a
+`TagsAdminService.merge()`. Se corrigió porque el fix es chico (reusa infraestructura ya presente en
+el componente) y porque el tutorial nuevo enseña explícitamente el gesto de merge como irreversible
+— dejar el bug vivo mientras se lo documenta en el copy del tutorial hubiera sido inconsistente.
 
 ### 8.14 — Lists: multi-flujo, tiza + organización (re-scoped por 8.85)
 
