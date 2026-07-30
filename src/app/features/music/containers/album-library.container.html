@@ -11,12 +11,14 @@
   <div class="zone-head-actions">
     <div
       class="youtube-download"
+      data-tutorial="music-youtube"
       [class.disabled]="!youtubeAvailable"
       [title]="youtubeAvailable ? '' : t('music.youtube.unavailableTooltip')"
     >
       <input
         type="url"
         class="search-input"
+        data-tutorial="music-youtube-input"
         [value]="youtubeUrl()"
         [disabled]="!youtubeAvailable || youtubeDownloading()"
         (input)="onYoutubeUrlInput(asInput($event.target).value)"
@@ -25,6 +27,7 @@
       <button
         type="button"
         class="mc-hover-grow"
+        data-tutorial="music-youtube-download"
         [disabled]="!youtubeAvailable || youtubeDownloading() || youtubeUrl().trim() === ''"
         (click)="onYoutubeDownload()"
       >
@@ -71,14 +74,20 @@
     </div>
 
     @if (selectedCount() > 0) {
-      <div class="bulk-bar" role="toolbar">
+      <div class="bulk-bar" data-tutorial="music-bulk-bar" role="toolbar">
         <span class="bulk-count">{{ bulkCountLabel() }}</span>
-        <button type="button" class="ghost mc-hover-wiggle" (click)="onBulkDelete()">
+        <button
+          type="button"
+          class="ghost mc-hover-wiggle"
+          data-tutorial="music-bulk-delete"
+          (click)="onBulkDelete()"
+        >
           <mc-icon name="trash" />
           <span>{{ t('music.bulk.delete') }}</span>
         </button>
         <select
           class="bulk-select"
+          data-tutorial="music-bulk-add-select"
           (change)="onBulkAddToPlaylist($event)"
           [attr.aria-label]="t('music.bulk.addTo')"
         >
@@ -87,7 +96,12 @@
             <option [value]="p.id">{{ p.title || t('music.untitledPlaylist') }}</option>
           }
         </select>
-        <button type="button" class="ghost mc-hover-grow" (click)="onClearSelection()">
+        <button
+          type="button"
+          class="ghost mc-hover-grow"
+          data-tutorial="music-bulk-clear"
+          (click)="onClearSelection()"
+        >
           <mc-icon name="x" />
           <span>{{ t('music.bulk.clear') }}</span>
         </button>
@@ -139,6 +153,7 @@
                   <button
                     type="button"
                     class="sel"
+                    data-tutorial="music-bulk-select"
                     (click)="onToggleSelect(tr.id, $event)"
                     [attr.aria-label]="t('music.bulk.selectRow')"
                     [attr.aria-pressed]="isSelected(tr.id)"

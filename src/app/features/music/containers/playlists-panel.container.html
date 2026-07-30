@@ -3,7 +3,12 @@
     <mc-icon name="list-bullets" class="zone-head-icon" />
     {{ t('music.playlists') }} ({{ summaries().length }})
   </h3>
-  <button type="button" class="primary mc-hover-grow" (click)="onCreate()">
+  <button
+    type="button"
+    class="primary mc-hover-grow"
+    data-tutorial="music-playlists-create"
+    (click)="onCreate()"
+  >
     <mc-icon name="plus" />
     <span>{{ t('music.newPlaylist') }}</span>
   </button>
@@ -24,6 +29,7 @@
       <li>
         <button
           type="button"
+          data-tutorial="music-playlists-row"
           [class.now-playing]="currentSourceId() === p.id"
           [class.drag-over]="dragOverId() === p.id"
           (click)="onSelect(p)"
