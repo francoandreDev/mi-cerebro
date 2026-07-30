@@ -840,7 +840,7 @@ original:
 
 Verificado: `bun run typecheck`, `bun run test` y `bun run lint` limpios (sin errores nuevos).
 
-### 8.16 — Command Palette: tutorial nuevo + capacidad de engine "anclar dentro de overlay"
+### 8.16 — Command Palette: tutorial nuevo + capacidad de engine "anclar dentro de overlay" — _Cerrado._
 
 _Prereq: 8.1. Recomendado ejecutar después de tener 2-3 páginas ya migradas a `tier` (8.8-8.12),
 para no ser el primer tutorial que valide el engine nuevo en simultáneo con contenido nuevo._
@@ -860,7 +860,48 @@ resultado quedan como **mención de existencia** (gestos secundarios, bajo impac
 states encontrados en esta página, ambos texto pasivo — evaluar si entran en el mismo commit o se
 suman a 8.6.
 
-### 8.17 — Sync: tutorial nuevo + gating por `isConfigured()`
+**Implementado.** `command-palette.tutorial.ts` nuevo (`id`/`pageId: 'command-palette'`, mismo
+patrón que `flow-project`/`flow-daily` en `home-flows.tutorial.ts` — no vive en ninguna ruta real,
+así que nunca aparece en el picker de ninguna página), registrado desde el propio
+`CommandPaletteContainer` con `autoStartIfUnseen: true` (decisión de producto: se preguntó
+explícitamente y se optó por auto-arranque global la primera vez que se abre la app, aceptando que
+en un primer boot puede ganarle al tutorial propio de la página donde aterriza el usuario, porque
+el shell registra antes que el contenedor de la ruta).
+
+**Bug real encontrado**: el roadmap asumía "`.search-btn` siempre en el DOM" — falso en el código
+actual. `PANE_HIDDEN_PREFIXES` en `workspace-sidebar.container.ts` esconde `.pane` (y con él el
+único botón de búsqueda existente) en las 18 rutas reales de la app; solo queda visible en `/dev`.
+El botón era, en la práctica, inalcanzable sin usar Ctrl+K a ciegas. Fix: se agregó un botón
+`.rail-btn.search` nuevo en el rail persistente (siempre en el DOM, mismo patrón que
+`.shortcuts-help`), con `(click)="openPalette()"` y `data-tutorial="command-palette-open"` — el
+botón viejo dentro de `.pane` se dejó con el mismo `data-tutorial` (inofensivo, nunca coexisten
+montados los dos a la vez).
+
+4 steps básico, en este orden: abrir (click en el rail, moreDetail: Ctrl+K) → escribir (sin
+`action` — no existe evento `input` en `TutorialStepAction`, y forzar un texto específico sería
+frágil; moreDetail cubre `tag:<label>` y "olvidar" una búsqueda) → navegar con flechas (action
+`ArrowDown` sobre `[data-tutorial="command-palette-results"]`, mismo atributo en las dos ramas
+mutuamente excluyentes `@if (mode() === 'recents')`/`@else`) → Enter abre el resultado (último a
+propósito: activa el item, navega y cierra la paleta, así que cualquier step posterior perdería su
+anchor — "Esc cierra sin elegir" quedó mencionado en el body en vez de ser step propio practicable,
+mismo motivo). "Olvidar query"/"ver tag directo" quedaron como mención de existencia en los bodies,
+sin anchor propio, según lo planeado. Los dos empty states (`palette.empty`/`palette.recents.empty`)
+se evaluaron y son pasivos correctamente — ya explican qué hacer ("Escribí para buscar"), no
+necesitan CTA.
+
+**Bug de posicionamiento encontrado** (afecta al engine, no solo a este tutorial): el anchor del
+rail queda pegado a la esquina inferior izquierda; con el `placement` default (`'bottom'`) el
+`cardBox()` clamped por el viewport termina tapando el propio botón, bloqueando el click real que
+el step le pide practicar al usuario — reproducido y confirmado en el navegador. Fix acotado a
+este step: `placement: 'right'`. No se tocó el engine en sí (otros steps con anchors en el rail,
+como `settings-rail-icon`, no tienen `action` y por eso nunca expusieron el problema).
+
+Verificado en el navegador de punta a punta: auto-arranque al cargar `/sync` (primera visita sin
+seen), click real en el botón nuevo del rail abre la paleta y avanza, escribir/flechas/Enter
+completan el flujo real (navega, cierra, `finish()` marca `command-palette` como visto en
+localStorage). `bun run typecheck`, `bun run test` (548/548) y `bun run lint` limpios.
+
+### 8.17 — Sync: tutorial nuevo + gating por `isConfigured()` — _Cerrado._
 
 _Prereq: 8.1 y, idealmente, 8.16 (comparten el patrón de engine "overlay/contenido condicional",
 mejor no ser los dos primeros en validarlo a la vez)._
@@ -876,6 +917,26 @@ leer un "tubo" divergente y saltar a `/variants/merge` desde ahí — **cross-re
 contenido**: el paso a paso de cómo resolver el merge en sí vive en `variants-merge` (8.11), acá
 solo se enseña el punto de entrada. Excluido del checklist de onboarding (8.7) — depende de un PAT
 externo de GitHub, no es acción de día uno.
+
+**Implementado.** `sync.tutorial.ts` nuevo, registrado desde `SyncContainer`. `skipIfMissing: true`
+en los 6 steps (no 5 — se sumó el step 0) deja que una sola definición cubra las dos situaciones:
+sin configurar, solo existe el anchor de `.not-configured` y el resto se saltea en cascada
+(`finish()` cierra el flujo ahí mismo); configurado, `.not-configured` no existe y el motor lo
+saltea derecho al step 1 sin que el usuario note nada. Orden: step 0 (`.not-configured`, action
+click sobre el link real a `/settings`) → push (click) → fetch (click) → consola de tubos (sin
+action, solo lectura) → avanzado: auto-push toggle (click, moreDetail: throttle) → avanzado: tubo
+divergente → `/variants/merge` (click, cross-reference — no duplica el paso a paso del merge en sí).
+Excluido del checklist de onboarding (8.7), como estaba planeado — no se tocó ese archivo.
+
+Verificado en el navegador: auto-arranque al entrar a `/sync` sin `isConfigured()`, step 0
+correctamente anclado y con el link real resaltado; click real en "Abrir configuración" navega a
+`/settings` (destruye `SyncContainer`) y el flujo termina limpio gracias a
+`practicedAdvancePending` (mismo mecanismo ya usado por Images en 8.91) — `sync` queda marcado
+como visto en localStorage, sin overlay colgado. Los steps 1-5 (rama configurada) no se pudieron
+ejercitar con un remoto real de GitHub — no corresponde crear credenciales de prueba solo para
+verificar UI — pero el mecanismo de `skipIfMissing`/anchors ya está probado end-to-end por 8.16
+(mismo patrón exacto de "overlay condicional") y por el propio cierre limpio de la rama
+sin-configurar. `bun run typecheck`, `bun run test` (548/548) y `bun run lint` limpios.
 
 ### 8.18 — Engine: selector de tutorial (múltiples flujos por página) — _Cerrado._
 

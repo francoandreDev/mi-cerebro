@@ -804,6 +804,24 @@ export const es = {
   'palette.queries.title': 'Búsquedas anteriores',
   'palette.queries.forget': 'Olvidar búsqueda',
 
+  'palette.tutorial.open.title': 'Un buscador para todo el cerebro',
+  'palette.tutorial.open.body':
+    'Este botón abre la búsqueda global: notas, tareas, metas, libros, todo lo que tengas, sin importar en qué página estés parado.',
+  'palette.tutorial.open.moreDetail':
+    'Ctrl+K (Cmd+K en Mac) la abre desde cualquier lugar, sin tocar el mouse.',
+  'palette.tutorial.search.title': 'Escribí y filtrá',
+  'palette.tutorial.search.body':
+    'Empezá a tipear para buscar por texto. Sin nada escrito ves tus últimas búsquedas y lo último que abriste.',
+  'palette.tutorial.search.moreDetail':
+    'Sumá tag:etiqueta a la búsqueda para filtrar solo lo que tiene esa etiqueta — y podés "olvidar" una búsqueda guardada con la ✕ que aparece al lado.',
+  'palette.tutorial.navigate.title': 'Flechas para moverte entre resultados',
+  'palette.tutorial.navigate.body': '↑ y ↓ mueven la selección sin soltar el teclado.',
+  'palette.tutorial.navigate.moreDetail':
+    'Si el resultado marcado es una etiqueta, Enter te lleva directo a esa vista de #etiqueta en vez de abrir una entidad.',
+  'palette.tutorial.pick.title': 'Enter abre lo seleccionado',
+  'palette.tutorial.pick.body':
+    'Enter navega directo a esa entidad y cierra la búsqueda. Esc en cualquier momento la cierra sin elegir nada.',
+
   'shortcuts.help.title': 'Atajos de teclado',
   'shortcuts.help.open': 'Mostrar ayuda de atajos',
   'shortcuts.help.close': 'Cerrar ayuda',
@@ -2889,6 +2907,27 @@ export const es = {
   'sync.autoPush.throttle.hint': 'Mínimo de minutos entre auto-pushes consecutivos. 5 por default.',
   'sync.autoPush.hourglass.remaining': 'Próximo auto-push en {time}',
   'sync.autoPush.skip.spark': 'Auto-push omitido: envío en curso',
+
+  'sync.tutorial.notConfigured.title': 'Primero, la línea al espejo',
+  'sync.tutorial.notConfigured.body':
+    'Sin un remoto de GitHub configurado no hay qué sincronizar. Configurá el PAT desde Ajustes para activar esta consola.',
+  'sync.tutorial.push.title': 'Push todo manda tus cambios',
+  'sync.tutorial.push.body':
+    'Sube el estado local de cada variante (main, comments, draft) a GitHub, una por una.',
+  'sync.tutorial.fetch.title': 'Fetch todo trae lo remoto',
+  'sync.tutorial.fetch.body':
+    'Baja los cambios que hicieron desde otro dispositivo, sin fusionar nada todavía.',
+  'sync.tutorial.console.title': 'Un tubo por rama',
+  'sync.tutorial.console.body':
+    'Cada cápsula muestra el ref y cuándo sincronizó por última vez. Roja o partida en dos: esa rama divergió entre local y remoto.',
+  'sync.tutorial.autoPush.title': 'Auto-push tras cada commit',
+  'sync.tutorial.autoPush.body':
+    'Activá este switch para que cada autocommit dispare un push solo, sin tocar las palancas.',
+  'sync.tutorial.autoPush.moreDetail':
+    'El throttle de al lado limita cada cuántos minutos puede repetirse — evita mandar un push por cada commit chico seguido.',
+  'sync.tutorial.divergent.title': 'Una rama dividida en dos',
+  'sync.tutorial.divergent.body':
+    'Cuando la cápsula se parte en dos mitades, local y remoto avanzaron por separado. "Resolver merge" te lleva a la confluencia de esa variante — cómo elegir qué lado gana vive ahí, no acá.',
 
   'home.title': 'Inicio',
   'home.goHome': 'Ir al inicio',
