@@ -28,7 +28,12 @@
       }
     </div>
     @if (!isEmpty()) {
-      <button type="button" class="danger mc-hover-wiggle" (click)="onEmpty()">
+      <button
+        type="button"
+        class="danger mc-hover-wiggle"
+        data-tutorial="trash-empty-all"
+        (click)="onEmpty()"
+      >
         <mc-icon name="broom" />
         <span>{{ t('trash.empty') }}</span>
       </button>
