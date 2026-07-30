@@ -40,6 +40,7 @@ interface KindGroup {
         <button
           type="button"
           class="x"
+          data-tutorial="calendar-book-close"
           (click)="dismiss.emit()"
           [attr.aria-label]="t('calendar.book.close')"
         >
@@ -47,7 +48,7 @@ interface KindGroup {
         </button>
 
         <div class="page left">
-          <header class="page-head">
+          <header class="page-head" data-tutorial="calendar-book-nav">
             <button
               type="button"
               class="page-nav"
@@ -66,7 +67,7 @@ interface KindGroup {
               <mc-icon name="caret-right" />
             </button>
           </header>
-          <ol class="week-list">
+          <ol class="week-list" data-tutorial="calendar-book-days">
             @for (d of days(); track d.iso) {
               <li>
                 <button
@@ -93,7 +94,7 @@ interface KindGroup {
         <div class="page right">
           <header class="page-head">
             <h3>{{ dayHeading() }}</h3>
-            <div class="actions">
+            <div class="actions" data-tutorial="calendar-book-create">
               <button
                 type="button"
                 class="quill"

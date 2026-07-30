@@ -15,6 +15,7 @@
     <button
       type="button"
       class="icon-btn"
+      data-tutorial="music-playlist-favorite"
       [class.fav-active]="playlist.favorite === true"
       (click)="onToggleFavorite()"
       [title]="t('music.favoriteToggle')"
@@ -30,6 +31,7 @@
     <button
       type="button"
       class="icon-btn"
+      data-tutorial="music-playlist-play"
       (click)="onPlayPlaylist()"
       [disabled]="activeTracks().length === 0"
       [title]="t('music.playAll')"
@@ -40,6 +42,7 @@
     <button
       type="button"
       class="icon-btn"
+      data-tutorial="music-playlist-shuffle"
       (click)="onShufflePlaylist()"
       [disabled]="activeTracks().length === 0"
       [title]="t('music.playShuffled')"
@@ -50,6 +53,7 @@
     <button
       type="button"
       class="icon-btn danger"
+      data-tutorial="music-playlist-delete"
       (click)="onDelete()"
       [title]="t('common.delete')"
       [attr.aria-label]="t('common.delete')"
@@ -75,6 +79,7 @@
         <li
           class="row"
           draggable="true"
+          data-tutorial="music-playlist-track-row"
           [class.playing]="currentTrackId() === track.id"
           [class.drag-over]="dragOverIdx() === i"
           (dragstart)="onTrackDragStart(i, $event)"
@@ -112,7 +117,12 @@
   }
 
   <div class="add-section">
-    <button type="button" class="primary add-toggle" (click)="togglePicker()">
+    <button
+      type="button"
+      class="primary add-toggle"
+      data-tutorial="music-playlist-add-toggle"
+      (click)="togglePicker()"
+    >
       {{ picking() ? t('music.done') : '+ ' + t('music.addTracks') }}
     </button>
     @if (picking()) {

@@ -377,6 +377,27 @@ export const es = {
   'history.tutorial.milestones.title': 'Marcá puntos importantes para filtrar el ruido',
   'history.tutorial.milestones.body':
     'Los autocommits se acumulan rápido. Nombrá un commit importante como milestone (botón "Marcar este punto" en el detalle) y después activá este filtro para ver solo esos hitos, sin el resto.',
+  'history.tutorial.timeline.moreDetail':
+    'El buscador entiende sintaxis propia: facet:main/comments/draft, since:7d, o pegar directamente un sha. Los chips de faceta debajo filtran sin escribir nada. Dentro de un commit, "Ver sólo cambios" compacta el diff a las líneas modificadas. Tandas de autocommits consecutivos (guardados automáticos, merges) se agrupan solas en una fila con contador — no hace falta colapsarlas a mano. Si el historial crece mucho, un cartel de "Compactar ahora" aparece abajo del todo con el link a configuración.',
+  'history.tutorial.nav.title': 'Saltá de hito en hito',
+  'history.tutorial.nav.body':
+    'Con hitos marcados, "]" salta al siguiente y "[" al anterior — sin tener que scrollear buscándolos entre el resto de los commits.',
+  'history.tutorial.milestoneMark.title': 'Marcar este commit como hito',
+  'history.tutorial.milestoneMark.body':
+    'Nombrá este commit para que quede fijo en el filtro de hitos y sea fácil de encontrar más adelante. Podés agregar una descripción opcional.',
+  'history.tutorial.flow.essentials': 'Historial: lo esencial',
+  'history.tutorial.flow.restore': 'Restaurar una versión',
+  'history.tutorial.restore.pick.title': 'Elegí la versión a restaurar',
+  'history.tutorial.restore.pick.body':
+    'Click en cualquier commit del historial lo selecciona — sus acciones de restauración aparecen en el detalle a la derecha.',
+  'history.tutorial.restore.scope.title': 'Elegí el alcance: todo el commit o una sola entidad',
+  'history.tutorial.restore.scope.body':
+    '"Restaurar este commit" vuelve TODO el workspace al estado exacto de ese momento. Este botón abre el formulario de confirmación — todavía no restaura nada.',
+  'history.tutorial.restore.scope.moreDetail':
+    'Si sólo necesitás una nota, tarea o escrito puntual y no todo el commit, cada entidad modificada tiene su propio botón "Restaurar" en la lista de cambios — mismo mecanismo, alcance más chico.',
+  'history.tutorial.restore.confirm.title': 'Confirmá con el sha exacto',
+  'history.tutorial.restore.confirm.body':
+    'Esta acción es irreversible: pisa el estado actual con el del commit elegido. Por eso pide que tipees el sha corto exacto (se ve arriba) antes de habilitar el botón — no es un gesto para practicar en el tutorial, hacelo sólo cuando de verdad quieras restaurar.',
   'versioning.history.zoom.legend.aria': 'Referencia de niveles de zoom',
   'versioning.history.zoom.legend.panorama': 'todo el año, un pico por día',
   'versioning.history.zoom.legend.strata': 'corte por bucket de commits',
@@ -457,6 +478,30 @@ export const es = {
   'variants.tutorial.merge.title': 'Mergeás los cambios o borrás la variante',
   'variants.tutorial.merge.body':
     'El botón de mergear te lleva a la pantalla de merge contra la original. El de borrar (con confirmación) descarta la variante entera si no la necesitás más.',
+  'variants.tutorial.select.moreDetail':
+    'La barra de arriba suma un buscador (filtra los brazos por nombre) y "Releer actividad" (recalcula reposo/actividad reciente sin recargar la página).',
+  'variants.tutorial.legend.title': 'El ícono ⓘ abre la leyenda del delta',
+  'variants.tutorial.legend.body':
+    'Explica qué significa cada color y símbolo del río: brazo activo, en reposo, vado (fork) y milestone.',
+  'variants.tutorial.flow.essentials': 'Variantes: lo esencial',
+  'variants.tutorial.flow.drawer': 'Editar y navegar una variante',
+  'variants.tutorial.drawer.renameStart.title': 'El lápiz activa el nombre editable',
+  'variants.tutorial.drawer.renameStart.body':
+    'Con una variante seleccionada (no la protegida), el ícono de lápiz en el panel inferior abre el nombre como input de texto.',
+  'variants.tutorial.drawer.renameConfirm.title': 'Enter guarda, Escape cancela',
+  'variants.tutorial.drawer.renameConfirm.body':
+    'Escribí el nuevo nombre y confirmá con Enter — Escape descarta el cambio sin guardar.',
+  'variants.tutorial.drawer.color.title': 'La gota de color abre el selector nativo',
+  'variants.tutorial.drawer.color.body':
+    'Cada variante tiene un color propio que la identifica en el delta y en sus pills — click para elegir otro.',
+  'variants.tutorial.drawer.delete.title': 'Eliminar pide confirmación',
+  'variants.tutorial.drawer.delete.body':
+    'Es el único gesto destructivo del panel: si hay cambios sin mergear contra la original, el diálogo de confirmación te avisa cuántos vas a perder.',
+  'variants.tutorial.drawer.history.title': 'El commit HEAD abre su punto en el historial',
+  'variants.tutorial.drawer.history.body':
+    'Click en el rombo de HEAD te lleva directo a ese commit en /history.',
+  'variants.tutorial.drawer.history.moreDetail':
+    'Las pills de origen y de milestone (cuando existen) hacen lo mismo — cada una navega al commit que representa.',
   'variants.form.title': 'Nueva variante',
   'variants.form.name': 'Nombre',
   'variants.form.name.placeholder': 'ej. experimento-2026',
@@ -540,6 +585,28 @@ export const es = {
   'merge.selector.from': 'Origen',
   'merge.selector.into': 'Destino',
   'merge.selector.swap': 'Invertir origen y destino',
+  'merge.tutorial.flow.merge': 'Resolver un merge',
+  'merge.tutorial.selector.title': 'Elegí origen y destino',
+  'merge.tutorial.selector.body':
+    '"Origen" es la variante de la que traés cambios, "Destino" la que los recibe (siempre comparás sus ramas main).',
+  'merge.tutorial.swap.title': '⇄ invierte origen y destino',
+  'merge.tutorial.swap.body': 'Útil cuando elegiste los lados al revés — no recalcula nada extra.',
+  'merge.tutorial.bulk.title': 'Aplicá una elección a todos los archivos',
+  'merge.tutorial.bulk.body':
+    'Este botón marca todas las filas para traer la versión del origen de una sola vez.',
+  'merge.tutorial.bulk.moreDetail':
+    '"Mantener todo" hace lo mismo del lado del destino, y "Saltar todo" descarta la fila entera sin tocarla.',
+  'merge.tutorial.fileChoice.title': 'Elegí archivo por archivo',
+  'merge.tutorial.fileChoice.body':
+    'Cada fila tiene su propio selector de 3 vías — origen, destino o saltar — para ajustar la elección masiva caso por caso.',
+  'merge.tutorial.apply.title': 'Aplicá el merge',
+  'merge.tutorial.apply.body':
+    'Aplica solo las filas marcadas para traer del origen; el resto queda como está en el destino.',
+  'merge.tutorial.retry.title': 'Si falla a mitad de camino, reintentá',
+  'merge.tutorial.retry.body':
+    'Un fallo parcial deja el resultado y el motivo a la vista — "Reintentar la fallida" reintenta solo esa entidad.',
+  'merge.tutorial.retry.moreDetail':
+    'Si preferís no resolverla ahora, "Saltar y continuar" aplica el resto de las pendientes sin esa entidad.',
 
   'errors.ver.010.title': 'No se pudo aplicar el merge',
   'errors.ver.010.message':
@@ -677,10 +744,29 @@ export const es = {
     'Sin etiquetas todavía. Se crean desde cualquier entidad — notas, tareas, metas, etc. — no desde acá.',
 
   'tags.page.title': 'Etiquetas',
+  'tags.tutorial.flow.essentials': 'Tags: lo esencial',
+  'tags.tutorial.flow.organize': 'Organizar tags',
   'tags.tutorial.origin.body':
     'Las etiquetas se crean desde cualquier entidad (notas, tareas, metas, etc), no desde acá. Esta pantalla es el listado centralizado de todas las que ya existen en tu workspace.',
-  'tags.tutorial.rowActions.body':
-    'Cuando tengas al menos una etiqueta, cada fila te deja recolorearla, renombrarla, fusionarla con otra o eliminarla — los cambios se aplican a todas las entidades que la usan.',
+  'tags.tutorial.filter.title': 'Filtrar etiquetas',
+  'tags.tutorial.filter.body': 'Escribí acá para encontrar una etiqueta por nombre en la lista.',
+  'tags.tutorial.filter.moreDetail':
+    'El filtro ignora mayúsculas y acentos, y coincide con cualquier parte del nombre — no hace falta escribirlo completo ni exacto.',
+  'tags.tutorial.detail.title': 'Ver dónde se usa una etiqueta',
+  'tags.tutorial.detail.body':
+    'Esta lista no navega al detalle de una etiqueta — hacelo desde el chip de etiqueta que ves en una nota, tarea, meta u otra entidad. Ahí vas a ver todo lo etiquetado, agrupado por tipo.',
+  'tags.tutorial.organize.recolor.title': 'Recolorear una etiqueta',
+  'tags.tutorial.organize.recolor.body':
+    'El punto de color abre una paleta — el nuevo color se aplica a la etiqueta en todas las entidades que la usan.',
+  'tags.tutorial.organize.rename.title': 'Renombrar una etiqueta',
+  'tags.tutorial.organize.rename.body':
+    'Tocá el nombre para editarlo en el lugar. Enter confirma, Escape cancela.',
+  'tags.tutorial.organize.merge.title': 'Combinar dos etiquetas',
+  'tags.tutorial.organize.merge.body':
+    '"Combinar" abre un selector de destino: la etiqueta de esta fila desaparece y todo lo que la usaba pasa a usar la que elijas. Es irreversible — la app te pide confirmación antes de aplicarlo.',
+  'tags.tutorial.organize.delete.title': 'Eliminar una etiqueta',
+  'tags.tutorial.organize.delete.body':
+    'Eliminar la quita de todas las entidades que la usan (el contador de la fila te dice cuántas). También pide confirmación antes de aplicarse.',
   'tags.page.filterPlaceholder': 'Filtrar etiquetas...',
   'tags.page.noMatch': 'Ninguna etiqueta coincide con el filtro.',
   'tags.page.usageCountOne': '{count} uso',
@@ -689,11 +775,15 @@ export const es = {
   'tags.page.delete': 'Eliminar',
   'tags.page.mergeInto': 'Combinar con...',
   'tags.page.mergeNoTargets': 'No hay otra etiqueta para combinar.',
+  'tags.page.mergeConfirm':
+    '¿Combinar "{from}" con "{to}"? "{from}" desaparece y no se puede deshacer.',
   'tags.page.deleteConfirm': '¿Eliminar la etiqueta "{label}"? No se usa en ninguna entidad.',
   'tags.page.deleteConfirmUsed':
     '¿Eliminar la etiqueta "{label}"? Se quitará de {count} entidad(es) que la usan.',
   'tags.page.confirm.delete.title': 'Eliminar etiqueta',
   'tags.page.confirm.delete.confirm': 'Sí, eliminar',
+  'tags.page.confirm.merge.title': 'Combinar etiquetas',
+  'tags.page.confirm.merge.confirm': 'Sí, combinar',
   'tags.page.confirm.cancel': 'Cancelar',
 
   'tags.detail.back': 'Volver a etiquetas',
@@ -861,12 +951,48 @@ export const es = {
   'tasks.tutorial.date.title': 'Al abrirla, le ponés una fecha',
   'tasks.tutorial.date.body':
     'Click en una tarea abre su detalle. Con fecha puesta se ubica sola en Floración (hoy) o Brote (esta semana), y aparece también en /calendar.',
+  'tasks.tutorial.date.moreDetail':
+    'En el detalle, el campo de fecha es un selector nativo: elegí un día y se agrega como chip. Podés sumar más de una fecha a la misma tarea (chips separados) y sacarlas con la ×.',
   'tasks.tutorial.transplant.title': 'Shift+→ la trasplanta al cantero siguiente',
   'tasks.tutorial.transplant.body':
     'Probalo: con una tarea enfocada, Shift+→ la mueve un cantero a la derecha, Shift+← a la izquierda. También podés arrastrarla con el mouse entre canteros.',
+  'tasks.tutorial.transplantDrag.title': 'También podés arrastrarla con el mouse',
+  'tasks.tutorial.transplantDrag.body':
+    'Tomá una tarea y soltala sobre otro cantero — el mismo trasplante que Shift+→, pero a mano. Si preferís el teclado, el atajo de arriba alcanza igual.',
   'tasks.tutorial.harvest.title': 'Enter abre el menú — "Cosechar" la completa',
   'tasks.tutorial.harvest.body':
     'Con la tarea enfocada, Enter abre un menú con los canteros y, al final, "Cosechar". Al cosechar cae acá, a la cesta, y el cambio queda commiteado al historial.',
+  'tasks.tutorial.water.title': '🚿 Regalas para que no se marchite',
+  'tasks.tutorial.water.body':
+    'Una tarea que lleva más de 3 días en Floración empieza a marchitarse (glyph distinto). Activá el riego acá arriba y tocá la gotita de una tarea en Brote o Semilla para subirla de posición antes de que le toque Floración.',
+
+  'tasks.tutorial.flow.essentials': 'Tareas: lo esencial',
+  'tasks.tutorial.flow.patio': 'Patio: archivo de cosechas',
+  'tasks.tutorial.patio.intro.title': 'El patio archiva lo que ya cosechaste',
+  'tasks.tutorial.patio.intro.body':
+    'Cada tarea completada cae acá, agrupada por el mes en que la terminaste — un archivo de solo lectura, no hay riego ni cosecha en esta pantalla (eso pasa en el jardín).',
+  'tasks.tutorial.patio.shape.title': 'Árbol o flor, según cuánto vivió',
+  'tasks.tutorial.patio.shape.body':
+    'Si una tarea pasó 14 días o más en Floración antes de cosecharse, se archiva como árbol en vez de flor — una marca visual de las que más tiempo estuvieron activas.',
+  'tasks.tutorial.patio.open.title': 'Click para volver a abrirla',
+  'tasks.tutorial.patio.open.body':
+    'Cualquier planta del patio se abre igual que en el jardín: click y vas a su detalle completo.',
+  'tasks.tutorial.patio.back.title': 'Volver al jardín',
+  'tasks.tutorial.patio.back.body': 'Este botón te lleva de vuelta a /tasks.',
+
+  'tasks.tutorial.flow.editor': 'Editor de tarea completo',
+  'tasks.tutorial.editor.reminder.title': 'Recordatorio ligado a la fecha',
+  'tasks.tutorial.editor.reminder.body':
+    'Con al menos una fecha puesta, activá el recordatorio acá — se dispara con la app abierta, cerca de la fecha (no se puede activar sin fecha, ni con la tarea ya cosechada).',
+  'tasks.tutorial.editor.tags.title': 'Etiquetá la tarea',
+  'tasks.tutorial.editor.tags.body':
+    'Escribí acá para buscar una etiqueta existente o crear una nueva. La primera etiqueta define el color de la tarea en el jardín.',
+  'tasks.tutorial.editor.focus.title': 'Alt+Shift+F: modo foco',
+  'tasks.tutorial.editor.focus.body':
+    'Oculta título, fecha, recordatorio y etiquetas — queda solo el cuerpo de la tarea, para escribir sin distracciones. El mismo atajo lo vuelve a mostrar.',
+  'tasks.tutorial.editor.delete.title': 'Borrar manda a la papelera',
+  'tasks.tutorial.editor.delete.body':
+    'No es definitivo: la tarea va a la papelera y se puede restaurar durante 30 días.',
   'tasks.garden.legend.wilted': 'Marchita · días sin completarse',
   'tasks.garden.legend.countToday': 'tareas para hoy',
   'tasks.garden.legend.countWeek': 'tareas para esta semana',
@@ -1205,19 +1331,123 @@ export const es = {
   'lists.chalk.confirm.remove.title': 'Eliminar capa',
   'lists.chalk.confirm.remove.confirm': 'Sí, eliminar',
 
+  'lists.tutorial.flow.essentials': 'Listas: lo esencial',
+  'lists.tutorial.flow.chalk': 'Herramientas del tablero de tiza',
+  'lists.tutorial.flow.folders': 'Organizar en carpetas',
+
+  'lists.tutorial.search.title': 'Buscá dentro de la pizarra',
+  'lists.tutorial.search.body':
+    'Filtra por título y por el contenido de los ítems a la vez — resalta las coincidencias en cada card.',
+  'lists.tutorial.axis.title': 'Cambiá el eje del índice lateral',
+  'lists.tutorial.axis.body':
+    'A-Z agrupa alfabéticamente; Tags agrupa por etiqueta (con "Sin etiqueta" al final). El rail salta directo al grupo elegido.',
+  'lists.tutorial.deleteEntry.title': 'Borrá una lista desde el estante',
+  'lists.tutorial.deleteEntry.body':
+    'El tacho que aparece al pasar el mouse sobre una card la manda a la papelera (se puede restaurar después).',
+  'lists.tutorial.deleteEntry.moreDetail':
+    'Pide confirmación antes de moverla — nunca borra directo sin ese paso.',
+
+  'lists.tutorial.chalkIntro.title': 'El tablero de tiza tiene su propia caja de herramientas',
+  'lists.tutorial.chalkIntro.body':
+    'Si el modo tiza no está activo, prendelo con el botón "Tiza" de la barra antes de seguir — el resto de este recorrido vive adentro de esa barra.',
+  'lists.tutorial.chalkDraw.title': 'Elegí tiza y dibujá un trazo',
+  'lists.tutorial.chalkDraw.body':
+    'Con la tiza seleccionada, clickeá y arrastrá sobre el tablero para trazar una línea con textura de grano.',
+  'lists.tutorial.chalkErase.title': 'La goma borra por donde pasa',
+  'lists.tutorial.chalkErase.body':
+    'Cambia el puntero a modo borrado — arrastrá sobre un trazo existente para eliminarlo por partes.',
+  'lists.tutorial.chalkColor.title': 'Elegí uno de los 5 colores de tiza',
+  'lists.tutorial.chalkColor.body':
+    'Blanca, amarilla, rosa, celeste o verde — el color activo se usa para el próximo trazo.',
+  'lists.tutorial.chalkSize.title': 'Elegí el grosor del trazo',
+  'lists.tutorial.chalkSize.body': 'Fino, medio o grueso — se aplica al trazo que sigue.',
+  'lists.tutorial.chalkUndo.title': 'Deshacer el último trazo o cambio de capa',
+  'lists.tutorial.chalkUndo.body':
+    'Retrocede una acción a la vez — dibujar, borrar, o cualquier cambio del panel de capas.',
+  'lists.tutorial.chalkRedo.title': 'Rehacer lo último deshecho',
+  'lists.tutorial.chalkRedo.body': 'El botón espejo de deshacer — vuelve a aplicar la acción.',
+  'lists.tutorial.chalkShortcuts.title': 'Atajos de teclado del tablero',
+  'lists.tutorial.chalkShortcuts.body':
+    'B elige tiza, E elige goma, [ deshace, ] rehace, 1-5 eligen color — todos inertes mientras escribís en un campo de texto. Ctrl+Shift+T alterna el modo tiza (probalo ahora).',
+  'lists.tutorial.chalkLayersOpen.title': 'Abrí el panel de capas',
+  'lists.tutorial.chalkLayersOpen.body':
+    'Cada capa agrupa sus propios trazos — podés mostrarlas, ocultarlas o reordenarlas por separado.',
+  'lists.tutorial.chalkLayersAdd.title': 'Sumá una capa nueva',
+  'lists.tutorial.chalkLayersAdd.body':
+    'El primer trazo que hacés ya crea una capa sola; este botón agrega una capa adicional en blanco.',
+  'lists.tutorial.chalkLayersManage.title': 'Cada fila tiene sus propios controles',
+  'lists.tutorial.chalkLayersManage.body':
+    'Click en el nombre para renombrar, el ojo oculta/muestra, el candado bloquea (evita dibujar encima), las flechas reordenan, y el tacho elimina la capa completa.',
+  'lists.tutorial.chalkLayersManage.moreDetail':
+    'Bloquear una capa no la oculta — solo impide que un trazo nuevo caiga ahí por accidente mientras dibujás en otra.',
+  'lists.tutorial.chalkExport.title': 'Exportá el tablero como imagen',
+  'lists.tutorial.chalkExport.body':
+    'PNG para compartir como imagen plana, SVG para conservar los trazos como vectores editables.',
+  'lists.tutorial.chalkClear.title': 'Limpiar pizarra borra todos los trazos de la capa activa',
+  'lists.tutorial.chalkClear.body':
+    'Solo afecta la capa seleccionada, no las demás — pide confirmación porque no se puede deshacer con undo una vez cerrada la lista.',
+  'lists.tutorial.chalkClear.moreDetail':
+    'Si querés vaciar todo el tablero, repetí la acción en cada capa por separado — no hay un "vaciar todas" de un solo click.',
+
+  'lists.tutorial.folders.create.title': 'Creá una carpeta',
+  'lists.tutorial.folders.create.body':
+    'El ícono de carpeta con "+" crea una subcarpeta dentro de donde estés parado — le ponés nombre y confirmás.',
+  'lists.tutorial.folders.open.title': 'Entrá a una carpeta con click',
+  'lists.tutorial.folders.open.body':
+    'Click en cualquier carpeta del breadcrumb te lleva adentro — las listas de esa carpeta pasan a mostrarse en el estante.',
+  'lists.tutorial.folders.manage.title': 'Renombrá, moví o borrá una carpeta',
+  'lists.tutorial.folders.manage.body':
+    'Los tres puntos junto a cada carpeta abren renombrar, mover o borrar.',
+  'lists.tutorial.folders.navigate.title': 'Volvé a la raíz con un click',
+  'lists.tutorial.folders.navigate.body':
+    'El primer ícono del breadcrumb siempre vuelve a la carpeta raíz, sin importar cuán hondo estés.',
+
   'writings.title': 'Escritos',
+  'writings.tutorial.flow.essentials': 'Writings: lo esencial',
+  'writings.tutorial.flow.library': 'Explorar la biblioteca',
   'writings.tutorial.create.title': 'Escribí un título y enviá: nace el escrito',
   'writings.tutorial.create.body':
     'Podés dejarlo sin título ("Sin título") y ponerlo después. Al enviar entrás directo al editor.',
   'writings.tutorial.editor.title': 'El editor es full-bleed: solo vos y el texto',
   'writings.tutorial.editor.body':
     'Sin paneles laterales, ancho de lectura cómodo. La barra de arriba tiene el título, la fecha límite opcional, tags, y el estado del guardado.',
+  'writings.tutorial.deadline.title': 'Fecha límite opcional, con recordatorio',
+  'writings.tutorial.deadline.body':
+    'Elegí una fecha límite si este escrito la necesita. Se puede quitar en cualquier momento con la X.',
+  'writings.tutorial.deadline.moreDetail':
+    'Con fecha límite puesta se habilita un recordatorio (campana, debajo): te avisa en la sección de Recordatorios cuando se acerca.',
+  'writings.tutorial.tags.title': 'Etiquetá el escrito para encontrarlo por tema',
+  'writings.tutorial.tags.body':
+    'Las etiquetas son transversales a toda la app: el mismo tag agrupa notas, tareas y escritos relacionados.',
   'writings.tutorial.autosave.title': 'Autosave cada ~2.5 segundos, sin que hagas nada',
   'writings.tutorial.autosave.body':
     'El indicador de la barra superior pasa de "Sin guardar" a "Guardando..." a "Guardado" solo. Nunca hace falta guardar a mano.',
   'writings.tutorial.focus.title': 'Alt+Shift+F oculta todo lo demás',
   'writings.tutorial.focus.body':
     'Es un atajo global de la app (funciona en cualquier editor): activa el modo foco, que esconde la barra superior y deja solo el texto en pantalla.',
+  'writings.tutorial.typewriter.title': 'El editor también tiene modo máquina de escribir',
+  'writings.tutorial.typewriter.body':
+    'Mantiene la línea activa centrada en pantalla mientras escribís. Es infraestructura compartida del editor, no algo propio de Writings — el mismo botón aparece en Notes y Books.',
+  'writings.tutorial.delete.title': 'Borrar manda a la papelera, no destruye',
+  'writings.tutorial.delete.body':
+    'Pide confirmación y el escrito queda recuperable 30 días en la papelera antes de borrarse en serio.',
+  'writings.tutorial.library.open.title': 'La biblioteca reúne todo lo que no estás leyendo ahora',
+  'writings.tutorial.library.open.body':
+    'Se abre en un modal aparte de "Seguir donde dejaste": ahí vive el resto de tus escritos.',
+  'writings.tutorial.library.search.title': 'Buscá por título o contenido',
+  'writings.tutorial.library.search.body':
+    'Filtra al toque, sin enviar nada. Se combina con las etiquetas de abajo.',
+  'writings.tutorial.library.view.title': 'Tres vistas: estantería, mesa o lista',
+  'writings.tutorial.library.view.body':
+    'Elegí la que te resulte más cómoda para escanear títulos — la app recuerda tu elección.',
+  'writings.tutorial.library.group.title': 'Agrupá por carpeta y ordená como quieras',
+  'writings.tutorial.library.group.body':
+    'Este botón agrupa la lista por carpeta. El selector de al lado cambia el orden dentro de cada grupo.',
+  'writings.tutorial.library.group.moreDetail':
+    'Ordenar por "Editado recientemente", título o cantidad de palabras — el select vive junto al buscador.',
+  'writings.tutorial.library.close.title': 'Escape cierra la biblioteca',
+  'writings.tutorial.library.close.body':
+    'También podés usar la X de arriba o click afuera del modal.',
   'writings.new': 'Nuevo escrito',
   'writings.untitledTitle': 'Sin título',
   'writings.empty': 'Sin escritos todavía. Empezá con "Nuevo escrito".',
@@ -1664,12 +1894,38 @@ export const es = {
   'files.tutorial.open.title': 'Click en un casillero lo abre',
   'files.tutorial.open.body':
     'Se abre inline si hay pocas colecciones, o en overlay si hay muchas. Ahí arrastrás archivos nuevos o usás "Agregar archivos".',
+  'files.tutorial.flow.essentials': 'Files: lo esencial',
+  'files.tutorial.flow.folders': 'Organizar en subcarpetas',
   'files.tutorial.tags.title': 'El primer tag pinta el frente del casillero',
   'files.tutorial.tags.body':
     'Con el casillero abierto, agregale un tag desde la barra superior. El color del primer tag queda pintado en el frente, para identificarlo de un vistazo en la pared.',
+  'files.tutorial.reorder.title': 'Arrastrá para subir o reordenar',
+  'files.tutorial.reorder.body':
+    'Soltá archivos sueltos sobre el tablero para subirlos, o arrastrá un archivo ya subido sobre otro para reordenarlos.',
+  'files.tutorial.renameItem.title': 'El lápiz renombra un archivo',
+  'files.tutorial.renameItem.body':
+    'Cada archivo tiene su propio nombre editable, distinto del nombre original que trajiste del disco.',
+  'files.tutorial.editTitle.title': 'El nombre de la colección se edita directo',
+  'files.tutorial.editTitle.body':
+    'Click en el título del casillero y escribí el nombre nuevo — se guarda solo.',
+  'files.tutorial.deleteCollection.title': 'Los tres puntos borran la colección',
+  'files.tutorial.deleteCollection.body':
+    'Abrí el menú "⋯" junto al título y elegí "Eliminar colección" — manda todo a la papelera, con confirmación antes de borrar.',
   'files.tutorial.download.title': 'Cada archivo se descarga por separado',
   'files.tutorial.download.body':
     'Adentro del casillero, cada archivo tiene su propio botón de descarga — no hace falta bajar la colección entera.',
+  'files.tutorial.folders.create.title': 'Creá una subcarpeta',
+  'files.tutorial.folders.create.body':
+    'El ícono de carpeta con "+" crea una subcarpeta dentro de donde estés parado — le ponés nombre y confirmás.',
+  'files.tutorial.folders.open.title': 'Entrá a una subcarpeta con click',
+  'files.tutorial.folders.open.body':
+    'Click en cualquier subcarpeta del breadcrumb te lleva adentro — las colecciones de esa carpeta pasan a mostrarse en la pared.',
+  'files.tutorial.folders.manage.title': 'Renombrá, moví o borrá una subcarpeta',
+  'files.tutorial.folders.manage.body':
+    'Los tres puntos junto a cada subcarpeta abren renombrar, mover o borrar.',
+  'files.tutorial.folders.navigate.title': 'Volvé a la raíz con un click',
+  'files.tutorial.folders.navigate.body':
+    'El primer ícono del breadcrumb siempre vuelve a la carpeta raíz, sin importar cuán hondo estés.',
   'files.items.moveUp': 'Subir',
   'files.items.moveDown': 'Bajar',
   'files.items.delete': 'Eliminar',
@@ -1885,19 +2141,55 @@ export const es = {
   'calendar.tutorial.views.title': 'Tres formas de mirar el tiempo',
   'calendar.tutorial.views.body':
     'Probalo: cambiá entre mes, semana y año desde acá. Mes te da el detalle día a día, año te muestra los doce meses de un vistazo.',
+  'calendar.tutorial.views.moreDetail':
+    'El botón "Hoy" y los selectores de mes/año de la izquierda te llevan directo a cualquier período sin tener que ir haciendo click en Anterior/Siguiente uno por uno.',
   'calendar.tutorial.day.title': 'Click en un día abre todo lo que tiene',
   'calendar.tutorial.day.body':
     'Tareas, recordatorios y demás con esa fecha aparecen en un modal, agrupados por tipo. Filtrás por tipo desde ahí mismo.',
   'calendar.tutorial.create.title': 'Desde el modal creás algo nuevo con esa fecha',
   'calendar.tutorial.create.body':
     'El modal del día te lleva a crear una tarea o un recordatorio que ya nace con esa fecha puesta — no hace falta asignarla después a mano.',
+  'calendar.tutorial.dragReschedule.title': 'Arrastrá una tarea del wallboard a otro día',
+  'calendar.tutorial.dragReschedule.body':
+    'Soltarla sobre una celda del mes reprograma esa tarea a la nueva fecha, sin abrir nada.',
   'calendar.tutorial.filter.title': 'El wallboard de la derecha filtra por tipo',
   'calendar.tutorial.filter.body':
     'Probalo: click en el encabezado de cualquier card (tareas, metas, recordatorios) prende o apaga ese tipo en la vista completa.',
+  'calendar.tutorial.kindToggle.title': 'Cada card se puede colapsar',
+  'calendar.tutorial.kindToggle.body':
+    'El chevron a la izquierda del nombre abre o cierra la lista de esa card sin sacarla del filtro — para eso está el toggle de la card entera (arriba).',
+  'calendar.tutorial.kindCreate.title': 'El + de cada card crea directo de ese tipo',
+  'calendar.tutorial.kindCreate.body':
+    'Un atajo más al mismo lugar que el modal del día: crear sin elegir fecha primero.',
+  'calendar.tutorial.search.title': 'Buscá cualquier evento por título',
+  'calendar.tutorial.search.body':
+    'Escribí en el buscador del toolbar — los resultados te llevan directo a la fecha de ese evento.',
+  'calendar.tutorial.gotoDate.title': 'Saltá directo a una fecha puntual',
+  'calendar.tutorial.gotoDate.body':
+    'El selector de fecha del toolbar te lleva a cualquier día del calendario sin navegar mes a mes.',
   'calendar.day.openBook': 'Ver en la agenda',
   'calendar.book.close': 'Cerrar libro',
   'calendar.book.emptyDay': 'Página en blanco.',
   'calendar.book.weekHeading': 'Semana del {date}',
+  'calendar.tutorial.flow.essentials': 'Calendario: lo esencial',
+  'calendar.tutorial.flow.week': 'Agenda semanal',
+  'calendar.tutorial.week.enter.title': 'La vista semana abre el libro de cuero',
+  'calendar.tutorial.week.enter.body':
+    'Es una zona propia, separada del mes y el año: cada semana ocupa una doble página.',
+  'calendar.tutorial.week.enter.moreDetail':
+    'También llegás acá desde el botón "Ver en la agenda" del modal de un día — abre el libro directo en esa semana.',
+  'calendar.tutorial.week.nav.title': 'Las flechas de la página izquierda cambian de semana',
+  'calendar.tutorial.week.nav.body':
+    'Igual que Anterior/Siguiente arriba, pero sin salir del libro.',
+  'calendar.tutorial.week.pickDay.title':
+    'Click en un día de la lista lo abre en la página derecha',
+  'calendar.tutorial.week.pickDay.body':
+    'Ahí ves todo lo que tiene ese día, agrupado por tipo, con los recordatorios como post-its.',
+  'calendar.tutorial.week.create.title': 'Cuatro plumas, una por tipo',
+  'calendar.tutorial.week.create.body':
+    'Tarea, meta, recordatorio o nota — cada pluma crea directo con la fecha del día abierto.',
+  'calendar.tutorial.week.close.title': 'La cruz cierra el libro',
+  'calendar.tutorial.week.close.body': 'Volvés a la vista mes donde estabas antes de abrirlo.',
   'tree.type.calendar': 'Calendario',
   'tree.type.reminders': 'Recordatorios',
 
@@ -1981,6 +2273,56 @@ export const es = {
   'reminders.tutorial.filters.title': 'Filtrá por fecha cuando hay muchas',
   'reminders.tutorial.filters.body':
     'Probalo: elegí un rango "desde"/"hasta" acá. Solo quedan visibles las palomas de ese rango — "Limpiar fechas" vuelve a mostrarlas todas.',
+  'reminders.tutorial.flow.essentials': 'Recordatorios: lo esencial',
+  'reminders.tutorial.flow.shortcuts': 'Atajos de teclado',
+  'reminders.tutorial.flow.snooze': 'Posponer y gestionar un recordatorio',
+  'reminders.tutorial.recurrence.title': 'Repetición automática',
+  'reminders.tutorial.recurrence.body':
+    'Elegí cada cuántos días/semanas/meses/años se repite. Al cumplirse, la paloma vuelve a soltarse sola con la próxima fecha calculada.',
+  'reminders.tutorial.pause.title': 'Pausar sin borrar',
+  'reminders.tutorial.pause.body':
+    'Probalo: tildá "En pausa". La paloma sigue en su jaula pero no vuela ni avisa hasta que la destildes.',
+  'reminders.tutorial.search.title': 'Buscá por nombre',
+  'reminders.tutorial.search.body':
+    'Probalo: hacé click acá y escribí. El palomar se filtra a las palomas cuyo papelito contiene ese texto.',
+  'reminders.tutorial.existence.title': 'Lo que no se ve queda registrado',
+  'reminders.tutorial.existence.body':
+    'Al borrar una paloma aparece un aviso abajo con "Deshacer" por unos segundos. Y las que marcás como hechas no desaparecen: quedan acá, en el registro de papelitos tomados.',
+  'reminders.tutorial.shortcuts.next.title': 'J — fila siguiente',
+  'reminders.tutorial.shortcuts.next.body':
+    'Probalo: apretá J. El foco de teclado baja a la próxima paloma del palomar, nichos primero y después la repisa de vencidas.',
+  'reminders.tutorial.shortcuts.prev.title': 'K — fila anterior',
+  'reminders.tutorial.shortcuts.prev.body': 'Probalo: apretá K. El foco sube a la paloma anterior.',
+  'reminders.tutorial.shortcuts.open.title': 'E — abrir la paloma enfocada',
+  'reminders.tutorial.shortcuts.open.body':
+    'Probalo: apretá E. Abre el detalle de la paloma que tiene el foco de teclado, sin necesidad de hacer click.',
+  'reminders.tutorial.shortcuts.toggleDone.title': 'Espacio — marcar/desmarcar hecho',
+  'reminders.tutorial.shortcuts.toggleDone.body':
+    'Probalo: apretá Espacio sobre la fila enfocada. Alterna entre pendiente y hecho, igual que el botón del detalle.',
+  'reminders.tutorial.shortcuts.delete.title': 'Supr — borrar la paloma enfocada',
+  'reminders.tutorial.shortcuts.delete.body':
+    'Probalo: apretá Supr. Borra la paloma enfocada directo, sin abrir el detalle — con el mismo aviso de "Deshacer" de siempre.',
+  'reminders.tutorial.shortcuts.new.title': 'N — nuevo recordatorio',
+  'reminders.tutorial.shortcuts.new.body':
+    'Probalo: apretá N desde cualquier lado de la página. El cursor salta directo al campo de "nuevo recordatorio".',
+  'reminders.tutorial.snooze.openDetail.title': 'Abrí una paloma para posponerla o gestionarla',
+  'reminders.tutorial.snooze.openDetail.body':
+    'Todo lo que sigue vive en el menú ⋮ del detalle: posponer, duplicar o eliminar.',
+  'reminders.tutorial.snooze.openOverflow.title': 'Abrí el menú ⋮',
+  'reminders.tutorial.snooze.openOverflow.body':
+    'Probalo: hacé click en los tres puntos. Se despliega el menú de posponer y gestionar.',
+  'reminders.tutorial.snooze.options.title': '4 formas rápidas de posponer',
+  'reminders.tutorial.snooze.options.body':
+    '"1 hora", "1 día", "el próximo lunes" o "el fin de semana" — cada una suma ese tiempo (o salta a ese día) sobre la fecha actual del recordatorio.',
+  'reminders.tutorial.snooze.duplicate.title': 'Duplicar',
+  'reminders.tutorial.snooze.duplicate.body':
+    'Probalo: hacé click en "Duplicar". Crea una copia idéntica (mismo título, fecha y repetición) como paloma nueva.',
+  'reminders.tutorial.snooze.reopenOverflow.title': 'El menú se cierra solo — reabrilo',
+  'reminders.tutorial.snooze.reopenOverflow.body':
+    'Cada click del menú ⋮ lo cierra automáticamente. Volvé a abrirlo para la próxima acción.',
+  'reminders.tutorial.snooze.delete.title': 'Eliminar',
+  'reminders.tutorial.snooze.delete.body':
+    'Probalo: hacé click en "Eliminar". Borra la paloma con el mismo aviso de "Deshacer" de siempre.',
   'reminders.detailTitle': 'Papelito',
   'reminders.dueAtLabel': 'Cuándo vuela',
   'reminders.recurrenceLabel': 'Anillo',
@@ -2220,6 +2562,57 @@ export const es = {
   'music.tutorial.miniplayer.title': 'Los controles te siguen a todas las secciones',
   'music.tutorial.miniplayer.body':
     'Si salís de /music, la mini-barra de abajo sigue mostrando el track actual con play/pausa, siguiente/anterior y avance de 10 segundos. Click en el título vuelve a la membrana.',
+  'music.tutorial.flow.essentials': 'Music: lo esencial',
+  'music.tutorial.album.moreDetail':
+    'Arrastrá cualquier track de la biblioteca a la pestaña "Playlists" para sumarlo sin abrir la playlist. La cola de reproducción (columna derecha) deja saltar a cualquier track ya encolado o vaciarla entera con el botón de arriba.',
+  'music.tutorial.seek.title': 'Clickeá o arrastrá la línea de tiempo para saltar',
+  'music.tutorial.seek.body':
+    'La waveform de "Reproduciendo ahora" no es solo decorativa: clickeala o arrastrala para saltar a cualquier punto del track.',
+  'music.tutorial.bulkSelect.title': 'Seleccioná varios tracks a la vez',
+  'music.tutorial.bulkSelect.body':
+    'Click en el círculo de cada fila los va marcando; shift+click selecciona un rango completo entre la última marca y esta.',
+  'music.tutorial.bulkDelete.title': 'Borrá toda la selección de una',
+  'music.tutorial.bulkDelete.body':
+    'Con uno o más tracks marcados aparece esta barra — "Eliminar" los manda a todos a la papelera junto.',
+  'music.tutorial.bulkAddToPlaylist.title': 'Sumá la selección a una playlist',
+  'music.tutorial.bulkAddToPlaylist.body':
+    'Elegí una playlist del desplegable y todos los tracks marcados se agregan de una, sin repetir el gesto track por track.',
+  'music.tutorial.bulkClear.title': 'Deshacé la selección',
+  'music.tutorial.bulkClear.body': 'Limpia las marcas sin tocar ningún track.',
+  'music.tutorial.flow.playlists': 'Armar y curar playlists',
+  'music.tutorial.tabPlaylists.title': 'La pestaña Playlists es la otra vista de la biblioteca',
+  'music.tutorial.tabPlaylists.body':
+    'Alterna entre "Álbumes" y "Playlists" en la misma columna izquierda — sin cambiar de ruta.',
+  'music.tutorial.playlistCreate.title': 'Creá una playlist nueva',
+  'music.tutorial.playlistCreate.body': 'Arranca vacía, lista para sumarle tracks.',
+  'music.tutorial.playlistOpen.title': 'Click en una playlist la abre para editarla',
+  'music.tutorial.playlistOpen.body':
+    'El editor toma toda la columna central: ahí reordenás, agregás y sacás tracks.',
+  'music.tutorial.playlistFavorite.title': 'Marcala como favorita',
+  'music.tutorial.playlistFavorite.body':
+    'La estrella la destaca con un ícono propio en el listado de playlists.',
+  'music.tutorial.playlistPlay.title': 'Reproducí la playlist completa en orden',
+  'music.tutorial.playlistPlay.body': 'Arranca desde el primer track de la lista.',
+  'music.tutorial.playlistShuffle.title': 'O en orden aleatorio',
+  'music.tutorial.playlistShuffle.body': 'Mismo botón que reproducir, pero mezclando el orden.',
+  'music.tutorial.playlistReorder.title': 'Arrastrá un track para reordenar la playlist',
+  'music.tutorial.playlistReorder.body':
+    'Tomá cualquier fila del asa (⋮⋮) y soltala en la posición que quieras dentro de la misma playlist.',
+  'music.tutorial.playlistAddTracks.title': 'Agregá tracks con el buscador',
+  'music.tutorial.playlistAddTracks.body':
+    'Abrí el picker y buscá por nombre — solo muestra tracks que todavía no están en esta playlist.',
+  'music.tutorial.playlistAddTracks.moreDetail':
+    'De paso: en "Reproduciendo ahora" (fuera del editor de playlist) hay un botón para mostrar la letra del track si la tiene incrustada, o buscarla online por artista/título si no. Los atajos de teclado "n"/"p" (siguiente/anterior) ya figuran en el diálogo global de atajos (?).',
+  'music.tutorial.playlistDelete.title': 'Eliminá la playlist',
+  'music.tutorial.playlistDelete.body':
+    'Borra la playlist (no los tracks, que siguen en la biblioteca) con confirmación previa.',
+  'music.tutorial.flow.youtube': 'Traer música de YouTube',
+  'music.tutorial.youtubeUrl.title': 'Pegá la URL de un video de YouTube',
+  'music.tutorial.youtubeUrl.body':
+    'Función disponible solo en la app de escritorio/Android — en el navegador este campo queda deshabilitado.',
+  'music.tutorial.youtubeDownload.title': 'Descargalo como MP3',
+  'music.tutorial.youtubeDownload.body':
+    'Extrae el audio, lo convierte a MP3 y lo agrega directo a tu biblioteca — el botón muestra "Descargando…" mientras dura.',
   'music.shortcuts.playPause': 'Reproducir / pausar',
   'music.shortcuts.newPlaylist': 'Nueva playlist',
   'music.shortcuts.focusSearch': 'Buscar en la biblioteca',

@@ -39,6 +39,7 @@ import {
   type CreateVariantRequest,
 } from '../components/variants-create-modal.component';
 import { VariantsStatsService, type VariantOverview } from '../services/variants-stats.service';
+import { registerVariantsDrawerTutorial } from './variants-drawer.tutorial';
 import { registerVariantsTutorial } from './variants.tutorial';
 
 @Component({
@@ -134,6 +135,7 @@ export class VariantsContainer implements OnInit {
 
   constructor() {
     registerVariantsTutorial();
+    registerVariantsDrawerTutorial();
     // why: keep selection pinned to the active variant on first load and
     //      after every switch. Manual clicks in the tree override until
     //      the next switch flips activeId again.

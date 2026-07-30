@@ -19,6 +19,7 @@ import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
 import { TaskEditorPaneComponent, type SaveStatus } from '../components/task-editor-pane.component';
 import { TASK_KIND, sortDueDates, type Task } from '../models/task.types';
 import { TasksService } from '../services/tasks.service';
+import { registerTasksEditorTutorial } from './tasks-editor.tutorial';
 
 @Component({
   selector: 'mc-tasks',
@@ -45,6 +46,7 @@ export class TasksContainer {
   protected readonly confirm = new ConfirmController();
 
   constructor() {
+    registerTasksEditorTutorial();
     effect(() => {
       const raw = this.id();
       const wanted = raw ? extractEntityId(raw) : undefined;

@@ -18,7 +18,7 @@
     </div>
   </header>
 
-  <div class="selector-bar">
+  <div class="selector-bar" data-tutorial="merge-selector-bar">
     @if (remote) {
       <div class="field">
         <span class="label">{{ t('merge.selector.from') }}</span>
@@ -38,6 +38,7 @@
     <button
       type="button"
       class="swap"
+      data-tutorial="merge-swap"
       (click)="swapSides()"
       [disabled]="remote || !fromId() || !intoId()"
       [title]="t('merge.selector.swap')"
@@ -66,7 +67,7 @@
   } @else {
     <div class="bulk-bar">
       <span class="bulk-label">{{ t('merge.bulk.label') }}</span>
-      <button type="button" (click)="applyAll('from')">
+      <button type="button" data-tutorial="merge-bulk-from" (click)="applyAll('from')">
         {{ t('merge.bulk.allFrom', { name: fl }) }}
       </button>
       <button type="button" (click)="applyAll('into')">
@@ -110,7 +111,7 @@
             }
           </div>
           <div class="col choice">
-            <div class="seg">
+            <div class="seg" data-tutorial="merge-file-choice">
               <button
                 type="button"
                 [class.on]="choice === 'from'"
@@ -148,6 +149,7 @@
       <button
         type="button"
         class="primary"
+        data-tutorial="merge-apply"
         [disabled]="applying() || c.from === 0"
         (click)="applyMerge()"
       >
@@ -185,11 +187,22 @@
       }
       <div class="outcome-actions">
         @if (o.failedAt) {
-          <button type="button" class="primary" (click)="retryFailed()" [disabled]="applying()">
+          <button
+            type="button"
+            class="primary"
+            data-tutorial="merge-retry"
+            (click)="retryFailed()"
+            [disabled]="applying()"
+          >
             {{ t('merge.outcome.retry') }}
           </button>
           @if (o.remaining.length > 0) {
-            <button type="button" (click)="skipAndContinue()" [disabled]="applying()">
+            <button
+              type="button"
+              data-tutorial="merge-skip-continue"
+              (click)="skipAndContinue()"
+              [disabled]="applying()"
+            >
               {{ t('merge.outcome.skipContinue', { n: o.remaining.length }) }}
             </button>
           }

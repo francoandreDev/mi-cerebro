@@ -44,6 +44,7 @@ const splitHighlight = (text: string, query: string): readonly Segment[] => {
   template: `
     <article
       class="entry"
+      data-tutorial="lists-shelf-entry"
       [class.dim]="dim()"
       [class.matched]="matched() && !!query()"
       role="article"

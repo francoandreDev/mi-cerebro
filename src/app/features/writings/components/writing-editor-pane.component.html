@@ -19,13 +19,18 @@
       <span>{{ statusLabel() }}</span>
     </span>
     @if (editable()) {
-      <button type="button" class="danger mc-hover-wiggle" (click)="removeWriting.emit()">
+      <button
+        type="button"
+        class="danger mc-hover-wiggle"
+        data-tutorial="writings-editor-delete"
+        (click)="removeWriting.emit()"
+      >
         <mc-icon name="trash" />
         <span>{{ t('writings.delete') }}</span>
       </button>
     }
   </header>
-  <section class="meta">
+  <section class="meta" data-tutorial="writings-editor-deadline">
     <mc-icon name="calendar-dots" class="meta-icon" />
     <span class="label">{{ t('writings.deadline.label') }}:</span>
     <input
@@ -65,6 +70,7 @@
     }
   </section>
   <mc-tag-picker
+    data-tutorial="writings-editor-tags"
     [availableTags]="availableTags()"
     [selectedIds]="writing().tags"
     [editable]="editable()"

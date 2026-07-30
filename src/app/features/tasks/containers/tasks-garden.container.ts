@@ -36,6 +36,7 @@ import { PlanterComponent } from '../components/planter.component';
 import type { TaskSummary } from '../models/task.types';
 import { type Bucket, bucketTasks } from '../services/task-buckets';
 import { TasksService } from '../services/tasks.service';
+import { registerTasksPatioTutorial } from './tasks-patio.tutorial';
 import { registerTasksTutorial } from './tasks.tutorial';
 
 const norm = (s: string): string => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
@@ -78,6 +79,7 @@ export class TasksGardenContainer {
 
   constructor() {
     registerTasksTutorial();
+    registerTasksPatioTutorial();
   }
 
   protected readonly STAGE_BY_BUCKET = STAGE_BY_BUCKET;

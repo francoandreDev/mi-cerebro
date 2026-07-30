@@ -20,6 +20,7 @@ import { ListEditorPaneComponent, type SaveStatus } from '../components/list-edi
 import type { ChalkLayer } from '../models/chalk.types';
 import { LIST_KIND, type List } from '../models/list.types';
 import { ListsService } from '../services/lists.service';
+import { registerListsChalkTutorial } from './lists-chalk.tutorial';
 import { registerListsTutorial } from './lists.tutorial';
 
 @Component({
@@ -49,6 +50,7 @@ export class ListsContainer {
 
   constructor() {
     registerListsTutorial();
+    registerListsChalkTutorial();
     effect(() => {
       const raw = this.id();
       const wanted = raw ? extractEntityId(raw) : undefined;

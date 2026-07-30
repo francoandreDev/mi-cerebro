@@ -26,6 +26,7 @@ import {
 import { CalendarTagFilterComponent } from '../components/tag-filter.component';
 import { CalendarToolbarComponent } from '../components/toolbar.component';
 import { CalendarYearGridComponent } from '../components/year-grid.component';
+import { registerCalendarWeekTutorial } from './calendar-week.tutorial';
 import { registerCalendarTutorial } from './calendar.tutorial';
 import {
   MONTH_NAMES_ES,
@@ -69,6 +70,7 @@ export class CalendarContainer {
 
   constructor() {
     registerCalendarTutorial();
+    registerCalendarWeekTutorial();
   }
 
   protected readonly tags = this.tagsService.tags;

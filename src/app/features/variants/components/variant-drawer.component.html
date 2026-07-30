@@ -6,7 +6,11 @@
     [style.--arm-color]="v.color"
   >
     <div class="identity">
-      <label class="droplet" [title]="t('variants.form.color')">
+      <label
+        class="droplet"
+        data-tutorial="variant-color-picker"
+        [title]="t('variants.form.color')"
+      >
         <input
           type="color"
           [value]="v.color"
@@ -20,6 +24,7 @@
           <input
             type="text"
             class="rename-input"
+            data-tutorial="variant-rename-input"
             [ngModel]="renameValue()"
             (ngModelChange)="renameValueChange.emit($event)"
             (keydown.enter)="$event.preventDefault(); renameSubmit.emit()"
@@ -47,6 +52,7 @@
         <button
           type="button"
           class="head-hero"
+          data-tutorial="variant-history-head"
           (click)="onHeadClick()"
           [title]="t('variants.head.subjectAt', { subject: head.subject, oid: shortOid(head.oid) })"
           [attr.aria-label]="
@@ -78,6 +84,7 @@
           <button
             type="button"
             class="pill pill-link"
+            data-tutorial="variant-pill-parent"
             (click)="onParentClick()"
             [title]="
               t('variants.lineage.origin') +
@@ -100,6 +107,7 @@
           <button
             type="button"
             class="pill pill-link"
+            data-tutorial="variant-pill-milestone"
             (click)="onMilestoneClick()"
             [title]="t('variants.milestone.label') + ' · ' + m.name + ' · ' + shortOid(m.oid)"
           >
@@ -178,6 +186,7 @@
           <button
             type="button"
             class="mc-hover-grow"
+            data-tutorial="variant-rename-start"
             (click)="renameStart.emit()"
             [disabled]="busy()"
             [attr.aria-label]="t('variants.action.rename')"
@@ -198,6 +207,7 @@
           <button
             type="button"
             class="danger mc-hover-wiggle"
+            data-tutorial="variant-delete-start"
             (click)="delete_.emit()"
             [disabled]="busy() || isActive()"
             [attr.aria-label]="t('variants.action.delete')"

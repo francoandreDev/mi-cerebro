@@ -6,7 +6,7 @@
 <section class="page">
   <header class="toolbar">
     <h2>{{ t('reminders.title') }}</h2>
-    <label class="search">
+    <label class="search" data-tutorial="reminders-search">
       <mc-icon name="magnifying-glass" />
       <input
         #searchInput
@@ -152,7 +152,7 @@
       <span class="quick-hint">{{ t('reminders.quickAddHint') }}</span>
     </form>
 
-    <footer class="ribbon">
+    <footer class="ribbon" data-tutorial="reminders-registry">
       <button type="button" class="ribbon-toggle" (click)="onToggleRegistry()">
         <mc-icon [name]="showRegistry() ? 'caret-down' : 'caret-right'" />
         <span>{{ t('reminders.registry') }}</span>
@@ -211,7 +211,7 @@
               (input)="onEditField('dueAt', asInput($event).value)"
             />
           </label>
-          <fieldset class="field recurrence">
+          <fieldset class="field recurrence" data-tutorial="reminder-recurrence">
             <legend>{{ t('reminders.recurrenceLabel') }}</legend>
             <select [value]="e.recurrence" (change)="onEditRecurrence(asInput($event).value)">
               <option value="none">{{ t('reminders.recurrence.none') }}</option>
@@ -232,7 +232,7 @@
               </label>
             }
           </fieldset>
-          <label class="field check">
+          <label class="field check" data-tutorial="reminder-pause">
             <input
               type="checkbox"
               [checked]="e.paused"
@@ -250,6 +250,7 @@
             <button
               type="button"
               class="ghost icon"
+              data-tutorial="reminder-overflow-toggle"
               [attr.aria-label]="t('reminders.moreActions')"
               [attr.aria-expanded]="overflowOpenId() === s.id"
               aria-haspopup="menu"
@@ -258,7 +259,7 @@
               <mc-icon name="dots-three-vertical" />
             </button>
             @if (overflowOpenId() === s.id) {
-              <div class="overflow-menu" role="menu">
+              <div class="overflow-menu" role="menu" data-tutorial="reminder-overflow-menu">
                 <button type="button" class="menu-item" role="menuitem" (click)="onSnooze(s, 1)">
                   <mc-icon name="clock-counter-clockwise" />
                   {{ t('reminders.snooze1h') }}
@@ -286,7 +287,13 @@
                   {{ t('reminders.snoozeWeekend') }}
                 </button>
                 @if (!e.readOnlyTitle) {
-                  <button type="button" class="menu-item" role="menuitem" (click)="onDuplicate(s)">
+                  <button
+                    type="button"
+                    class="menu-item"
+                    role="menuitem"
+                    data-tutorial="reminder-duplicate"
+                    (click)="onDuplicate(s)"
+                  >
                     <mc-icon name="copy" />
                     {{ t('reminders.duplicate') }}
                   </button>
@@ -295,6 +302,7 @@
                   type="button"
                   class="menu-item danger"
                   role="menuitem"
+                  data-tutorial="reminder-delete"
                   (click)="onDelete(s)"
                 >
                   <mc-icon name="trash" />

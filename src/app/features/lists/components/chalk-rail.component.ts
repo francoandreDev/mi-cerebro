@@ -17,7 +17,12 @@ export interface RailGroup {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <nav class="rail" [attr.aria-label]="t('lists.board.railAria')">
-      <div class="axis" role="group" [attr.aria-label]="t('lists.board.axisToggleAria')">
+      <div
+        class="axis"
+        data-tutorial="lists-shelf-axis"
+        role="group"
+        [attr.aria-label]="t('lists.board.axisToggleAria')"
+      >
         <button
           type="button"
           class="axis-btn"

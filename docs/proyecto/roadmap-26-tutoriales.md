@@ -482,7 +482,7 @@ implementar esto, sin cambios necesarios).
   son genéricos porque cualquier feature que use `mc-editor` los hereda (a diferencia de Books, que
   tiene su propio toolbar y no toca este archivo compartido).
 
-### 8.9 — Tasks: cobertura completa, multi-flujo (re-scoped por 8.85)
+### 8.9 — Tasks: cobertura completa, multi-flujo (re-scoped por 8.85) — _Cerrado._
 
 _Prereq: 8.1, 8.18._
 
@@ -498,6 +498,52 @@ gestos únicos sobre anchors ya cubiertos → se quedan dentro del flujo existen
    sí (hoy solo se enseña el resultado/canasta en el flujo esencial — mover esa explicación acá).
 3. **`tasks-editor` — "Editor de tarea completo"** (nuevo, manual, `route: '/tasks/:id'`):
    recordatorios, tags, foco, borrar.
+
+**Implementado 2026-07-27, con desvíos respecto al texto de arriba:**
+
+- **`tasks-patio` no tiene riego ni el gesto de cosecha — auditado y confirmado que esas
+  mecánicas no viven en `/tasks/patio`.** `tasks-patio.container.ts`/`.html` y
+  `harvested-plant.component.ts` muestran que el patio es un archivo **de solo lectura**: agrupa
+  tareas ya cosechadas por mes, con un único gesto real (abrir una planta, `(open)`). No hay botón
+  de riego ni transición de estado ahí — `onWater()`, el toggle 🚿 y el estado `wilted` viven en
+  `tasks-garden.container.ts`/`.html` (el jardín, `/tasks`), y el gesto de cosecha en sí (Enter con
+  la tarea enfocada → menú → "Cosechar") también ocurre ahí, en `plant-card.component.ts`
+  (`onTransplantKey`) — de hecho ya estaba bien cubierto por el `body` del step `harvest` existente
+  (`tasks.tutorial.harvest.body`), así que ese step no cambió. Contenido real de `tasks-patio`:
+  intro al archivo mensual, qué significa que una planta se archive como árbol en vez de flor
+  (`TREE_LONGEVITY_DAYS = 14` días en Floración antes de cosechar), abrir una planta, volver al
+  jardín. `labelKey` ajustado a "Patio: archivo de cosechas" (sin "riego", para no prometer una
+  mecánica que esta pantalla no tiene).
+- **La mecánica de riego/marchitamiento se sumó igual, pero al flujo `tasks` existente** (no a
+  `tasks-patio`, por el punto anterior): step nuevo `tier: 'avanzado'`, anchor
+  `[data-tutorial="tasks-water-toggle"]` (agregado al botón 🚿 en `tasks-garden.container.html`),
+  `action: { event: 'click' }`. Sin `icon` — no hay glyph de gota en `shared/icon/icons.data.ts` y
+  no ameritaba agregar uno nuevo solo para este step.
+- **`tasks-patio` sí usa `route: '/tasks/patio'`** tal como pedía el texto original, pero registrado
+  desde `TasksGardenContainer` (`/tasks`, no desde `TasksPatioContainer`) — así el picker "Guía de
+  la página" puede ofrecerlo estando en el jardín y navegar solo al arrancarlo. A diferencia de
+  `/tasks/:id`, `/tasks/patio` es una ruta literal sin id, así que sí calza con
+  `router.navigateByUrl(step.route)`.
+- **`tasks-editor` sin `route: '/tasks/:id'`**, mismo criterio que `notes-editor-advanced`/
+  `goals-constellation`: no hay id fijo para navegar un flujo manual arrancado desde otro lado, así
+  que se registra directo en `TasksContainer` (montado solo en `/tasks/:id`) — sólo aparece en el
+  picker una vez que el usuario ya tiene una tarea abierta.
+- **Step de tags sin `action`**: agregar una etiqueta es escribir en el input de búsqueda/creación
+  de `shared/tags/tag-picker.component.ts` — no hay un click único que capturar (mismo caso ya
+  resuelto en `tags.tutorial.ts`), queda descriptivo.
+- **Step de foco reusa el anchor genérico `editor-host`** (`shared/editor/editor.component.html`,
+  agregado en 8.8 sin prefijo por feature) en vez de crear uno nuevo por-feature — mismo mecanismo
+  que cualquier otra feature que use `mc-editor`. `action.key` es el atajo global
+  `Alt+Shift+F` (`FocusModeService`), `skipIfMissing: true` igual que el precedente de
+  `writings.tutorial.ts`.
+- Anchors nuevos: `tasks-water-toggle` (`tasks-garden.container.html`), `tasks-patio-header`,
+  `tasks-patio-grove`, `tasks-patio-item`, `tasks-patio-back` (`tasks-patio.container.html`),
+  `tasks-editor-reminder`, `tasks-editor-tags`, `tasks-editor-delete`
+  (`task-editor-pane.component.html`). Reusado sin cambios: `editor-host`.
+- Tasks no tiene gesto de arrastrar-y-soltar una tarea sobre una subcarpeta (a diferencia de Books)
+  — no se tocó nada de `shared/folder-breadcrumb/`; un eventual flujo `tasks-folders` (mencionado
+  como pendiente en 8.86) queda fuera del alcance de este ítem, sin asignar a ninguna fase.
+- `bun run typecheck` limpio.
 
 ### 8.10 — Settings: cobertura completa, multi-flujo (re-scoped por 8.85) — _Cerrado._
 
@@ -558,7 +604,7 @@ refresh, leyenda) son gestos sueltos sobre el canvas ya cubierto:
    from/into, swap, aplicar-todo-de-un-lado, elegir por archivo, aplicar merge, reintentar/saltar en
    fallo parcial (8+ gestos propios, ruta dedicada — el candidato más claro de toda la auditoría).
 
-### 8.12 — Files: cobertura moderada, multi-flujo (re-scoped por 8.85)
+### 8.12 — Files: cobertura moderada, multi-flujo (re-scoped por 8.85) — _Cerrado._
 
 _Prereq: 8.1, 8.18._
 
@@ -573,7 +619,32 @@ tomada ahí. El resto son gestos puntuales sobre anchors del flujo esencial, no 
 2. **`files-folders` — "Organizar en subcarpetas"** (nuevo, manual): crear/renombrar/mover
    subcarpeta, breadcrumbs.
 
-### 8.13 — Tags: split del step `rowActions`, multi-flujo condicional (re-scoped por 8.85)
+**Implementado:** (1) el step de tags pasó de anclar en `files-wall` (la pared, sin el picker
+visible) a anclar directo en `[data-tutorial="files-tag-picker"]` (el `mc-tag-picker` de
+`file-collection-meta-bar.component.ts`), con `action: click` sobre su `input` —"agregar un tag"
+requiere escribir texto libre, gesto que el engine no puede detectar, así que el click que abre el
+picker es el gesto concreto practicable (mismo criterio ya usado en `goal-peek-rename`: el click
+que entra al modo edición cuenta como la práctica, no hace falta completar el gesto entero).
+`skipIfMissing: true` por si el picker no está montado (colección no abierta). (2) "editar/borrar
+título de colección" se separó en 2 steps, no 1 — cada uno es un gesto distinto (editar el título
+vs. eliminar la colección), y §4.6.15b pide un gesto por step: `files.tutorial.editTitle` (click en
+`[data-tutorial="files-title-input"]`) y `files.tutorial.deleteCollection` (click en el ítem
+"Eliminar" de `[data-tutorial="files-collection-menu"]`, el `mc-menu-button` de la meta-bar). (3)
+"drag-and-drop de subida/reorden" quedó como un solo step (`files.tutorial.reorder`) con
+`action: dragstart` sobre `[data-tutorial="files-item-board"]` — mismo criterio que
+`books.tutorial.organize`: el drop de archivos externos desde el SO no es un evento que el engine
+soporte (no hay `drop` en `TutorialStepAction['event']`), así que solo el reorder interno
+(`dragstart` nativo en cada `.slot`) es el gesto detectable; el copy menciona ambos gestos, la
+`action` solo practica el segundo. (4) "renombrar ítem" ancla en
+`[data-tutorial="file-artifact-rename"]` (el botón lápiz de `file-artifact.component.html`), click.
+(5) Confirmado contra el código: `FilesContainer` no cablea `(childDragOver)`/`(childDrop)` en su
+`<mc-folder-breadcrumb>` — sin gesto de "soltar sobre subcarpeta", así que `files-folders` abre
+subcarpeta con click igual que `goals-folders`, no con drag. (6) todos los anchors nuevos de
+`shared/folder-breadcrumb/` ya existían (reusados de Goals/Notes, sin duplicar el componente, según
+§8.86). (7) `FILES_TUTORIAL` sumó `labelKey: 'files.tutorial.flow.essentials'` al pasar a
+multi-flujo (antes no lo necesitaba con un solo flujo registrado en la página).
+
+### 8.13 — Tags: split del step `rowActions`, multi-flujo condicional (re-scoped por 8.85) — _Cerrado._
 
 _Prereq: 8.1, 8.18._
 
@@ -593,7 +664,28 @@ Nota aparte: merge no tiene diálogo de confirmación pese a ser irreversible �
 corrige acá, documentarlo como tal en el commit (no es parte del framework de onboarding, es un
 hallazgo colateral más).
 
-### 8.14 — Lists: multi-flujo, tiza + organización (re-scoped por 8.85)
+**Implementado:** el split es exactamente el planteado, con dos desvíos. (1) La condición real del
+gate en `TagsContainer` (`tags.container.ts`) es `!isEmpty()` (`tagsService.tags().length === 0`),
+no `rows().length > 0` como decía el guess inicial de este ítem — `rows()` es el listado ya
+_filtrado_ por el input de texto, así que gatear sobre él hacía que `tags-organize` desapareciera
+del picker en cuanto el usuario tipeaba un filtro sin coincidencias, aunque siguieran existiendo
+tags. Se prioriza la señal semánticamente correcta ("¿hay al menos un tag?") sobre la literal del
+roadmap. (2) `tags-organize` no se auto-registra ni se auto-descarta vía `DestroyRef` como el resto
+de flujos secundarios (que siempre están montados junto a su página) — acá un `effect()` en el
+constructor de `TagsContainer` llama a `registerTagsOrganizeTutorial()`/dispara su disposer cada vez
+que `!isEmpty()` cruza de `false` a `true` y viceversa; el `effect` solo lee la señal (nunca la
+escribe), así que no aplica la restricción de §4.1.3b. `tags-organize.tutorial.ts` expone
+`registerTagsOrganizeTutorial(tutorials: TutorialService)` recibiendo el servicio ya inyectado en
+vez de auto-inyectarlo, porque `inject()` no es válido dentro del cuerpo del `effect`.
+
+**Hallazgo colateral corregido:** el bug de merge sin confirmación (mencionado en el ítem original)
+se arregló en el mismo commit — `mergeInto()` en `tags.container.ts` ahora pasa por el mismo
+`ConfirmController` que ya usaba `deleteTag()` (mismo tono `danger`) antes de llamar a
+`TagsAdminService.merge()`. Se corrigió porque el fix es chico (reusa infraestructura ya presente en
+el componente) y porque el tutorial nuevo enseña explícitamente el gesto de merge como irreversible
+— dejar el bug vivo mientras se lo documenta en el copy del tutorial hubiera sido inconsistente.
+
+### 8.14 — Lists: multi-flujo, tiza + organización (re-scoped por 8.85) — _Cerrado._
 
 _Prereq: 8.1, 8.18._
 
@@ -613,6 +705,54 @@ un `moreDetail`. Carpetas del shelf (mismo patrón que Notes/Files) también apa
    carpeta, breadcrumbs — mismo patrón que Notes (8.8) y Files (8.12); ver nota transversal en
    8.86 sobre no duplicar este flujo 5 veces si el volumen de contenido termina siendo idéntico
    entre páginas.
+
+**Implementado 2026-07-27, con desvíos respecto al texto de arriba:**
+
+- **La ampliación del ítem 1 se hizo en `lists-shelf.tutorial.ts`, no en `lists.tutorial.ts`.**
+  Ambos archivos comparten `id: 'lists'` a propósito (rutas mutuamente excluyentes: detalle
+  `/lists/:id` vs. shelf `/lists`), pero búsqueda/eje/borrar son gestos del shelf — viven en
+  `lists-shelf.container.html`, no en el editor de detalle. Se sumaron como 3 steps nuevos (no
+  `moreDetail`): búsqueda es mención sin `action` (mismo motivo que `goals.tutorial.filters.body`
+  §8.87 — demasiadas combinaciones de texto para un solo gesto), cambio de eje sí lleva `action`
+  (click en cualquiera de los 2 botones del grupo), y borrar lista sigue el patrón
+  `goal-peek-delete` (`action` + `skipIfMissing` + `moreDetail` explicando el confirm dialog).
+  Ambos archivos ganaron `labelKey: 'lists.tutorial.flow.essentials'` porque `pageId: 'lists'` ahora
+  agrupa 2 definiciones a la vez en cada ruta (el picker se activa).
+- **`lists-chalk` requirió un step inicial sin `action` y `skipIfMissing: true` en casi todos los
+  demás.** Es un flujo manual (nunca autostart), así que no puede asumir que el modo tiza ya está
+  activo — casi todo el contenido de `chalk-toolbar.component.html` vive dentro de un
+  `@if (active())`. El primer step sólo avisa "prendé modo tiza si no lo está" (sin `action`, para no
+  arriesgar apagarlo de nuevo con un click forzado si ya estaba prendido); el resto de los steps que
+  dependen de ese `@if` llevan `skipIfMissing: true` para no quedar con el spotlight flotando si el
+  usuario no lo activó. `Ctrl+Shift+T` sí tiene `action: keydown` real (anchor siempre presente,
+  atajo funciona sin importar el estado). Los otros 5 atajos (`b`/`e`/`[`/`]`/1-5) quedan
+  mencionados en el mismo step que Ctrl+Shift+T, sin `action` propio cada uno — empaquetarlos en 6
+  steps separados violaba la relación costo/beneficio del flujo sin aportar nada que el texto no
+  cubra ya. "Limpiar pizarra" quedó sin `action` pese a tener anchor: forzar el click abre un
+  confirm dialog `danger` que el tutorial no puede cancelar por el usuario, y el botón está
+  deshabilitado hasta que la capa activa tenga trazos (`canClear`) — se documentó tal cual en el
+  `why` del archivo.
+- **Confirmado con el código real**: los atajos de `chalk-shortcuts.ts` se registran vía
+  `ShortcutsService` con `scope: 'editable-safe'` — no son un listener local del `<svg>` del
+  tablero, son globales de página pero inertes con foco en inputs/contentEditable y sin efecto
+  salvo que el modo tiza esté activo (los handlers no-opean si no). Ninguno de los 6 combos
+  (`b`/`e`/`[`/`]`/1-5/Ctrl+Shift+T) colisiona con un atajo de otra feature.
+- **`lists-folders` sigue el patrón de Notes/Goals, no el de Books**: verificado en
+  `chalk-entry.component.ts`/`lists-shelf.container.html` que las cards del shelf no son
+  `draggable` y el container no cablea `(childDragOver)`/`(childDrop)` hacia
+  `<mc-folder-breadcrumb>` — no hay gesto de "soltar una lista sobre una subcarpeta", así que ese
+  step es "abrir subcarpeta con click" en vez de drop, igual que Notes y Goals.
+- Anchors nuevos: `lists-chalk-board` (`chalk-board.component.html`), `lists-chalk-tool-chalk`,
+  `lists-chalk-tool-eraser`, `lists-chalk-palette`, `lists-chalk-sizes`, `lists-chalk-undo`,
+  `lists-chalk-redo`, `lists-chalk-layers-toggle`, `lists-chalk-clear`, `lists-chalk-export`
+  (`chalk-toolbar.component.html`), `lists-chalk-layers-panel`, `lists-chalk-layers-add`,
+  `lists-chalk-layer-rename`, `lists-chalk-layer-visibility`, `lists-chalk-layer-lock`,
+  `lists-chalk-layer-reorder` (`chalk-layers-panel.component.html`), `lists-shelf-search`
+  (`lists-shelf.container.html`), `lists-shelf-axis` (`chalk-rail.component.ts`), `lists-shelf-entry`
+  (`chalk-entry.component.ts`). Reusados sin cambios: `lists-chalk-bar` (ya existía),
+  `lists-shelf-new`/`lists-shelf-rail` (ya existían), `folder-breadcrumb-add`/`-child`/
+  `-child-manage`/`-root` (`shared/folder-breadcrumb/`).
+- `bun run typecheck` limpio (ver commit). `bun run test`/`bun run lint` sin errores nuevos.
 
 ### 8.15 — Dashboard: ajuste menor. Music: multi-flujo (re-scoped por 8.85)
 
@@ -642,6 +782,39 @@ aparte (descarga por YouTube URL) y una selección masiva con bulk actions:
 5. **Letras** (toggle + búsqueda externa por artista/título): 3 steps posibles pero muy chico y
    secundario — queda como `moreDetail` dentro de `music-playlists` en vez de flujo propio; atajos
    `n`/`p` como **mención de existencia** (ya cubiertos por el diálogo global de shortcuts).
+
+**Implementado (Music):** el bug 8.3 (`mini-player` sin `skipIfMissing`) ya estaba resuelto en el
+código al momento de encarar este ítem — no hizo falta tocarlo, solo se dejó documentado acá.
+Los 3 flujos se implementaron sustancialmente como se diseñó, con desvíos menores frente al plan
+original:
+
+- **Seek en waveform** no es un `action` sobre el step `play` existente (ese step practica
+  espacio para play/pause, un gesto distinto) sino un **step nuevo** inmediatamente después,
+  anclado a `[data-tutorial="music-waveform"]` (`now-playing.container.html`, solo existe con
+  `currentTrack()` → `skipIfMissing: true`) — separar ambos respeta la regla de "un gesto por
+  step" (§4.6.15b) en vez de forzar dos gestos en un mismo step.
+- **Drag&drop a playlist + cola (jump-to/clear)** quedó como `moreDetail` sobre el step `album`
+  existente (mismo flujo esencial), tal como estaba planeado.
+- **Selección múltiple + bulk actions** se implementó como 4 steps `tier: 'avanzado'` dentro de
+  `music.tutorial.ts` (seleccionar, bulk-delete, bulk-agregar-a-playlist, limpiar selección) en
+  vez de un solo step genérico — cada botón de la barra de selección (`.bulk-bar`,
+  `album-library.container.html`) es un gesto propio y necesitaba su propio anchor
+  (`data-tutorial="music-bulk-select/delete/add-select/clear"`, agregados en este commit).
+- **`music-playlists`** suma un step inicial de cambio de pestaña (Álbumes → Playlists,
+  `data-tutorial="music-tab-playlists"`, mismo patrón que Settings §4.6.15b) que el plan
+  original no explicitaba pero que hace falta para que el resto de los steps (todos dentro de
+  esa pestaña o del editor de una playlist activa) tengan sentido sin asumir que el usuario ya
+  está ahí.
+- **Letras** quedó como `moreDetail` sobre el step "agregar tracks vía picker" de
+  `music-playlists` (no hay anchor propio de letras dentro del editor de playlist — la UI de
+  letras vive en `now-playing.container.html`, fuera de ese flujo — pero `moreDetail` no requiere
+  colocación física, solo texto suplementario sobre un step ya visitado).
+- **`music-youtube`** no lleva `skipIfMissing` en ningún step: el bloque `.youtube-download`
+  siempre está en el DOM (deshabilitado con tooltip fuera de Tauri/Capacitor,
+  `YoutubeDownloadService.isAvailable()`), a diferencia de los anchors condicionales del resto de
+  la página.
+
+Verificado: `bun run typecheck`, `bun run test` y `bun run lint` limpios (sin errores nuevos).
 
 ### 8.16 — Command Palette: tutorial nuevo + capacidad de engine "anclar dentro de overlay"
 
@@ -856,7 +1029,7 @@ ts`/`.html` que las estrellas de la wall no son `draggable` y el container no ca
   `folder-breadcrumb-add`/`-child`/`-child-manage`/`-root` (`shared/folder-breadcrumb/`).
 - `bun run typecheck` limpio.
 
-### 8.88 — Calendar: multi-flujo, agenda semanal
+### 8.88 — Calendar: multi-flujo, agenda semanal — _Cerrado._
 
 _Prereq: 8.1, 8.18. Independiente del fix 8.4 (empty state del wallboard), se puede hacer en el
 mismo commit o por separado._
@@ -874,7 +1047,38 @@ cerrar) → flujo propio. El resto son gestos sueltos sobre el header/tabla ya c
    rápida por tipo, cerrar. "Abrir libro" desde el modal de día como **mención de existencia**
    dentro de este flujo (es el punto de entrada, no un gesto a practicar aparte).
 
-### 8.89 — Reminders: multi-flujo, atajos + posponer
+**Implementado, con desvíos respecto al texto de arriba:**
+
+- **Búsqueda y "ir a fecha" no anclan en `calendar-views`/`calendar-table`.** El toolbar
+  (`toolbar.component.ts`) es un elemento separado, físicamente por encima del header con esos dos
+  anchors — forzar el spotlight ahí habría señalado el lugar equivocado. Se agregó un anchor propio,
+  `calendar-toolbar`, mismo patrón que `books-catalog` en `books.tutorial.ts` (un anchor nuevo para
+  contenido `tier: 'avanzado'` en vez de reusar uno existente a la fuerza). El drag-and-drop de
+  tareas y el toggle/create de las kind-cards sí anclan en `calendar-table`/`calendar-wallboard`
+  como decía el punto 1 — esos dos coincidían con la ubicación real del gesto.
+- **Búsqueda queda sin `action`.** Es un `<input type="search">` de texto libre: no hay un evento
+  único y confiable (`click`/`submit`/`keydown`/`dragstart`) que capture "escribir una búsqueda" —
+  mismo motivo por el que otros buscadores del proyecto (Goals, Books) tampoco llevan `action`.
+  "Ir a fecha" sí lo lleva (`click` sobre el `<input type="date">`, que abre el date-picker nativo).
+- **Drag-and-drop ancla el spotlight en `calendar-table`** (donde cae la tarea) **pero detecta el
+  `dragstart` en `calendar-wallboard`** (`li[draggable="true"]`, el origen real del arrastre) vía
+  `action.selector` — mismo mecanismo que ya usa `goals.tutorial.ts` para separar dónde se señala de
+  dónde se detecta el gesto.
+- **Botón "Hoy" + selects de mes/año van como `moreDetail` del step `views`** (ya existente, `tier`
+  básico) en vez de un step propio — viven en el mismo header, a un click de los 3 chips de vista.
+- **`calendar-week` se registra desde `CalendarContainer`**, junto con `calendar`: ambos flujos
+  comparten el mismo container (a diferencia de Goals/Books, la vista semana no tiene su propia
+  ruta — es un `view=week` query param del mismo `/calendar`), así que no hace falta el patrón
+  "registrar desde el container hijo" que usaron `goals-constellation`/`books-tts`.
+- **Los 4 anchors nuevos del libro** (`calendar-book-nav`/`-days`/`-create`/`-close`) llevan
+  `skipIfMissing: true` salvo el primero (`calendar-view-week`, siempre visible en el header): sólo
+  existen una vez que la vista semana está montada, y el usuario puede llegar al flujo desde el
+  picker estando todavía en la vista mes.
+- **Creación rápida por tipo (4 plumas) queda sin `action`**, igual que el step `create` del flujo
+  principal: cada botón navega a `/tasks`, `/goals`, `/reminders` o `/notes`, sacando al usuario de
+  `/calendar` a mitad de tutorial.
+
+### 8.89 — Reminders: multi-flujo, atajos + posponer — _Cerrado._
 
 _Prereq: 8.1, 8.18._
 
@@ -889,6 +1093,28 @@ teclado, y el menú de posponer/gestionar (`⋮` overflow) — ambas con 3+ gest
    marcar/borrar con espacio/Delete, nueva paloma con N.
 3. **`reminders-snooze` — "Posponer y gestionar un recordatorio"** (nuevo, manual): snooze 1h/1d/
    lunes/finde, duplicar, eliminar desde el menú `⋮`.
+
+**Implementado:** (1) el step `states` original (puerta que se abre, vencidos en la repisa) es
+puramente pasivo — no hay un `action` que sirva para "recurrencia + pausa" ahí, así que en vez de
+forzarlos dentro de ese step se agregaron dos steps nuevos entre `open` y `states`: `recurrence`
+(descriptivo, un `<select>` no tiene evento único confiable, mismo criterio que
+`goals-constellation.tutorial.ts`) y `pause` (`action: click` real sobre el checkbox del detalle,
+`data-tutorial="reminder-pause"`). (2) `search` usa el mismo estilo "click en la zona" que
+`filters` (anchor nuevo `data-tutorial="reminders-search"` en el `<label>` de búsqueda) — tipear
+texto no es un evento que `TutorialStepAction` pueda practicar, igual que el resto de búsquedas del
+proyecto. (3) el step de mención de existencia (undo + registro) ancla en el footer
+`data-tutorial="reminders-registry"`, agregado nuevo. (4) `reminders-shortcuts` ancla los 5 primeros
+steps en `[data-tutorial="reminders-palomar"]` (siempre presente, incluso vacío) y el de N reusa
+`reminders-quick-add`; los 6 son `keydown` sin modificador, mismo patrón que `music.tutorial.ts`
+(Espacio, `/`). (5) el mayor desvío está en `reminders-snooze`: el menú `⋮` se cierra solo tras
+cualquier click de sus botones (`overflowOpenId.set(null)` en cada handler de
+`reminders.container.ts`), así que los 4 presets de snooze (1h/1d/lunes/finde) quedan agrupados en
+un único step descriptivo sin `action` (el menú sigue abierto porque ese step no lo cierra) — un
+`action` real en cualquiera de los cuatro cerraría el menú antes de mostrar los otros tres.
+Duplicar sí practica un `action` real; como eso cierra el menú, se agregó un step explícito
+"reabrilo" (mismo gesto que abrirlo la primera vez, nombrado aparte porque la razón de repetirlo es
+información real) antes de eliminar. Nuevos anchors: `reminder-overflow-toggle`,
+`reminder-overflow-menu`, `reminder-duplicate`, `reminder-delete`.
 
 ### 8.90 — Books: cobertura completa, la superficie más grande de la auditoría — _Cerrado._
 

@@ -36,6 +36,7 @@ const ACCENT_HUES = [12, 32, 96, 162, 200, 252, 302, 340] as const;
         <input
           type="text"
           class="title-input"
+          data-tutorial="files-title-input"
           [value]="collection().title"
           [placeholder]="t('files.placeholderTitle')"
           [attr.aria-label]="t('files.placeholderTitle')"
@@ -57,18 +58,21 @@ const ACCENT_HUES = [12, 32, 96, 162, 200, 252, 302, 340] as const;
             <span class="status-label">{{ statusLabel() }}</span>
           </span>
           @if (editable()) {
-            <mc-menu-button
-              variant="ghost"
-              [label]="'⋯'"
-              [options]="menuOptions()"
-              (choose)="onMenuChoose($event)"
-            />
+            <span data-tutorial="files-collection-menu">
+              <mc-menu-button
+                variant="ghost"
+                [label]="'⋯'"
+                [options]="menuOptions()"
+                (choose)="onMenuChoose($event)"
+              />
+            </span>
           }
         </div>
       </div>
       @if (showTags()) {
         <mc-tag-picker
           class="tags"
+          data-tutorial="files-tag-picker"
           [availableTags]="availableTags()"
           [selectedIds]="collection().tags"
           [editable]="editable()"
