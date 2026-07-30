@@ -377,6 +377,26 @@ export const es = {
   'history.tutorial.milestones.title': 'Marcá puntos importantes para filtrar el ruido',
   'history.tutorial.milestones.body':
     'Los autocommits se acumulan rápido. Nombrá un commit importante como milestone (botón "Marcar este punto" en el detalle) y después activá este filtro para ver solo esos hitos, sin el resto.',
+  'history.tutorial.timeline.moreDetail':
+    'El buscador entiende sintaxis propia: facet:main/comments/draft, since:7d, o pegar directamente un sha. Los chips de faceta debajo filtran sin escribir nada. Dentro de un commit, "Ver sólo cambios" compacta el diff a las líneas modificadas. Tandas de autocommits consecutivos (guardados automáticos, merges) se agrupan solas en una fila con contador — no hace falta colapsarlas a mano. Si el historial crece mucho, un cartel de "Compactar ahora" aparece abajo del todo con el link a configuración.',
+  'history.tutorial.nav.title': 'Saltá de hito en hito',
+  'history.tutorial.nav.body':
+    'Con hitos marcados, "]" salta al siguiente y "[" al anterior — sin tener que scrollear buscándolos entre el resto de los commits.',
+  'history.tutorial.milestoneMark.title': 'Marcar este commit como hito',
+  'history.tutorial.milestoneMark.body':
+    'Nombrá este commit para que quede fijo en el filtro de hitos y sea fácil de encontrar más adelante. Podés agregar una descripción opcional.',
+  'history.tutorial.flow.restore': 'Restaurar una versión',
+  'history.tutorial.restore.pick.title': 'Elegí la versión a restaurar',
+  'history.tutorial.restore.pick.body':
+    'Click en cualquier commit del historial lo selecciona — sus acciones de restauración aparecen en el detalle a la derecha.',
+  'history.tutorial.restore.scope.title': 'Elegí el alcance: todo el commit o una sola entidad',
+  'history.tutorial.restore.scope.body':
+    '"Restaurar este commit" vuelve TODO el workspace al estado exacto de ese momento. Este botón abre el formulario de confirmación — todavía no restaura nada.',
+  'history.tutorial.restore.scope.moreDetail':
+    'Si sólo necesitás una nota, tarea o escrito puntual y no todo el commit, cada entidad modificada tiene su propio botón "Restaurar" en la lista de cambios — mismo mecanismo, alcance más chico.',
+  'history.tutorial.restore.confirm.title': 'Confirmá con el sha exacto',
+  'history.tutorial.restore.confirm.body':
+    'Esta acción es irreversible: pisa el estado actual con el del commit elegido. Por eso pide que tipees el sha corto exacto (se ve arriba) antes de habilitar el botón — no es un gesto para practicar en el tutorial, hacelo sólo cuando de verdad quieras restaurar.',
   'versioning.history.zoom.legend.aria': 'Referencia de niveles de zoom',
   'versioning.history.zoom.legend.panorama': 'todo el año, un pico por día',
   'versioning.history.zoom.legend.strata': 'corte por bucket de commits',
@@ -457,6 +477,30 @@ export const es = {
   'variants.tutorial.merge.title': 'Mergeás los cambios o borrás la variante',
   'variants.tutorial.merge.body':
     'El botón de mergear te lleva a la pantalla de merge contra la original. El de borrar (con confirmación) descarta la variante entera si no la necesitás más.',
+  'variants.tutorial.select.moreDetail':
+    'La barra de arriba suma un buscador (filtra los brazos por nombre) y "Releer actividad" (recalcula reposo/actividad reciente sin recargar la página).',
+  'variants.tutorial.legend.title': 'El ícono ⓘ abre la leyenda del delta',
+  'variants.tutorial.legend.body':
+    'Explica qué significa cada color y símbolo del río: brazo activo, en reposo, vado (fork) y milestone.',
+  'variants.tutorial.flow.essentials': 'Variantes: lo esencial',
+  'variants.tutorial.flow.drawer': 'Editar y navegar una variante',
+  'variants.tutorial.drawer.renameStart.title': 'El lápiz activa el nombre editable',
+  'variants.tutorial.drawer.renameStart.body':
+    'Con una variante seleccionada (no la protegida), el ícono de lápiz en el panel inferior abre el nombre como input de texto.',
+  'variants.tutorial.drawer.renameConfirm.title': 'Enter guarda, Escape cancela',
+  'variants.tutorial.drawer.renameConfirm.body':
+    'Escribí el nuevo nombre y confirmá con Enter — Escape descarta el cambio sin guardar.',
+  'variants.tutorial.drawer.color.title': 'La gota de color abre el selector nativo',
+  'variants.tutorial.drawer.color.body':
+    'Cada variante tiene un color propio que la identifica en el delta y en sus pills — click para elegir otro.',
+  'variants.tutorial.drawer.delete.title': 'Eliminar pide confirmación',
+  'variants.tutorial.drawer.delete.body':
+    'Es el único gesto destructivo del panel: si hay cambios sin mergear contra la original, el diálogo de confirmación te avisa cuántos vas a perder.',
+  'variants.tutorial.drawer.history.title': 'El commit HEAD abre su punto en el historial',
+  'variants.tutorial.drawer.history.body':
+    'Click en el rombo de HEAD te lleva directo a ese commit en /history.',
+  'variants.tutorial.drawer.history.moreDetail':
+    'Las pills de origen y de milestone (cuando existen) hacen lo mismo — cada una navega al commit que representa.',
   'variants.form.title': 'Nueva variante',
   'variants.form.name': 'Nombre',
   'variants.form.name.placeholder': 'ej. experimento-2026',
@@ -540,6 +584,28 @@ export const es = {
   'merge.selector.from': 'Origen',
   'merge.selector.into': 'Destino',
   'merge.selector.swap': 'Invertir origen y destino',
+  'merge.tutorial.flow.merge': 'Resolver un merge',
+  'merge.tutorial.selector.title': 'Elegí origen y destino',
+  'merge.tutorial.selector.body':
+    '"Origen" es la variante de la que traés cambios, "Destino" la que los recibe (siempre comparás sus ramas main).',
+  'merge.tutorial.swap.title': '⇄ invierte origen y destino',
+  'merge.tutorial.swap.body': 'Útil cuando elegiste los lados al revés — no recalcula nada extra.',
+  'merge.tutorial.bulk.title': 'Aplicá una elección a todos los archivos',
+  'merge.tutorial.bulk.body':
+    'Este botón marca todas las filas para traer la versión del origen de una sola vez.',
+  'merge.tutorial.bulk.moreDetail':
+    '"Mantener todo" hace lo mismo del lado del destino, y "Saltar todo" descarta la fila entera sin tocarla.',
+  'merge.tutorial.fileChoice.title': 'Elegí archivo por archivo',
+  'merge.tutorial.fileChoice.body':
+    'Cada fila tiene su propio selector de 3 vías — origen, destino o saltar — para ajustar la elección masiva caso por caso.',
+  'merge.tutorial.apply.title': 'Aplicá el merge',
+  'merge.tutorial.apply.body':
+    'Aplica solo las filas marcadas para traer del origen; el resto queda como está en el destino.',
+  'merge.tutorial.retry.title': 'Si falla a mitad de camino, reintentá',
+  'merge.tutorial.retry.body':
+    'Un fallo parcial deja el resultado y el motivo a la vista — "Reintentar la fallida" reintenta solo esa entidad.',
+  'merge.tutorial.retry.moreDetail':
+    'Si preferís no resolverla ahora, "Saltar y continuar" aplica el resto de las pendientes sin esa entidad.',
 
   'errors.ver.010.title': 'No se pudo aplicar el merge',
   'errors.ver.010.message':
@@ -1335,18 +1401,51 @@ export const es = {
     'El primer ícono del breadcrumb siempre vuelve a la carpeta raíz, sin importar cuán hondo estés.',
 
   'writings.title': 'Escritos',
+  'writings.tutorial.flow.essentials': 'Writings: lo esencial',
+  'writings.tutorial.flow.library': 'Explorar la biblioteca',
   'writings.tutorial.create.title': 'Escribí un título y enviá: nace el escrito',
   'writings.tutorial.create.body':
     'Podés dejarlo sin título ("Sin título") y ponerlo después. Al enviar entrás directo al editor.',
   'writings.tutorial.editor.title': 'El editor es full-bleed: solo vos y el texto',
   'writings.tutorial.editor.body':
     'Sin paneles laterales, ancho de lectura cómodo. La barra de arriba tiene el título, la fecha límite opcional, tags, y el estado del guardado.',
+  'writings.tutorial.deadline.title': 'Fecha límite opcional, con recordatorio',
+  'writings.tutorial.deadline.body':
+    'Elegí una fecha límite si este escrito la necesita. Se puede quitar en cualquier momento con la X.',
+  'writings.tutorial.deadline.moreDetail':
+    'Con fecha límite puesta se habilita un recordatorio (campana, debajo): te avisa en la sección de Recordatorios cuando se acerca.',
+  'writings.tutorial.tags.title': 'Etiquetá el escrito para encontrarlo por tema',
+  'writings.tutorial.tags.body':
+    'Las etiquetas son transversales a toda la app: el mismo tag agrupa notas, tareas y escritos relacionados.',
   'writings.tutorial.autosave.title': 'Autosave cada ~2.5 segundos, sin que hagas nada',
   'writings.tutorial.autosave.body':
     'El indicador de la barra superior pasa de "Sin guardar" a "Guardando..." a "Guardado" solo. Nunca hace falta guardar a mano.',
   'writings.tutorial.focus.title': 'Alt+Shift+F oculta todo lo demás',
   'writings.tutorial.focus.body':
     'Es un atajo global de la app (funciona en cualquier editor): activa el modo foco, que esconde la barra superior y deja solo el texto en pantalla.',
+  'writings.tutorial.typewriter.title': 'El editor también tiene modo máquina de escribir',
+  'writings.tutorial.typewriter.body':
+    'Mantiene la línea activa centrada en pantalla mientras escribís. Es infraestructura compartida del editor, no algo propio de Writings — el mismo botón aparece en Notes y Books.',
+  'writings.tutorial.delete.title': 'Borrar manda a la papelera, no destruye',
+  'writings.tutorial.delete.body':
+    'Pide confirmación y el escrito queda recuperable 30 días en la papelera antes de borrarse en serio.',
+  'writings.tutorial.library.open.title': 'La biblioteca reúne todo lo que no estás leyendo ahora',
+  'writings.tutorial.library.open.body':
+    'Se abre en un modal aparte de "Seguir donde dejaste": ahí vive el resto de tus escritos.',
+  'writings.tutorial.library.search.title': 'Buscá por título o contenido',
+  'writings.tutorial.library.search.body':
+    'Filtra al toque, sin enviar nada. Se combina con las etiquetas de abajo.',
+  'writings.tutorial.library.view.title': 'Tres vistas: estantería, mesa o lista',
+  'writings.tutorial.library.view.body':
+    'Elegí la que te resulte más cómoda para escanear títulos — la app recuerda tu elección.',
+  'writings.tutorial.library.group.title': 'Agrupá por carpeta y ordená como quieras',
+  'writings.tutorial.library.group.body':
+    'Este botón agrupa la lista por carpeta. El selector de al lado cambia el orden dentro de cada grupo.',
+  'writings.tutorial.library.group.moreDetail':
+    'Ordenar por "Editado recientemente", título o cantidad de palabras — el select vive junto al buscador.',
+  'writings.tutorial.library.close.title': 'Escape cierra la biblioteca',
+  'writings.tutorial.library.close.body':
+    'También podés usar la X de arriba o click afuera del modal.',
   'writings.new': 'Nuevo escrito',
   'writings.untitledTitle': 'Sin título',
   'writings.empty': 'Sin escritos todavía. Empezá con "Nuevo escrito".',
