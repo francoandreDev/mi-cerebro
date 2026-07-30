@@ -1,6 +1,6 @@
-<section class="patio">
+<section class="patio" data-tutorial="tasks-patio-header">
   <header class="head">
-    <button type="button" class="back" (click)="onBack()">
+    <button type="button" class="back" data-tutorial="tasks-patio-back" (click)="onBack()">
       ← {{ t('tasks.patio.backToGarden') }}
     </button>
     <div class="head-text">
@@ -15,9 +15,10 @@
     @for (group of groups(); track group.key) {
       <section class="month">
         <h2 class="month-label">{{ group.label }}</h2>
-        <div class="grove">
+        <div class="grove" data-tutorial="tasks-patio-grove">
           @for (item of group.items; track item.summary.id) {
             <mc-harvested-plant
+              data-tutorial="tasks-patio-item"
               [summary]="item.summary"
               [shape]="item.shape"
               [availableTags]="tags()"

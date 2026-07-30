@@ -861,12 +861,47 @@ export const es = {
   'tasks.tutorial.date.title': 'Al abrirla, le ponés una fecha',
   'tasks.tutorial.date.body':
     'Click en una tarea abre su detalle. Con fecha puesta se ubica sola en Floración (hoy) o Brote (esta semana), y aparece también en /calendar.',
+  'tasks.tutorial.date.moreDetail':
+    'En el detalle, el campo de fecha es un selector nativo: elegí un día y se agrega como chip. Podés sumar más de una fecha a la misma tarea (chips separados) y sacarlas con la ×.',
   'tasks.tutorial.transplant.title': 'Shift+→ la trasplanta al cantero siguiente',
   'tasks.tutorial.transplant.body':
     'Probalo: con una tarea enfocada, Shift+→ la mueve un cantero a la derecha, Shift+← a la izquierda. También podés arrastrarla con el mouse entre canteros.',
+  'tasks.tutorial.transplantDrag.title': 'También podés arrastrarla con el mouse',
+  'tasks.tutorial.transplantDrag.body':
+    'Tomá una tarea y soltala sobre otro cantero — el mismo trasplante que Shift+→, pero a mano. Si preferís el teclado, el atajo de arriba alcanza igual.',
   'tasks.tutorial.harvest.title': 'Enter abre el menú — "Cosechar" la completa',
   'tasks.tutorial.harvest.body':
     'Con la tarea enfocada, Enter abre un menú con los canteros y, al final, "Cosechar". Al cosechar cae acá, a la cesta, y el cambio queda commiteado al historial.',
+  'tasks.tutorial.water.title': '🚿 Regalas para que no se marchite',
+  'tasks.tutorial.water.body':
+    'Una tarea que lleva más de 3 días en Floración empieza a marchitarse (glyph distinto). Activá el riego acá arriba y tocá la gotita de una tarea en Brote o Semilla para subirla de posición antes de que le toque Floración.',
+
+  'tasks.tutorial.flow.patio': 'Patio: archivo de cosechas',
+  'tasks.tutorial.patio.intro.title': 'El patio archiva lo que ya cosechaste',
+  'tasks.tutorial.patio.intro.body':
+    'Cada tarea completada cae acá, agrupada por el mes en que la terminaste — un archivo de solo lectura, no hay riego ni cosecha en esta pantalla (eso pasa en el jardín).',
+  'tasks.tutorial.patio.shape.title': 'Árbol o flor, según cuánto vivió',
+  'tasks.tutorial.patio.shape.body':
+    'Si una tarea pasó 14 días o más en Floración antes de cosecharse, se archiva como árbol en vez de flor — una marca visual de las que más tiempo estuvieron activas.',
+  'tasks.tutorial.patio.open.title': 'Click para volver a abrirla',
+  'tasks.tutorial.patio.open.body':
+    'Cualquier planta del patio se abre igual que en el jardín: click y vas a su detalle completo.',
+  'tasks.tutorial.patio.back.title': 'Volver al jardín',
+  'tasks.tutorial.patio.back.body': 'Este botón te lleva de vuelta a /tasks.',
+
+  'tasks.tutorial.flow.editor': 'Editor de tarea completo',
+  'tasks.tutorial.editor.reminder.title': 'Recordatorio ligado a la fecha',
+  'tasks.tutorial.editor.reminder.body':
+    'Con al menos una fecha puesta, activá el recordatorio acá — se dispara con la app abierta, cerca de la fecha (no se puede activar sin fecha, ni con la tarea ya cosechada).',
+  'tasks.tutorial.editor.tags.title': 'Etiquetá la tarea',
+  'tasks.tutorial.editor.tags.body':
+    'Escribí acá para buscar una etiqueta existente o crear una nueva. La primera etiqueta define el color de la tarea en el jardín.',
+  'tasks.tutorial.editor.focus.title': 'Alt+Shift+F: modo foco',
+  'tasks.tutorial.editor.focus.body':
+    'Oculta título, fecha, recordatorio y etiquetas — queda solo el cuerpo de la tarea, para escribir sin distracciones. El mismo atajo lo vuelve a mostrar.',
+  'tasks.tutorial.editor.delete.title': 'Borrar manda a la papelera',
+  'tasks.tutorial.editor.delete.body':
+    'No es definitivo: la tarea va a la papelera y se puede restaurar durante 30 días.',
   'tasks.garden.legend.wilted': 'Marchita · días sin completarse',
   'tasks.garden.legend.countToday': 'tareas para hoy',
   'tasks.garden.legend.countWeek': 'tareas para esta semana',

@@ -482,7 +482,7 @@ implementar esto, sin cambios necesarios).
   son genéricos porque cualquier feature que use `mc-editor` los hereda (a diferencia de Books, que
   tiene su propio toolbar y no toca este archivo compartido).
 
-### 8.9 — Tasks: cobertura completa, multi-flujo (re-scoped por 8.85)
+### 8.9 — Tasks: cobertura completa, multi-flujo (re-scoped por 8.85) — _Cerrado._
 
 _Prereq: 8.1, 8.18._
 
@@ -498,6 +498,52 @@ gestos únicos sobre anchors ya cubiertos → se quedan dentro del flujo existen
    sí (hoy solo se enseña el resultado/canasta en el flujo esencial — mover esa explicación acá).
 3. **`tasks-editor` — "Editor de tarea completo"** (nuevo, manual, `route: '/tasks/:id'`):
    recordatorios, tags, foco, borrar.
+
+**Implementado 2026-07-27, con desvíos respecto al texto de arriba:**
+
+- **`tasks-patio` no tiene riego ni el gesto de cosecha — auditado y confirmado que esas
+  mecánicas no viven en `/tasks/patio`.** `tasks-patio.container.ts`/`.html` y
+  `harvested-plant.component.ts` muestran que el patio es un archivo **de solo lectura**: agrupa
+  tareas ya cosechadas por mes, con un único gesto real (abrir una planta, `(open)`). No hay botón
+  de riego ni transición de estado ahí — `onWater()`, el toggle 🚿 y el estado `wilted` viven en
+  `tasks-garden.container.ts`/`.html` (el jardín, `/tasks`), y el gesto de cosecha en sí (Enter con
+  la tarea enfocada → menú → "Cosechar") también ocurre ahí, en `plant-card.component.ts`
+  (`onTransplantKey`) — de hecho ya estaba bien cubierto por el `body` del step `harvest` existente
+  (`tasks.tutorial.harvest.body`), así que ese step no cambió. Contenido real de `tasks-patio`:
+  intro al archivo mensual, qué significa que una planta se archive como árbol en vez de flor
+  (`TREE_LONGEVITY_DAYS = 14` días en Floración antes de cosechar), abrir una planta, volver al
+  jardín. `labelKey` ajustado a "Patio: archivo de cosechas" (sin "riego", para no prometer una
+  mecánica que esta pantalla no tiene).
+- **La mecánica de riego/marchitamiento se sumó igual, pero al flujo `tasks` existente** (no a
+  `tasks-patio`, por el punto anterior): step nuevo `tier: 'avanzado'`, anchor
+  `[data-tutorial="tasks-water-toggle"]` (agregado al botón 🚿 en `tasks-garden.container.html`),
+  `action: { event: 'click' }`. Sin `icon` — no hay glyph de gota en `shared/icon/icons.data.ts` y
+  no ameritaba agregar uno nuevo solo para este step.
+- **`tasks-patio` sí usa `route: '/tasks/patio'`** tal como pedía el texto original, pero registrado
+  desde `TasksGardenContainer` (`/tasks`, no desde `TasksPatioContainer`) — así el picker "Guía de
+  la página" puede ofrecerlo estando en el jardín y navegar solo al arrancarlo. A diferencia de
+  `/tasks/:id`, `/tasks/patio` es una ruta literal sin id, así que sí calza con
+  `router.navigateByUrl(step.route)`.
+- **`tasks-editor` sin `route: '/tasks/:id'`**, mismo criterio que `notes-editor-advanced`/
+  `goals-constellation`: no hay id fijo para navegar un flujo manual arrancado desde otro lado, así
+  que se registra directo en `TasksContainer` (montado solo en `/tasks/:id`) — sólo aparece en el
+  picker una vez que el usuario ya tiene una tarea abierta.
+- **Step de tags sin `action`**: agregar una etiqueta es escribir en el input de búsqueda/creación
+  de `shared/tags/tag-picker.component.ts` — no hay un click único que capturar (mismo caso ya
+  resuelto en `tags.tutorial.ts`), queda descriptivo.
+- **Step de foco reusa el anchor genérico `editor-host`** (`shared/editor/editor.component.html`,
+  agregado en 8.8 sin prefijo por feature) en vez de crear uno nuevo por-feature — mismo mecanismo
+  que cualquier otra feature que use `mc-editor`. `action.key` es el atajo global
+  `Alt+Shift+F` (`FocusModeService`), `skipIfMissing: true` igual que el precedente de
+  `writings.tutorial.ts`.
+- Anchors nuevos: `tasks-water-toggle` (`tasks-garden.container.html`), `tasks-patio-header`,
+  `tasks-patio-grove`, `tasks-patio-item`, `tasks-patio-back` (`tasks-patio.container.html`),
+  `tasks-editor-reminder`, `tasks-editor-tags`, `tasks-editor-delete`
+  (`task-editor-pane.component.html`). Reusado sin cambios: `editor-host`.
+- Tasks no tiene gesto de arrastrar-y-soltar una tarea sobre una subcarpeta (a diferencia de Books)
+  — no se tocó nada de `shared/folder-breadcrumb/`; un eventual flujo `tasks-folders` (mencionado
+  como pendiente en 8.86) queda fuera del alcance de este ítem, sin asignar a ninguna fase.
+- `bun run typecheck` limpio.
 
 ### 8.10 — Settings: cobertura completa, multi-flujo (re-scoped por 8.85) — _Cerrado._
 
