@@ -1885,19 +1885,54 @@ export const es = {
   'calendar.tutorial.views.title': 'Tres formas de mirar el tiempo',
   'calendar.tutorial.views.body':
     'Probalo: cambiá entre mes, semana y año desde acá. Mes te da el detalle día a día, año te muestra los doce meses de un vistazo.',
+  'calendar.tutorial.views.moreDetail':
+    'El botón "Hoy" y los selectores de mes/año de la izquierda te llevan directo a cualquier período sin tener que ir haciendo click en Anterior/Siguiente uno por uno.',
   'calendar.tutorial.day.title': 'Click en un día abre todo lo que tiene',
   'calendar.tutorial.day.body':
     'Tareas, recordatorios y demás con esa fecha aparecen en un modal, agrupados por tipo. Filtrás por tipo desde ahí mismo.',
   'calendar.tutorial.create.title': 'Desde el modal creás algo nuevo con esa fecha',
   'calendar.tutorial.create.body':
     'El modal del día te lleva a crear una tarea o un recordatorio que ya nace con esa fecha puesta — no hace falta asignarla después a mano.',
+  'calendar.tutorial.dragReschedule.title': 'Arrastrá una tarea del wallboard a otro día',
+  'calendar.tutorial.dragReschedule.body':
+    'Soltarla sobre una celda del mes reprograma esa tarea a la nueva fecha, sin abrir nada.',
   'calendar.tutorial.filter.title': 'El wallboard de la derecha filtra por tipo',
   'calendar.tutorial.filter.body':
     'Probalo: click en el encabezado de cualquier card (tareas, metas, recordatorios) prende o apaga ese tipo en la vista completa.',
+  'calendar.tutorial.kindToggle.title': 'Cada card se puede colapsar',
+  'calendar.tutorial.kindToggle.body':
+    'El chevron a la izquierda del nombre abre o cierra la lista de esa card sin sacarla del filtro — para eso está el toggle de la card entera (arriba).',
+  'calendar.tutorial.kindCreate.title': 'El + de cada card crea directo de ese tipo',
+  'calendar.tutorial.kindCreate.body':
+    'Un atajo más al mismo lugar que el modal del día: crear sin elegir fecha primero.',
+  'calendar.tutorial.search.title': 'Buscá cualquier evento por título',
+  'calendar.tutorial.search.body':
+    'Escribí en el buscador del toolbar — los resultados te llevan directo a la fecha de ese evento.',
+  'calendar.tutorial.gotoDate.title': 'Saltá directo a una fecha puntual',
+  'calendar.tutorial.gotoDate.body':
+    'El selector de fecha del toolbar te lleva a cualquier día del calendario sin navegar mes a mes.',
   'calendar.day.openBook': 'Ver en la agenda',
   'calendar.book.close': 'Cerrar libro',
   'calendar.book.emptyDay': 'Página en blanco.',
   'calendar.book.weekHeading': 'Semana del {date}',
+  'calendar.tutorial.flow.week': 'Agenda semanal',
+  'calendar.tutorial.week.enter.title': 'La vista semana abre el libro de cuero',
+  'calendar.tutorial.week.enter.body':
+    'Es una zona propia, separada del mes y el año: cada semana ocupa una doble página.',
+  'calendar.tutorial.week.enter.moreDetail':
+    'También llegás acá desde el botón "Ver en la agenda" del modal de un día — abre el libro directo en esa semana.',
+  'calendar.tutorial.week.nav.title': 'Las flechas de la página izquierda cambian de semana',
+  'calendar.tutorial.week.nav.body':
+    'Igual que Anterior/Siguiente arriba, pero sin salir del libro.',
+  'calendar.tutorial.week.pickDay.title':
+    'Click en un día de la lista lo abre en la página derecha',
+  'calendar.tutorial.week.pickDay.body':
+    'Ahí ves todo lo que tiene ese día, agrupado por tipo, con los recordatorios como post-its.',
+  'calendar.tutorial.week.create.title': 'Cuatro plumas, una por tipo',
+  'calendar.tutorial.week.create.body':
+    'Tarea, meta, recordatorio o nota — cada pluma crea directo con la fecha del día abierto.',
+  'calendar.tutorial.week.close.title': 'La cruz cierra el libro',
+  'calendar.tutorial.week.close.body': 'Volvés a la vista mes donde estabas antes de abrirlo.',
   'tree.type.calendar': 'Calendario',
   'tree.type.reminders': 'Recordatorios',
 

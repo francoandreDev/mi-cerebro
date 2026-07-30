@@ -856,7 +856,7 @@ ts`/`.html` que las estrellas de la wall no son `draggable` y el container no ca
   `folder-breadcrumb-add`/`-child`/`-child-manage`/`-root` (`shared/folder-breadcrumb/`).
 - `bun run typecheck` limpio.
 
-### 8.88 — Calendar: multi-flujo, agenda semanal
+### 8.88 — Calendar: multi-flujo, agenda semanal — _Cerrado._
 
 _Prereq: 8.1, 8.18. Independiente del fix 8.4 (empty state del wallboard), se puede hacer en el
 mismo commit o por separado._
@@ -873,6 +873,37 @@ cerrar) → flujo propio. El resto son gestos sueltos sobre el header/tabla ya c
 2. **`calendar-week` — "Agenda semanal"** (nuevo, manual): nav prev/next, click día, creación
    rápida por tipo, cerrar. "Abrir libro" desde el modal de día como **mención de existencia**
    dentro de este flujo (es el punto de entrada, no un gesto a practicar aparte).
+
+**Implementado, con desvíos respecto al texto de arriba:**
+
+- **Búsqueda y "ir a fecha" no anclan en `calendar-views`/`calendar-table`.** El toolbar
+  (`toolbar.component.ts`) es un elemento separado, físicamente por encima del header con esos dos
+  anchors — forzar el spotlight ahí habría señalado el lugar equivocado. Se agregó un anchor propio,
+  `calendar-toolbar`, mismo patrón que `books-catalog` en `books.tutorial.ts` (un anchor nuevo para
+  contenido `tier: 'avanzado'` en vez de reusar uno existente a la fuerza). El drag-and-drop de
+  tareas y el toggle/create de las kind-cards sí anclan en `calendar-table`/`calendar-wallboard`
+  como decía el punto 1 — esos dos coincidían con la ubicación real del gesto.
+- **Búsqueda queda sin `action`.** Es un `<input type="search">` de texto libre: no hay un evento
+  único y confiable (`click`/`submit`/`keydown`/`dragstart`) que capture "escribir una búsqueda" —
+  mismo motivo por el que otros buscadores del proyecto (Goals, Books) tampoco llevan `action`.
+  "Ir a fecha" sí lo lleva (`click` sobre el `<input type="date">`, que abre el date-picker nativo).
+- **Drag-and-drop ancla el spotlight en `calendar-table`** (donde cae la tarea) **pero detecta el
+  `dragstart` en `calendar-wallboard`** (`li[draggable="true"]`, el origen real del arrastre) vía
+  `action.selector` — mismo mecanismo que ya usa `goals.tutorial.ts` para separar dónde se señala de
+  dónde se detecta el gesto.
+- **Botón "Hoy" + selects de mes/año van como `moreDetail` del step `views`** (ya existente, `tier`
+  básico) en vez de un step propio — viven en el mismo header, a un click de los 3 chips de vista.
+- **`calendar-week` se registra desde `CalendarContainer`**, junto con `calendar`: ambos flujos
+  comparten el mismo container (a diferencia de Goals/Books, la vista semana no tiene su propia
+  ruta — es un `view=week` query param del mismo `/calendar`), así que no hace falta el patrón
+  "registrar desde el container hijo" que usaron `goals-constellation`/`books-tts`.
+- **Los 4 anchors nuevos del libro** (`calendar-book-nav`/`-days`/`-create`/`-close`) llevan
+  `skipIfMissing: true` salvo el primero (`calendar-view-week`, siempre visible en el header): sólo
+  existen una vez que la vista semana está montada, y el usuario puede llegar al flujo desde el
+  picker estando todavía en la vista mes.
+- **Creación rápida por tipo (4 plumas) queda sin `action`**, igual que el step `create` del flujo
+  principal: cada botón navega a `/tasks`, `/goals`, `/reminders` o `/notes`, sacando al usuario de
+  `/calendar` a mitad de tutorial.
 
 ### 8.89 — Reminders: multi-flujo, atajos + posponer
 
