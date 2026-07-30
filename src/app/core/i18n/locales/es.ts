@@ -1699,12 +1699,38 @@ export const es = {
   'files.tutorial.open.title': 'Click en un casillero lo abre',
   'files.tutorial.open.body':
     'Se abre inline si hay pocas colecciones, o en overlay si hay muchas. Ahí arrastrás archivos nuevos o usás "Agregar archivos".',
+  'files.tutorial.flow.essentials': 'Files: lo esencial',
+  'files.tutorial.flow.folders': 'Organizar en subcarpetas',
   'files.tutorial.tags.title': 'El primer tag pinta el frente del casillero',
   'files.tutorial.tags.body':
     'Con el casillero abierto, agregale un tag desde la barra superior. El color del primer tag queda pintado en el frente, para identificarlo de un vistazo en la pared.',
+  'files.tutorial.reorder.title': 'Arrastrá para subir o reordenar',
+  'files.tutorial.reorder.body':
+    'Soltá archivos sueltos sobre el tablero para subirlos, o arrastrá un archivo ya subido sobre otro para reordenarlos.',
+  'files.tutorial.renameItem.title': 'El lápiz renombra un archivo',
+  'files.tutorial.renameItem.body':
+    'Cada archivo tiene su propio nombre editable, distinto del nombre original que trajiste del disco.',
+  'files.tutorial.editTitle.title': 'El nombre de la colección se edita directo',
+  'files.tutorial.editTitle.body':
+    'Click en el título del casillero y escribí el nombre nuevo — se guarda solo.',
+  'files.tutorial.deleteCollection.title': 'Los tres puntos borran la colección',
+  'files.tutorial.deleteCollection.body':
+    'Abrí el menú "⋯" junto al título y elegí "Eliminar colección" — manda todo a la papelera, con confirmación antes de borrar.',
   'files.tutorial.download.title': 'Cada archivo se descarga por separado',
   'files.tutorial.download.body':
     'Adentro del casillero, cada archivo tiene su propio botón de descarga — no hace falta bajar la colección entera.',
+  'files.tutorial.folders.create.title': 'Creá una subcarpeta',
+  'files.tutorial.folders.create.body':
+    'El ícono de carpeta con "+" crea una subcarpeta dentro de donde estés parado — le ponés nombre y confirmás.',
+  'files.tutorial.folders.open.title': 'Entrá a una subcarpeta con click',
+  'files.tutorial.folders.open.body':
+    'Click en cualquier subcarpeta del breadcrumb te lleva adentro — las colecciones de esa carpeta pasan a mostrarse en la pared.',
+  'files.tutorial.folders.manage.title': 'Renombrá, moví o borrá una subcarpeta',
+  'files.tutorial.folders.manage.body':
+    'Los tres puntos junto a cada subcarpeta abren renombrar, mover o borrar.',
+  'files.tutorial.folders.navigate.title': 'Volvé a la raíz con un click',
+  'files.tutorial.folders.navigate.body':
+    'El primer ícono del breadcrumb siempre vuelve a la carpeta raíz, sin importar cuán hondo estés.',
   'files.items.moveUp': 'Subir',
   'files.items.moveDown': 'Bajar',
   'files.items.delete': 'Eliminar',
