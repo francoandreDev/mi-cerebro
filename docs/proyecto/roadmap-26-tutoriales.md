@@ -1078,7 +1078,7 @@ cerrar) → flujo propio. El resto son gestos sueltos sobre el header/tabla ya c
   principal: cada botón navega a `/tasks`, `/goals`, `/reminders` o `/notes`, sacando al usuario de
   `/calendar` a mitad de tutorial.
 
-### 8.89 — Reminders: multi-flujo, atajos + posponer
+### 8.89 — Reminders: multi-flujo, atajos + posponer — _Cerrado._
 
 _Prereq: 8.1, 8.18._
 
@@ -1093,6 +1093,28 @@ teclado, y el menú de posponer/gestionar (`⋮` overflow) — ambas con 3+ gest
    marcar/borrar con espacio/Delete, nueva paloma con N.
 3. **`reminders-snooze` — "Posponer y gestionar un recordatorio"** (nuevo, manual): snooze 1h/1d/
    lunes/finde, duplicar, eliminar desde el menú `⋮`.
+
+**Implementado:** (1) el step `states` original (puerta que se abre, vencidos en la repisa) es
+puramente pasivo — no hay un `action` que sirva para "recurrencia + pausa" ahí, así que en vez de
+forzarlos dentro de ese step se agregaron dos steps nuevos entre `open` y `states`: `recurrence`
+(descriptivo, un `<select>` no tiene evento único confiable, mismo criterio que
+`goals-constellation.tutorial.ts`) y `pause` (`action: click` real sobre el checkbox del detalle,
+`data-tutorial="reminder-pause"`). (2) `search` usa el mismo estilo "click en la zona" que
+`filters` (anchor nuevo `data-tutorial="reminders-search"` en el `<label>` de búsqueda) — tipear
+texto no es un evento que `TutorialStepAction` pueda practicar, igual que el resto de búsquedas del
+proyecto. (3) el step de mención de existencia (undo + registro) ancla en el footer
+`data-tutorial="reminders-registry"`, agregado nuevo. (4) `reminders-shortcuts` ancla los 5 primeros
+steps en `[data-tutorial="reminders-palomar"]` (siempre presente, incluso vacío) y el de N reusa
+`reminders-quick-add`; los 6 son `keydown` sin modificador, mismo patrón que `music.tutorial.ts`
+(Espacio, `/`). (5) el mayor desvío está en `reminders-snooze`: el menú `⋮` se cierra solo tras
+cualquier click de sus botones (`overflowOpenId.set(null)` en cada handler de
+`reminders.container.ts`), así que los 4 presets de snooze (1h/1d/lunes/finde) quedan agrupados en
+un único step descriptivo sin `action` (el menú sigue abierto porque ese step no lo cierra) — un
+`action` real en cualquiera de los cuatro cerraría el menú antes de mostrar los otros tres.
+Duplicar sí practica un `action` real; como eso cierra el menú, se agregó un step explícito
+"reabrilo" (mismo gesto que abrirlo la primera vez, nombrado aparte porque la razón de repetirlo es
+información real) antes de eliminar. Nuevos anchors: `reminder-overflow-toggle`,
+`reminder-overflow-menu`, `reminder-duplicate`, `reminder-delete`.
 
 ### 8.90 — Books: cobertura completa, la superficie más grande de la auditoría — _Cerrado._
 
