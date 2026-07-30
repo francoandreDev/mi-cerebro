@@ -30,6 +30,7 @@ import { WritingSpineComponent } from '../components/writing-spine.component';
 import type { WritingSummary } from '../models/writing.types';
 import { WritingsService } from '../services/writings.service';
 import { formatAgo } from './format-ago';
+import { registerWritingsLibraryTutorial } from './writings-library.tutorial';
 import { registerWritingsTutorial } from './writings.tutorial';
 
 type SortKey = 'updated' | 'title' | 'wordCount';
@@ -86,6 +87,7 @@ export class WritingsShelfContainer {
 
   constructor() {
     registerWritingsTutorial();
+    registerWritingsLibraryTutorial();
   }
 
   protected readonly tags = this.tagsService.tags;

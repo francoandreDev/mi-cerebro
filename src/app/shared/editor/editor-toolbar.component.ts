@@ -140,6 +140,7 @@ const HIGHLIGHT_SWATCH_LABELS: Record<string, TranslationKey> = {
         <button
           type="button"
           class="ghost"
+          data-tutorial="editor-toolbar-typewriter"
           [attr.aria-pressed]="typewriterActive()"
           [attr.aria-label]="t('editor.typewriter.button')"
           [title]="t('editor.typewriter.button')"
