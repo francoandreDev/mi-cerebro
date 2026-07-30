@@ -25,6 +25,8 @@ import { RemoteService } from '@core/versioning/remote.service';
 import { VariantsService } from '@core/versioning/variants.service';
 import type { Variant } from '@core/versioning/variants.types';
 
+import { registerVariantsMergeTutorial } from './variants-merge.tutorial';
+
 @Component({
   selector: 'mc-variants-merge',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -85,6 +87,10 @@ export class MergeContainer implements OnInit {
     }
     return { from, into, skip, total: map.size };
   });
+
+  constructor() {
+    registerVariantsMergeTutorial();
+  }
 
   async ngOnInit(): Promise<void> {
     const params = this.route.snapshot.queryParamMap;
