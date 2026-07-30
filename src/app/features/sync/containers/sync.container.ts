@@ -33,6 +33,8 @@ import { VariantsService } from '@core/versioning/variants.service';
 import { IconComponent } from '@shared/icon/icon.component';
 import { McDatePipe } from '@shared/pipes/mc-date.pipe';
 
+import { registerSyncTutorial } from './sync.tutorial';
+
 export type TubeStatus = RefSyncStatus | 'idle' | 'divergent';
 
 interface Tube {
@@ -135,6 +137,7 @@ export class SyncContainer {
   });
 
   constructor() {
+    registerSyncTutorial();
     const destroyRef = inject(DestroyRef);
     const interval = setInterval(() => this.nowTick.set(Date.now()), 15_000);
     destroyRef.onDestroy(() => clearInterval(interval));

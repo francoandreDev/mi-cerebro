@@ -5,7 +5,7 @@
   </header>
 
   @if (!isConfigured()) {
-    <section class="not-configured" role="alert">
+    <section class="not-configured" data-tutorial="sync-not-configured" role="alert">
       <div class="nc-header">
         <mc-icon name="warning" class="mc-anim-pulse" />
         <h3>{{ t('sync.notConfigured.title') }}</h3>
@@ -18,7 +18,7 @@
     </section>
   } @else {
     <div class="layout">
-      <section class="console" role="region" aria-label="refs">
+      <section class="console" data-tutorial="sync-console" role="region" aria-label="refs">
         <header class="console-head" aria-hidden="true">
           <span class="col-variant">{{ t('sync.console.variantHeader') }}</span>
           @for (f of facets; track f) {
@@ -66,6 +66,7 @@
                   @if (tube.status === 'divergent') {
                     <a
                       class="merge-link"
+                      data-tutorial="sync-divergent-link"
                       [routerLink]="['/variants/merge']"
                       [queryParams]="{
                         incoming: 'remote',
@@ -91,6 +92,7 @@
             <button
               type="button"
               class="lever lever--push mc-hover-grow"
+              data-tutorial="sync-push"
               [disabled]="isPushing() || isFetching() || hasDivergence()"
               [title]="hasDivergence() ? t('sync.divergent.disabled') : ''"
               (click)="pushAll()"
@@ -108,6 +110,7 @@
             <button
               type="button"
               class="lever lever--fetch mc-hover-grow"
+              data-tutorial="sync-fetch"
               [disabled]="isPushing() || isFetching()"
               (click)="fetchAll()"
             >
@@ -150,7 +153,7 @@
               <span>{{ t('sync.autoPush.skip.spark') }}</span>
             </span>
           }
-          <label class="switch">
+          <label class="switch" data-tutorial="sync-autopush-toggle">
             <input
               type="checkbox"
               [checked]="versioningSettings().pushAfterAutocommit"
