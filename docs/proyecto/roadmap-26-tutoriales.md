@@ -365,7 +365,7 @@ _Prereq: ninguno._
 — filtrar a cero no muestra nada, ni siquiera texto. Peor que "pasivo": es invisible. Agregar el
 bloque `@empty` y un CTA "Limpiar filtro".
 
-### 8.5 — Empty state que miente: Notes `/notes/:id` sin nota seleccionada
+### 8.5 — Empty state que miente: Notes `/notes/:id` sin nota seleccionada — _Cerrado._
 
 _Prereq: ninguno._
 
@@ -373,7 +373,12 @@ _Prereq: ninguno._
 control que cree una — viola la regla del proyecto de que la UI no debe mentir. Agregar un botón
 real de crear, o cambiar el copy para no prometer una acción que no existe.
 
-### 8.6 — Empty states: resto del pase (Goals, Lists, Writings, Tags, Music, Files)
+**Implementado.** Ya resuelto por el commit `975f94b` (bug/empty-state fixes 8.2-8.6), sin marcar
+como cerrado en su momento. `notes.container.html` empty state tiene botón real "Nueva nota"
+(`(click)="onCreateNote()"`, deshabilitado mientras `creating()`). Verificado al cerrar este ítem:
+sigue presente y funcional, sin cambios de código necesarios.
+
+### 8.6 — Empty states: resto del pase (Goals, Lists, Writings, Tags, Music, Files) — _Cerrado._
 
 _Prereq: ninguno. Se puede hacer en un solo chat porque son cambios chicos y del mismo tipo
 (agregar un CTA dentro de un bloque de empty state ya existente), o partirse por página si un
@@ -404,6 +409,25 @@ empty state, no solo un control adyacente):
 room, Sync not-configured, Lists shelf, Goals wall (primer empty), Trash (ambos — un trash vacío
 no debe tener CTA, es correcto que sea pasivo), History (no hay acción de "crear un commit" que
 ofrecer), Settings (no tiene empty states).
+
+**Implementado.** Igual que 8.5, todo el pase ya estaba resuelto por el commit `975f94b`
+(bug/empty-state fixes 8.2-8.6) — el roadmap no se había marcado como cerrado. Verificado
+punto por punto contra el código actual, sin cambios necesarios:
+
+- **Goals**: `goals-wall.container.html` `noMatch` block tiene CTA "Limpiar filtro" real.
+- **Lists**: detalle sin selección (`lists.container.html`) tiene botón real "Nueva lista"
+  (`onCreateNew()`), no solo "Volver" como describía el ítem original. Card vacía
+  (`chalk-entry.component.ts`) confirmado: toda la card tiene `(click)="open.emit(...)"` —
+  click-through funciona, no requiere CTA propio.
+- **Writings**: `writings-shelf.container.html` `noMatch` tiene CTA "Limpiar filtros" dentro
+  del bloque.
+- **Tags**: `tags.empty` y `tags.detail.empty` explican que las etiquetas se crean desde otras
+  entidades, no desde la página de tags. Sin link a Notes/Tasks (quedó como opcional, no se
+  agregó).
+- **Music**: `playlists-panel.container.html` empty state tiene CTA "Crear playlist" dentro
+  del bloque.
+- **Files**: tanto `files.container.html` (colecciones) como `file-grid.component.html` (ítems)
+  tienen el CTA real dentro de su propio bloque de empty state.
 
 ### 8.7 — Checklist de onboarding en Home
 
