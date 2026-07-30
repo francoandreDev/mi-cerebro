@@ -677,10 +677,29 @@ export const es = {
     'Sin etiquetas todavía. Se crean desde cualquier entidad — notas, tareas, metas, etc. — no desde acá.',
 
   'tags.page.title': 'Etiquetas',
+  'tags.tutorial.flow.essentials': 'Tags: lo esencial',
+  'tags.tutorial.flow.organize': 'Organizar tags',
   'tags.tutorial.origin.body':
     'Las etiquetas se crean desde cualquier entidad (notas, tareas, metas, etc), no desde acá. Esta pantalla es el listado centralizado de todas las que ya existen en tu workspace.',
-  'tags.tutorial.rowActions.body':
-    'Cuando tengas al menos una etiqueta, cada fila te deja recolorearla, renombrarla, fusionarla con otra o eliminarla — los cambios se aplican a todas las entidades que la usan.',
+  'tags.tutorial.filter.title': 'Filtrar etiquetas',
+  'tags.tutorial.filter.body': 'Escribí acá para encontrar una etiqueta por nombre en la lista.',
+  'tags.tutorial.filter.moreDetail':
+    'El filtro ignora mayúsculas y acentos, y coincide con cualquier parte del nombre — no hace falta escribirlo completo ni exacto.',
+  'tags.tutorial.detail.title': 'Ver dónde se usa una etiqueta',
+  'tags.tutorial.detail.body':
+    'Esta lista no navega al detalle de una etiqueta — hacelo desde el chip de etiqueta que ves en una nota, tarea, meta u otra entidad. Ahí vas a ver todo lo etiquetado, agrupado por tipo.',
+  'tags.tutorial.organize.recolor.title': 'Recolorear una etiqueta',
+  'tags.tutorial.organize.recolor.body':
+    'El punto de color abre una paleta — el nuevo color se aplica a la etiqueta en todas las entidades que la usan.',
+  'tags.tutorial.organize.rename.title': 'Renombrar una etiqueta',
+  'tags.tutorial.organize.rename.body':
+    'Tocá el nombre para editarlo en el lugar. Enter confirma, Escape cancela.',
+  'tags.tutorial.organize.merge.title': 'Combinar dos etiquetas',
+  'tags.tutorial.organize.merge.body':
+    '"Combinar" abre un selector de destino: la etiqueta de esta fila desaparece y todo lo que la usaba pasa a usar la que elijas. Es irreversible — la app te pide confirmación antes de aplicarlo.',
+  'tags.tutorial.organize.delete.title': 'Eliminar una etiqueta',
+  'tags.tutorial.organize.delete.body':
+    'Eliminar la quita de todas las entidades que la usan (el contador de la fila te dice cuántas). También pide confirmación antes de aplicarse.',
   'tags.page.filterPlaceholder': 'Filtrar etiquetas...',
   'tags.page.noMatch': 'Ninguna etiqueta coincide con el filtro.',
   'tags.page.usageCountOne': '{count} uso',
@@ -689,11 +708,15 @@ export const es = {
   'tags.page.delete': 'Eliminar',
   'tags.page.mergeInto': 'Combinar con...',
   'tags.page.mergeNoTargets': 'No hay otra etiqueta para combinar.',
+  'tags.page.mergeConfirm':
+    '¿Combinar "{from}" con "{to}"? "{from}" desaparece y no se puede deshacer.',
   'tags.page.deleteConfirm': '¿Eliminar la etiqueta "{label}"? No se usa en ninguna entidad.',
   'tags.page.deleteConfirmUsed':
     '¿Eliminar la etiqueta "{label}"? Se quitará de {count} entidad(es) que la usan.',
   'tags.page.confirm.delete.title': 'Eliminar etiqueta',
   'tags.page.confirm.delete.confirm': 'Sí, eliminar',
+  'tags.page.confirm.merge.title': 'Combinar etiquetas',
+  'tags.page.confirm.merge.confirm': 'Sí, combinar',
   'tags.page.confirm.cancel': 'Cancelar',
 
   'tags.detail.back': 'Volver a etiquetas',

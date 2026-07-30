@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 
 import { ErrorService } from '@core/errors/error.service';
 import { I18nService } from '@core/i18n/i18n.service';
@@ -8,6 +16,8 @@ import { TagsAdminService } from '@core/tags/tags-admin.service';
 import { TagsService } from '@core/tags/tags.service';
 import { TAG_SWATCHES, tagHexFor } from '@core/theme/theme-palette';
 import { ThemeService } from '@core/theme/theme.service';
+import { TutorialService } from '@core/tutorials/tutorial.service';
+import { registerTagsOrganizeTutorial } from './tags-organize.tutorial';
 import { registerTagsTutorial } from './tags.tutorial';
 import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
 import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
@@ -58,6 +68,22 @@ export class TagsContainer {
 
   constructor() {
     registerTagsTutorial();
+    // why: `tags-organize` (recolor/rename/merge/delete) only makes sense
+    //      once at least one tag row exists to act on (§8.13) — gate on
+    //      `!isEmpty()` (tag count), not the filtered `rows()` computed the
+    //      roadmap first named, so typing a filter that matches nothing
+    //      doesn't flicker the flow out of the picker mid-session.
+    const tutorials = inject(TutorialService);
+    let disposeOrganize: (() => void) | null = null;
+    effect(() => {
+      if (this.isEmpty()) {
+        disposeOrganize?.();
+        disposeOrganize = null;
+      } else {
+        disposeOrganize ??= registerTagsOrganizeTutorial(tutorials);
+      }
+    });
+    inject(DestroyRef).onDestroy(() => disposeOrganize?.());
     void this.tagsService.refresh().catch((e: unknown) => this.errors.report(e));
   }
 
@@ -126,16 +152,34 @@ export class TagsContainer {
     this.mergingId.set(this.mergingId() === id ? null : id);
   }
 
-  protected async mergeInto(fromId: string, toId: string): Promise<void> {
+  protected mergeInto(fromId: string, toId: string): void {
     this.mergingId.set(null);
-    this.busyId.set(fromId);
-    try {
-      await this.admin.merge(fromId, toId);
-    } catch (e) {
-      this.errors.report(e);
-    } finally {
-      this.busyId.set(null);
-    }
+    const from = this.tagsService.tags().find((t) => t.id === fromId);
+    const to = this.tagsService.tags().find((t) => t.id === toId);
+    if (!from || !to) return;
+    // why: merge is irreversible (the source tag is deleted and every
+    //      entity that used it now points at `to` instead) — same
+    //      confirm-before-destroy treatment as deleteTag, closing the gap
+    //      found while splitting this row into tutorial steps (§8.13).
+    this.confirm.ask(
+      {
+        title: this.t('tags.page.confirm.merge.title'),
+        message: this.t('tags.page.mergeConfirm', { from: from.label, to: to.label }),
+        confirmLabel: this.t('tags.page.confirm.merge.confirm'),
+        cancelLabel: this.t('tags.page.confirm.cancel'),
+        tone: 'danger',
+      },
+      async () => {
+        this.busyId.set(fromId);
+        try {
+          await this.admin.merge(fromId, toId);
+        } catch (e) {
+          this.errors.report(e);
+        } finally {
+          this.busyId.set(null);
+        }
+      },
+    );
   }
 
   protected deleteTag(tag: Tag, usageCount: number): void {
