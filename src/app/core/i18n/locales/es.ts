@@ -1840,15 +1840,31 @@ export const es = {
   'images.tutorial.create.title': '"Nueva galería" te da una sala',
   'images.tutorial.create.body':
     'Cada galería es una sala nueva en el plano del museo, lista para colgar imágenes.',
+  'images.tutorial.create.moreDetail':
+    'Desde el plano también buscás por título, ordenás por reciente o alfabético, filtrás por tag, y organizás en subcarpetas — todo arriba del todo, junto al buscador.',
   'images.tutorial.upload.title': 'Adentro, arrastrás o pegás las imágenes',
   'images.tutorial.upload.body':
     'Soltá archivos acá o pegá con Ctrl+V — se cuelgan solas en la pared. Si son muchas, la sala se auto-pagina en cuartos.',
+  'images.tutorial.upload.moreDetail':
+    'El arrastre funciona sobre toda la pared, no solo un punto — soltá varias imágenes juntas y se cuelgan todas. Si preferís el selector de archivos del sistema, el botón "+" abre el mismo diálogo.',
+  'images.tutorial.open.title': 'Click en un cuadro lo abre en grande',
+  'images.tutorial.open.body':
+    'El lightbox muestra la imagen a tamaño completo con su nombre y dimensiones. Escape, o click afuera, lo cierra.',
+  'images.tutorial.deleteImage.title': 'El tacho en cada cuadro lo borra',
+  'images.tutorial.deleteImage.body': 'Pide confirmación — no hay deshacer.',
   'images.tutorial.navigate.title': 'Click selecciona, doble click entra',
   'images.tutorial.navigate.body':
     'Desde el plano del museo, un click en una sala la previsualiza acá abajo; doble click te mete adentro.',
   'images.tutorial.minimap.title': 'El mini-mapa salta entre cuartos',
   'images.tutorial.minimap.body':
     'Cuando la sala tiene varios cuartos (se auto-pagina al subir muchas imágenes), el mini-mapa del pie te lleva directo a cualquiera, sin scrollear toda la pared.',
+  'images.tutorial.minimap.moreDetail':
+    'El botón "Recorrer" del plano del museo te trae directo a la sala activa. Cuando hay más de un cuarto, "← Cuarto anterior" y "Cuarto siguiente →" al pie de la pared hacen lo mismo que el mini-mapa, un cuarto a la vez.',
+  'images.tutorial.deleteGallery.title': 'El menú "⋯" borra la galería entera',
+  'images.tutorial.deleteGallery.body':
+    'Elegí "Eliminar" ahí adentro — pide confirmación porque se lleva todas las imágenes de la sala.',
+  'images.tutorial.deleteGallery.moreDetail':
+    'El título y las etiquetas de la galería (arriba, junto al menú) también se editan desde acá — no hace falta entrar a ningún otro lado.',
   'images.museum.planLabel': 'Planta del museo',
   'images.museum.activeSala': 'Sala activa',
   'images.museum.cuarto': 'Cuarto {n} de {total}',
@@ -1966,9 +1982,22 @@ export const es = {
   'trash.tutorial.search.title': 'Buscá por nombre cuando hay mucho acumulado',
   'trash.tutorial.search.body':
     'Probalo: escribí acá arriba, o filtrá por tipo de entidad con los chips que aparecen debajo (notas, tareas, etc).',
+  'trash.tutorial.filter.title': 'Los chips filtran por tipo de entidad',
+  'trash.tutorial.filter.body':
+    'Cada chip muestra cuántas hay de ese tipo — clickealo para ver solo esas, o "Todo" para volver a la lista completa.',
+  'trash.tutorial.view.title': 'El ojo abre un preview de lo que era',
+  'trash.tutorial.view.body':
+    'Ves el contenido real de la entidad borrada (facts, tags, extracto) antes de decidir si restaurarla o purgarla.',
+  'trash.tutorial.view.moreDetail': 'Escape, o click afuera, cierra el modal.',
   'trash.tutorial.restore.title': 'Restaurás, purgás, o esperás 30 días',
   'trash.tutorial.restore.body':
     'Cada card tiene botones para restaurar (vuelve a donde estaba) o purgar (borra en serio, pide confirmación). Si no hacés nada, se purga sola a los 30 días — el countdown se ve en la card. "Vaciar" arriba borra todo de una.',
+  'trash.tutorial.purge.title': 'El tacho de una card la borra para siempre',
+  'trash.tutorial.purge.body':
+    'Pide confirmación — a diferencia de restaurar, esto no tiene vuelta atrás.',
+  'trash.tutorial.emptyAll.title': '"Vaciar" purga todo de una',
+  'trash.tutorial.emptyAll.body':
+    'Igual que el purgado individual pero para toda la papelera — pide confirmación antes de borrar todo en serio.',
   'trash.emptyState': 'La papelera está vacía.',
   'trash.restore': 'Restaurar',
   'trash.purge': 'Borrar',

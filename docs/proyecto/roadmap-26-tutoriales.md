@@ -1158,7 +1158,7 @@ de editor completa, TTS, índice de capítulos, y comentarios/propose son 4 zona
 6. **`books-tts` — "Lectura en voz alta"** (nuevo, manual): Ctrl+Alt+R, controles de TTS, bookmark
    toggle dentro del editor, export de capítulo a markdown.
 
-### 8.91 — Images: ajustes menores, sin flujo nuevo
+### 8.91 — Images: ajustes menores, sin flujo nuevo — _Cerrado._
 
 _Prereq: 8.1._
 
@@ -1168,6 +1168,29 @@ galería (destructivo, `tier: 'avanzado'`) como steps nuevos con `action`; drag-
 como `moreDetail` sobre el step de subida (que hoy solo practica Ctrl+V); botón "Recorrer"/next-
 prev cuarto como `moreDetail`; búsqueda, orden, filtro por tag, título/tags de galería y carpetas
 como **mención de existencia** (demasiado situacionales para practicarse uno por uno).
+
+**Implementado, con un desvío estructural real:** el split de contenido es el planteado —
+`images-frame-open` (lightbox, `eye`) y `images-frame-delete` (tier avanzado) en cada frame de
+`museum-room.component.html` (mismo truco de `data-tutorial` compartido en un `@for` que Trash),
+`images-gallery-menu` (tier avanzado, el único ítem del menú "⋯" es "Eliminar") en
+`gallery-meta-bar.component.html` — con moreDetail mencionando que el título/tags de la galería
+también viven ahí al lado. Drag-and-drop y "Recorrer"/next-prev cuarto quedaron como `moreDetail`
+de los steps de subida y mini-mapa respectivamente; búsqueda/orden/filtro-por-tag/carpetas del
+índice quedaron como `moreDetail` del step de creación (único step anclado en el índice,
+`/images`).
+
+El desvío: `IMAGES_TUTORIAL` (un solo `TutorialDefinition`, sin flujo nuevo — folds ya bastan) tenía
+la mitad de sus steps anclados en `/images/:id` (la sala) pero solo se registraba desde
+`GalleriesIndexContainer` (`/images`). Como las dos rutas son mutuamente excluyentes y el registro
+se desmonta al navegar, "Guía de la página" desaparecía apenas el usuario entraba a una galería ya
+creada (no vía el gesto de "crear", el único camino que sobrevive gracias a
+`practicedAdvancePending`) — un usuario que abre una sala existente nunca podía volver a invocar el
+tutorial ahí. Se corrigió llamando también a `registerImagesTutorial()` desde el constructor de
+`GalleriesContainer` (mismo id, mismo objeto, sin duplicar definición); como consecuencia, el step
+`images-new` (anclado solo en el índice) ahora también puede arrancar estando ya en una sala, así
+que se le sumó `skipIfMissing: true` para saltar directo al siguiente step en vez de dejar la
+tarjeta sin spotlight — el mismo caso que el comentario de `tutorial-overlay.component.ts` ya
+documenta ("tarjeta flotando en la esquina").
 
 ### 8.92 — Writings: flujo nuevo para el modal de biblioteca
 
@@ -1202,7 +1225,7 @@ falta:
 2. **`history-restore` — "Restaurar una versión"** (nuevo, manual): elegir commit, elegir alcance
    (completo vs. entidad individual), confirmar (con el input de confirmación tipeada).
 
-### 8.94 — Trash: ajustes menores, sin flujo nuevo
+### 8.94 — Trash: ajustes menores, sin flujo nuevo — _Cerrado._
 
 _Prereq: 8.1._
 
@@ -1211,6 +1234,17 @@ entidad y ver detalle (modal preview) como steps nuevos con `action`; purgar ind
 papelera completa como `tier: 'avanzado'` junto al step de restore ya cubierto (ninguno de los dos
 amerita flujo propio, son gestos únicos aunque destructivos); Escape cierra modal como **mención de
 existencia**.
+
+**Implementado:** exactamente lo planteado, sin desvíos de fondo. `data-tutorial="trash-filter-bar"`
+en `trash-filter-bar.component.html` (acción real: click en cualquier `.chip`, vía
+`action.selector`), `trash-card-view` y `trash-card-purge` en cada `trash-card.component.html` (son
+por-card, dentro de un `@for` — un solo `data-tutorial` compartido funciona porque
+`matchesAction()` usa `event.target.closest(selector)`, no un listener por elemento), y
+`trash-empty-all` en el botón "Vaciar" de `trash.container.html`. Los 4 anchors nuevos llevan
+`skipIfMissing: true` porque ninguno existe con la papelera vacía (caso típico de usuario nuevo,
+mismo criterio que los 3 steps ya existentes). El step de "ver detalle" suma un `moreDetail`
+mencionando que Escape (o click afuera) cierra el modal — la mención de existencia pedida en el
+ítem, doblada sobre un step real en vez de uno descriptivo aparte.
 
 ### Orden sugerido (no estricto)
 
