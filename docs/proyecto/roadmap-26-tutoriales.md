@@ -643,6 +643,39 @@ aparte (descarga por YouTube URL) y una selección masiva con bulk actions:
    secundario — queda como `moreDetail` dentro de `music-playlists` en vez de flujo propio; atajos
    `n`/`p` como **mención de existencia** (ya cubiertos por el diálogo global de shortcuts).
 
+**Implementado (Music):** el bug 8.3 (`mini-player` sin `skipIfMissing`) ya estaba resuelto en el
+código al momento de encarar este ítem — no hizo falta tocarlo, solo se dejó documentado acá.
+Los 3 flujos se implementaron sustancialmente como se diseñó, con desvíos menores frente al plan
+original:
+
+- **Seek en waveform** no es un `action` sobre el step `play` existente (ese step practica
+  espacio para play/pause, un gesto distinto) sino un **step nuevo** inmediatamente después,
+  anclado a `[data-tutorial="music-waveform"]` (`now-playing.container.html`, solo existe con
+  `currentTrack()` → `skipIfMissing: true`) — separar ambos respeta la regla de "un gesto por
+  step" (§4.6.15b) en vez de forzar dos gestos en un mismo step.
+- **Drag&drop a playlist + cola (jump-to/clear)** quedó como `moreDetail` sobre el step `album`
+  existente (mismo flujo esencial), tal como estaba planeado.
+- **Selección múltiple + bulk actions** se implementó como 4 steps `tier: 'avanzado'` dentro de
+  `music.tutorial.ts` (seleccionar, bulk-delete, bulk-agregar-a-playlist, limpiar selección) en
+  vez de un solo step genérico — cada botón de la barra de selección (`.bulk-bar`,
+  `album-library.container.html`) es un gesto propio y necesitaba su propio anchor
+  (`data-tutorial="music-bulk-select/delete/add-select/clear"`, agregados en este commit).
+- **`music-playlists`** suma un step inicial de cambio de pestaña (Álbumes → Playlists,
+  `data-tutorial="music-tab-playlists"`, mismo patrón que Settings §4.6.15b) que el plan
+  original no explicitaba pero que hace falta para que el resto de los steps (todos dentro de
+  esa pestaña o del editor de una playlist activa) tengan sentido sin asumir que el usuario ya
+  está ahí.
+- **Letras** quedó como `moreDetail` sobre el step "agregar tracks vía picker" de
+  `music-playlists` (no hay anchor propio de letras dentro del editor de playlist — la UI de
+  letras vive en `now-playing.container.html`, fuera de ese flujo — pero `moreDetail` no requiere
+  colocación física, solo texto suplementario sobre un step ya visitado).
+- **`music-youtube`** no lleva `skipIfMissing` en ningún step: el bloque `.youtube-download`
+  siempre está en el DOM (deshabilitado con tooltip fuera de Tauri/Capacitor,
+  `YoutubeDownloadService.isAvailable()`), a diferencia de los anchors condicionales del resto de
+  la página.
+
+Verificado: `bun run typecheck`, `bun run test` y `bun run lint` limpios (sin errores nuevos).
+
 ### 8.16 — Command Palette: tutorial nuevo + capacidad de engine "anclar dentro de overlay"
 
 _Prereq: 8.1. Recomendado ejecutar después de tener 2-3 páginas ya migradas a `tier` (8.8-8.12),

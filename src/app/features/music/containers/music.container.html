@@ -6,6 +6,7 @@
         <button
           type="button"
           role="tab"
+          data-tutorial="music-tab-albums"
           [attr.aria-selected]="leftView() === 'albums'"
           [class.is-active]="leftView() === 'albums'"
           class="tab mc-hover-grow"
@@ -17,6 +18,7 @@
         <button
           type="button"
           role="tab"
+          data-tutorial="music-tab-playlists"
           [attr.aria-selected]="leftView() === 'playlists'"
           [class.is-active]="leftView() === 'playlists'"
           class="tab mc-hover-grow"

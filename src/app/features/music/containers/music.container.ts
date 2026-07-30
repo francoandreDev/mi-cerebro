@@ -26,6 +26,8 @@ import { QueuePanelContainer } from './queue-panel.container';
 import { ResonantSurfaceContainer } from './resonant-surface.container';
 import { registerMusicShortcuts } from './music.shortcuts';
 import { registerMusicTutorial } from './music.tutorial';
+import { registerMusicPlaylistsTutorial } from './music-playlists.tutorial';
+import { registerMusicYoutubeTutorial } from './music-youtube.tutorial';
 import { TRACK_DRAG_MIME } from './music.dnd';
 
 // why: hovering a track drag over the "Playlists" tab auto-switches the left
@@ -69,6 +71,8 @@ export class MusicContainer {
 
   constructor() {
     registerMusicTutorial();
+    registerMusicPlaylistsTutorial();
+    registerMusicYoutubeTutorial();
     registerMusicShortcuts({
       togglePlay: () => void this.player.toggle(),
       newPlaylist: () => void this.onCreatePlaylist(),

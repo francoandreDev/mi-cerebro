@@ -2220,6 +2220,57 @@ export const es = {
   'music.tutorial.miniplayer.title': 'Los controles te siguen a todas las secciones',
   'music.tutorial.miniplayer.body':
     'Si salís de /music, la mini-barra de abajo sigue mostrando el track actual con play/pausa, siguiente/anterior y avance de 10 segundos. Click en el título vuelve a la membrana.',
+  'music.tutorial.flow.essentials': 'Music: lo esencial',
+  'music.tutorial.album.moreDetail':
+    'Arrastrá cualquier track de la biblioteca a la pestaña "Playlists" para sumarlo sin abrir la playlist. La cola de reproducción (columna derecha) deja saltar a cualquier track ya encolado o vaciarla entera con el botón de arriba.',
+  'music.tutorial.seek.title': 'Clickeá o arrastrá la línea de tiempo para saltar',
+  'music.tutorial.seek.body':
+    'La waveform de "Reproduciendo ahora" no es solo decorativa: clickeala o arrastrala para saltar a cualquier punto del track.',
+  'music.tutorial.bulkSelect.title': 'Seleccioná varios tracks a la vez',
+  'music.tutorial.bulkSelect.body':
+    'Click en el círculo de cada fila los va marcando; shift+click selecciona un rango completo entre la última marca y esta.',
+  'music.tutorial.bulkDelete.title': 'Borrá toda la selección de una',
+  'music.tutorial.bulkDelete.body':
+    'Con uno o más tracks marcados aparece esta barra — "Eliminar" los manda a todos a la papelera junto.',
+  'music.tutorial.bulkAddToPlaylist.title': 'Sumá la selección a una playlist',
+  'music.tutorial.bulkAddToPlaylist.body':
+    'Elegí una playlist del desplegable y todos los tracks marcados se agregan de una, sin repetir el gesto track por track.',
+  'music.tutorial.bulkClear.title': 'Deshacé la selección',
+  'music.tutorial.bulkClear.body': 'Limpia las marcas sin tocar ningún track.',
+  'music.tutorial.flow.playlists': 'Armar y curar playlists',
+  'music.tutorial.tabPlaylists.title': 'La pestaña Playlists es la otra vista de la biblioteca',
+  'music.tutorial.tabPlaylists.body':
+    'Alterna entre "Álbumes" y "Playlists" en la misma columna izquierda — sin cambiar de ruta.',
+  'music.tutorial.playlistCreate.title': 'Creá una playlist nueva',
+  'music.tutorial.playlistCreate.body': 'Arranca vacía, lista para sumarle tracks.',
+  'music.tutorial.playlistOpen.title': 'Click en una playlist la abre para editarla',
+  'music.tutorial.playlistOpen.body':
+    'El editor toma toda la columna central: ahí reordenás, agregás y sacás tracks.',
+  'music.tutorial.playlistFavorite.title': 'Marcala como favorita',
+  'music.tutorial.playlistFavorite.body':
+    'La estrella la destaca con un ícono propio en el listado de playlists.',
+  'music.tutorial.playlistPlay.title': 'Reproducí la playlist completa en orden',
+  'music.tutorial.playlistPlay.body': 'Arranca desde el primer track de la lista.',
+  'music.tutorial.playlistShuffle.title': 'O en orden aleatorio',
+  'music.tutorial.playlistShuffle.body': 'Mismo botón que reproducir, pero mezclando el orden.',
+  'music.tutorial.playlistReorder.title': 'Arrastrá un track para reordenar la playlist',
+  'music.tutorial.playlistReorder.body':
+    'Tomá cualquier fila del asa (⋮⋮) y soltala en la posición que quieras dentro de la misma playlist.',
+  'music.tutorial.playlistAddTracks.title': 'Agregá tracks con el buscador',
+  'music.tutorial.playlistAddTracks.body':
+    'Abrí el picker y buscá por nombre — solo muestra tracks que todavía no están en esta playlist.',
+  'music.tutorial.playlistAddTracks.moreDetail':
+    'De paso: en "Reproduciendo ahora" (fuera del editor de playlist) hay un botón para mostrar la letra del track si la tiene incrustada, o buscarla online por artista/título si no. Los atajos de teclado "n"/"p" (siguiente/anterior) ya figuran en el diálogo global de atajos (?).',
+  'music.tutorial.playlistDelete.title': 'Eliminá la playlist',
+  'music.tutorial.playlistDelete.body':
+    'Borra la playlist (no los tracks, que siguen en la biblioteca) con confirmación previa.',
+  'music.tutorial.flow.youtube': 'Traer música de YouTube',
+  'music.tutorial.youtubeUrl.title': 'Pegá la URL de un video de YouTube',
+  'music.tutorial.youtubeUrl.body':
+    'Función disponible solo en la app de escritorio/Android — en el navegador este campo queda deshabilitado.',
+  'music.tutorial.youtubeDownload.title': 'Descargalo como MP3',
+  'music.tutorial.youtubeDownload.body':
+    'Extrae el audio, lo convierte a MP3 y lo agrega directo a tu biblioteca — el botón muestra "Descargando…" mientras dura.',
   'music.shortcuts.playPause': 'Reproducir / pausar',
   'music.shortcuts.newPlaylist': 'Nueva playlist',
   'music.shortcuts.focusSearch': 'Buscar en la biblioteca',
