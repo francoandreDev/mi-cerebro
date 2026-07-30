@@ -24,6 +24,7 @@ import { TagsService } from '@core/tags/tags.service';
 import { IconComponent } from '@shared/icon/icon.component';
 import type { IconName } from '@shared/icon/icons.data';
 
+import { registerCommandPaletteTutorial } from './command-palette.tutorial';
 import {
   KIND_TITLE_KEY,
   type EntityItem,
@@ -122,6 +123,7 @@ export class CommandPaletteContainer {
     void this.searchIndex.load();
     this.recentsService.start();
     this.registerGlobalShortcut();
+    registerCommandPaletteTutorial();
     effect(() => {
       if (this.open()) {
         this.cursor.set(0);

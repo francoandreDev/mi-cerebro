@@ -148,6 +148,17 @@
     </button>
     <button
       type="button"
+      class="rail-btn search"
+      data-tutorial="command-palette-open"
+      [title]="t('palette.openButton')"
+      [attr.aria-label]="t('palette.openButton')"
+      (click)="openPalette()"
+    >
+      <mc-icon name="magnifying-glass" />
+      <span class="rail-label">{{ t('palette.openButton') }}</span>
+    </button>
+    <button
+      type="button"
       class="rail-btn shortcuts-help"
       [title]="t('shortcuts.help.open')"
       [attr.aria-label]="t('shortcuts.help.open')"
@@ -177,6 +188,7 @@
         <button
           type="button"
           class="search-btn"
+          data-tutorial="command-palette-open"
           [attr.aria-label]="t('palette.openButton')"
           [title]="t('palette.openButton')"
           (click)="openPalette()"

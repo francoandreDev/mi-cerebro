@@ -18,6 +18,7 @@
           #input
           type="text"
           class="input"
+          data-tutorial="command-palette-input"
           [placeholder]="t('palette.placeholder')"
           [attr.aria-label]="t('palette.placeholder')"
           [value]="query()"
@@ -38,7 +39,7 @@
             <span>{{ t('palette.recents.empty') }}</span>
           </p>
         } @else {
-          <ul class="results" role="listbox">
+          <ul class="results" data-tutorial="command-palette-results" role="listbox">
             @if (recentsItems().length > 0) {
               <li class="section" role="presentation">{{ t('palette.recents.title') }}</li>
               @for (h of recentsItems(); track h.id; let i = $index) {
@@ -87,7 +88,7 @@
           <span>{{ t('palette.empty') }}</span>
         </p>
       } @else {
-        <ul class="results" role="listbox">
+        <ul class="results" data-tutorial="command-palette-results" role="listbox">
           @if (tagViewItem(); as tv) {
             <li
               class="hit tag-view"
