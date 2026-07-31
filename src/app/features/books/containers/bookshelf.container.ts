@@ -29,8 +29,18 @@ import { BookCatalogOverlayComponent } from '../components/book-catalog-overlay.
 import type { BookSummary } from '../models/book.types';
 import { BooksService } from '../services/books.service';
 import { readDragId, shelfDropTarget, slotDropTarget } from './bookshelf-dnd';
-import { DENSITY_KEY, loadDensity, wireBfcacheReset } from './bookshelf-prefs';
-import { buildBookTooltip, toCatalogShelves } from './bookshelf-projections';
+import {
+  DENSITY_KEY,
+  loadDensity,
+  loadPinnedFolders,
+  savePinnedFolders,
+  wireBfcacheReset,
+} from './bookshelf-prefs';
+import {
+  buildBookTooltip,
+  sortNamedFoldersPinnedFirst,
+  toCatalogShelves,
+} from './bookshelf-projections';
 import { registerBooksFoldersTutorial } from './books-folders.tutorial';
 import { registerBooksTutorial } from './books.tutorial';
 
@@ -84,6 +94,9 @@ export class BookshelfContainer {
   protected readonly density = signal<'normal' | 'compact'>(loadDensity());
   // why: estado UI del overlay del catálogo (libro-índice). No persistido.
   protected readonly catalogOpen = signal<boolean>(false);
+  // why: estantes anclados al tope, ajenos al orden alfabético — persistido
+  //      en localStorage, mismo criterio que la densidad.
+  protected readonly pinnedFolders = signal<ReadonlySet<string>>(loadPinnedFolders());
 
   private readonly params = toSignal(this.route.queryParamMap, {
     initialValue: this.route.snapshot.queryParamMap,
@@ -96,13 +109,14 @@ export class BookshelfContainer {
   //      entera para poder saltar a cualquier libro sin navegar carpeta por
   //      carpeta.
   protected readonly catalogShelves = computed(() =>
-    toCatalogShelves(this.allShelvesGrouped(), (f) => this.shelfLabel(f)),
+    toCatalogShelves(this.allShelvesGrouped(), (f) => this.shelfLabel(f), this.pinnedFolders()),
   );
 
   constructor() {
     registerBooksTutorial();
     registerBooksFoldersTutorial();
     effect(() => localStorage.setItem(DENSITY_KEY, this.density()));
+    effect(() => savePinnedFolders(this.pinnedFolders()));
     inject(DestroyRef).onDestroy(
       wireBfcacheReset(() => {
         this.query.set('');
@@ -139,8 +153,8 @@ export class BookshelfContainer {
     if (root) out.push({ folder: '', books: root });
     const named = [...grouped.entries()]
       .filter(([f]) => f !== '')
-      .sort(([a], [b]) => a.localeCompare(b));
-    for (const [folder, books] of named) out.push({ folder, books });
+      .map(([folder, books]) => ({ folder, books }));
+    for (const shelf of sortNamedFoldersPinnedFirst(named, this.pinnedFolders())) out.push(shelf);
     return out;
   });
 
@@ -199,6 +213,15 @@ export class BookshelfContainer {
 
   protected shelfLabel(folder: string): string {
     return folder === '' ? this.t('books.shelf.unshelved') : folder;
+  }
+
+  protected toggleFolderPin(folder: string): void {
+    this.pinnedFolders.update((prev) => {
+      const next = new Set(prev);
+      if (next.has(folder)) next.delete(folder);
+      else next.add(folder);
+      return next;
+    });
   }
 
   protected onDragStart(id: string, event: DragEvent): void {

@@ -200,6 +200,7 @@
     [untitledLabel]="t('books.untitledTitle')"
     (dismiss)="closeCatalog()"
     (pick)="onCatalogSelect($event)"
+    (togglePin)="toggleFolderPin($event)"
   />
 } @else if (mode() === 'list') {
   <ul class="list">

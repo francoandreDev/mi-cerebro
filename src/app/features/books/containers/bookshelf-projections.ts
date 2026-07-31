@@ -16,12 +16,28 @@ type Translator = (key: TranslationKey, params?: Record<string, string | number>
 export const toCatalogShelves = <S extends ShelfLike>(
   shelves: readonly S[],
   resolveLabel: (folder: string) => string,
+  pinnedFolders: ReadonlySet<string>,
 ): readonly CatalogShelf[] =>
   shelves.map((s) => ({
     folder: s.folder,
     label: resolveLabel(s.folder),
     books: s.books.map((v) => v.summary),
+    pinned: pinnedFolders.has(s.folder),
   }));
+
+// why: '' (sin estante) siempre queda primero, ajeno al anclado — el resto
+//      de los estantes anclados sube al tope (alfabético entre sí), y los
+//      no anclados quedan alfabéticos detrás, sin importar cuántos haya.
+export const sortNamedFoldersPinnedFirst = <S extends ShelfLike>(
+  named: readonly S[],
+  pinnedFolders: ReadonlySet<string>,
+): readonly S[] =>
+  [...named].sort((a, b) => {
+    const aPinned = pinnedFolders.has(a.folder);
+    const bPinned = pinnedFolders.has(b.folder);
+    if (aPinned !== bPinned) return aPinned ? -1 : 1;
+    return a.folder.localeCompare(b.folder);
+  });
 
 // why: tooltip del slot del bookshelf — formato `{title} · {chapters} · ...`.
 export const buildBookTooltip = (s: BookSummary, t: Translator): string => {

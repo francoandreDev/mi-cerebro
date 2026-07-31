@@ -15,26 +15,12 @@ Formato por entrada:
 
 ## Books / UI (origen: rediseño de /books)
 
-### Pin/fijado de estantes al tope del bookshelf
-
-- **Qué**: poder "anclar" estantes al tope para que no se muevan del orden alfabético — útil cuando hay muchos estantes y querés acceso rápido a 1-2 frecuentes.
-- **Por qué se difirió**: con densidad compacta + colapso el problema de scroll quedó razonable. Pin agrega estado nuevo (set de pinned folders en localStorage), reordering del computed `shelves`, y UI (icono pin en el shelf-head). Vale la pena recién con N>10 estantes; hoy con 1-3 estantes es overkill.
-- **Target**: sin asignar — abrir cuando aparezca dolor real de "tengo muchos estantes y los importantes se pierden".
-- **Origen**: sesión 2026-06-29 (rediseño /books shelf — mencionado en la propuesta de UX para el problema de espacio, postergado por YAGNI).
-
 ### Estantería con forma creativa / no lineal (árbol, curva, etc.)
 
 - **Qué**: el shelf actual es una pared rectangular con tablas horizontales y bookends a los lados — metáfora "biblioteca clásica". Una versión avanzada permitiría layouts no rectangulares: ramas de árbol con shelves angulados, espirales, formas custom que el usuario elija o defina. Las referencias mostradas en la sesión incluían un shelf con forma de árbol (ramas con libros agrupados por copa/tronco) que carga significado adicional ("estos son mis raíces", "estos son los frutos recientes", etc.).
 - **Por qué se difirió**: el v1 todavía no resuelve los básicos (legibilidad del lomo, reorden, múltiples estanterías nombradas). El layout creativo agrega complejidad de posicionamiento (cada shelf necesita su propio ángulo + ancla en una grilla 2D), modelo de "shape" persistido, y editor visual para que el usuario configure. Primero hay que pulir la metáfora clásica.
 - **Target**: sin asignar — abrir cuando el shelf clásico esté funcional (legible, reordenable, multi-estante) y aparezca demanda real de "quiero mi biblioteca con forma de X".
 - **Origen**: sesión 2026-06-29 (rediseño /books shelf — el usuario referenció una estantería en forma de árbol como inspiración).
-
-### IDs de libros legibles / acortados en la URL
-
-- **Qué**: hoy `/books/:bookId/:chapterId` usa UUIDs (`23ad559b-8c33-4817-bf85-2cf8a9eb0af9/35d67ec5-e808-4aaa-b04e-cd9064eda6f9`) — internamente está bien pero externamente es ilegible, impráctico para compartir/recordar y satura la barra del browser. El "patrón id" está extendido a toda la app así que probablemente conviene resolverlo de forma transversal, no sólo en books.
-- **Por qué se difirió**: requiere decidir esquema (slug derivado del título con desambiguación numérica, hash corto base36 de 6-8 chars, mapping bidireccional id↔shortId con índice en disco), migración de URLs viejas (¿redirect 301-like?, ¿soportar ambas?), y resolver colisiones cuando dos entidades distintas generan el mismo slug. Decisión cross-feature (notas, tasks, listas, escritos, libros, galerías, etc.) que merece su propio paso de roadmap, no entra en una sesión de UI de books.
-- **Target**: sin asignar — sub-paso transversal a definir.
-- **Origen**: sesión 2026-06-29 (rediseño /books reader, anotado mientras se enfocaba el espacio desaprovechado en la página).
 
 ### Override de imágenes para portada/reverso de libro y miniaturas de capítulo
 

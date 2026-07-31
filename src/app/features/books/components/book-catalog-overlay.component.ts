@@ -20,6 +20,7 @@ export interface CatalogShelf {
   readonly folder: string;
   readonly label: string;
   readonly books: readonly BookSummary[];
+  readonly pinned: boolean;
 }
 
 // why: overlay tipo libro abierto que lista estantes + libros del workspace.
@@ -38,6 +39,7 @@ export class BookCatalogOverlayComponent {
   readonly untitledLabel = input<string>('Sin título');
   readonly dismiss = output<void>();
   readonly pick = output<string>();
+  readonly togglePin = output<string>();
 
   private readonly i18n = inject(I18nService);
 
@@ -71,6 +73,10 @@ export class BookCatalogOverlayComponent {
   }
   protected selectShelf(folder: string | null): void {
     this.selectedFolder.set(folder);
+  }
+  protected onTogglePin(folder: string, event: Event): void {
+    event.stopPropagation();
+    this.togglePin.emit(folder);
   }
   protected onBookClick(id: string): void {
     this.pick.emit(id);

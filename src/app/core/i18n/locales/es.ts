@@ -1568,6 +1568,8 @@ export const es = {
   'books.catalog.bookCount': '{count} libros',
   'books.catalog.totalBooks': '{count} libros · biblioteca completa',
   'books.catalog.chapters': '{count} cap.',
+  'books.catalog.pin': 'Anclar estante al tope',
+  'books.catalog.unpin': 'Desanclar estante',
   'books.desk.chaptersTitle': 'Capítulos',
   'books.desk.addChapter': 'Agregar capítulo',
   'books.desk.emptyChapters': 'Este libro no tiene capítulos todavía.',

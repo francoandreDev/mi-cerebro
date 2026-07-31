@@ -49,7 +49,7 @@
           </button>
         </li>
         @for (s of shelves(); track s.folder) {
-          <li>
+          <li class="shelf-row">
             <button
               type="button"
               class="shelf-link"
@@ -59,6 +59,18 @@
               <span class="shelf-link-label">{{ s.label }}</span>
               <span class="shelf-link-count">{{ s.books.length }}</span>
             </button>
+            @if (s.folder !== '') {
+              <button
+                type="button"
+                class="pin-btn"
+                [class.pinned]="s.pinned"
+                [attr.aria-pressed]="s.pinned"
+                [title]="t(s.pinned ? 'books.catalog.unpin' : 'books.catalog.pin')"
+                (click)="onTogglePin(s.folder, $event)"
+              >
+                <mc-icon [name]="s.pinned ? 'push-pin' : 'push-pin-slash'" />
+              </button>
+            }
           </li>
         }
       </ul>
