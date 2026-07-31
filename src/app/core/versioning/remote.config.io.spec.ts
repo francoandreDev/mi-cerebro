@@ -10,7 +10,7 @@ import {
   readRemoteSecrets,
   writeRemoteSecrets,
 } from './remote.config.io';
-import { REMOTE_SECRETS_SCHEMA_VERSION } from './remote.types';
+import { REMOTE_SECRETS_SCHEMA_VERSION, localDateKey } from './remote.types';
 
 class MemFs implements ConfigFs {
   private readonly files = new Map<string, Uint8Array>();
@@ -84,6 +84,36 @@ describe('readRemoteSecrets', () => {
       new TextEncoder().encode(JSON.stringify({ schemaVersion: 1, remote: { url: 'x' } })),
     );
     expect((await readRemoteSecrets(fs)).remote).toBeNull();
+  });
+
+  it('round-trips dispatchCount ("N envíos hoy")', async () => {
+    const fs = new MemFs();
+    await writeRemoteSecrets(fs, {
+      schemaVersion: REMOTE_SECRETS_SCHEMA_VERSION,
+      remote: null,
+      dispatchCount: { date: '2026-07-31', count: 3 },
+    });
+    const file = await readRemoteSecrets(fs);
+    expect(file.dispatchCount).toEqual({ date: '2026-07-31', count: 3 });
+  });
+
+  it('discards a malformed dispatchCount instead of failing the whole read', async () => {
+    const fs = new MemFs();
+    await fs.writeFile(
+      '.mi-cerebro/secrets.json',
+      new TextEncoder().encode(
+        JSON.stringify({ schemaVersion: 1, remote: null, dispatchCount: { date: 5, count: 'x' } }),
+      ),
+    );
+    const file = await readRemoteSecrets(fs);
+    expect(file.dispatchCount).toBeUndefined();
+  });
+});
+
+describe('localDateKey', () => {
+  it('formats as local YYYY-MM-DD, zero-padded', () => {
+    expect(localDateKey(new Date(2026, 0, 5))).toBe('2026-01-05');
+    expect(localDateKey(new Date(2026, 11, 31))).toBe('2026-12-31');
   });
 });
 

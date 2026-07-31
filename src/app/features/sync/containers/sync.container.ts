@@ -24,6 +24,7 @@ import { AutoPushService } from '@core/versioning/auto-push.service';
 import { RemoteService } from '@core/versioning/remote.service';
 import {
   FACETS,
+  localDateKey,
   type Facet,
   type RefSyncOutcome,
   type RefSyncStatus,
@@ -86,6 +87,17 @@ export class SyncContainer {
 
   protected readonly divergentRefs = this.remote.divergentRefs;
   protected readonly facets = FACETS;
+  protected readonly syncMuted = computed(() => this.settings.state().sync.muted);
+
+  // why: "N envíos hoy" (docs/deferred/sync.md) — re-derived off nowTick
+  //      so the counter honestly resets to 0 right at local midnight
+  //      instead of showing yesterday's count until the next push.
+  protected readonly dispatchesToday = computed(() => {
+    this.nowTick();
+    const dc = this.remote.dispatchCount();
+    if (!dc || dc.date !== localDateKey(new Date())) return 0;
+    return dc.count;
+  });
 
   protected readonly consoleRows = computed<readonly ConsoleRow[]>(() => {
     const file = this.variants.file();
@@ -226,6 +238,10 @@ export class SyncContainer {
   protected onThrottleInput(event: Event): void {
     const v = Number((event.target as HTMLInputElement).value);
     if (Number.isFinite(v)) this.settings.setPushThrottleMinutes(v);
+  }
+
+  protected toggleSyncMuted(): void {
+    this.settings.setSyncMuted(!this.syncMuted());
   }
 }
 

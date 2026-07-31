@@ -135,6 +135,10 @@ export class SettingsService {
     }));
   }
 
+  setSyncMuted(muted: boolean): void {
+    this.update((s) => ({ ...s, sync: { ...s.sync, muted } }));
+  }
+
   setCompactionThresholdCommits(commits: number): void {
     if (!Number.isFinite(commits)) return;
     const clamped = Math.max(50, Math.min(10_000, Math.round(commits)));
@@ -268,4 +272,5 @@ const mergeWithDefaults = (partial: Partial<Settings>): Settings => ({
     partial.goals as Partial<{ reminderLeadMinutes: number }> | undefined,
   ),
   theme: { ...DEFAULT_SETTINGS.theme, ...(partial.theme ?? {}) },
+  sync: { ...DEFAULT_SETTINGS.sync, ...(partial.sync ?? {}) },
 });

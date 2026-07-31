@@ -35,12 +35,15 @@ import { detectDivergences, type DivergentRef } from './remote-divergence';
 import {
   REMOTE_SECRETS_SCHEMA_VERSION,
   emptyRemoteSecrets,
+  localDateKey,
   type BulkSyncResult,
+  type DispatchCount,
   type PushOutcome,
   type RefSyncOutcome,
   type RemoteConfig,
   type RemoteSecretsFile,
 } from './remote.types';
+import { SyncWhistleService } from './sync-whistle.service';
 import { VariantsService } from './variants.service';
 import { stripHeadsPrefix } from './variants.io';
 
@@ -52,6 +55,7 @@ export class RemoteService {
   private readonly variants = inject(VariantsService);
   private readonly fsLock = inject(FsLockService);
   private readonly fs = inject(FsService);
+  private readonly whistle = inject(SyncWhistleService);
 
   private readonly stateSignal = signal<RemoteSecretsFile>(emptyRemoteSecrets());
   private readonly pushingSignal = signal(false);
@@ -70,6 +74,7 @@ export class RemoteService {
   readonly lastPushOutcomes = this.lastPushOutcomesSignal.asReadonly();
   readonly lastFetchOutcomes = this.lastFetchOutcomesSignal.asReadonly();
   readonly lastBulkAt = this.lastBulkAtSignal.asReadonly();
+  readonly dispatchCount = computed(() => this.stateSignal().dispatchCount ?? null);
   readonly divergentRefs = this.divergentRefsSignal.asReadonly();
   readonly hasDivergence = computed(() => this.divergentRefsSignal().length > 0);
 
@@ -302,9 +307,11 @@ export class RemoteService {
     const next: RemoteSecretsFile = {
       ...this.stateSignal(),
       lastPushAt: new Date().toISOString(),
+      dispatchCount: bumpDispatchCount(this.stateSignal().dispatchCount),
     };
     await writeRemoteSecrets(fs, next);
     this.stateSignal.set(next);
+    this.whistle.play();
   }
 
   private async loadFromDisk(): Promise<void> {
@@ -339,4 +346,10 @@ export class RemoteService {
       writeFile: (path, content) => adapter.writeFile(path, content),
     };
   }
+}
+
+function bumpDispatchCount(prev: DispatchCount | undefined): DispatchCount {
+  const today = localDateKey(new Date());
+  if (prev?.date === today) return { date: today, count: prev.count + 1 };
+  return { date: today, count: 1 };
 }

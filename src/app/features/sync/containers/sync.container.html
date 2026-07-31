@@ -2,6 +2,15 @@
   <header class="head">
     <h2><mc-icon name="arrows-clockwise" class="title-icon" /> {{ t('sync.title') }}</h2>
     <p class="subtitle">{{ t('sync.subtitle') }}</p>
+    <button
+      type="button"
+      class="mute-toggle"
+      [attr.aria-pressed]="syncMuted()"
+      [title]="syncMuted() ? t('sync.mute.unmute') : t('sync.mute.mute')"
+      (click)="toggleSyncMuted()"
+    >
+      <mc-icon [name]="syncMuted() ? 'speaker-slash' : 'speaker-high'" />
+    </button>
   </header>
 
   @if (!isConfigured()) {
@@ -202,6 +211,11 @@
               <span class="stamp-value muted">{{ t('sync.panel.sealNever') }}</span>
             }
           </div>
+          @if (dispatchesToday(); as count) {
+            @if (count > 0) {
+              <p class="dispatch-count">{{ t('sync.panel.dispatchCount', { count }) }}</p>
+            }
+          }
         </section>
       </aside>
     </div>

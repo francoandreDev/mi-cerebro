@@ -7,6 +7,9 @@
   flex-direction: column;
   gap: var(--mc-space-4);
 }
+.head {
+  position: relative;
+}
 .head h2 {
   margin: 0;
   font-size: var(--mc-font-size-xl);
@@ -20,6 +23,27 @@
 .subtitle {
   margin: var(--mc-space-1) 0 0;
   color: var(--mc-fg-muted);
+}
+.mute-toggle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--mc-border-default);
+  border-radius: 999px;
+  background: var(--mc-bg-elevated);
+  color: var(--mc-fg-muted);
+  cursor: pointer;
+  transition:
+    color 150ms ease,
+    background 150ms ease;
+}
+.mute-toggle:hover {
+  color: var(--mc-fg-default);
 }
 /* central sin línea al espejo — cartel enmarcado, sin tubos. */
 .not-configured {
@@ -246,6 +270,12 @@
   font-size: var(--mc-font-size-md);
   font-weight: 600;
 }
+.dispatch-count {
+  margin: var(--mc-space-2) 0 0;
+  font-size: var(--mc-font-size-xs, 0.75rem);
+  font-variant-numeric: tabular-nums;
+  color: var(--mc-fg-muted);
+}
 @media (max-width: 1100px) {
   .layout {
     grid-template-columns: 1fr;
@@ -354,6 +384,10 @@
   box-shadow:
     inset 0 1px 0 color-mix(in oklab, white 20%, transparent),
     0 1px 2px color-mix(in oklab, black 30%, transparent);
+  /* why: sombra proyectada sobre el vidrio del tubo — sigue a la cápsula
+     en su viaje (ver .tube[data-flight] abajo) para dar sensación de
+     profundidad real, no un adorno estático. */
+  filter: drop-shadow(0 4px 3px color-mix(in oklab, black 45%, transparent));
   transition: background 200ms ease;
 }
 .capsule-ref {

@@ -19,7 +19,6 @@ Este índice es sólo un mapa de temas — no lista ítems individuales. Para es
 - [`files-writings-tasks.md`](./files-writings-tasks.md) — archivos sueltos, escritos y tareas.
 - [`lists-images.md`](./lists-images.md) — listas (tiza sobre pizarra) e imágenes (museo).
 - [`shortcuts-cross-section.md`](./shortcuts-cross-section.md) — atajos de teclado y vista cross-section por tag.
-- [`sync.md`](./sync.md) — sincronización con remoto (UI y push).
 - [`responsive.md`](./responsive.md) — pantallas mobile pendientes de verificación/rediseño.
 - [`versionado.md`](./versionado.md) — versionado, variantes, historial, merges. **Sección más extensa/compleja — atacar al final.**
 

@@ -37,10 +37,12 @@ export async function readRemoteSecrets(fs: ConfigFs): Promise<RemoteSecretsFile
   try {
     const parsed = JSON.parse(TEXT_DECODER.decode(bytes)) as Partial<RemoteSecretsFile>;
     if (parsed.schemaVersion !== REMOTE_SECRETS_SCHEMA_VERSION) return emptyRemoteSecrets();
+    const dispatchCount = normalizeDispatchCount(parsed.dispatchCount);
     return {
       schemaVersion: REMOTE_SECRETS_SCHEMA_VERSION,
       remote: normalizeRemote(parsed.remote ?? null),
       ...(parsed.lastPushAt ? { lastPushAt: parsed.lastPushAt } : {}),
+      ...(dispatchCount ? { dispatchCount } : {}),
     };
   } catch {
     return emptyRemoteSecrets();
@@ -68,6 +70,15 @@ export async function ensureGitignoredSecrets(fs: ConfigFs): Promise<void> {
   const suffix = current.endsWith('\n') || current.length === 0 ? '' : '\n';
   const next = `${current}${suffix}${GITIGNORE_LINE}\n`;
   await fs.writeFile(GITIGNORE_FILE, TEXT_ENCODER.encode(next));
+}
+
+function normalizeDispatchCount(dc: unknown): RemoteSecretsFile['dispatchCount'] {
+  if (!dc || typeof dc !== 'object') return undefined;
+  const d = dc as { date?: unknown; count?: unknown };
+  if (typeof d.date !== 'string' || typeof d.count !== 'number' || !Number.isFinite(d.count)) {
+    return undefined;
+  }
+  return { date: d.date, count: Math.max(0, Math.round(d.count)) };
 }
 
 function normalizeRemote(remote: unknown): RemoteSecretsFile['remote'] {

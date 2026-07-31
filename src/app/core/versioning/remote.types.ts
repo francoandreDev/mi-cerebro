@@ -11,16 +11,33 @@ export interface RemoteConfig {
   readonly token: string;
 }
 
+// why: "N envíos hoy" (docs/deferred/sync.md) — count resets when `date`
+//      (local YYYY-MM-DD, see localDateKey) no longer matches today.
+export interface DispatchCount {
+  readonly date: string;
+  readonly count: number;
+}
+
 export interface RemoteSecretsFile {
   readonly schemaVersion: typeof REMOTE_SECRETS_SCHEMA_VERSION;
   readonly remote: RemoteConfig | null;
   readonly lastPushAt?: string;
+  readonly dispatchCount?: DispatchCount;
 }
 
 export const emptyRemoteSecrets = (): RemoteSecretsFile => ({
   schemaVersion: REMOTE_SECRETS_SCHEMA_VERSION,
   remote: null,
 });
+
+// why: local (not UTC) calendar day, so the counter rolls over at
+//      midnight in the user's own timezone, not at UTC midnight.
+export function localDateKey(d: Date): string {
+  const y = d.getFullYear();
+  const m = (d.getMonth() + 1).toString().padStart(2, '0');
+  const day = d.getDate().toString().padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
 
 export interface PushOutcome {
   readonly ref: string;

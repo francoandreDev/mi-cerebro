@@ -36,6 +36,10 @@ export interface Settings {
     readonly customBgSatLevel?: BgSatLevel;
     readonly customAccentId?: string;
   };
+  readonly sync: {
+    // why: silbido al despachar una cápsula en /sync (docs/deferred/sync.md).
+    readonly muted: boolean;
+  };
 }
 
 export type BgSatLevel = 'low' | 'mid' | 'high';
@@ -55,4 +59,5 @@ export const DEFAULT_SETTINGS: Settings = {
   goals: { dormantThresholdDays: 30 },
   reminders: { leadMinutes: 1440 },
   theme: { override: 'auto' },
+  sync: { muted: false },
 };
