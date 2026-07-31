@@ -1,0 +1,68 @@
+<div class="backdrop" (click)="dismiss.emit()" role="presentation"></div>
+<div class="dialog" role="dialog" aria-modal="true">
+  <header>
+    @if (historyStack().length > 0) {
+      <button
+        type="button"
+        class="back"
+        [attr.aria-label]="t('connections.graph.back')"
+        (click)="goBack()"
+      >
+        <mc-icon name="arrow-left" />
+      </button>
+    }
+    <h3>{{ t('connections.graph.title') }}</h3>
+    <button type="button" class="ghost" (click)="dismiss.emit()" aria-label="Cerrar">
+      <mc-icon name="x" />
+    </button>
+  </header>
+
+  @if (neighbors().length === 0) {
+    <p class="empty">{{ t('connections.graph.empty') }}</p>
+  } @else {
+    <svg class="graph" viewBox="0 0 400 400" role="img">
+      @for (n of neighbors(); track n.kind + ':' + n.entityId) {
+        <line
+          class="edge"
+          [class.outgoing]="lineClass(n) === 'outgoing'"
+          [class.backlink]="lineClass(n) === 'backlink'"
+          [class.both]="lineClass(n) === 'both'"
+          x1="200"
+          y1="200"
+          [attr.x2]="n.x"
+          [attr.y2]="n.y"
+        />
+      }
+      @for (n of neighbors(); track n.kind + ':' + n.entityId) {
+        <g
+          class="node neighbor"
+          [class.orphaned]="n.title === null"
+          tabindex="0"
+          role="button"
+          [attr.aria-label]="label(n.title)"
+          (click)="onNeighborClick(n)"
+          (keydown.enter)="onNeighborClick(n)"
+        >
+          <circle [attr.cx]="n.x" [attr.cy]="n.y" r="20" />
+          <text [attr.x]="n.x" [attr.y]="n.y + 34" text-anchor="middle">{{ label(n.title) }}</text>
+        </g>
+      }
+      <g class="node center">
+        <circle cx="200" cy="200" r="28" />
+        <text x="200" y="242" text-anchor="middle">{{ label(centerTitle()) }}</text>
+      </g>
+    </svg>
+  }
+
+  <footer>
+    <button
+      type="button"
+      class="primary"
+      [disabled]="centerTitle() === null"
+      (click)="openCurrent()"
+    >
+      <mc-icon name="arrow-square-out" />
+      {{ t('connections.graph.open') }}
+    </button>
+  </footer>
+</div>

@@ -126,6 +126,15 @@ const ICONS = [
   ['columns', 'regular', 'columns'],
   ['grid-four', 'regular', 'grid-four'],
 ];
+// why: this ICONS array has drifted behind src/app/shared/icon/icons.data.ts
+//      (113 icons here vs. 114 in the actual file as of 2026-07-31 —
+//      'share-network' was hand-appended to icons.data.ts, not added here,
+//      after discovering re-running this script silently DROPS every icon
+//      added to icons.data.ts outside this list instead of erroring).
+//      Do not run this script to add a single icon — hand-edit
+//      icons.data.ts's type union + ICON_DATA map instead (mirror an
+//      existing entry's shape) until this array is reconciled with the
+//      real file.
 
 const INNER_RE = /<svg[^>]*>([\s\S]*)<\/svg>/;
 

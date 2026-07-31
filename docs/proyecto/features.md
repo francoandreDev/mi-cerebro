@@ -27,6 +27,67 @@ Al abrir la app: vuelve a la última ruta + última entidad abierta + scroll. Es
 
 ---
 
+## 10bis. Conexiones y backlinks entre entidades
+
+Cierra la idea 4 de `docs/evolution.md` ("editor sin comprensión de conexiones") y dos ítems de `docs/deferred/`: "Referencias/links entre entidades desde el editor" (`shortcuts-cross-section.md`) e "Hilos entre items relacionados" (`files-writings-tasks.md`, rediseño cork board de `/files`). Diseño cerrado 2026-07-31; implementación en roadmap ítem 27 (`roadmap-27-conexiones.md`).
+
+Una **conexión** es genérica: no le importa de qué tipo son las dos entidades que une.
+
+```ts
+EntityRef = { kind: EntityKind; id: string }
+Relation = {
+  id: string;
+  from: EntityRef;
+  to: EntityRef;
+  origin: 'editor' | 'manual';
+  contextSnippet?: string; // sólo origin:'editor' — frase donde nació el link, congelada al crear
+  createdAt: string;
+}
+```
+
+- **Storage centralizado, no embebido:** `.mi-cerebro/relations.json` (`{ schemaVersion, relations: Relation[] }`), mismo molde que `tags.json` — un backlink es un `filter` sobre el array, no un escaneo de todas las entidades. Escritura atómica + mismo `FsLockService` que ya serializa autocommits y switch de variante (evita carreras multi-pestaña).
+- **Resolución de título/ruta sin duplicar infra:** `Relation` no guarda ni título ni ruta del extremo — eso ya lo tiene el índice de búsqueda de §10 (`.mi-cerebro/index/index.json`, un `IndexEntry` por entidad de cualquier kind). El panel de conexiones y el picker resuelven contra ese índice en el momento de renderizar. Consecuencia: **no hace falta un flag `orphaned` persistido** (a diferencia de los anchors de comentarios en §12) — si `IndexService.getById(kind, id)` no devuelve nada, la conexión se muestra como rota en vivo, sin estado propio que mantener.
+- **`core/relations/`** (`RelationsService`, `relations-storage.ts`, `relations.types.ts`): `outgoingFor(ref)`, `backlinksFor(ref)`, `create()`, `remove()`. Sin conocimiento de features — sólo IDs y kinds, igual que `core/tags/`.
+
+### Vincular desde el editor
+
+- Nueva extensión TipTap `core/tiptap/entity-ref/` (mismo molde que `image-ref/`): nodo inline `entityRef` con attrs `{kind, id, label}`, persistido como `<span data-entity-ref data-kind="..." data-id="..." data-label="...">` — sobrevive a copy/paste y a búsqueda de texto plano, igual que `image-ref`.
+- **Botón fijo "Vincular a…" en la barra del editor** (mismo lugar que "Insertar imagen", siempre visible, no depende de la vista Combinada ni de tener texto seleccionado — decisión tomada tras feedback de usuario, ver roadmap ítem 27 Fase 6: el punto de entrada original, sólo en la bubble menu de la vista Combinada, era indescubrible). Con selección, envuelve el texto elegido; sin selección, inserta el chip en el cursor. La bubble menu sobre selección de texto también ofrece "Vincular a…" como atajo rápido (§11) — dos caminos al mismo flujo. Abre `shared/entity-link-picker/` (dumb component) que busca sobre el **mismo índice de §10** — sin índice nuevo. Inserta el nodo `entityRef` (envolviendo la selección, o en el cursor si no hay selección) + `RelationsService.create({ from: <entidad activa>, to: <elegida>, origin: 'editor', contextSnippet: <texto de la selección, vacío si no había> })`.
+- El nodo renderiza como **chip navegable** (pill, mismo lenguaje visual que un chip de prioridad/tag ya usado en la app), no como link crudo subrayado. Click resuelve la ruta actual contra el índice y navega.
+
+### Panel "Conexiones" en el detalle de cada entidad
+
+`shared/connections-panel/` (dumb, recibe `outgoing`/`backlinks` ya resueltos por el container — mismo patrón smart/dumb de regla §4.5), montado en el detalle de notas, escritos, listas, tareas, metas, archivos e imágenes. Dos grupos:
+
+- **Salientes** — relaciones creadas desde esta entidad (origin `editor` o `manual`).
+- **Referenciado desde** — backlinks: todo lo que apunta a esta entidad, sin que el usuario tuviera que declararlo en ambos lados. Cada card muestra el `contextSnippet` (si `origin:'editor'`) con la frase vinculada resaltada, o "vinculado manualmente" (si `origin:'manual'`), + acción de desvincular.
+
+### Hilos manuales en `/files` (sin pasar por texto)
+
+Resuelve el ítem diferido del rediseño cork board: arrastrar una tarjeta de `FileItem` sobre otra en el tablero crea una `Relation` `origin:'manual'` directamente (sin picker — el destino ya está a la vista), con popover opcional para nombrarla (se guarda en `contextSnippet`, reusado como label libre en este caso). Se renderiza como un hilo (SVG) entre las dos posiciones del tablero. No hace falta un grafo propio de `FileItem`/`FileCollection` — es el mismo `RelationsService` que usa el editor.
+
+### Mapa de conexiones (grafo de 1 salto)
+
+Botón "Ver en el mapa" en el panel "Conexiones" (no un ítem nuevo en el rail lateral ni una pestaña
+en `/tags` — decisión tomada preguntando al usuario, no asumida) abre un diálogo (`shared/connections/connections-graph-overlay.component.ts`) centrado en la entidad activa: círculo central + sus
+vecinos directos (salientes + backlinks fusionados por par, línea distinta si hay ambas direcciones)
+en SVG puro, mismo lenguaje visual que la constelación de metas (§13) — sin física de
+repulsión/springs, posiciones por ángulo determinístico alrededor del centro. Click en un vecino no
+navega, **recentra el grafo sobre él** ("caminar" el grafo, con pila de historial para "Volver");
+navegar de verdad es un botón "Abrir" aparte, siempre sobre la entidad central actual. Deliberadamente
+1 salto, no el grafo completo del workspace — ver "Qué queda afuera" abajo.
+
+### Qué queda afuera de este corte
+
+- **Grafo completo del workspace con layout de fuerzas.** El mapa de 1 salto (arriba) es caminable
+  pero no un mapa global — graficar todo el workspace sin física de repulsión/springs sería un
+  hairball ilegible, y agregar esa física es mucho más código para un caso de uso que "caminar
+  desde acá" ya cubre.
+- **Sugerencias automáticas** (por tags compartidos o similitud vía MiniSearch). Es la capa "inteligente" real de la idea 4 de `evolution.md`, deliberadamente pospuesta hasta validar si vínculo manual + backlink ya resuelve el dolor real de uso.
+- **Kinds vinculables en el primer corte:** notas, escritos, listas, tareas, metas, archivos, imágenes — los que tienen vista de detalle. Recordatorios y música (tracks/playlists) quedan afuera por ahora (sin vista de detalle equivalente donde anclar el panel).
+
+---
+
 ## 11. Editor de escritura
 
 Editor **híbrido tipo WYSIWYG**: el usuario ve siempre el resultado renderizado, no sintaxis.
@@ -36,7 +97,7 @@ Características:
 - Formato básico: negrita, cursiva, subrayado, tachado, encabezados, listas, citas, código.
 - **Highlighting personalizable**: el usuario define colores para fechas, números, texto plano, etc. Combina reconocimiento automático (tipo highlighting de lenguaje) con override manual desde la UI (tipo Word). Los esquemas de color custom se guardan en IndexedDB.
 - Inserción de imágenes desde la galería (referencia, no embed).
-- Inserción de links internos a otras entidades (por ID).
+- Inserción de links internos a otras entidades, como chip navegable vía "Vincular a…" en el bubble menu (ver §10bis).
 - Autosave continuo.
 
 **TipTap** sobre ProseMirror. Integración Angular vía wrapper (`ngx-tiptap` o envoltorio propio). El highlighting personalizable se implementa como extensiones custom.

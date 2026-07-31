@@ -14,13 +14,20 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { Router } from '@angular/router';
 import type { Editor, JSONContent } from '@tiptap/core';
 
 import { ImageReaderService } from '@core/images/image-reader.service';
+import { RelationsService } from '@core/relations/relations.service';
+import { routeFor } from '@core/search/kind-routes';
 import { BOOKMARK_PIN_META_KEY } from '@core/tiptap/bookmark-pin/bookmark-pin.ext';
 import { COMMENT_CLOUDS_META_KEY } from '@core/tiptap/comment-clouds/comment-clouds.ext';
 import { COMMENT_RANGE_MAPPING_META_KEY } from '@core/tiptap/comment-range-mapping/comment-range-mapping.ext';
 import { DRAFT_DECORATIONS_META_KEY } from '@core/tiptap/draft-decorations/draft-decorations.ext';
+import {
+  ENTITY_REF_NAME,
+  type EntityRefOpenPayload,
+} from '@core/tiptap/entity-ref/entity-ref.node';
 import { IMAGE_REF_NAME } from '@core/tiptap/image-ref/image-ref.node';
 import { TTS_HIGHLIGHT_META_KEY } from '@core/tiptap/tts-highlight/tts-highlight.ext';
 import { TYPEWRITER_FOCUS_META_KEY } from '@core/tiptap/typewriter-focus/typewriter-focus.ext';
@@ -37,6 +44,8 @@ import { DraftsPanelContainer } from './drafts-panel.container';
 import { DraftSessionController } from './draft-session.controller';
 import { EditorCommentsCoordinator } from './editor-comments.coordinator';
 import { EditorToolbarComponent } from './editor-toolbar.component';
+import type { EntityLinkPicked } from './entity-link-picker-dialog.component';
+import { EntityLinkPickerDialogComponent } from './entity-link-picker-dialog.component';
 import { TypewriterModeService } from './typewriter-mode.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import { ImagePickerDialogComponent } from './image-picker-dialog.component';
@@ -59,6 +68,7 @@ import { createEditorInstance, jsonEquals } from './setup-editor';
     DraftsPanelContainer,
     EditorToolbarComponent,
     ImagePickerDialogComponent,
+    EntityLinkPickerDialogComponent,
   ],
   templateUrl: './editor.component.html',
   styleUrl: './editor.component.css',
@@ -69,6 +79,11 @@ export class EditorComponent {
   readonly editable = input<boolean>(true);
   readonly entityId = input<string>('');
   readonly entityTitle = input<string>('');
+  // why: kind de la entidad activa (ej. 'note', 'goal') — necesario para
+  //      registrar el extremo `from` de una Relation al vincular desde el
+  //      editor (§10bis). Vacío = "Vincular a…" no crea la Relation (sólo
+  //      pasaría en un consumidor nuevo de mc-editor que no lo declare).
+  readonly entityKind = input<string>('');
   // why: marcador de párrafo — opt-in porque el resto de entidades que usan
   //      mc-editor (notas, tareas, etc.) no lo necesitan. Ver book-reader/
   //      chapter-editor-pane, únicos consumidores hoy.
@@ -90,9 +105,13 @@ export class EditorComponent {
   private readonly drafts = inject(DraftsService);
   private readonly comments = inject(CommentsService);
   private readonly variants = inject(VariantsService);
+  private readonly relations = inject(RelationsService);
+  private readonly router = inject(Router);
   protected readonly typewriterMode = inject(TypewriterModeService);
 
   protected readonly pickerOpen = signal(false);
+  protected readonly linkPickerOpen = signal(false);
+  private pendingLinkRange: { from: number; to: number; text: string } | null = null;
   protected readonly view = signal<'clean' | 'combined'>('clean');
   protected readonly commentsIndexOpen = signal(false);
   protected readonly draftsIndexOpen = signal(false);
@@ -212,6 +231,51 @@ export class EditorComponent {
     this.ensureCombined();
     this.draftSession.start();
     ed.commands.focus();
+  }
+
+  // why: a diferencia de propose/comment, vincular no es una operación de
+  //      rama (§10bis) — no llama ensureCombined(), funciona igual en
+  //      `clean` que en `combined`. Llegan acá dos entradas: la bubble
+  //      (siempre con selección, sólo visible en combined) y el botón fijo
+  //      del toolbar (visible siempre, con o sin selección — sin selección
+  //      inserta el chip en el cursor en vez de envolver texto). Guarda
+  //      from/to/text ahora porque abrir el picker le saca el foco al
+  //      editor y la selección de ProseMirror puede colapsar.
+  triggerLink(): void {
+    this.bubble.set(null);
+    const ed = this.editor;
+    if (!ed) return;
+    const { from, to } = ed.state.selection;
+    this.pendingLinkRange = { from, to, text: ed.state.doc.textBetween(from, to, ' ') };
+    this.linkPickerOpen.set(true);
+  }
+
+  protected onEntityLinked(picked: EntityLinkPicked): void {
+    this.linkPickerOpen.set(false);
+    const range = this.pendingLinkRange;
+    this.pendingLinkRange = null;
+    const ed = this.editor;
+    if (!ed || !range) return;
+    ed.chain()
+      .focus()
+      .insertContentAt(
+        { from: range.from, to: range.to },
+        {
+          type: ENTITY_REF_NAME,
+          attrs: { kind: picked.kind, entityId: picked.id, label: picked.label },
+        },
+      )
+      .run();
+    const kind = this.entityKind();
+    const id = this.entityId();
+    if (kind && id) {
+      void this.relations.create({
+        from: { kind, id },
+        to: { kind: picked.kind, id: picked.id },
+        origin: 'editor',
+        contextSnippet: range.text,
+      });
+    }
   }
 
   // why: toolbar buttons (unlike Alt+C/Alt+P, pressed while a selection is
@@ -498,6 +562,8 @@ export class EditorComponent {
       onBookmarkToggle: (blockId) => this.bookmarkToggle.emit(blockId),
       bookmarkPinAriaLabel: () => this.i18n.t('editor.bookmark.set'),
       bookmarkMarkerAriaLabel: () => this.i18n.t('editor.bookmark.unset'),
+      onEntityRefOpen: (payload: EntityRefOpenPayload) =>
+        void this.router.navigate([...routeFor(payload.kind, payload.entityId, payload.label)]),
     });
     this.suppressEmit = false;
 

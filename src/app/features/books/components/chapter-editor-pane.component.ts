@@ -24,7 +24,7 @@ import { TtsControlsComponent } from '@shared/tts-controls/tts-controls.componen
 import { toRoman } from '@shared/utils/roman';
 import { WritingStatsPopoverComponent } from '@shared/writing-stats-popover/writing-stats-popover.component';
 
-import type { Chapter } from '../models/book.types';
+import { BOOK_KIND, type Chapter } from '../models/book.types';
 import type { BookSaveStatus } from './book-meta-bar.component';
 
 const DEFAULT_TTS_STATE: TtsPaneState = {
@@ -53,6 +53,7 @@ export interface ChapterWritingStats {
   },
 })
 export class ChapterEditorPaneComponent {
+  protected readonly entityKind = BOOK_KIND;
   readonly chapter = input.required<Chapter>();
   readonly status = input<BookSaveStatus>('saved');
   readonly editable = input<boolean>(true);
@@ -335,6 +336,9 @@ export class ChapterEditorPaneComponent {
   }
   protected openImagePicker(): void {
     this.editorRef()?.openImagePicker();
+  }
+  protected triggerLink(): void {
+    this.editorRef()?.triggerLink();
   }
   protected hasImageGalleries(): boolean {
     return this.editorRef()?.hasImageGalleries() ?? false;

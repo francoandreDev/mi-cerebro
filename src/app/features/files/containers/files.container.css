@@ -94,6 +94,18 @@
 }
 .wall-slot { display: block; }
 
+/* why: hilos manuales (§10bis) — arrastrar una casilla sobre otra crea la
+   conexión; estos dos estados son el único feedback visual del gesto, no
+   hay ícono de "modo vincular" separado. */
+.wall-slot.dragging {
+  opacity: 0.4;
+}
+.wall-slot.drag-target {
+  outline: 2px dashed var(--mc-accent-primary);
+  outline-offset: 4px;
+  border-radius: var(--mc-radius-md);
+}
+
 /* the floor strip below the wall (subtle base shadow) */
 .wall-board::after {
   content: '';

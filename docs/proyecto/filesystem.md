@@ -14,6 +14,7 @@ Raíz elegida por el usuario al abrir la app la primera vez (sugerencia: `Docume
 ├── .mi-cerebro/                       # metadata interna. NO TOCAR.
 │   ├── config.json                    # config global del workspace (schemaVersion, retención papelera, etc.)
 │   ├── tags.json                      # registro central de tags
+│   ├── relations.json                 # registro central de conexiones entre entidades (§10bis)
 │   ├── index/                         # índice de búsqueda persistido (espejo del de IndexedDB)
 │   │   └── index.json
 │   ├── trash/                         # soft-delete con retención (default 30 días)
@@ -70,7 +71,7 @@ Raíz elegida por el usuario al abrir la app la primera vez (sugerencia: `Docume
 
 ### Convenciones
 
-- **IDs estables internos.** Filename = `<slug-humano>.json`, pero adentro del JSON hay un `id` UUID inmutable. Los links entre entidades y los tags usan IDs, no rutas. **El mapa `id → ruta actual` vive en memoria por servicio** (`idToPath`/`idToLoc`, poblado por el `refresh()` de cada `*Service`), no persistido en el índice en disco — cada pestaña/reload lo reconstruye caminando el filesystem. Si el id buscado no está en el mapa (reload directo antes de que el `refresh()` de boot termine, o condición de carrera), cada servicio re-camina el filesystem una vez como fallback (`findPath`/`findLoc`) antes de asumir que la entidad no existe; sólo si tampoco aparece ahí se considera borrada (§20a). Un `ResolveFn` de Angular Router (`core/fs/entity-ready.guard.ts`) espera a que ese `refresh()` haya corrido al menos una vez antes de activar cualquier ruta de detalle, para no depender de que el sidebar se haya montado primero (§20b).
+- **IDs estables internos.** Filename = `<slug-humano>.json`, pero adentro del JSON hay un `id` UUID inmutable. Los links entre entidades y los tags usan IDs, no rutas. **Conexiones entre entidades (`relations.json`) no duplican esta resolución**: guardan sólo `{kind, id}` en cada extremo y resuelven título/ruta actuales contra el índice de búsqueda (`.mi-cerebro/index/index.json`, ya generado por cada `*Service`), igual que el picker de vincular reusa ese mismo índice para buscar — ver §10bis. **El mapa `id → ruta actual` vive en memoria por servicio** (`idToPath`/`idToLoc`, poblado por el `refresh()` de cada `*Service`), no persistido en el índice en disco — cada pestaña/reload lo reconstruye caminando el filesystem. Si el id buscado no está en el mapa (reload directo antes de que el `refresh()` de boot termine, o condición de carrera), cada servicio re-camina el filesystem una vez como fallback (`findPath`/`findLoc`) antes de asumir que la entidad no existe; sólo si tampoco aparece ahí se considera borrada (§20a). Un `ResolveFn` de Angular Router (`core/fs/entity-ready.guard.ts`) espera a que ese `refresh()` haya corrido al menos una vez antes de activar cualquier ruta de detalle, para no depender de que el sidebar se haya montado primero (§20b).
 - **Renombrar es libre.** El usuario puede mover y renombrar archivos/carpetas por fuera; la app reconcilia por ID al detectar el cambio.
 - **Validación de integridad al abrir el workspace.** Detecta IDs duplicados, faltantes o links rotos y los repara o pide confirmación.
 - **Profundidad de carpetas:** sin límite duro, warning a partir de 8 niveles.

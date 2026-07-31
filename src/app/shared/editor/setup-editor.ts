@@ -23,6 +23,10 @@ import {
   type CommentRangeUpdate,
 } from '@core/tiptap/comment-range-mapping/comment-range-mapping.ext';
 import { createDraftDecorationsExtension } from '@core/tiptap/draft-decorations/draft-decorations.ext';
+import {
+  createEntityRefNode,
+  type EntityRefOpenPayload,
+} from '@core/tiptap/entity-ref/entity-ref.node';
 import { createHighlightExtension } from '@core/tiptap/highlight/highlight.ext';
 import { createImageRefNode } from '@core/tiptap/image-ref/image-ref.node';
 import { createTtsHighlightExtension } from '@core/tiptap/tts-highlight/tts-highlight.ext';
@@ -73,6 +77,7 @@ export interface SetupEditorContext {
   readonly onBookmarkToggle: (blockId: string) => void;
   readonly bookmarkPinAriaLabel: () => string;
   readonly bookmarkMarkerAriaLabel: () => string;
+  readonly onEntityRefOpen: (payload: EntityRefOpenPayload) => void;
 }
 
 export const createEditorInstance = (ctx: SetupEditorContext): Editor =>
@@ -97,6 +102,7 @@ export const createEditorInstance = (ctx: SetupEditorContext): Editor =>
       createTtsHighlightExtension(),
       createTypewriterFocusExtension(),
       createImageRefNode(ctx.reader),
+      createEntityRefNode(ctx.onEntityRefOpen),
       createDraftDecorationsExtension({
         onClick: ctx.onDraftInsertClick,
         ariaLabel: ctx.draftInsertAriaLabel,

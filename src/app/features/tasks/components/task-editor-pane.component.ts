@@ -5,12 +5,13 @@ import { FocusModeService } from '@core/focus-mode/focus-mode.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import type { Tag } from '@core/tags/tag.types';
+import { ConnectionsPanelContainer } from '@shared/connections/connections-panel.container';
 import { EditorComponent } from '@shared/editor/editor.component';
 import { IconComponent } from '@shared/icon/icon.component';
 import type { IconName } from '@shared/icon/icons.data';
 import { TagPickerComponent } from '@shared/tags/tag-picker.component';
 
-import type { Task } from '../models/task.types';
+import { TASK_KIND, type Task } from '../models/task.types';
 import { DueDatesPickerComponent } from './due-dates-picker.component';
 
 export type SaveStatus = 'saved' | 'saving' | 'unsaved';
@@ -18,11 +19,18 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
 @Component({
   selector: 'mc-task-editor-pane',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [EditorComponent, TagPickerComponent, DueDatesPickerComponent, IconComponent],
+  imports: [
+    EditorComponent,
+    TagPickerComponent,
+    DueDatesPickerComponent,
+    IconComponent,
+    ConnectionsPanelContainer,
+  ],
   templateUrl: './task-editor-pane.component.html',
   styleUrl: './task-editor-pane.component.css',
 })
 export class TaskEditorPaneComponent {
+  protected readonly entityKind = TASK_KIND;
   readonly task = input.required<Task>();
   readonly status = input<SaveStatus>('saved');
   readonly availableTags = input.required<readonly Tag[]>();

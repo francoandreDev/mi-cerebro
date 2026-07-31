@@ -15,12 +15,6 @@ Formato por entrada:
 
 ## Archivos (origen: rediseño /files — tablero de evidencia)
 
-### Hilos entre items relacionados
-
-- **Qué**: el rediseño "cork board" sugiere visualmente la idea de items vinculados con hilos. Hoy no hay modelo de relaciones entre `FileItem`s, así que la pieza queda como puro decorado pendiente.
-- **Por qué se difirió**: introducir relaciones requiere extender `FileCollection`/`FileItem` con un grafo (id origen, id destino, opcional label), persistirlo en `_collection.json`, manejar deletes (limpiar hilos huérfanos), y diseñar UX para crear/borrar el hilo. Es un feature autónoma de tamaño propio, no parte del cambio visual.
-- **Target**: sin asignar — abrir si aparece demanda real de "agrupar archivos relacionados dentro de una colección".
-
 ### Posición libre real (drag x/y) en el tablero
 
 - **Qué**: en lugar de grilla con jitter determinista, dejar que el usuario arrastre cada artefacto a una coordenada arbitraria del corcho y persistirla.

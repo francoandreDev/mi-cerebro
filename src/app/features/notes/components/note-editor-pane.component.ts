@@ -5,19 +5,20 @@ import { FocusModeService } from '@core/focus-mode/focus-mode.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import type { Tag } from '@core/tags/tag.types';
+import { ConnectionsPanelContainer } from '@shared/connections/connections-panel.container';
 import { EditorComponent } from '@shared/editor/editor.component';
 import { IconComponent } from '@shared/icon/icon.component';
 import type { IconName } from '@shared/icon/icons.data';
 import { TagPickerComponent } from '@shared/tags/tag-picker.component';
 
-import type { Note } from '../models/note.types';
+import { NOTE_KIND, type Note } from '../models/note.types';
 
 export type SaveStatus = 'saved' | 'saving' | 'unsaved';
 
 @Component({
   selector: 'mc-note-editor-pane',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [EditorComponent, TagPickerComponent, IconComponent],
+  imports: [EditorComponent, TagPickerComponent, IconComponent, ConnectionsPanelContainer],
   template: `
     @if (!focusMode.active()) {
       <header class="bar">
@@ -75,6 +76,7 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
         (addTag)="addTag.emit($event)"
         (removeTag)="removeTag.emit($event)"
       />
+      <mc-connections-panel [entityKind]="entityKind" [entityId]="note().id" />
     }
     <mc-editor
       class="editor"
@@ -83,6 +85,7 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
       [editable]="editable()"
       [entityId]="note().id"
       [entityTitle]="note().title"
+      [entityKind]="entityKind"
       (valueChange)="bodyChange.emit($event)"
     />
   `,
@@ -179,6 +182,7 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
   `,
 })
 export class NoteEditorPaneComponent {
+  protected readonly entityKind = NOTE_KIND;
   readonly note = input.required<Note>();
   readonly status = input<SaveStatus>('saved');
   readonly availableTags = input.required<readonly Tag[]>();

@@ -1,0 +1,60 @@
+@if (hasAny()) {
+  <section class="connections">
+    <button type="button" class="view-map" (click)="graphOpen.set(true)">
+      <mc-icon name="share-network" />
+      {{ t('connections.viewOnMap') }}
+    </button>
+    @if (outgoing().length > 0) {
+      <div class="group">
+        <h4 class="heading">{{ t('connections.outgoing') }}</h4>
+        @for (r of outgoing(); track r.relationId) {
+          <div class="row">
+            <button type="button" class="entity" [disabled]="r.title === null" (click)="open(r)">
+              <mc-icon [name]="iconFor(r.kind)" />
+              <span class="title">{{ r.title ?? t('connections.orphaned') }}</span>
+            </button>
+            <button
+              type="button"
+              class="unlink"
+              [attr.aria-label]="t('connections.unlink')"
+              (click)="unlink(r.relationId)"
+            >
+              <mc-icon name="x" />
+            </button>
+          </div>
+        }
+      </div>
+    }
+    @if (backlinks().length > 0) {
+      <div class="group">
+        <h4 class="heading">{{ t('connections.backlinks') }}</h4>
+        @for (r of backlinks(); track r.relationId) {
+          <div class="row">
+            <button type="button" class="entity" [disabled]="r.title === null" (click)="open(r)">
+              <mc-icon [name]="iconFor(r.kind)" />
+              <span class="title">{{ r.title ?? t('connections.orphaned') }}</span>
+              @if (r.contextSnippet) {
+                <span class="snippet">"{{ r.contextSnippet }}"</span>
+              }
+            </button>
+            <button
+              type="button"
+              class="unlink"
+              [attr.aria-label]="t('connections.unlink')"
+              (click)="unlink(r.relationId)"
+            >
+              <mc-icon name="x" />
+            </button>
+          </div>
+        }
+      </div>
+    }
+  </section>
+}
+@if (graphOpen()) {
+  <mc-connections-graph-overlay
+    [centerKind]="entityKind()"
+    [centerId]="entityId()"
+    (dismiss)="graphOpen.set(false)"
+  />
+}

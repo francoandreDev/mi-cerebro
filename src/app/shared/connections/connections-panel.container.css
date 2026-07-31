@@ -1,0 +1,102 @@
+.connections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-3);
+  padding: var(--mc-space-2) var(--mc-space-3);
+  border: 1px solid var(--mc-border-default);
+  border-radius: var(--mc-radius-md);
+  background: var(--mc-bg-surface);
+}
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-1);
+}
+.view-map {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mc-space-1);
+  background: transparent;
+  border: 1px solid var(--mc-border-default);
+  border-radius: var(--mc-radius-pill);
+  padding: 2px var(--mc-space-2);
+  color: var(--mc-fg-muted);
+  font-size: var(--mc-font-size-xs);
+  cursor: pointer;
+}
+.view-map:hover,
+.view-map:focus-visible {
+  color: var(--mc-accent-primary);
+  border-color: var(--mc-accent-primary);
+  outline: none;
+}
+.heading {
+  margin: 0;
+  font-size: var(--mc-font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--mc-fg-dim);
+  font-weight: 700;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+}
+.entity {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+  background: transparent;
+  border: 0;
+  padding: var(--mc-space-1) var(--mc-space-2);
+  border-radius: var(--mc-radius-sm);
+  color: var(--mc-fg-primary);
+  cursor: pointer;
+  text-align: left;
+}
+.entity:hover:not(:disabled),
+.entity:focus-visible:not(:disabled) {
+  background: var(--mc-bg-hover);
+  outline: none;
+}
+.entity:disabled {
+  color: var(--mc-fg-dim);
+  cursor: default;
+  font-style: italic;
+}
+.entity mc-icon {
+  color: var(--mc-accent-primary);
+  flex-shrink: 0;
+}
+.title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.snippet {
+  color: var(--mc-fg-dim);
+  font-size: var(--mc-font-size-xs);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.unlink {
+  flex-shrink: 0;
+  background: transparent;
+  border: 0;
+  color: var(--mc-fg-dim);
+  cursor: pointer;
+  padding: var(--mc-space-1);
+  border-radius: var(--mc-radius-sm);
+  display: inline-flex;
+}
+.unlink:hover,
+.unlink:focus-visible {
+  color: var(--mc-state-danger);
+  background: var(--mc-bg-hover);
+  outline: none;
+}

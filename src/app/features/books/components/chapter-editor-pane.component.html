@@ -49,6 +49,18 @@
         <button
           type="button"
           class="list-toggle"
+          data-tutorial="books-editor-link"
+          [attr.aria-label]="t('editor.bubble.link')"
+          [title]="t('editor.bubble.link')"
+          (click)="triggerLink()"
+        >
+          <mc-icon name="link-simple" />
+        </button>
+      }
+      @if (editable()) {
+        <button
+          type="button"
+          class="list-toggle"
           data-tutorial="books-editor-format"
           [class.active]="boldActive()"
           [attr.aria-pressed]="boldActive()"
@@ -254,6 +266,7 @@
           [editable]="editable()"
           [entityId]="chapter().id"
           [entityTitle]="chapter().title"
+          [entityKind]="entityKind"
           [bookmarkable]="editable()"
           [bookmarkedBlockId]="bookmarkBlockId()"
           [ttsHighlightBlockId]="ttsHighlightBlockId()"

@@ -5,20 +5,21 @@ import { FocusModeService } from '@core/focus-mode/focus-mode.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import type { Tag } from '@core/tags/tag.types';
+import { ConnectionsPanelContainer } from '@shared/connections/connections-panel.container';
 import { EditorComponent } from '@shared/editor/editor.component';
 import { TypewriterModeService } from '@shared/editor/typewriter-mode.service';
 import { IconComponent } from '@shared/icon/icon.component';
 import type { IconName } from '@shared/icon/icons.data';
 import { TagPickerComponent } from '@shared/tags/tag-picker.component';
 
-import type { Writing } from '../models/writing.types';
+import { WRITING_KIND, type Writing } from '../models/writing.types';
 
 export type SaveStatus = 'saved' | 'saving' | 'unsaved';
 
 @Component({
   selector: 'mc-writing-editor-pane',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [EditorComponent, TagPickerComponent, IconComponent],
+  imports: [EditorComponent, TagPickerComponent, IconComponent, ConnectionsPanelContainer],
   templateUrl: './writing-editor-pane.component.html',
   styleUrl: './writing-editor-pane.component.css',
   // why: :host is the pane's own scroll container when typewriter mode is
@@ -29,6 +30,7 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
   },
 })
 export class WritingEditorPaneComponent {
+  protected readonly entityKind = WRITING_KIND;
   readonly writing = input.required<Writing>();
   readonly status = input<SaveStatus>('saved');
   readonly availableTags = input.required<readonly Tag[]>();

@@ -21,10 +21,12 @@ import { WorkspaceService } from '@core/fs/workspace.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { EntityLockController } from '@core/locks/entity-lock.controller';
+import { RelationsService } from '@core/relations/relations.service';
 import { entitySlugSegment, extractEntityId } from '@core/routing/entity-slug';
 import { TagsService } from '@core/tags/tags.service';
 import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
 import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
+import { ConnectionsPanelContainer } from '@shared/connections/connections-panel.container';
 import { FolderActionDialogComponent } from '@shared/folder-action-dialog/folder-action-dialog.component';
 import { FolderActionDialogController } from '@shared/folder-action-dialog/folder-action-dialog.controller';
 import { FolderBreadcrumbComponent } from '@shared/folder-breadcrumb/folder-breadcrumb.component';
@@ -53,6 +55,7 @@ import { registerFilesTutorial } from './files.tutorial';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ConfirmDialogComponent,
+    ConnectionsPanelContainer,
     FileCollectionMetaBarComponent,
     FileGridComponent,
     FileLockerComponent,
@@ -66,6 +69,7 @@ import { registerFilesTutorial } from './files.tutorial';
   styleUrl: './files.container.css',
 })
 export class FilesContainer {
+  protected readonly entityKind = FILE_KIND;
   readonly id = input<string | undefined>(undefined);
 
   protected readonly filesService = inject(FilesService);
@@ -78,6 +82,7 @@ export class FilesContainer {
   private readonly errors = inject(ErrorService);
   private readonly i18n = inject(I18nService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly relations = inject(RelationsService);
 
   protected readonly tags = this.tagsService.tags;
   protected readonly active = signal<FileCollection | null>(null);
@@ -100,6 +105,13 @@ export class FilesContainer {
   protected readonly lock = new EntityLockController(FILE_KIND, this.active);
   protected readonly confirm = new ConfirmController();
   protected readonly folderActionDialog = new FolderActionDialogController();
+  // why: hilos manuales en el corcho (§10bis) — arrastrar una casilla sobre
+  //      otra crea una Relation directo, sin picker (el destino ya está a
+  //      la vista). Sólo un signal global "qué se está arrastrando": la
+  //      cantidad de casillas en una carpeta es chica, no hace falta el
+  //      costo de trackear dragenter/dragleave por casilla para un
+  //      resaltado más preciso del target puntual.
+  protected readonly draggingCollectionId = signal<string | null>(null);
 
   constructor() {
     registerFilesTutorial();
@@ -190,6 +202,36 @@ export class FilesContainer {
 
   protected async onOpenCollection(id: string, title: string): Promise<void> {
     await this.router.navigate(['/files', entitySlugSegment(title, id, 'coleccion')]);
+  }
+
+  // why: HTML5 drag-and-drop en vez de pointer-capture (comparar con
+  //      goal-constellation-editor) — acá el gesto es "soltar sobre otro
+  //      elemento distinto", no arrastre libre continuo; dragstart/dragover/
+  //      drop no compite con el click de "abrir casillero" del botón interno
+  //      (FileLockerComponent no se toca).
+  protected onLockerDragStart(event: DragEvent, id: string): void {
+    this.draggingCollectionId.set(id);
+    event.dataTransfer?.setData('text/plain', id);
+  }
+
+  protected onLockerDragOver(event: DragEvent, id: string): void {
+    if (this.draggingCollectionId() && this.draggingCollectionId() !== id) event.preventDefault();
+  }
+
+  protected onLockerDrop(event: DragEvent, targetId: string): void {
+    event.preventDefault();
+    const sourceId = this.draggingCollectionId();
+    this.draggingCollectionId.set(null);
+    if (!sourceId || sourceId === targetId) return;
+    void this.relations.create({
+      from: { kind: this.entityKind, id: sourceId },
+      to: { kind: this.entityKind, id: targetId },
+      origin: 'manual',
+    });
+  }
+
+  protected onLockerDragEnd(): void {
+    this.draggingCollectionId.set(null);
   }
 
   protected async onCreateCollection(): Promise<void> {

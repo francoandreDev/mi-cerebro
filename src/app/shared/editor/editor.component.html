@@ -16,6 +16,7 @@
     [citationActive]="citationActive()"
     [typewriterActive]="typewriterMode.active()"
     (openPicker)="pickerOpen.set(true)"
+    (openLinkPicker)="triggerLink()"
     (setView)="setView($event)"
     (toggleCommentsIndex)="commentsIndexOpen.set(!commentsIndexOpen())"
     (toggleDraftsIndex)="draftsIndexOpen.set(!draftsIndexOpen())"
@@ -49,7 +50,12 @@
     data-tutorial="editor-host"
   ></div>
   @if (bubble(); as b) {
-    <mc-bubble-menu [position]="b" (propose)="triggerPropose()" (comment)="triggerComment()" />
+    <mc-bubble-menu
+      [position]="b"
+      (propose)="triggerPropose()"
+      (comment)="triggerComment()"
+      (link)="triggerLink()"
+    />
   }
   @if (commentPopover(); as p) {
     <mc-comment-popover
@@ -89,4 +95,11 @@
 </div>
 @if (pickerOpen()) {
   <mc-image-picker-dialog (picked)="onPicked($event)" (dismiss)="pickerOpen.set(false)" />
+}
+@if (linkPickerOpen()) {
+  <mc-entity-link-picker-dialog
+    [excludeId]="entityId()"
+    (picked)="onEntityLinked($event)"
+    (dismiss)="linkPickerOpen.set(false)"
+  />
 }

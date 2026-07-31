@@ -58,6 +58,17 @@ const HIGHLIGHT_SWATCH_LABELS: Record<string, TranslationKey> = {
         <button
           type="button"
           class="ghost"
+          data-tutorial="editor-toolbar-link"
+          (click)="openLinkPicker.emit()"
+          [attr.aria-label]="t('editor.bubble.link')"
+        >
+          <mc-icon name="link-simple" /> {{ t('editor.bubble.link') }}
+        </button>
+      }
+      @if (editable()) {
+        <button
+          type="button"
+          class="ghost"
           data-tutorial="editor-toolbar-format"
           [attr.aria-pressed]="boldActive()"
           [attr.aria-label]="t('editor.mark.bold')"
@@ -267,6 +278,7 @@ export class EditorToolbarComponent {
   readonly typewriterActive = input<boolean>(false);
 
   readonly openPicker = output<void>();
+  readonly openLinkPicker = output<void>();
   readonly setView = output<EditorView>();
   readonly toggleCommentsIndex = output<void>();
   readonly toggleDraftsIndex = output<void>();

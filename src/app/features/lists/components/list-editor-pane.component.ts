@@ -5,13 +5,14 @@ import { FocusModeService } from '@core/focus-mode/focus-mode.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import type { Tag } from '@core/tags/tag.types';
+import { ConnectionsPanelContainer } from '@shared/connections/connections-panel.container';
 import { EditorComponent } from '@shared/editor/editor.component';
 import { IconComponent } from '@shared/icon/icon.component';
 import type { IconName } from '@shared/icon/icons.data';
 import { TagPickerComponent } from '@shared/tags/tag-picker.component';
 
 import type { ChalkLayer } from '../models/chalk.types';
-import type { List } from '../models/list.types';
+import { LIST_KIND, type List } from '../models/list.types';
 import { ChalkboardOverlayComponent } from './chalkboard-overlay.component';
 
 export type SaveStatus = 'saved' | 'saving' | 'unsaved';
@@ -19,7 +20,13 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
 @Component({
   selector: 'mc-list-editor-pane',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [EditorComponent, TagPickerComponent, IconComponent, ChalkboardOverlayComponent],
+  imports: [
+    EditorComponent,
+    TagPickerComponent,
+    IconComponent,
+    ChalkboardOverlayComponent,
+    ConnectionsPanelContainer,
+  ],
   template: `
     @if (!focusMode.active()) {
       <header class="bar">
@@ -55,6 +62,7 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
         (addTag)="addTag.emit($event)"
         (removeTag)="removeTag.emit($event)"
       />
+      <mc-connections-panel [entityKind]="entityKind" [entityId]="list().id" />
     }
     <mc-chalkboard-overlay
       class="board"
@@ -71,6 +79,7 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
         [editable]="editable()"
         [entityId]="list().id"
         [entityTitle]="list().title"
+        [entityKind]="entityKind"
         (valueChange)="bodyChange.emit($event)"
       />
     </mc-chalkboard-overlay>
@@ -149,6 +158,7 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
   `,
 })
 export class ListEditorPaneComponent {
+  protected readonly entityKind = LIST_KIND;
   readonly list = input.required<List>();
   readonly status = input<SaveStatus>('saved');
   readonly availableTags = input.required<readonly Tag[]>();

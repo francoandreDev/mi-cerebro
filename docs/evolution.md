@@ -14,7 +14,7 @@ Origen: investigación de dolores no cubiertos por apps de "segundo cerebro" exi
 
 **Gap confirmado en mi-cerebro:** hoy solo hay recuperación **activa** (búsqueda por texto/tag/árbol, §10 de `docs/proyecto/features.md`) y links **manuales** (insertar referencia a otra entidad por ID, §11). El único mecanismo de aparición espontánea que existe es el banner aleatorio de objetivos (§13, `GoalReminderContainer`) — y es exclusivo de goals, no aplica a notas/escritos/listas. Choca directamente con la visión propia del proyecto (§1: "orden impecable y búsqueda instantánea" describe un filing cabinet, no un pensamiento externo).
 
-**Estado:** ✅ primer corte cerrado 2026-07-15 (§19.22bis de `docs/proyecto/roadmap-22-25.md`) — sección "Redescubrí esto" en `/dashboard`, aleatorio ponderado por antigüedad sobre notas/escritos/listas. Capítulos de libros, selección por similitud (MiniSearch) como modo adicional, persistencia entre sesiones y dismiss/snooze quedaron en `docs/deferred/index.md` (grupo "Resurfacing pasivo en dashboard").
+**Estado:** ✅ cerrado 2026-07-31 (§19.22bis de `docs/proyecto/roadmap-22-25.md`) — sección "Redescubrí esto" en `/dashboard`, aleatorio ponderado por antigüedad sobre notas/escritos/listas. Los 4 ítems que habían quedado diferidos (capítulos de libros en el pool, selección por similitud vía `SearchIndexService`, persistencia de `resurfaceExcluded` entre sesiones, dismiss/snooze) ya se implementaron también — sin diferidos pendientes en este grupo.
 
 ---
 
@@ -34,7 +34,7 @@ Origen: investigación de dolores no cubiertos por apps de "segundo cerebro" exi
 
 **Gap parcial en mi-cerebro:** hay una semilla del concepto ya nombrada pero no cableada: `goals.dormantThresholdDays` existe como placeholder en `SettingsService` (§19 paso 11bis) apuntando al "lifecycle de variantes en reposo" (§12) — pero es para variantes de escritos, no para goals. Objetivos hoy solo tienen `deadline`/`completed`/`progress`/`priority` (§13) — ninguna señal derivada de "sin actividad reciente". El acompañamiento real (detectar inactividad, avisar antes del abandono en vez de solo recordar que existe) no está implementado.
 
-**Estado:** ✅ primer corte cerrado 2026-07-15 (§19.25 de `docs/proyecto/roadmap-22-25.md`) — `Goal.lastProgressAt` (schema v8) mide sólo cambios de progreso/steps/completed, no cualquier edición; `isGoalDormant` computa dormancia contra `settings.goals.dormantThresholdDays` (30 días default, ya existía sin cablear). Superficie en dashboard (badge 🌙) y en el wall de constelaciones `/goals` (estrella desaturada). El editor de meta individual (`/goals/:id`) no muestra la señal — queda en `docs/deferred/index.md`.
+**Estado:** ✅ cerrado 2026-07-31 (§19.25 de `docs/proyecto/roadmap-22-25.md`) — `Goal.lastProgressAt` (schema v8) mide sólo cambios de progreso/steps/completed, no cualquier edición; `isGoalDormant` computa dormancia contra `settings.goals.dormantThresholdDays` (configurable en `/settings`). Superficie en dashboard (badge 🌙), wall de constelaciones `/goals` (estrella desaturada) y editor individual `/goals/:id`. Notificación proactiva al dormirse (`sourceKind: 'goal-dormant'`, opt-in vía `reminder.notifyOnDormant`) también implementada — sin diferidos pendientes en este grupo.
 
 ---
 
@@ -44,7 +44,7 @@ Origen: investigación de dolores no cubiertos por apps de "segundo cerebro" exi
 
 **Gap confirmado en mi-cerebro:** el editor TipTap (§11) resuelve formato y highlighting, pero cero asistencia de contenido. Existe un embrión de la idea de "relaciones entre items" ya identificado y diferido explícitamente en `deferred/index.md` ("Hilos entre items relacionados", origen rediseño `/files`) — pero acotado a `FileItem`/tablero de evidencia, no al editor de escritura ni a notas/escritos en general. Requeriría un modelo de grafo de relaciones (origen/destino/label) que hoy no existe para ninguna entidad de texto.
 
-**Estado:** 🔲 sin explorar, el más caro de los 4 (toca modelo de datos de todas las entidades de texto). Depende de que primero exista algo de idea 1 (resurfacing) para tener superficie donde mostrar las conexiones detectadas.
+**Estado:** ✅ primer corte cerrado 2026-07-31 (§19.27 de `docs/proyecto/roadmap-27-conexiones.md`, spec en `docs/proyecto/features.md` §10bis) — vincular desde el editor, backlinks automáticos en 7 tipos de entidad, hilos manuales en `/files` (drag-and-drop), y un mapa de conexiones de 1 salto ("Ver en el mapa" desde el panel, caminable pero no el grafo completo del workspace), todo verificado en navegador real. Primer corte deliberadamente acotado a lo estructural, un solo modelo `Relation` genérico; la capa realmente "inteligente" de esta idea — sugerencias automáticas por similitud/tags compartidos, y un grafo completo con layout de fuerzas — queda fuera de este corte, a validar recién si lo ya construido resuelve el dolor real de uso.
 
 ---
 

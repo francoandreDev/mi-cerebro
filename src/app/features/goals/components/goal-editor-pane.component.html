@@ -83,6 +83,7 @@
     (addTag)="addTag.emit($event)"
     (removeTag)="removeTag.emit($event)"
   />
+  <mc-connections-panel [entityKind]="entityKind" [entityId]="goal().id" />
 }
 <mc-editor
   class="editor"
@@ -91,5 +92,6 @@
   [editable]="editable()"
   [entityId]="goal().id"
   [entityTitle]="goal().title"
+  [entityKind]="entityKind"
   (valueChange)="bodyChange.emit($event)"
 />

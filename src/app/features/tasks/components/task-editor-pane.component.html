@@ -74,6 +74,7 @@
     (addTag)="addTag.emit($event)"
     (removeTag)="removeTag.emit($event)"
   />
+  <mc-connections-panel [entityKind]="entityKind" [entityId]="task().id" />
 }
 <mc-editor
   class="editor"
@@ -82,5 +83,6 @@
   [editable]="editable()"
   [entityId]="task().id"
   [entityTitle]="task().title"
+  [entityKind]="entityKind"
   (valueChange)="bodyChange.emit($event)"
 />

@@ -6,11 +6,12 @@ import { LEAD_PRESETS } from '@core/reminders/goal-cadence.utils';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import type { Tag } from '@core/tags/tag.types';
+import { ConnectionsPanelContainer } from '@shared/connections/connections-panel.container';
 import { EditorComponent } from '@shared/editor/editor.component';
 import { IconComponent } from '@shared/icon/icon.component';
 import { TagPickerComponent } from '@shared/tags/tag-picker.component';
 
-import { type Goal, type GoalPriority, type GoalStep } from '../models/goal.types';
+import { GOAL_KIND, type Goal, type GoalPriority, type GoalStep } from '../models/goal.types';
 import { GoalConstellationEditorComponent } from './goal-constellation-editor.component';
 
 export type SaveStatus = 'saved' | 'saving' | 'unsaved';
@@ -18,11 +19,18 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
 @Component({
   selector: 'mc-goal-editor-pane',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [EditorComponent, TagPickerComponent, IconComponent, GoalConstellationEditorComponent],
+  imports: [
+    EditorComponent,
+    TagPickerComponent,
+    IconComponent,
+    GoalConstellationEditorComponent,
+    ConnectionsPanelContainer,
+  ],
   templateUrl: './goal-editor-pane.component.html',
   styleUrl: './goal-editor-pane.component.css',
 })
 export class GoalEditorPaneComponent {
+  protected readonly entityKind = GOAL_KIND;
   readonly goal = input.required<Goal>();
   readonly status = input<SaveStatus>('saved');
   readonly availableTags = input.required<readonly Tag[]>();

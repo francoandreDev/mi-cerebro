@@ -34,6 +34,7 @@
       (addTag)="onAddTag($event)"
       (removeTag)="onRemoveTag($event)"
     />
+    <mc-connections-panel [entityKind]="entityKind" [entityId]="gallery.id" />
     <mc-museum-room
       data-tutorial="images-room"
       [images]="currentCuarto()"

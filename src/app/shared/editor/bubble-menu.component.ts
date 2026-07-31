@@ -1,9 +1,9 @@
 // 13f — Floating bubble menu that appears anchored above the editor's
-// current text selection in the combined view. Offers exactly two
-// actions: "Proponer cambio" (start a draft session) and "Comentar"
-// (open the comment popover). Positioning is computed by the host
-// editor and passed in via `position`; this component is purely
-// presentational.
+// current text selection in the combined view. Offers three actions:
+// "Proponer cambio" (start a draft session), "Comentar" (open the
+// comment popover), and "Vincular a…" (§10bis — link the selection to
+// another entity). Positioning is computed by the host editor and
+// passed in via `position`; this component is purely presentational.
 
 import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 
@@ -34,6 +34,9 @@ export interface BubblePosition {
       <button type="button" class="action" (click)="comment.emit()">
         <mc-icon name="chat-circle" /> {{ t('editor.bubble.comment') }}
       </button>
+      <button type="button" class="action" (click)="link.emit()">
+        <mc-icon name="link-simple" /> {{ t('editor.bubble.link') }}
+      </button>
     </div>
   `,
   styleUrl: './bubble-menu.component.scss',
@@ -42,6 +45,7 @@ export class BubbleMenuComponent {
   readonly position = input.required<BubblePosition>();
   readonly propose = output<void>();
   readonly comment = output<void>();
+  readonly link = output<void>();
 
   private readonly i18n = inject(I18nService);
 

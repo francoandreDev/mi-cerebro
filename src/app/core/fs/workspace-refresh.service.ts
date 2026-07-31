@@ -22,11 +22,13 @@ import { RemindersService } from '@features/reminders/services/reminders.service
 import { TasksService } from '@features/tasks/services/tasks.service';
 import { WritingsService } from '@features/writings/services/writings.service';
 
+import { RelationsService } from '@core/relations/relations.service';
 import { TagsService } from '@core/tags/tags.service';
 
 @Injectable({ providedIn: 'root' })
 export class WorkspaceRefreshService {
   private readonly tags = inject(TagsService);
+  private readonly relations = inject(RelationsService);
   private readonly notes = inject(NotesService);
   private readonly tasks = inject(TasksService);
   private readonly goals = inject(GoalsService);
@@ -46,6 +48,7 @@ export class WorkspaceRefreshService {
   //      so behavior at boot and at switch is identical.
   async refreshAll(): Promise<void> {
     await this.tags.refresh();
+    await this.relations.refresh();
     await this.notes.refresh();
     await this.tasks.refresh();
     await this.goals.refresh();

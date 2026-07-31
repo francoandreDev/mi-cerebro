@@ -46,7 +46,18 @@
     } @else {
       <ul class="wall-grid">
         @for (summary of visibleCollections(); track summary.id; let i = $index) {
-          <li class="wall-slot">
+          <li
+            class="wall-slot"
+            draggable="true"
+            [class.dragging]="draggingCollectionId() === summary.id"
+            [class.drag-target]="
+              draggingCollectionId() !== null && draggingCollectionId() !== summary.id
+            "
+            (dragstart)="onLockerDragStart($event, summary.id)"
+            (dragover)="onLockerDragOver($event, summary.id)"
+            (drop)="onLockerDrop($event, summary.id)"
+            (dragend)="onLockerDragEnd()"
+          >
             <mc-file-locker
               [summary]="summary"
               [availableTags]="tags()"
@@ -120,6 +131,7 @@
       (addTag)="onAddTag($event)"
       (removeTag)="onRemoveTag($event)"
     />
+    <mc-connections-panel [entityKind]="entityKind" [entityId]="collection.id" />
     <mc-file-grid
       [collection]="collection"
       [previews]="previewUrls()"

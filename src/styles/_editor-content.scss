@@ -48,6 +48,40 @@ mc-editor .editor-host .mc-image-ref--missing {
   border: 1px dashed var(--mc-border-default);
   color: var(--mc-fg-muted);
 }
+// why: chip de "Vincular a…" (§10bis, entity-ref.node.ts) — mismo lenguaje
+// visual que un chip de tag/prioridad ya usado en la app, no un link
+// subrayado suelto.
+mc-editor .editor-host .mc-entity-ref {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  vertical-align: middle;
+  background: var(--mc-bg-selected);
+  border: 1px solid var(--mc-border-strong);
+  border-radius: var(--mc-radius-pill);
+  padding: 1px 10px 1px 6px;
+  font-size: 0.92em;
+  font-weight: 500;
+  color: var(--mc-fg-primary);
+  cursor: pointer;
+}
+mc-editor .editor-host .mc-entity-ref:hover,
+mc-editor .editor-host .mc-entity-ref:focus-visible {
+  background: var(--mc-bg-hover);
+  border-color: var(--mc-accent-primary);
+  outline: none;
+}
+mc-editor .editor-host .mc-entity-ref-icon {
+  display: inline-flex;
+  width: 0.85em;
+  height: 0.85em;
+  color: var(--mc-accent-primary);
+  flex-shrink: 0;
+}
+mc-editor .editor-host .mc-entity-ref-icon svg {
+  width: 100%;
+  height: 100%;
+}
 mc-editor .editor-host .ProseMirror {
   outline: none;
   min-height: 180px;

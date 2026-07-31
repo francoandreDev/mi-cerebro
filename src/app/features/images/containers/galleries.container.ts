@@ -21,6 +21,7 @@ import { extractEntityId } from '@core/routing/entity-slug';
 import { TagsService } from '@core/tags/tags.service';
 import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
 import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
+import { ConnectionsPanelContainer } from '@shared/connections/connections-panel.container';
 import { IconComponent } from '@shared/icon/icon.component';
 import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
 import { orderItems, paginateCuartos } from '@shared/utils/museum-asymmetry';
@@ -42,6 +43,7 @@ import { registerImagesTutorial } from './images.tutorial';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ConfirmDialogComponent,
+    ConnectionsPanelContainer,
     GalleryMetaBarComponent,
     IconComponent,
     ImageLightboxComponent,
@@ -53,6 +55,7 @@ import { registerImagesTutorial } from './images.tutorial';
   styleUrl: './galleries.container.css',
 })
 export class GalleriesContainer {
+  protected readonly entityKind = IMAGE_KIND;
   readonly id = input<string | undefined>(undefined);
 
   private readonly galleriesService = inject(GalleriesService);
