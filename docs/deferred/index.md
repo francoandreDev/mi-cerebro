@@ -13,7 +13,6 @@ Este índice es sólo un mapa de temas — no lista ítems individuales. Para es
 
 ---
 
-- [`notes-search-navigation.md`](./notes-search-navigation.md) — notas, árbol de carpetas con filtro, tags y búsqueda global.
 - [`trash-books.md`](./trash-books.md) — papelera y biblioteca de libros.
 - [`reminders-goals.md`](./reminders-goals.md) — recordatorios (incluido el "palomar") y metas/constelaciones.
 - [`files-writings-tasks.md`](./files-writings-tasks.md) — archivos sueltos, escritos y tareas.

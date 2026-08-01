@@ -793,9 +793,10 @@ export const es = {
 
   'palette.label': 'Búsqueda global',
   'palette.openButton': 'Abrir búsqueda global',
-  'palette.placeholder': 'Buscar... (probá tag:trabajo)',
+  'palette.placeholder': 'Buscar... (probá tag:trabajo o kind:tareas)',
   'palette.empty': 'Escribí para buscar entre tus notas.',
   'palette.unknownTag': 'No existe la etiqueta',
+  'palette.unknownKind': 'No existe el tipo',
   'palette.viewTag': 'Ver todo lo de #{label}',
   'palette.hint': '↑↓ navegar · enter abrir · esc cerrar',
   'palette.kindUnknown': 'Otro',
@@ -813,7 +814,7 @@ export const es = {
   'palette.tutorial.search.body':
     'Empezá a tipear para buscar por texto. Sin nada escrito ves tus últimas búsquedas y lo último que abriste.',
   'palette.tutorial.search.moreDetail':
-    'Sumá tag:etiqueta a la búsqueda para filtrar solo lo que tiene esa etiqueta — y podés "olvidar" una búsqueda guardada con la ✕ que aparece al lado.',
+    'Sumá tag:etiqueta para filtrar solo lo que tiene esa etiqueta, o kind:tareas (kind:notas, kind:metas...) para filtrar por tipo — se pueden combinar. Y podés "olvidar" una búsqueda guardada con la ✕ que aparece al lado.',
   'palette.tutorial.navigate.title': 'Flechas para moverte entre resultados',
   'palette.tutorial.navigate.body': '↑ y ↓ mueven la selección sin soltar el teclado.',
   'palette.tutorial.navigate.moreDetail':

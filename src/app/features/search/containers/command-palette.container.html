@@ -32,6 +32,12 @@
           {{ t('palette.unknownTag') }} "{{ parsed().unknownTags.join(', ') }}"
         </p>
       }
+      @if (parsed().unknownKinds.length > 0) {
+        <p class="warn">
+          <mc-icon name="warning" class="mc-anim-pulse" />
+          {{ t('palette.unknownKind') }} "{{ parsed().unknownKinds.join(', ') }}"
+        </p>
+      }
       @if (mode() === 'recents') {
         @if (items().length === 0) {
           <p class="empty">

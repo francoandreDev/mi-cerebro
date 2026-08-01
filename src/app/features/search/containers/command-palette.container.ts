@@ -15,7 +15,7 @@ import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { CommandPaletteService } from '@core/search/command-palette.service';
 import { routeFor } from '@core/search/kind-routes';
-import { parsePaletteQuery } from '@core/search/palette-query';
+import { type KindOption, parsePaletteQuery } from '@core/search/palette-query';
 import { PaletteQueriesService } from '@core/search/palette-queries.service';
 import { PaletteRecentsService } from '@core/search/palette-recents.service';
 import { SearchIndexService } from '@core/search/search-index.service';
@@ -56,13 +56,17 @@ export class CommandPaletteContainer {
   protected readonly query = signal('');
   protected readonly cursor = signal(0);
 
+  protected readonly kindOptions = computed<readonly KindOption[]>(() =>
+    Object.keys(KIND_TITLE_KEY).map((kind) => ({ kind, label: this.t(KIND_TITLE_KEY[kind]!) })),
+  );
+
   protected readonly parsed = computed(() =>
-    parsePaletteQuery(this.query(), this.tagsService.tags()),
+    parsePaletteQuery(this.query(), this.tagsService.tags(), this.kindOptions()),
   );
 
   protected readonly mode = computed<'recents' | 'results'>(() => {
     const p = this.parsed();
-    return p.text === '' && p.tagIds.length === 0 ? 'recents' : 'results';
+    return p.text === '' && p.tagIds.length === 0 && p.kinds.length === 0 ? 'recents' : 'results';
   });
 
   protected readonly recentsItems = computed<readonly EntityItem[]>(() => {
@@ -90,7 +94,11 @@ export class CommandPaletteContainer {
     if (!this.open() || this.mode() !== 'results') return [];
     void this.searchIndex.ready();
     const p = this.parsed();
-    const hits = this.searchIndex.query({ text: p.text, tagIds: p.tagIds });
+    const hits = this.searchIndex.query({
+      text: p.text,
+      tagIds: p.tagIds,
+      ...(p.kinds.length > 0 ? { kinds: p.kinds } : {}),
+    });
     return hits.map((h) => ({
       type: 'entity' as const,
       id: h.id,
