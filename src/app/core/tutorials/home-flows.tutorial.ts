@@ -77,6 +77,37 @@ export const DAILY_FLOW_TUTORIAL: TutorialDefinition = {
   ],
 };
 
+// why: "Ver todo lo de un tema" promovido de HOME_WORKFLOWS_FUTURE a
+//      HOME_WORKFLOWS_TODAY — la vista ya existe (palette `tag:` + `/tags/:id`
+//      con preview nativo por kind), la tarjeta "próximamente" mentía. Sin
+//      anchor propio para "abrir el palomar" — reusa el mismo botón que
+//      command-palette.tutorial.ts (cero anchors nuevos). El step 2 no lleva
+//      `action` porque escribir `tag:<nombre>` es un evento `input` de texto
+//      libre, no soportado por TutorialStepAction (ver reglas.md §4.6.15b).
+export const TAGVIEW_FLOW_TUTORIAL: TutorialDefinition = {
+  id: 'flow-tagview',
+  pageId: 'flow-tagview',
+  steps: [
+    {
+      anchorSelector: '[data-tutorial="command-palette-open"]',
+      titleKey: 'home.flow.tagview.title',
+      bodyKey: 'home.flow.tagview.step.1',
+      action: { event: 'click', icon: 'magnifying-glass' },
+    },
+    {
+      anchorSelector: '[data-tutorial="command-palette-input"]',
+      titleKey: 'home.flow.tagview.title',
+      bodyKey: 'home.flow.tagview.step.2',
+    },
+    {
+      route: '/tags',
+      anchorSelector: '[data-tutorial="tags-header"]',
+      titleKey: 'home.flow.tagview.title',
+      bodyKey: 'home.flow.tagview.step.3',
+    },
+  ],
+};
+
 // why: registrado una sola vez, siempre vivo (AppShellContainer nunca se
 //      destruye) — a diferencia de los tutoriales de página, un flujo no
 //      depende de qué ruta esté activa. autoStartIfUnseen: false porque un
@@ -86,4 +117,5 @@ export function registerHomeFlowTutorials(): void {
   const tutorials = inject(TutorialService);
   tutorials.register(PROJECT_FLOW_TUTORIAL, { autoStartIfUnseen: false });
   tutorials.register(DAILY_FLOW_TUTORIAL, { autoStartIfUnseen: false });
+  tutorials.register(TAGVIEW_FLOW_TUTORIAL, { autoStartIfUnseen: false });
 }

@@ -3043,15 +3043,15 @@ export const es = {
 
   'home.flow.study.title': 'Estudiar profundizando un tema',
   'home.flow.study.description':
-    'Mezcla de lectura, notas, imágenes y música de fondo, todo pegado por un tag transversal. Necesita: quick-capture global (Ctrl+Shift+N) desde dentro del reader y vista cross-section por tag — ninguna de las dos existe todavía.',
+    'Mezcla de lectura, notas e imágenes, todo pegado por un tag transversal. Falta una sola pieza: quick-capture global (Ctrl+Shift+N) desde dentro del reader, para anotar o adjuntar sin cortar la lectura.',
   'home.flow.study.step.1':
-    'Subís el libro a /books, estante nombrado con el tema. El lomo queda visible en la estantería.',
+    'Subís el libro a /books, estante nombrado con el tema, y le ponés el tag del tema. El lomo queda visible en la estantería.',
   'home.flow.study.step.2':
     'Mientras leés en el reader, un atajo global (futuro) abre una nota rápida sin interrumpir la lectura — el sticky aparece en /notes con el tag del tema preseleccionado.',
   'home.flow.study.step.3':
     'Mismo atajo permite adjuntar screenshots/diagramas directamente a una sala de /images del tema, también con el tag pre-asignado.',
   'home.flow.study.step.4':
-    'Al final, una vista cross-section (futuro) te muestra todo lo tagueado con el tema en una sola pantalla: libro, stickies, cuadros del museo, escritos. Hoy hay que revisarlo sección por sección.',
+    'Al final, Ctrl+K → tag:<tema> → "Ver todo lo de #tag" te muestra libro, stickies y cuadros del museo juntos, cada uno con su preview real — esa parte ya existe hoy (ver el flujo "Ver todo lo de un tema").',
 
   'home.flow.daily.title': 'Tu rutina del día',
   'home.flow.daily.description':
@@ -3067,13 +3067,12 @@ export const es = {
 
   'home.flow.tagview.title': 'Ver todo lo de un tema',
   'home.flow.tagview.description':
-    'Un tag como hilo conductor que junta entidades de todas las secciones. Hoy hay tag por entidad y filtro por sección; falta la vista unificada que cruce todas.',
-  'home.flow.tagview.step.1':
-    'Tipeás el nombre del tag en una nueva pantalla de "Vista por tag" (futura).',
+    'Un tag como hilo conductor que junta entidades de todas las secciones en una sola pantalla, cada una con su preview visual nativo. (Música y recordatorios todavía no son taggeables — quedan afuera por ahora.)',
+  'home.flow.tagview.step.1': 'Abrís el buscador global (Ctrl+K) desde cualquier pantalla.',
   'home.flow.tagview.step.2':
-    'Ves en una sola pantalla todo lo asociado al tag: stickies del muro, posters del wallboard, libros de la estantería, cuadros del museo, escritos, tareas que florecen, etc — cada uno en su preview visual nativo.',
+    'Escribís tag:<nombre> — aparece arriba de los resultados "Ver todo lo de #tag". Clickearlo te lleva a la vista del tag.',
   'home.flow.tagview.step.3':
-    'Click en cualquier preview te lleva al lugar real donde vive. Útil para retomar un proyecto, repasar un tema, o ver de qué viene una idea suelta que te encontrás meses después.',
+    'Ahí ves todo lo asociado al tag: stickies del muro, posters del wallboard, libros de la estantería, cuadros del museo, escritos, tareas — cada uno con su card visual real, no una lista genérica. Click en cualquiera te lleva al lugar donde vive. Lo mismo se alcanza clickeando un tag directo desde /tags.',
 
   'home.entity.notes.purpose':
     'Muro de stickies en columnas (tipo Pinterest). Cada nota es un sticky de formato libre que ocupa lo que necesita. Chips de filtro arriba para acotar el muro.',

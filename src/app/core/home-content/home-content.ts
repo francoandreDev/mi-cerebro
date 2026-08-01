@@ -74,6 +74,13 @@ export const HOME_WORKFLOWS_TODAY: readonly HomeWorkflow[] = [
       'home.flow.daily.step.4',
     ],
   },
+  {
+    key: 'tagview',
+    icon: 'magnifying-glass',
+    title: 'home.flow.tagview.title',
+    description: 'home.flow.tagview.description',
+    steps: ['home.flow.tagview.step.1', 'home.flow.tagview.step.2', 'home.flow.tagview.step.3'],
+  },
 ];
 
 export const HOME_WORKFLOWS_FUTURE: readonly HomeWorkflow[] = [
@@ -88,13 +95,6 @@ export const HOME_WORKFLOWS_FUTURE: readonly HomeWorkflow[] = [
       'home.flow.study.step.3',
       'home.flow.study.step.4',
     ],
-  },
-  {
-    key: 'tagview',
-    icon: 'magnifying-glass',
-    title: 'home.flow.tagview.title',
-    description: 'home.flow.tagview.description',
-    steps: ['home.flow.tagview.step.1', 'home.flow.tagview.step.2', 'home.flow.tagview.step.3'],
   },
 ];
 
