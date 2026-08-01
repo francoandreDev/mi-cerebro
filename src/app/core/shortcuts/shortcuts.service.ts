@@ -10,7 +10,7 @@ function isEditable(target: EventTarget | null): boolean {
 
 const MOD_ALIASES = new Set(['ctrl', 'control', 'cmd', 'command', 'meta']);
 
-function matches(combo: string, event: KeyboardEvent): boolean {
+export function matches(combo: string, event: KeyboardEvent): boolean {
   // why: combo '+' as a literal key (not a separator) breaks the naive
   //      split('+') — "+".split('+') is ['', ''], swallowing the key itself.
   //      Treat a trailing '+' as the key and split only the modifiers before it.
@@ -25,7 +25,10 @@ function matches(combo: string, event: KeyboardEvent): boolean {
       .map((p) => p.trim().toLowerCase())
       .filter(Boolean);
   } else {
-    const parts = combo.split('+').map((p) => p.trim().toLowerCase());
+    // why: a bare ' ' (spacebar) combo trims to '' and can never match
+    //      event.key (' ') — preserve a part that's non-empty but all
+    //      whitespace instead of collapsing it away.
+    const parts = combo.split('+').map((p) => (p.trim() || p).toLowerCase());
     key = parts[parts.length - 1] ?? '';
     modifierParts = parts.slice(0, -1);
   }
