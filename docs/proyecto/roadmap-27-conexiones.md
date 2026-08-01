@@ -303,3 +303,44 @@ extender los kinds vinculables a recordatorios/música.
 (`docs/deferred/shortcuts-cross-section.md`) y de "Hilos entre items relacionados"
 (`docs/deferred/files-writings-tasks.md`) — ambos ya apuntan a este paso (regla §4.11.25b). Se
 borran de sus archivos de tema recién cuando este ítem cierre implementado, no antes.
+
+---
+
+28. **Vista de lista + atajos de fila (J/K/Space/E/Del) en tasks y goals.** _Cerrado — implementado
+    y verificado en navegador real, 2026-08-01._
+
+**Contexto.** `docs/deferred/reminders-goals.md` tenía diferido "Atajos de navegación de fila
+(J/K, Space, E, Del) — pendiente en tasks/goals" desde el rediseño de reminders (donde sí se
+resolvió, con el primitivo `createListCursor`, `shared/utils/list-cursor.ts`): tasks (`/tasks`,
+kanban de buckets) y goals (`/goals`, wall de constelación) no tenían ningún orden de fila visible
+al que mapear J/K sin inventar uno arbitrario — violaría "la UI no debe mentir" (`reglas.md`).
+Ambas features sí tenían un orden real subyacente sin usar para navegación: `TaskSummary.position`
+(el mismo que reordena `onWater()`) y `GoalSummary.position` (el que ya usa el comparator de
+`GoalsService.summaries`). El paso agrega un **modo lista** (toggle, mismo patrón que el grid/list
+de `/books`) que hace ese orden visible, y recién ahí cablea J/K/Space/E/Del sobre él.
+
+- `shared/utils/row-nav.controller.ts` nuevo: `RowNavController` centraliza el bloque de 5
+  bindings J/K/Space/E/Del que reminders tenía inline en `registerShortcuts()` — reutilizado tal
+  cual por tasks y goals en vez de copiarlo, porque ambos containers ya estaban al límite duro de
+  300 líneas (`reglas.md` §4.4) antes de este cambio.
+- `/tasks`: `TasksGardenContainer` gana `viewMode` (`'garden'|'list'`, persistido en
+  `localStorage`, mismo patrón que `night`/`watering`) + botón toggle en el header. El modo lista
+  agrupa por bucket (hoy/semana/backlog), cada grupo ya ordenado por `position`. Espacio cosecha la
+  fila enfocada (no hay "descosechar" — mismo comportamiento que el botón existente).
+- `/goals`: `GoalsWallContainer` gana el mismo toggle (`'wall'|'list'`). El modo lista filtra por
+  query/tags/hideCompleted (mismo criterio que `buildStars`) y ordena por `summaries()` (ya
+  ordenado: no completadas primero, luego `position`). Espacio marca/desmarca "lograda".
+- **Bug preexistente encontrado y corregido**: `ShortcutsService.matches()` (`core/shortcuts/`)
+  hacía `.trim()` sobre cada parte del combo — un combo `' '` (barra espaciadora, usado por
+  reminders desde su rediseño) se convertía en `''` y nunca podía matchear `event.key === ' '`. El
+  Space de reminders estaba silenciosamente roto desde que se implementó; se detectó al verificar
+  Space en tasks/goals en navegador real. Fix + `shortcuts.service.spec.ts` nuevo (regresión sobre
+  `matches`, exportada para testeo).
+- i18n: `tasks.garden.viewMode.*`, `tasks.garden.list.*`, `tasks.shortcuts.*`,
+  `goals.wall.viewMode.*`, `goals.shortcuts.*`, más un step "avanzado" en `tasks.tutorial.ts` y
+  `goals.tutorial.ts` cada uno (regla §4.6.15b).
+- **Verificado en navegador real**: toggle a lista en ambas páginas, J/K mueve el cursor (resaltado
+  visible), Space cosecha/marca-lograda la fila enfocada, E navega a la entidad, Delete abre el
+  diálogo de confirmación existente. Persistencia del modo de vista confirmada tras reload.
+  `bun run typecheck` limpio, `bun run test` 567/567 verde (562 previos + 5 nuevos), `bun run lint`
+  sin errores nuevos (0 errores, warnings preexistentes sin cambios).

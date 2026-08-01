@@ -983,6 +983,9 @@ export const es = {
   'tasks.tutorial.water.title': '🚿 Regalas para que no se marchite',
   'tasks.tutorial.water.body':
     'Una tarea que lleva más de 3 días en Floración empieza a marchitarse (glyph distinto). Activá el riego acá arriba y tocá la gotita de una tarea en Brote o Semilla para subirla de posición antes de que le toque Floración.',
+  'tasks.tutorial.viewToggle.title': 'Vista de lista + atajos de fila',
+  'tasks.tutorial.viewToggle.body':
+    'Cambia el jardín por una lista plana ordenada por cantero. Con la fila enfocada: J/K mueve el cursor, Espacio cosecha, E abre la tarea, Supr la borra.',
 
   'tasks.tutorial.flow.essentials': 'Tareas: lo esencial',
   'tasks.tutorial.flow.patio': 'Patio: archivo de cosechas',
@@ -1015,6 +1018,17 @@ export const es = {
   'tasks.garden.legend.countToday': 'tareas para hoy',
   'tasks.garden.legend.countWeek': 'tareas para esta semana',
   'tasks.garden.legend.countBacklog': 'tareas en backlog',
+
+  'tasks.garden.viewMode.toList': 'Ver como lista',
+  'tasks.garden.viewMode.toGarden': 'Ver como jardín',
+  'tasks.garden.list.overdue': 'Vencida',
+  'tasks.garden.list.harvest': 'Cosechar',
+  'tasks.garden.list.delete': 'Borrar',
+  'tasks.shortcuts.next': 'Fila siguiente',
+  'tasks.shortcuts.prev': 'Fila anterior',
+  'tasks.shortcuts.open': 'Abrir fila enfocada',
+  'tasks.shortcuts.harvest': 'Cosechar fila enfocada',
+  'tasks.shortcuts.delete': 'Borrar fila enfocada',
 
   'tasks.patio.title': 'Patio',
   'tasks.patio.subtitle': 'Tus cosechas',
@@ -1106,6 +1120,9 @@ export const es = {
   'goals.tutorial.move.title': 'Arrastrá una estrella para mover toda su meta',
   'goals.tutorial.move.body':
     'Un drag desde cualquier estrella mueve la constelación completa de esa meta por el cielo — la posición se guarda sola. Sus pasos se reacomodan juntos, pegados entre sí.',
+  'goals.tutorial.viewToggle.title': 'Vista de lista + atajos de fila',
+  'goals.tutorial.viewToggle.body':
+    'Cambia el cielo por una lista plana de metas. Con la fila enfocada: J/K mueve el cursor, Espacio marca/desmarca lograda, E abre la meta, Supr la borra.',
 
   'goals.tutorial.constellation.create.title': 'Click en el lienzo siembra un paso nuevo',
   'goals.tutorial.constellation.create.body':
@@ -1233,6 +1250,14 @@ export const es = {
   'goals.wall.peekProgressEmpty': 'Sin pasos todavía',
   'goals.wall.peekProgress': '{done} de {total} · {pct}%',
   'goals.wall.peekDeadlineEmpty': 'Sin plazo',
+
+  'goals.wall.viewMode.toList': 'Ver como lista',
+  'goals.wall.viewMode.toWall': 'Ver como constelación',
+  'goals.shortcuts.next': 'Fila siguiente',
+  'goals.shortcuts.prev': 'Fila anterior',
+  'goals.shortcuts.open': 'Abrir fila enfocada',
+  'goals.shortcuts.toggleCompleted': 'Marcar/desmarcar lograda',
+  'goals.shortcuts.delete': 'Borrar fila enfocada',
 
   'lists.title': 'Listas',
   'lists.new': 'Nueva lista',

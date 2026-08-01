@@ -63,6 +63,24 @@
       >
         🚿 {{ t('tasks.garden.toggleWatering') }}
       </button>
+      <button
+        type="button"
+        class="toggle"
+        data-tutorial="tasks-view-toggle"
+        [attr.aria-label]="
+          viewMode() === 'garden'
+            ? t('tasks.garden.viewMode.toList')
+            : t('tasks.garden.viewMode.toGarden')
+        "
+        [title]="
+          viewMode() === 'garden'
+            ? t('tasks.garden.viewMode.toList')
+            : t('tasks.garden.viewMode.toGarden')
+        "
+        (click)="onToggleViewMode()"
+      >
+        <mc-icon [name]="viewMode() === 'garden' ? 'list-bullets' : 'grid-four'" />
+      </button>
       <span class="counts" aria-hidden="true">{{ counts() }}</span>
       @if (devMode) {
         <button
@@ -122,113 +140,170 @@
     (manageFolder)="onManageFolder($event)"
   />
 
-  <div class="planters" data-tutorial="tasks-planters">
-    <mc-planter
-      stage="bloom"
-      bucket="today"
-      [title]="t('tasks.garden.planterToday')"
-      [emptyLabel]="t('tasks.garden.empty.today')"
-      [count]="pending().today.length"
-      [dragOver]="dnd.overZone() === 'today'"
-      (dragEnter)="dnd.onDragEnter($event)"
-      (dragLeaveBucket)="dnd.onDragLeave($event)"
-      (dropOn)="onDrop($event)"
-    >
-      @for (entry of pending().today; track entry.summary.id) {
-        <mc-plant-card
-          [entry]="entry"
-          stage="bloom"
-          [availableTags]="tags()"
-          [untitledLabel]="untitledLabel()"
-          [wiltDays]="wiltDaysFor(entry.summary)"
-          [lifted]="dnd.draggingId() === entry.summary.id"
-          [justSprouted]="justSproutedId() === entry.summary.id"
-          (open)="onOpen(entry.summary.id, entry.summary.title)"
-          (transplant)="onTransplant($event)"
-          (harvest)="onHarvest($event)"
-          (remove)="onDelete($event)"
-          (dragstart)="dnd.onDragStart($event, entry.summary.id)"
-          (dragend)="dnd.onDragEnd()"
-        />
+  @if (viewMode() === 'list') {
+    <div class="task-list" data-tutorial="tasks-list-view">
+      @for (group of listGroups(); track group.key) {
+        <section class="task-list-group">
+          <h2 class="task-list-group-title">{{ group.label }} · {{ group.items.length }}</h2>
+          @if (group.items.length === 0) {
+            <p class="task-list-empty">{{ group.emptyLabel }}</p>
+          } @else {
+            <ul class="task-list-rows">
+              @for (entry of group.items; track entry.summary.id) {
+                <li
+                  class="task-row"
+                  [class.focused]="cursor.focusedId() === entry.summary.id"
+                  [attr.data-task-row]="entry.summary.id"
+                >
+                  <button
+                    type="button"
+                    class="task-row-open"
+                    (click)="onOpen(entry.summary.id, entry.summary.title)"
+                  >
+                    <span class="task-row-title">{{ entry.summary.title || untitledLabel() }}</span>
+                    @if (entry.overdue) {
+                      <span class="task-row-overdue">{{ t('tasks.garden.list.overdue') }}</span>
+                    }
+                  </button>
+                  <button
+                    type="button"
+                    class="task-row-action"
+                    [attr.aria-label]="t('tasks.garden.list.harvest')"
+                    [title]="t('tasks.garden.list.harvest')"
+                    (click)="onHarvest(entry.summary.id)"
+                  >
+                    <mc-icon name="check" />
+                  </button>
+                  <button
+                    type="button"
+                    class="task-row-action task-row-action--danger"
+                    [attr.aria-label]="t('tasks.garden.list.delete')"
+                    [title]="t('tasks.garden.list.delete')"
+                    (click)="onDelete(entry.summary.id)"
+                  >
+                    <mc-icon name="trash" />
+                  </button>
+                </li>
+              }
+            </ul>
+            @if (group.key === 'backlog' && hiddenBacklogCount() > 0) {
+              <button type="button" class="load-more" (click)="onLoadMoreBacklog()">
+                {{ t('tasks.garden.loadMore') }} · {{ loadMoreLabel() }}
+              </button>
+            }
+          }
+        </section>
       }
-      <div basket class="basket-stack" data-tutorial="tasks-basket">
-        <mc-harvest-basket [harvested]="harvested()" />
-        <button type="button" class="patio-link" (click)="onOpenPatio()">
-          {{ t('tasks.garden.openPatio') }} →
-        </button>
-      </div>
-    </mc-planter>
+    </div>
+  } @else {
+    <div class="planters" data-tutorial="tasks-planters">
+      <mc-planter
+        stage="bloom"
+        bucket="today"
+        [title]="t('tasks.garden.planterToday')"
+        [emptyLabel]="t('tasks.garden.empty.today')"
+        [count]="pending().today.length"
+        [dragOver]="dnd.overZone() === 'today'"
+        (dragEnter)="dnd.onDragEnter($event)"
+        (dragLeaveBucket)="dnd.onDragLeave($event)"
+        (dropOn)="onDrop($event)"
+      >
+        @for (entry of pending().today; track entry.summary.id) {
+          <mc-plant-card
+            [entry]="entry"
+            stage="bloom"
+            [availableTags]="tags()"
+            [untitledLabel]="untitledLabel()"
+            [wiltDays]="wiltDaysFor(entry.summary)"
+            [lifted]="dnd.draggingId() === entry.summary.id"
+            [justSprouted]="justSproutedId() === entry.summary.id"
+            (open)="onOpen(entry.summary.id, entry.summary.title)"
+            (transplant)="onTransplant($event)"
+            (harvest)="onHarvest($event)"
+            (remove)="onDelete($event)"
+            (dragstart)="dnd.onDragStart($event, entry.summary.id)"
+            (dragend)="dnd.onDragEnd()"
+          />
+        }
+        <div basket class="basket-stack" data-tutorial="tasks-basket">
+          <mc-harvest-basket [harvested]="harvested()" />
+          <button type="button" class="patio-link" (click)="onOpenPatio()">
+            {{ t('tasks.garden.openPatio') }} →
+          </button>
+        </div>
+      </mc-planter>
 
-    <mc-planter
-      stage="sprout"
-      bucket="week"
-      [title]="t('tasks.garden.planterWeek')"
-      [emptyLabel]="t('tasks.garden.empty.week')"
-      [count]="pending().week.length"
-      [dragOver]="dnd.overZone() === 'week'"
-      (dragEnter)="dnd.onDragEnter($event)"
-      (dragLeaveBucket)="dnd.onDragLeave($event)"
-      (dropOn)="onDrop($event)"
-    >
-      @for (entry of pending().week; track entry.summary.id) {
-        <mc-plant-card
-          [entry]="entry"
-          stage="sprout"
-          [availableTags]="tags()"
-          [untitledLabel]="untitledLabel()"
-          [wateringMode]="watering()"
-          [watered]="wateredId() === entry.summary.id"
-          [lifted]="dnd.draggingId() === entry.summary.id"
-          [justSprouted]="justSproutedId() === entry.summary.id"
-          (open)="onOpen(entry.summary.id, entry.summary.title)"
-          (transplant)="onTransplant($event)"
-          (harvest)="onHarvest($event)"
-          (remove)="onDelete($event)"
-          (water)="onWater($event, 'week')"
-          (dragstart)="dnd.onDragStart($event, entry.summary.id)"
-          (dragend)="dnd.onDragEnd()"
-        />
-      }
-    </mc-planter>
+      <mc-planter
+        stage="sprout"
+        bucket="week"
+        [title]="t('tasks.garden.planterWeek')"
+        [emptyLabel]="t('tasks.garden.empty.week')"
+        [count]="pending().week.length"
+        [dragOver]="dnd.overZone() === 'week'"
+        (dragEnter)="dnd.onDragEnter($event)"
+        (dragLeaveBucket)="dnd.onDragLeave($event)"
+        (dropOn)="onDrop($event)"
+      >
+        @for (entry of pending().week; track entry.summary.id) {
+          <mc-plant-card
+            [entry]="entry"
+            stage="sprout"
+            [availableTags]="tags()"
+            [untitledLabel]="untitledLabel()"
+            [wateringMode]="watering()"
+            [watered]="wateredId() === entry.summary.id"
+            [lifted]="dnd.draggingId() === entry.summary.id"
+            [justSprouted]="justSproutedId() === entry.summary.id"
+            (open)="onOpen(entry.summary.id, entry.summary.title)"
+            (transplant)="onTransplant($event)"
+            (harvest)="onHarvest($event)"
+            (remove)="onDelete($event)"
+            (water)="onWater($event, 'week')"
+            (dragstart)="dnd.onDragStart($event, entry.summary.id)"
+            (dragend)="dnd.onDragEnd()"
+          />
+        }
+      </mc-planter>
 
-    <mc-planter
-      stage="seed"
-      bucket="backlog"
-      [title]="t('tasks.garden.planterBacklog')"
-      [emptyLabel]="t('tasks.garden.empty.backlog')"
-      [count]="pending().backlog.length"
-      [dragOver]="dnd.overZone() === 'backlog'"
-      (dragEnter)="dnd.onDragEnter($event)"
-      (dragLeaveBucket)="dnd.onDragLeave($event)"
-      (dropOn)="onDrop($event)"
-    >
-      @for (entry of visibleBacklog(); track entry.summary.id; let i = $index) {
-        <mc-plant-card
-          [entry]="entry"
-          stage="seed"
-          [availableTags]="tags()"
-          [untitledLabel]="untitledLabel()"
-          [wateringMode]="watering()"
-          [watered]="wateredId() === entry.summary.id"
-          [lifted]="dnd.draggingId() === entry.summary.id"
-          [justSprouted]="justSproutedId() === entry.summary.id"
-          [emerging]="i >= emergingFrom()"
-          (open)="onOpen(entry.summary.id, entry.summary.title)"
-          (transplant)="onTransplant($event)"
-          (harvest)="onHarvest($event)"
-          (remove)="onDelete($event)"
-          (water)="onWater($event, 'backlog')"
-          (dragstart)="dnd.onDragStart($event, entry.summary.id)"
-          (dragend)="dnd.onDragEnd()"
-        />
-      }
-      @if (hiddenBacklogCount() > 0) {
-        <button type="button" class="load-more" (click)="onLoadMoreBacklog()">
-          {{ t('tasks.garden.loadMore') }} · {{ loadMoreLabel() }}
-        </button>
-      }
-    </mc-planter>
-  </div>
+      <mc-planter
+        stage="seed"
+        bucket="backlog"
+        [title]="t('tasks.garden.planterBacklog')"
+        [emptyLabel]="t('tasks.garden.empty.backlog')"
+        [count]="pending().backlog.length"
+        [dragOver]="dnd.overZone() === 'backlog'"
+        (dragEnter)="dnd.onDragEnter($event)"
+        (dragLeaveBucket)="dnd.onDragLeave($event)"
+        (dropOn)="onDrop($event)"
+      >
+        @for (entry of visibleBacklog(); track entry.summary.id; let i = $index) {
+          <mc-plant-card
+            [entry]="entry"
+            stage="seed"
+            [availableTags]="tags()"
+            [untitledLabel]="untitledLabel()"
+            [wateringMode]="watering()"
+            [watered]="wateredId() === entry.summary.id"
+            [lifted]="dnd.draggingId() === entry.summary.id"
+            [justSprouted]="justSproutedId() === entry.summary.id"
+            [emerging]="i >= emergingFrom()"
+            (open)="onOpen(entry.summary.id, entry.summary.title)"
+            (transplant)="onTransplant($event)"
+            (harvest)="onHarvest($event)"
+            (remove)="onDelete($event)"
+            (water)="onWater($event, 'backlog')"
+            (dragstart)="dnd.onDragStart($event, entry.summary.id)"
+            (dragend)="dnd.onDragEnd()"
+          />
+        }
+        @if (hiddenBacklogCount() > 0) {
+          <button type="button" class="load-more" (click)="onLoadMoreBacklog()">
+            {{ t('tasks.garden.loadMore') }} · {{ loadMoreLabel() }}
+          </button>
+        }
+      </mc-planter>
+    </div>
+  }
 
   <p class="sr-live" aria-live="polite">{{ announce() }}</p>
 </section>

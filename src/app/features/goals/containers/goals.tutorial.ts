@@ -130,6 +130,16 @@ export const GOALS_TUTORIAL: TutorialDefinition = {
       bodyKey: 'goals.tutorial.move.body',
       placement: 'bottom',
     },
+    // why: docs/deferred/reminders-goals.md — J/K/Space/E/Del sólo tienen
+    //      sentido sobre un orden visible; este toggle es el punto de
+    //      entrada a ese orden, así que amerita su propio step avanzado.
+    {
+      anchorSelector: '[data-tutorial="goals-view-toggle"]',
+      titleKey: 'goals.tutorial.viewToggle.title',
+      bodyKey: 'goals.tutorial.viewToggle.body',
+      action: { event: 'click', icon: 'list-bullets' },
+      tier: 'avanzado',
+    },
   ],
 };
 

@@ -494,6 +494,58 @@
   padding: var(--mc-space-5);
 }
 
+.goal-list {
+  flex: 1;
+  overflow-y: auto;
+}
+.goal-list-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-1);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.goal-row {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+  border-radius: var(--mc-radius-sm);
+  border: 1px solid transparent;
+}
+.goal-row.focused {
+  border-color: var(--mc-accent-primary);
+  background: var(--mc-bg-elevated);
+}
+.goal-row-open {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  gap: var(--mc-space-2);
+  background: transparent;
+  border: none;
+  text-align: left;
+  padding: var(--mc-space-2);
+  color: var(--mc-fg-primary);
+  font-size: var(--mc-font-size-sm);
+  cursor: pointer;
+}
+.goal-row-badge {
+  font-family: var(--mc-font-mono);
+  font-size: var(--mc-font-size-xs);
+  color: var(--mc-fg-muted);
+}
+.goal-row-action {
+  background: transparent;
+  border: none;
+  color: var(--mc-fg-secondary);
+  padding: var(--mc-space-1);
+  cursor: pointer;
+}
+.goal-row-action--danger:hover {
+  color: var(--mc-danger);
+}
+
 @keyframes mc-star-pulse {
   0%,
   100% {

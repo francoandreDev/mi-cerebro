@@ -1,8 +1,10 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   computed,
+  effect,
   inject,
   isDevMode,
   signal,
@@ -27,7 +29,9 @@ import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.co
 import { FolderActionDialogComponent } from '@shared/folder-action-dialog/folder-action-dialog.component';
 import { FolderActionDialogController } from '@shared/folder-action-dialog/folder-action-dialog.controller';
 import { FolderBreadcrumbComponent } from '@shared/folder-breadcrumb/folder-breadcrumb.component';
+import { IconComponent } from '@shared/icon/icon.component';
 import { createDndController } from '@shared/utils/dnd-controller';
+import { RowNavController } from '@shared/utils/row-nav.controller';
 
 import { HarvestBasketComponent } from '../components/harvest-basket.component';
 import { PlantCardComponent } from '../components/plant-card.component';
@@ -48,7 +52,10 @@ const STAGE_BY_BUCKET: Record<Bucket, PlantStage> = {
 const WILT_THRESHOLD_DAYS = 3;
 const NIGHT_KEY = 'mc.tasks.garden.night';
 const WATERING_KEY = 'mc.tasks.garden.watering';
+const VIEW_KEY = 'mc.tasks.garden.viewMode';
 const BACKLOG_PAGE_SIZE = 24;
+
+type ViewMode = 'garden' | 'list';
 
 @Component({
   selector: 'mc-tasks-garden',
@@ -60,6 +67,7 @@ const BACKLOG_PAGE_SIZE = 24;
     HarvestBasketComponent,
     FolderBreadcrumbComponent,
     FolderActionDialogComponent,
+    IconComponent,
   ],
   templateUrl: './tasks-garden.container.html',
   styleUrl: './tasks-garden.container.css',
@@ -76,10 +84,43 @@ export class TasksGardenContainer {
   private readonly i18n = inject(I18nService);
   private readonly host = inject(ElementRef<HTMLElement>);
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly destroyRef = inject(DestroyRef);
+
+  private readonly rowNav = new RowNavController(
+    {
+      rowIds: () => this.rowIds(),
+      onToggle: (id) => void this.onHarvest(id),
+      onOpen: (id) => {
+        const s = this.summaries().find((x) => x.id === id);
+        this.onOpen(id, s?.title ?? '');
+      },
+      onDelete: (id) => this.onDelete(id),
+    },
+    {
+      next: 'tasks.shortcuts.next',
+      prev: 'tasks.shortcuts.prev',
+      open: 'tasks.shortcuts.open',
+      toggle: 'tasks.shortcuts.harvest',
+      del: 'tasks.shortcuts.delete',
+    },
+    'tasks',
+  );
+  protected readonly cursor = this.rowNav.cursor;
 
   constructor() {
     registerTasksTutorial();
     registerTasksPatioTutorial();
+    const unregister = this.rowNav.register();
+    this.destroyRef.onDestroy(unregister);
+    effect(() => {
+      const id = this.cursor.focusedId();
+      if (!id) return;
+      queueMicrotask(() => {
+        document
+          .querySelector(`[data-task-row="${CSS.escape(id)}"]`)
+          ?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      });
+    });
   }
 
   protected readonly STAGE_BY_BUCKET = STAGE_BY_BUCKET;
@@ -89,6 +130,7 @@ export class TasksGardenContainer {
   protected readonly creating = signal<boolean>(false);
   protected readonly night = signal<boolean>(readBool(NIGHT_KEY));
   protected readonly watering = signal<boolean>(readBool(WATERING_KEY));
+  protected readonly viewMode = signal<ViewMode>(readView());
   protected readonly dnd = createDndController<Bucket>();
   protected readonly announce = signal<string>('');
   protected readonly wateredId = signal<string | null>(null);
@@ -135,6 +177,37 @@ export class TasksGardenContainer {
   protected readonly loadMoreLabel = computed(() =>
     this.t('tasks.garden.loadMoreCount').replace('{n}', String(this.hiddenBacklogCount())),
   );
+
+  // why: J/K cursor + list-mode order — each bucket array is already sorted
+  //      by TaskSummary.position (TasksService.summariesSignal), the same
+  //      order onWater() reorders — mirrors it instead of inventing a new one
+  //      (see docs/deferred/reminders-goals.md).
+  protected readonly rowIds = computed<readonly string[]>(() => [
+    ...this.pending().today.map((e) => e.summary.id),
+    ...this.pending().week.map((e) => e.summary.id),
+    ...this.pending().backlog.map((e) => e.summary.id),
+  ]);
+
+  protected readonly listGroups = computed(() => [
+    {
+      key: 'today' as const,
+      label: this.t('tasks.garden.planterToday'),
+      emptyLabel: this.t('tasks.garden.empty.today'),
+      items: this.pending().today,
+    },
+    {
+      key: 'week' as const,
+      label: this.t('tasks.garden.planterWeek'),
+      emptyLabel: this.t('tasks.garden.empty.week'),
+      items: this.pending().week,
+    },
+    {
+      key: 'backlog' as const,
+      label: this.t('tasks.garden.planterBacklog'),
+      emptyLabel: this.t('tasks.garden.empty.backlog'),
+      items: this.visibleBacklog(),
+    },
+  ]);
 
   protected readonly harvested = computed<readonly TaskSummary[]>(() => {
     return this.buckets()
@@ -202,6 +275,12 @@ export class TasksGardenContainer {
     const next = !this.watering();
     this.watering.set(next);
     persistBool(WATERING_KEY, next);
+  }
+
+  protected onToggleViewMode(): void {
+    const next: ViewMode = this.viewMode() === 'garden' ? 'list' : 'garden';
+    this.viewMode.set(next);
+    persistView(next);
   }
 
   protected onOpen(id: string, title: string): void {
@@ -415,6 +494,20 @@ const readBool = (key: string): boolean => {
 const persistBool = (key: string, value: boolean): void => {
   try {
     localStorage.setItem(key, value ? '1' : '0');
+  } catch {
+    /* ignore quota */
+  }
+};
+const readView = (): ViewMode => {
+  try {
+    return localStorage.getItem(VIEW_KEY) === 'list' ? 'list' : 'garden';
+  } catch {
+    return 'garden';
+  }
+};
+const persistView = (v: ViewMode): void => {
+  try {
+    localStorage.setItem(VIEW_KEY, v);
   } catch {
     /* ignore quota */
   }

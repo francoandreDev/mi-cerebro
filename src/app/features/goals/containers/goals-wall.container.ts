@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -20,6 +28,7 @@ import { FolderActionDialogController } from '@shared/folder-action-dialog/folde
 import { FolderBreadcrumbComponent } from '@shared/folder-breadcrumb/folder-breadcrumb.component';
 import { IconComponent } from '@shared/icon/icon.component';
 import { TagChipComponent } from '@shared/tags/tag-chip.component';
+import { RowNavController } from '@shared/utils/row-nav.controller';
 
 import { GoalPeekOverlayComponent } from '../components/goal-peek-overlay.component';
 import type { GoalSummary } from '../models/goal.types';
@@ -31,8 +40,26 @@ import {
   buildConstellationLinks,
   buildStars,
   constellationCenter,
+  normTitle,
   type StarVm,
 } from './goal-wall-layout.utils';
+
+const VIEW_KEY = 'mc.goals.wall.viewMode';
+type ViewMode = 'wall' | 'list';
+const readView = (): ViewMode => {
+  try {
+    return localStorage.getItem(VIEW_KEY) === 'list' ? 'list' : 'wall';
+  } catch {
+    return 'wall';
+  }
+};
+const persistView = (v: ViewMode): void => {
+  try {
+    localStorage.setItem(VIEW_KEY, v);
+  } catch {
+    /* ignore quota */
+  }
+};
 
 @Component({
   selector: 'mc-goals-wall',
@@ -58,10 +85,41 @@ export class GoalsWallContainer {
   private readonly errors = inject(ErrorService);
   private readonly i18n = inject(I18nService);
   private readonly settings = inject(SettingsService);
+  private readonly destroyRef = inject(DestroyRef);
+
+  private readonly rowNav = new RowNavController(
+    {
+      rowIds: () => this.listGoals().map((g) => g.id),
+      onToggle: (id) => void this.toggleCompleted(id),
+      onOpen: (id) => void this.openGoal(id),
+      onDelete: (id) => this.removeGoal(id),
+    },
+    {
+      next: 'goals.shortcuts.next',
+      prev: 'goals.shortcuts.prev',
+      open: 'goals.shortcuts.open',
+      toggle: 'goals.shortcuts.toggleCompleted',
+      del: 'goals.shortcuts.delete',
+    },
+    'goals',
+  );
+  protected readonly cursor = this.rowNav.cursor;
+  protected readonly viewMode = signal<ViewMode>(readView());
 
   constructor() {
     registerGoalsTutorial();
     registerGoalsFoldersTutorial();
+    const unregister = this.rowNav.register();
+    this.destroyRef.onDestroy(unregister);
+    effect(() => {
+      const id = this.cursor.focusedId();
+      if (!id) return;
+      queueMicrotask(() => {
+        document
+          .querySelector(`[data-goal-row="${CSS.escape(id)}"]`)
+          ?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      });
+    });
   }
 
   protected readonly tags = this.tagsService.tags;
@@ -164,6 +222,23 @@ export class GoalsWallContainer {
   );
 
   protected readonly links = computed(() => buildConstellationLinks(this.stars()));
+
+  // why: J/K cursor + list-mode order — `summaries()` is already sorted by
+  //      GoalsService's comparator (not-completed first, then
+  //      GoalSummary.position), the same order the service maintains for
+  //      the entity tree — mirrors it instead of inventing a wall-specific
+  //      one (see docs/deferred/reminders-goals.md).
+  protected readonly listGoals = computed<readonly GoalSummary[]>(() => {
+    const q = normTitle(this.query().trim());
+    const tagIds = this.activeTagIds();
+    const hideCompleted = this.hideCompleted();
+    return this.inCurrentFolder().filter((g) => {
+      if (q && !normTitle(g.title).includes(q)) return false;
+      if (tagIds.size > 0 && !g.tags.some((id) => tagIds.has(id))) return false;
+      if (hideCompleted && g.completed) return false;
+      return true;
+    });
+  });
 
   protected readonly allDim = computed(
     () => this.stars().length > 0 && this.stars().every((s) => s.dim),
@@ -340,6 +415,51 @@ export class GoalsWallContainer {
       this.i18n,
       this.folderActionDialog,
       (e) => this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize())),
+    );
+  }
+
+  protected onToggleViewMode(): void {
+    const next: ViewMode = this.viewMode() === 'wall' ? 'list' : 'wall';
+    this.viewMode.set(next);
+    persistView(next);
+  }
+
+  protected async openGoal(id: string): Promise<void> {
+    await this.router.navigate(['/goals', entitySlugSegment(this.goalTitle(id), id)]);
+  }
+
+  protected async toggleCompleted(id: string): Promise<void> {
+    const summary = this.summaries().find((s) => s.id === id);
+    if (!summary) return;
+    try {
+      await this.workspace.ensureWritable();
+      await this.goalsService.patch(id, { completed: !summary.completed });
+    } catch (e) {
+      this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize()));
+    }
+  }
+
+  protected removeGoal(id: string): void {
+    const title = this.goalTitle(id);
+    this.confirm.ask(
+      {
+        title: this.t('goals.confirm.delete.title'),
+        message: this.t('goals.deleteConfirm').replace(
+          '{title}',
+          title || this.t('goals.untitledTitle'),
+        ),
+        confirmLabel: this.t('goals.confirm.delete.confirm'),
+        cancelLabel: this.t('goals.confirm.cancel'),
+        tone: 'danger',
+      },
+      async () => {
+        try {
+          await this.workspace.ensureWritable();
+          await this.goalsService.deleteToTrash(id);
+        } catch (e) {
+          this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize()));
+        }
+      },
     );
   }
 }
