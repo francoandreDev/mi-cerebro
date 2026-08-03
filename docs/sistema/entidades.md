@@ -54,6 +54,14 @@ Forma "carpeta + capítulos", en un kind separado (`books/`, no anidado bajo `wr
 
 **UI:** `BooksContainer` orquesta un único `EntityLockController('book')` por libro (no uno por capítulo), una book-meta-bar (título + tags + estado + borrar), una chapter-list (mover arriba/abajo, agregar, quitar) y un chapter-editor-pane (título + body). `BookOpenContainer` cachea blob URLs de cover/back/chapter-images vía dos `effect()` sobre `active()`/`chapters()` (revocados en `DestroyRef.onDestroy` y en cada refresh), y expone un picker de archivo + botón de quitar por cara (tapa/contratapa cerradas) y por capítulo (`ChapterIndexCardComponent`, botones en `.ops` junto a mover/borrar). Rutas `/books`, `/books/:id`, `/books/:id/:chapterId`. Sidebar con chip `Libros`, botón de nuevo libro y botón de nueva carpeta.
 
+**Vista de estantería (`BookshelfContainer`, `/books`):** tres modos, rotados por un único botón (`ShelfViewMode = 'shelf' | 'list' | 'tree'`, `MODE_ORDER` en `bookshelf.container.ts`, mismo patrón que `HistoryZoom`/`ZOOM_ORDER` en `history.container.ts`):
+
+- **`shelf`** (default): una sola carpeta a la vez (navegación por breadcrumb), libros en fila con drag-and-drop nativo (`bookshelf-dnd.ts`: `shelfDropTarget`/`slotDropTarget`, posición fraccional entre hermanos).
+- **`list`**: la misma carpeta actual, en filas compactas con `mc-book-volume` en density `'micro'`.
+- **`tree`**: toda la biblioteca a la vez — cada carpeta es una rama de un mismo árbol (`bookshelf-tree.component.ts` + `bookshelf-tree-geometry.ts`). La geometría es pura y determinística: curvas de Bézier cuadráticas en un `<svg viewBox="0 0 100 100">`, una rama por carpeta (alternando lado según su índice en el orden ya provisto por `sortNamedFoldersPinnedFirst`), largo proporcional a `Math.sqrt(cantidad de libros)`, cada libro ubicado en un punto `t` a lo largo de la curva con un jitter chico derivado del hash de su id (mismo criterio que `stepOffset` en `goal-constellation-editor`) para no quedar en fila perfecta. Sin forma persistida ni editor visual — alcance de v1, ver `docs/deferred/trash-books.md` (ítem cerrado) para el porqué del recorte. Click en un libro abre el libro; click en la etiqueta de una rama navega a esa carpeta y vuelve a modo `shelf`; el pin de carpeta reutiliza `toggleFolderPin`. **Sin drag-and-drop en este modo** (queda para una vuelta futura si hace falta reordenar sin pasar por `shelf`).
+
+`catalogShelves()` (ya computado para el overlay de catálogo, `toCatalogShelves` en `bookshelf-projections.ts`) alimenta tanto el catálogo como el árbol — ninguno de los dos necesitó una obtención de datos nueva.
+
 **Papelera:** al ser una entrada-directorio, `TrashService` tiene una rama especial para `kind === 'book'` (lee el bundle, llama `restoreFromBundle`, purga el archivo); `parseEntry` extrae el título desde `raw.book.title` para bundles.
 
 ## Imágenes

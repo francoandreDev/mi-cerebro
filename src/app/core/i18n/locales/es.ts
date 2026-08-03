@@ -1597,6 +1597,7 @@ export const es = {
   'books.shelf.tooltip': '{title} · {chapters} · ~{words} palabras · {ago}',
   'books.shelf.toggleGrid': 'Vista de estantería',
   'books.shelf.toggleList': 'Vista de lista',
+  'books.shelf.toggleTree': 'Vista de árbol',
   'books.shelf.unshelved': 'Sin estante',
   'books.shelf.emptyShelfHint': 'Arrastrá un libro acá para llenar este estante.',
   'books.shelf.densityCompact': 'Vista compacta',

@@ -15,12 +15,12 @@ Formato por entrada:
 
 ## Books / UI (origen: rediseño de /books)
 
-### Estantería con forma creativa / no lineal (árbol, curva, etc.)
+### Drag-and-drop en modo árbol
 
-- **Qué**: el shelf actual es una pared rectangular con tablas horizontales y bookends a los lados — metáfora "biblioteca clásica". Una versión avanzada permitiría layouts no rectangulares: ramas de árbol con shelves angulados, espirales, formas custom que el usuario elija o defina. Las referencias mostradas en la sesión incluían un shelf con forma de árbol (ramas con libros agrupados por copa/tronco) que carga significado adicional ("estos son mis raíces", "estos son los frutos recientes", etc.).
-- **Por qué se difirió**: el v1 todavía no resuelve los básicos (legibilidad del lomo, reorden, múltiples estanterías nombradas). El layout creativo agrega complejidad de posicionamiento (cada shelf necesita su propio ángulo + ancla en una grilla 2D), modelo de "shape" persistido, y editor visual para que el usuario configure. Primero hay que pulir la metáfora clásica.
-- **Target**: sin asignar — abrir cuando el shelf clásico esté funcional (legible, reordenable, multi-estante) y aparezca demanda real de "quiero mi biblioteca con forma de X".
-- **Origen**: sesión 2026-06-29 (rediseño /books shelf — el usuario referenció una estantería en forma de árbol como inspiración).
+- **Qué**: el modo `tree` (ver `docs/sistema/entidades.md`, sección Libros) permite abrir libros y navegar carpetas, pero no reordenar/mover libros arrastrando — a diferencia de `shelf`, que sí lo soporta (`bookshelf-dnd.ts`).
+- **Por qué se difirió**: el hit-testing de drop sobre puntos dispersos en una curva SVG (en vez de una fila lineal) es una coreografía de pointer events más compleja que la de `shelf`; el modo árbol es principalmente una vista panorámica de navegación/lectura, `shelf` ya cubre el caso de reordenar.
+- **Target**: sin asignar — abrir si el usuario nota falta de reordenar sin salir del modo árbol.
+- **Origen**: sesión 2026-08-03 (implementación del árbol, ítem original de 2026-06-29 cerrado).
 
 ### Paginación real persistida fila por fila (no global)
 

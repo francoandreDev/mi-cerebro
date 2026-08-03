@@ -1,0 +1,58 @@
+<div class="tree" data-tutorial="books-tree">
+  <svg class="branches" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+    <path class="trunk" [attr.d]="trunkPath" />
+    @for (branch of branches(); track branch.folder) {
+      <path class="branch" [attr.d]="branch.path" />
+    }
+  </svg>
+
+  @for (branch of branches(); track branch.folder) {
+    <div
+      class="branch-label"
+      [class.pinned]="branch.pinned"
+      [style.left.%]="branch.books[0]?.x ?? 50"
+      [style.top.%]="branch.books[0]?.y ?? 50"
+    >
+      <button
+        type="button"
+        class="branch-name"
+        (click)="onFolderClick(branch.folder, $event)"
+        [attr.aria-label]="branch.label"
+        [title]="branch.label"
+      >
+        <span>{{ branch.label }}</span>
+      </button>
+      <button
+        type="button"
+        class="pin-btn"
+        (click)="onPinClick(branch.folder, $event)"
+        [attr.aria-label]="branch.pinned ? t('books.catalog.unpin') : t('books.catalog.pin')"
+        [title]="branch.pinned ? t('books.catalog.unpin') : t('books.catalog.pin')"
+      >
+        <mc-icon [name]="branch.pinned ? 'push-pin-slash' : 'push-pin'" />
+      </button>
+    </div>
+
+    @for (point of branch.books; track point.book.id) {
+      <button
+        type="button"
+        class="book-node"
+        [style.left.%]="point.x"
+        [style.top.%]="point.y"
+        [attr.aria-label]="displayTitle(point.book)"
+        [title]="displayTitle(point.book)"
+        (click)="onBookClick(point.book)"
+      >
+        <mc-book-volume
+          [bookId]="point.book.id"
+          [title]="point.book.title"
+          [untitledLabel]="untitledLabel()"
+          tallness="short"
+          [chapterCount]="point.book.chapterCount"
+          [accent]="point.book.accent"
+          density="micro"
+        />
+      </button>
+    }
+  }
+</div>

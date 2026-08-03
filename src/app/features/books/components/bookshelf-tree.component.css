@@ -1,0 +1,95 @@
+:host {
+  display: block;
+  flex: 1;
+  min-height: 0;
+}
+
+.tree {
+  position: relative;
+  width: 100%;
+  height: min(72vh, 720px);
+  min-height: 420px;
+  border-radius: var(--mc-radius-md);
+  background: color-mix(in srgb, var(--mc-bg-elevated) 60%, transparent);
+  overflow: hidden;
+}
+
+.branches {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.trunk,
+.branch {
+  fill: none;
+  stroke: color-mix(in srgb, #6b4a2b 70%, var(--mc-fg-muted) 30%);
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+.trunk {
+  stroke-width: 3;
+}
+.branch {
+  stroke-width: 1.6;
+  opacity: 0.75;
+}
+
+.branch-label {
+  position: absolute;
+  transform: translate(-50%, -130%);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--mc-bg-elevated);
+  border: 1px solid var(--mc-border-default);
+  border-radius: var(--mc-radius-sm);
+  padding: 2px 4px;
+  font-size: 11px;
+  white-space: nowrap;
+  z-index: 2;
+}
+.branch-label.pinned {
+  border-color: var(--mc-accent-primary);
+}
+.branch-name {
+  background: transparent;
+  border: none;
+  color: var(--mc-fg-primary);
+  cursor: pointer;
+  padding: 0 2px;
+  font-family: var(--mc-font-serif);
+}
+.pin-btn {
+  background: transparent;
+  border: none;
+  color: var(--mc-fg-muted);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  padding: 0 2px;
+}
+.pin-btn:hover {
+  color: var(--mc-fg-primary);
+}
+
+.book-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  z-index: 1;
+  transition: transform 0.12s ease;
+}
+.book-node:hover {
+  transform: translate(-50%, -50%) scale(1.6);
+  z-index: 3;
+}
+
+@media (max-width: 480px) {
+  .tree {
+    height: min(80vh, 560px);
+  }
+}

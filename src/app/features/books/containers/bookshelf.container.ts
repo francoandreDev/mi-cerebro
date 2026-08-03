@@ -26,6 +26,7 @@ import { BookVolumeComponent } from '@shared/entity-cards/book-volume.component'
 import { IconComponent } from '@shared/icon/icon.component';
 
 import { BookCatalogOverlayComponent } from '../components/book-catalog-overlay.component';
+import { BookshelfTreeComponent } from '../components/bookshelf-tree.component';
 import type { BookSummary } from '../models/book.types';
 import { BooksService } from '../services/books.service';
 import { readDragId, shelfDropTarget, slotDropTarget } from './bookshelf-dnd';
@@ -57,11 +58,20 @@ interface Shelf {
 
 const TALLNESS: readonly ('short' | 'medium' | 'tall')[] = ['short', 'medium', 'tall'];
 
+export type ShelfViewMode = 'shelf' | 'list' | 'tree';
+const MODE_ORDER: readonly ShelfViewMode[] = ['shelf', 'list', 'tree'];
+const MODE_ICON: Record<ShelfViewMode, 'grid-four' | 'list-bullets' | 'git-branch'> = {
+  shelf: 'grid-four',
+  list: 'list-bullets',
+  tree: 'git-branch',
+};
+
 @Component({
   selector: 'mc-bookshelf',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     BookCatalogOverlayComponent,
+    BookshelfTreeComponent,
     BookVolumeComponent,
     IconComponent,
     FolderBreadcrumbComponent,
@@ -84,7 +94,18 @@ export class BookshelfContainer {
   protected readonly summaries = this.booksService.summaries;
   protected readonly folders = this.booksService.folders;
   protected readonly query = signal<string>('');
-  protected readonly mode = signal<'shelf' | 'list'>('shelf');
+  protected readonly mode = signal<ShelfViewMode>('shelf');
+  protected readonly nextMode = computed<ShelfViewMode>(() => {
+    const idx = MODE_ORDER.indexOf(this.mode());
+    return MODE_ORDER[(idx + 1) % MODE_ORDER.length]!;
+  });
+  protected readonly nextModeIcon = computed(() => MODE_ICON[this.nextMode()]);
+  protected readonly nextModeLabel = computed<TranslationKey>(() => {
+    const next = this.nextMode();
+    if (next === 'list') return 'books.shelf.toggleList';
+    if (next === 'tree') return 'books.shelf.toggleTree';
+    return 'books.shelf.toggleGrid';
+  });
   // why: id del libro abriéndose tras un click — dispara la animación CSS antes de navegar.
   protected readonly opening = signal<string | null>(null);
   // why: DnD — libro arrastrado + estado de hover sobre el estante actual / una subcarpeta.
@@ -175,7 +196,14 @@ export class BookshelfContainer {
     this.query.set('');
   }
   protected toggleMode(): void {
-    this.mode.update((m) => (m === 'shelf' ? 'list' : 'shelf'));
+    this.mode.set(this.nextMode());
+  }
+  protected onTreeOpenBook(book: BookSummary): void {
+    this.openBook(book.id, book.title);
+  }
+  protected onTreeOpenFolder(folder: string): void {
+    this.mode.set('shelf');
+    this.onFolderNavigate(folder);
   }
   protected toggleDensity(): void {
     this.density.update((d) => (d === 'normal' ? 'compact' : 'normal'));

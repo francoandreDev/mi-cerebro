@@ -54,13 +54,11 @@
     <button
       type="button"
       class="ghost mc-hover-grow"
-      [attr.aria-label]="
-        mode() === 'shelf' ? t('books.shelf.toggleList') : t('books.shelf.toggleGrid')
-      "
-      [title]="mode() === 'shelf' ? t('books.shelf.toggleList') : t('books.shelf.toggleGrid')"
+      [attr.aria-label]="t(nextModeLabel())"
+      [title]="t(nextModeLabel())"
       (click)="toggleMode()"
     >
-      <mc-icon [name]="mode() === 'shelf' ? 'list-bullets' : 'grid-four'" />
+      <mc-icon [name]="nextModeIcon()" />
     </button>
     <button
       type="button"
@@ -193,6 +191,14 @@
     </div>
     <div class="bookcase-bottom" aria-hidden="true"></div>
   </div>
+} @else if (mode() === 'tree') {
+  <mc-bookshelf-tree
+    [shelves]="catalogShelves()"
+    [untitledLabel]="t('books.untitledTitle')"
+    (openBook)="onTreeOpenBook($event)"
+    (openFolder)="onTreeOpenFolder($event)"
+    (togglePin)="toggleFolderPin($event)"
+  />
 }
 @if (catalogOpen()) {
   <mc-book-catalog-overlay
