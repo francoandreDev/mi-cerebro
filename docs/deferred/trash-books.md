@@ -34,10 +34,10 @@ Formato por entrada:
 - **Por qué se difirió**: para tener páginas exactas sin abrir el capítulo habría que renderizar el editor en headless al cargar el libro (caro) o derivar la métrica de un cálculo de altura puro sobre el JSONContent (frágil, depende del CSS). Es una optimización para libros viejos que nunca pasaron por el editor v4; libros nuevos se autocorrigen apenas el usuario los abre.
 - **Target**: sin asignar.
 
-### Subset + conversión a woff2 de Crimson Pro
+### Subset latin-extended de Crimson Pro
 
-- **Qué**: las tres variantes de Crimson Pro viven en `public/fonts/` como `.ttf` (~98KB c/u, ~294KB total). Convertirlas a `.woff2` recortaría ~50% y un subset latin-extended bajaría otro ~30%.
-- **Por qué se difirió**: `woff2_compress` no está en el entorno de desarrollo; bajar las versiones woff2 oficiales de Google Fonts requiere ajustar `User-Agent`. Funcionalmente las ttf funcionan idéntico y los 300KB son aceptables para una PWA (se cachean por el SW en el primer boot).
-- **Target**: §19.16f.
+- **Qué**: las tres variantes de Crimson Pro ya se sirven como `.woff2` (conversión local con `woff2_compress`, ~61% menos peso, `.ttf` original como fallback vía `src` en cascada) — ver `_fonts.scss`. Queda por hacer: un subset latin-extended de cada `.woff2` recortaría otro ~30%.
+- **Por qué se difirió**: el subset requiere `pyftsubset` (paquete `fonttools`), no disponible en este entorno; instalarlo agrega una dependencia de build nueva para un ahorro incremental sobre una ganancia ya conseguida.
+- **Target**: sin asignar.
 
 ---
