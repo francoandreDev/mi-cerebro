@@ -9,8 +9,9 @@ export const TRACK_EXT = '.mp3';
 export const TRACK_MIME = 'audio/mpeg';
 
 export const MUSIC_LIBRARY_KIND = 'music-library';
-export const MUSIC_LIBRARY_SCHEMA_VERSION = 2;
+export const MUSIC_LIBRARY_SCHEMA_VERSION = 3;
 export const PLAYLIST_KIND = 'playlist';
+export const PLAYLIST_SCHEMA_VERSION = 2;
 export const TRACK_KIND = 'track';
 
 // why: bump when a *new ID3 field* is added (like `lyrics`) so tracks probed
@@ -39,6 +40,7 @@ export interface Track {
   readonly coverPath?: string;
   readonly metadataProbedAt?: string;
   readonly metadataProbeVersion?: number;
+  readonly tags: readonly string[];
 }
 
 export interface MusicLibrary {
@@ -48,12 +50,15 @@ export interface MusicLibrary {
 }
 
 export interface Playlist {
+  readonly schemaVersion: number;
   readonly id: string;
   readonly title: string;
   readonly trackIds: readonly string[];
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly favorite?: boolean;
+  readonly tags: readonly string[];
+  readonly [key: string]: unknown;
 }
 
 export interface PlaylistSummary {
@@ -62,4 +67,5 @@ export interface PlaylistSummary {
   readonly trackCount: number;
   readonly updatedAt: string;
   readonly favorite: boolean;
+  readonly tags: readonly string[];
 }

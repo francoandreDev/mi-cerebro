@@ -21,6 +21,9 @@
   font-size: var(--mc-font-size-md);
   padding: var(--mc-space-1) var(--mc-space-2);
 }
+.pl-tags {
+  display: block;
+}
 .title-input {
   flex: 1;
   min-width: 0;

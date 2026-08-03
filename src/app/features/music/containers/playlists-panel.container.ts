@@ -79,6 +79,7 @@ export class PlaylistsPanelContainer {
         favorite: created.favorite === true,
         trackCount: created.trackIds.length,
         updatedAt: created.updatedAt,
+        tags: created.tags,
       });
     } catch (e) {
       this.errors.report(withReauthIfNeeded(e, () => this.workspace.reauthorize()));

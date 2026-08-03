@@ -107,6 +107,16 @@ export class TagDetailContainer {
       .filter((i): i is Extract<TaggedItem, { kind: 'file' }> => i.kind === 'file')
       .map((i) => i.summary),
   );
+  protected readonly trackItems = computed(() =>
+    this.items()
+      .filter((i): i is Extract<TaggedItem, { kind: 'track' }> => i.kind === 'track')
+      .map((i) => i.summary),
+  );
+  protected readonly playlistItems = computed(() =>
+    this.items()
+      .filter((i): i is Extract<TaggedItem, { kind: 'playlist' }> => i.kind === 'playlist')
+      .map((i) => i.summary),
+  );
 
   protected readonly isEmpty = computed(
     () =>
@@ -117,15 +127,27 @@ export class TagDetailContainer {
       this.writingItems().length === 0 &&
       this.bookItems().length === 0 &&
       this.imageItems().length === 0 &&
-      this.fileItems().length === 0,
+      this.fileItems().length === 0 &&
+      this.trackItems().length === 0 &&
+      this.playlistItems().length === 0,
   );
 
   protected t(key: TranslationKey, params?: Record<string, string | number>): string {
     return this.i18n.t(key, params);
   }
 
+  private static readonly UNTITLED_KEY: Readonly<Record<string, TranslationKey>> = {
+    track: 'music.untitledTrack',
+    playlist: 'music.untitledPlaylist',
+  };
+
   protected untitledLabel(kind: TaggedItemKind): string {
-    return this.t(`${kind}s.untitledTitle` as TranslationKey);
+    const special = TagDetailContainer.UNTITLED_KEY[kind];
+    return this.t(special ?? (`${kind}s.untitledTitle` as TranslationKey));
+  }
+
+  protected trackSubtitle(track: Extract<TaggedItem, { kind: 'track' }>['summary']): string {
+    return track.artist?.trim() || '';
   }
 
   protected wordsLabel(wordCount: number): string {

@@ -7,6 +7,8 @@ import { FilesService } from '@features/files/services/files.service';
 import { GoalsService } from '@features/goals/services/goals.service';
 import { GalleriesService } from '@features/images/services/galleries.service';
 import { ListsService } from '@features/lists/services/lists.service';
+import { MusicLibraryService } from '@features/music/services/music-library.service';
+import { PlaylistsService } from '@features/music/services/playlists.service';
 import { NotesService } from '@features/notes/services/notes.service';
 import { TasksService } from '@features/tasks/services/tasks.service';
 import { WritingsService } from '@features/writings/services/writings.service';
@@ -52,6 +54,20 @@ interface Entity {
   readonly tags: readonly string[];
 }
 
+// why: MusicLibraryService exposes tracks as a `tracks` signal + `setTrackTags`
+//      instead of the read/save pair every other entity service uses.
+class FakeMusicLibraryService {
+  tracks = signal<readonly Entity[]>([]);
+
+  seed(entities: readonly Entity[]): void {
+    this.tracks.set(entities);
+  }
+
+  async setTrackTags(id: string, tags: readonly string[]): Promise<void> {
+    this.tracks.update((curr) => curr.map((t) => (t.id === id ? { ...t, tags } : t)));
+  }
+}
+
 describe('TagsAdminService', () => {
   let notes: FakeEntityService<Entity>;
   let tasks: FakeEntityService<Entity>;
@@ -61,6 +77,8 @@ describe('TagsAdminService', () => {
   let books: FakeEntityService<Entity>;
   let galleries: FakeEntityService<Entity>;
   let files: FakeEntityService<Entity>;
+  let tracks: FakeMusicLibraryService;
+  let playlists: FakeEntityService<Entity>;
   let tagsService: { remove: (id: string) => Promise<void>; removed: string[] };
 
   beforeEach(() => {
@@ -72,6 +90,8 @@ describe('TagsAdminService', () => {
     books = new FakeEntityService();
     galleries = new FakeEntityService();
     files = new FakeEntityService();
+    tracks = new FakeMusicLibraryService();
+    playlists = new FakeEntityService();
     const removed: string[] = [];
     tagsService = {
       removed,
@@ -91,6 +111,8 @@ describe('TagsAdminService', () => {
         { provide: BooksService, useValue: books },
         { provide: GalleriesService, useValue: galleries },
         { provide: FilesService, useValue: files },
+        { provide: MusicLibraryService, useValue: tracks },
+        { provide: PlaylistsService, useValue: playlists },
         { provide: TagsService, useValue: tagsService },
       ],
     });

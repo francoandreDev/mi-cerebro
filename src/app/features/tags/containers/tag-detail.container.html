@@ -179,4 +179,44 @@
       </div>
     </section>
   }
+
+  @if (trackItems().length) {
+    <section class="group">
+      <h2><mc-icon name="music-note" />{{ t('music.library') }} ({{ trackItems().length }})</h2>
+      <div class="cards">
+        @for (track of trackItems(); track track.id) {
+          <mc-tagged-generic-card
+            [id]="track.id"
+            [title]="track.title || ''"
+            [untitledLabel]="untitledLabel('track')"
+            [subtitle]="trackSubtitle(track)"
+            icon="music-note"
+            [tagIds]="track.tags"
+            [availableTags]="availableTags()"
+            (open)="open('track', track.id, track.title || '')"
+          />
+        }
+      </div>
+    </section>
+  }
+
+  @if (playlistItems().length) {
+    <section class="group">
+      <h2><mc-icon name="music-notes" />{{ t('music.playlists') }} ({{ playlistItems().length }})</h2>
+      <div class="cards">
+        @for (playlist of playlistItems(); track playlist.id) {
+          <mc-tagged-generic-card
+            [id]="playlist.id"
+            [title]="playlist.title"
+            [untitledLabel]="untitledLabel('playlist')"
+            [subtitle]="playlist.trackCount + ''"
+            icon="music-notes"
+            [tagIds]="playlist.tags"
+            [availableTags]="availableTags()"
+            (open)="open('playlist', playlist.id, playlist.title)"
+          />
+        }
+      </div>
+    </section>
+  }
 </div>

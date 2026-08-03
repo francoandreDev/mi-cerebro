@@ -7,6 +7,9 @@ import { FsService } from '@core/fs/fs.service';
 import type { NativeDirRef } from '@core/fs/native-fs.types';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { MigrationsService } from '@core/migrations/migrations.service';
+import { SearchIndexService } from '@core/search/search-index.service';
+import type { SearchDoc } from '@core/search/search.types';
+import { TagsService } from '@core/tags/tags.service';
 import { toSlug } from '@shared/utils/slug';
 
 import {
@@ -26,7 +29,10 @@ import {
 } from '../models/music.types';
 import { extFromMime, sha1Hex } from './cover-hash';
 import { readId3, trackFieldsFromId3 } from './id3-reader';
-import { musicLibraryV2MigrationStep } from './music-library.migration';
+import {
+  musicLibraryV2MigrationStep,
+  musicLibraryV3MigrationStep,
+} from './music-library.migration';
 
 const TRASH_META_DIR = '.mi-cerebro';
 const TRASH_SUBDIR = 'trash';
@@ -37,6 +43,8 @@ export class MusicLibraryService {
   private readonly workspace = inject(WorkspaceService);
   private readonly migrations = inject(MigrationsService);
   private readonly errors = inject(ErrorService);
+  private readonly search = inject(SearchIndexService);
+  private readonly tags = inject(TagsService);
 
   private readonly tracksSignal = signal<readonly Track[]>([]);
   readonly tracks = this.tracksSignal.asReadonly();
@@ -45,7 +53,7 @@ export class MusicLibraryService {
     this.migrations.register({
       kind: MUSIC_LIBRARY_KIND,
       latest: MUSIC_LIBRARY_SCHEMA_VERSION,
-      steps: [musicLibraryV2MigrationStep(1)],
+      steps: [musicLibraryV2MigrationStep(1), musicLibraryV3MigrationStep(2)],
     });
   }
 
@@ -74,6 +82,7 @@ export class MusicLibraryService {
     if (backfilled) lib = { schemaVersion: MUSIC_LIBRARY_SCHEMA_VERSION, tracks: backfilled };
     const sorted = [...lib.tracks].sort((a, b) => a.originalName.localeCompare(b.originalName));
     this.tracksSignal.set(sorted);
+    await this.search.rebuildKind(TRACK_KIND, sorted.map((t) => this.toSearchDoc(t)));
     return sorted;
   }
 
@@ -155,6 +164,7 @@ export class MusicLibraryService {
         ...trackFieldsFromId3(id3, coverPath),
         metadataProbedAt: now,
         metadataProbeVersion: MUSIC_METADATA_PROBE_VERSION,
+        tags: [],
       });
     }
     if (added.length === 0) return [];
@@ -165,7 +175,21 @@ export class MusicLibraryService {
     await this.writeLibrary(root, next);
     const sorted = [...next.tracks].sort((a, b) => a.originalName.localeCompare(b.originalName));
     this.tracksSignal.set(sorted);
+    for (const t of added) await this.search.upsert(this.toSearchDoc(t));
     return added;
+  }
+
+  async setTrackTags(id: string, tags: readonly string[]): Promise<void> {
+    const current = this.tracksSignal();
+    const idx = current.findIndex((t) => t.id === id);
+    if (idx < 0) return;
+    const updated: Track = { ...current[idx]!, tags };
+    const next = [...current];
+    next[idx] = updated;
+    this.tracksSignal.set(next);
+    const root = await this.musicDir();
+    await this.writeLibrary(root, { schemaVersion: MUSIC_LIBRARY_SCHEMA_VERSION, tracks: next });
+    await this.search.upsert(this.toSearchDoc(updated));
   }
 
   async removeTrackToTrash(id: string): Promise<void> {
@@ -188,12 +212,16 @@ export class MusicLibraryService {
     };
     await this.writeLibrary(root, next);
     this.tracksSignal.set(next.tracks);
+    await this.search.remove(id);
   }
 
   async restoreTrackFromTrash(trashDayDir: NativeDirRef, entryName: string): Promise<void> {
     const srcDir = await this.fs.getDir(trashDayDir, entryName);
     if (!srcDir) throw new AppError(ERROR_CODES.FS_003, { severity: 'error' });
-    const track = await this.fs.readJson<Track>(srcDir, TRACK_META_FILE);
+    const raw = await this.fs.readJson<Track>(srcDir, TRACK_META_FILE);
+    // why: tracks trashed before tags existed lack the field entirely — the
+    //      trashed meta.json is a raw snapshot, not migrated on read.
+    const track: Track = { ...raw, tags: Array.isArray(raw.tags) ? raw.tags : [] };
     const root = await this.musicDir();
     const tracksDir = await this.fs.getOrCreateDir(root, TRACKS_DIR);
     const filename = `${track.id}${TRACK_EXT}`;
@@ -207,6 +235,7 @@ export class MusicLibraryService {
     await this.writeLibrary(root, next);
     const sorted = [...next.tracks].sort((a, b) => a.originalName.localeCompare(b.originalName));
     this.tracksSignal.set(sorted);
+    await this.search.upsert(this.toSearchDoc(track));
     try {
       await this.fs.removeEntry(trashDayDir, entryName, { recursive: true });
     } catch {
@@ -308,6 +337,22 @@ export class MusicLibraryService {
 
   private async writeLibrary(dir: NativeDirRef, lib: MusicLibrary): Promise<void> {
     await this.fs.writeFileAtomic(dir, LIBRARY_FILE, JSON.stringify(lib, null, 2));
+  }
+
+  private toSearchDoc(track: Track): SearchDoc {
+    const tagIds = track.tags.filter((id) => this.tags.byId(id) !== undefined);
+    const tagLabels = tagIds
+      .map((id) => this.tags.byId(id)?.label ?? '')
+      .filter((l) => l !== '')
+      .join(' ');
+    const body = [track.artist, track.album, track.genre].filter(Boolean).join(' ');
+    return {
+      id: track.id,
+      kind: TRACK_KIND,
+      title: track.title?.trim() || track.originalName,
+      body: tagLabels === '' ? body : `${body} ${tagLabels}`,
+      tagIds,
+    };
   }
 }
 

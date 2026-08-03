@@ -13,9 +13,11 @@ import { ErrorService } from '@core/errors/error.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { PlayerService } from '@core/music/player.service';
+import { TagsService } from '@core/tags/tags.service';
 import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
 import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
 import { IconComponent } from '@shared/icon/icon.component';
+import { TagPickerComponent } from '@shared/tags/tag-picker.component';
 
 import type { Playlist, Track } from '../models/music.types';
 import { MusicLibraryService } from '../services/music-library.service';
@@ -24,7 +26,7 @@ import { PlaylistsService } from '../services/playlists.service';
 @Component({
   selector: 'mc-playlist-editor',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ConfirmDialogComponent, IconComponent],
+  imports: [ConfirmDialogComponent, IconComponent, TagPickerComponent],
   templateUrl: './playlist-editor.container.html',
   styleUrl: './playlist-editor.container.css',
 })
@@ -34,6 +36,9 @@ export class PlaylistEditorContainer {
   private readonly player = inject(PlayerService);
   private readonly errors = inject(ErrorService);
   private readonly i18n = inject(I18nService);
+  private readonly tagsService = inject(TagsService);
+
+  protected readonly availableTags = this.tagsService.tags;
 
   private readonly playlistSignal = signal<Playlist | null>(null);
 
@@ -88,6 +93,24 @@ export class PlaylistEditorContainer {
 
   protected onTitleInput(value: string): void {
     void this.savePatch({ title: value });
+  }
+
+  protected async onAddTag(label: string): Promise<void> {
+    const pl = this.current();
+    if (!pl) return;
+    try {
+      const tag = await this.tagsService.touch(label);
+      if (pl.tags.includes(tag.id)) return;
+      await this.savePatch({ tags: [...pl.tags, tag.id] });
+    } catch (e) {
+      this.errors.report(e);
+    }
+  }
+
+  protected async onRemoveTag(id: string): Promise<void> {
+    const pl = this.current();
+    if (!pl || !pl.tags.includes(id)) return;
+    await this.savePatch({ tags: pl.tags.filter((t) => t !== id) });
   }
 
   protected async onToggleFavorite(): Promise<void> {

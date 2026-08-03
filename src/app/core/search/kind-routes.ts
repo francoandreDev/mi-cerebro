@@ -4,7 +4,10 @@ import type { EntityKind } from './search.types';
 
 // why: maps `SearchKind` ↔ Angular router URL. Lives in core so features
 //      never import each other's routes. Reminder has no detail view, so
-//      `routeFor` returns the index and `parseDetailUrl` ignores it.
+//      `routeFor` returns the index and `parseDetailUrl` ignores it. Track
+//      and playlist have no `/music/:id` detail route either (Music isn't
+//      an entity-kind, see docs/sistema/musica.md) — both resolve to the
+//      `/music` index, same treatment as reminder.
 const ROUTES: Readonly<Record<string, readonly string[]>> = {
   note: ['/notes'],
   task: ['/tasks'],
@@ -15,6 +18,8 @@ const ROUTES: Readonly<Record<string, readonly string[]>> = {
   image: ['/images'],
   file: ['/files'],
   reminder: ['/reminders'],
+  track: ['/music'],
+  playlist: ['/music'],
 };
 
 const SEGMENT_TO_KIND: Readonly<Record<string, EntityKind>> = {
@@ -31,7 +36,7 @@ const SEGMENT_TO_KIND: Readonly<Record<string, EntityKind>> = {
 export function routeFor(kind: EntityKind, id: string, title = ''): readonly string[] {
   const base = ROUTES[kind];
   if (!base) return ['/notes'];
-  if (kind === 'reminder') return base;
+  if (kind === 'reminder' || kind === 'track' || kind === 'playlist') return base;
   return [...base, entitySlugSegment(title, id)];
 }
 

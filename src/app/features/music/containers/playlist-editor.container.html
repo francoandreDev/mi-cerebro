@@ -71,6 +71,14 @@
     </button>
   </header>
 
+  <mc-tag-picker
+    class="pl-tags"
+    [availableTags]="availableTags()"
+    [selectedIds]="playlist.tags"
+    (addTag)="onAddTag($event)"
+    (removeTag)="onRemoveTag($event)"
+  />
+
   @if (activeTracks().length === 0) {
     <p class="empty">{{ t('music.emptyPlaylist') }}</p>
   } @else {

@@ -73,8 +73,12 @@ import { WorkspaceSidebarContainer } from './workspace-sidebar.container';
       }
       <mc-quick-capture-dialog
         [visible]="quickCapture.open()"
+        [availableTags]="quickCapture.availableTags()"
+        [contextTagIds]="quickCapture.contextTagIds()"
         (submitted)="quickCapture.capture($event)"
         (cancelled)="quickCapture.closeDialog()"
+        (addTag)="quickCapture.addContextTag($event)"
+        (removeTag)="quickCapture.removeContextTag($event)"
       />
       @if (!focusMode.active()) {
         <mc-reminder-toast />
