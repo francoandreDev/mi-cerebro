@@ -17,7 +17,6 @@ Este índice es sólo un mapa de temas — no lista ítems individuales. Para es
 - [`reminders-goals.md`](./reminders-goals.md) — recordatorios (incluido el "palomar") y metas/constelaciones.
 - [`files-writings-tasks.md`](./files-writings-tasks.md) — archivos sueltos, escritos y tareas.
 - [`responsive.md`](./responsive.md) — pantallas mobile pendientes de verificación/rediseño.
-- [`testing.md`](./testing.md) — cobertura e2e (Playwright) pendiente de extender a las 7 entidades restantes.
 - [`versionado.md`](./versionado.md) — versionado, variantes, historial, merges. **Sección más extensa/compleja — atacar al final.**
 
 ---
