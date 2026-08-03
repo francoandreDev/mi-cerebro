@@ -1,0 +1,33 @@
+<div
+  #host
+  class="scene-host"
+  tabindex="0"
+  role="application"
+  [attr.aria-label]="t('images.museum.enter3d')"
+  (keydown)="onKeyDown($event)"
+  (keyup)="onKeyUp($event)"
+  (pointerdown)="onPointerDown($event)"
+  (pointermove)="onPointerMove($event)"
+  (pointerup)="onPointerUp($event)"
+>
+  <ngt-canvas [shadows]="true" [camera]="cameraConfig" (created)="onCreated($event)">
+    <mc-museum-scene-contents
+      *canvasContent
+      [images]="images()"
+      [urls]="urls()"
+      (open)="onOpen($event)"
+      (hoverChange)="onHover($event)"
+    />
+  </ngt-canvas>
+
+  <p class="hint">{{ t('images.museum.enter3d') }}</p>
+
+  @if (hoveredLabel(); as label) {
+    <p class="caption">
+      {{ label }}
+      @if (editable()) {
+        <span class="caption-hint">{{ t('images.museum.deleteHint') }}</span>
+      }
+    </p>
+  }
+</div>
