@@ -82,7 +82,7 @@ Polish visual, casos de baja frecuencia, o ítems que el propio `deferred/index.
 44. Textura realista de tiza (Tier 3) — polish, entra si las capas se sienten "planchadas".
 45. ~~Export PNG/SVG de las capas (listas)~~ — resuelto 2026-07-20, botón "Exportar" (`mc-menu-button`) en la toolbar de tiza serializa las capas visibles a un SVG standalone (puntos normalizados horneados a px reales) y opcionalmente rasteriza a PNG vía canvas (`svgToPngBlob`), descarga con `triggerDownload` (ver `deferred/lists-images.md`, entrada eliminada).
 46. Undo/redo dedicado para trazos (listas) (Tier 3) — panel de capas + historial git ya cubren.
-47. Estilo "pizarra de verdad" en todo el pane (Tier 3) — riesgo de romper modo lectura.
+47. ~~Estilo "pizarra de verdad" en todo el pane~~ — resuelto 2026-08-03, toggle "vista pizarra completa" (off por default) en `/lists/:id`, restyle scopeado a esa instancia del editor compartido vía un input nuevo + host class, sin tocar `--mc-*` ni romper el modo lectura (ver `deferred/lists-images.md`, entrada eliminada).
 48. Animaciones de snooze / gestos manuales (palomar) (Tier 3) — las animaciones críticas del scheduler ya están.
 49. Detalles bonitos: plumitas, plumaje, ronroneo (palomar) (Tier 3) — pulido visual de baja prioridad.
 50. Palomares temáticos por categoría (Tier 3) — los filtros del MVP ya resuelven la saturación.

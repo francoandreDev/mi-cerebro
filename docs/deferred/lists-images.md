@@ -13,14 +13,6 @@ Formato por entrada:
 
 ---
 
-## Listas — Tiza sobre pizarra (origen: schema v4, 2026-06-25)
-
-### Estilo "pizarra de verdad" en todo el pane
-
-- **Qué**: el fondo del pane `/lists/:id` hoy mantiene la superficie base (tema activo). La metáfora "pizarra" se transmite por la paleta de tizas y el panel oscuro de la toolbar; ir más lejos implicaría restilizar el editor TipTap (texto claro sobre fondo verde-pizarra) y cargar fuente "Caveat" en el body.
-- **Por qué se difirió**: restilizar el editor toca CSS variables transversales y rompe el modo lectura cuando otra pestaña tiene el lock. Mejor dejar el editor con su look estándar y que la pizarra sea la capa de tiza encima. Si el usuario lo pide, se cablea con un toggle "vista pizarra completa".
-- **Target**: sin asignar.
-
 ## Imágenes — Museo (origen: rediseño /images, 2026-06-25)
 
 ### Sala 3D real (three.js + angular-three)
