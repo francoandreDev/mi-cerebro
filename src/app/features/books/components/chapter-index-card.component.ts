@@ -114,9 +114,9 @@ export class ChapterIndexCardComponent {
   }
 
   protected readonly palette = computed(() => hashColor(this.chapter().id));
-  // why: glyph procedural — un símbolo tipográfico distinto por capítulo
+  // why: glyph procedural — símbolo tipográfico distinto por capítulo
   //      derivado del hash, da identidad visual sin pedir al usuario que
-  //      suba una imagen. Cuando habilitemos override, esto cae de fallback.
+  //      suba una imagen. Fallback cuando `thumbUrl` es null (sin override).
   protected readonly glyph = computed(() => {
     const palette = ['§', '✦', '✧', '❖', '✺', '✱', '✥', '✿', '✾', '☙'];
     const h = simpleHash(this.chapter().id);
