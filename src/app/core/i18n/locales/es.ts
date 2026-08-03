@@ -676,18 +676,18 @@ export const es = {
   'notes.tutorial.flow.editorAdvanced': 'Editor: formato avanzado',
   'notes.tutorial.flow.drafts': 'Comentarios y borradores',
 
-  'notes.tutorial.folders.create.title': 'Este botón crea una subcarpeta',
+  'notes.tutorial.folders.create.title': 'Creá una carpeta',
   'notes.tutorial.folders.create.body':
-    'Creá una carpeta para agrupar notas por tema. El breadcrumb te muestra dónde estás parado dentro del árbol.',
-  'notes.tutorial.folders.open.title': 'Click en una carpeta la abre',
+    'Agrupá notas por tema o proyecto. El breadcrumb te muestra dónde estás parado dentro del árbol.',
+  'notes.tutorial.folders.open.title': 'Entrá a una carpeta con click',
   'notes.tutorial.folders.open.body':
-    'Entrás a esa subcarpeta y el muro muestra solo las notas que viven ahí adentro.',
-  'notes.tutorial.folders.manage.title': 'El ⋮ de cada carpeta la renombra, mueve o elimina',
+    'El muro muestra solo las notas que viven dentro de esa carpeta.',
+  'notes.tutorial.folders.manage.title': 'Renombrá, moví o borrá una carpeta',
   'notes.tutorial.folders.manage.body':
     'Abrí este menú sobre cualquier subcarpeta para renombrarla, moverla dentro de otra, o eliminarla.',
   'notes.tutorial.folders.manage.moreDetail':
     'Notas no tiene arrastrar-y-soltar hacia una carpeta — mover una nota se hace desde este mismo menú.',
-  'notes.tutorial.folders.navigate.title': 'El breadcrumb te devuelve a cualquier nivel',
+  'notes.tutorial.folders.navigate.title': 'Volvé a la raíz con un click',
   'notes.tutorial.folders.navigate.body':
     'Click en "Raíz" o en cualquier carpeta intermedia del breadcrumb salta directo a ese nivel, sin ir carpeta por carpeta.',
   'notes.tutorial.folders.schedule.title': 'Esta fecha programa la nota',
@@ -1668,16 +1668,16 @@ export const es = {
   'books.tutorial.readerToc.title': 'Este ícono abre el índice de capítulos',
   'books.tutorial.readerToc.body':
     "Probalo: también se abre con Ctrl+' desde cualquier lado del lector.",
-  'books.tutorial.folders.create.title': 'Este botón crea una subcarpeta',
+  'books.tutorial.folders.create.title': 'Creá una carpeta',
   'books.tutorial.folders.create.body':
-    'Creá una carpeta para agrupar libros por tema. Arrastrá un libro para moverlo entre carpetas, y hacé click en el breadcrumb para volver a una carpeta anterior.',
+    'Agrupá libros por tema o proyecto. El breadcrumb te muestra dónde estás parado dentro del árbol.',
   'books.tutorial.folders.drop.title': 'Soltá un libro sobre una subcarpeta para moverlo ahí',
   'books.tutorial.folders.drop.body':
     'Arrastrá cualquier libro del estante y soltalo sobre una de las carpetas hijas del breadcrumb — se mueve directo, sin tener que abrir esa carpeta primero.',
-  'books.tutorial.folders.manage.title': 'El ⋮ de cada carpeta la renombra, mueve o elimina',
+  'books.tutorial.folders.manage.title': 'Renombrá, moví o borrá una carpeta',
   'books.tutorial.folders.manage.body':
     'Abrí este menú sobre cualquier subcarpeta para renombrarla, moverla dentro de otra, o eliminarla.',
-  'books.tutorial.folders.navigate.title': 'El breadcrumb te devuelve a cualquier nivel',
+  'books.tutorial.folders.navigate.title': 'Volvé a la raíz con un click',
   'books.tutorial.folders.navigate.body':
     'Click en "Raíz" o en cualquier carpeta intermedia del breadcrumb salta directo a ese nivel, sin ir carpeta por carpeta.',
   'books.tutorial.chapterIndex.add.title': 'Este botón agrega un capítulo nuevo',
