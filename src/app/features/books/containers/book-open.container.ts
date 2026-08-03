@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
   effect,
   inject,
@@ -30,8 +31,9 @@ import { triggerDownload } from '@shared/utils/trigger-download';
 
 import { BookMetaBarComponent, type BookSaveStatus } from '../components/book-meta-bar.component';
 import { ChapterIndexCardComponent } from '../components/chapter-index-card.component';
-import { BOOK_KIND, type Book, type ChapterSummary } from '../models/book.types';
+import { BOOK_KIND, type Book, type BookFaceRef, type ChapterSummary } from '../models/book.types';
 import { bookToMarkdown, buildImageResolver, markdownFilename } from '../services/book-export.util';
+import { BookImagesService } from '../services/book-images.service';
 import { BooksService } from '../services/books.service';
 import { registerBooksChapterIndexTutorial } from './books-chapter-index.tutorial';
 
@@ -67,6 +69,7 @@ export class BookOpenContainer {
   readonly id = input<string | undefined>(undefined);
 
   private readonly booksService = inject(BooksService);
+  private readonly bookImages = inject(BookImagesService);
   private readonly autosave = inject(AutosaveService);
   private readonly workspace = inject(WorkspaceService);
   private readonly tagsService = inject(TagsService);
@@ -96,6 +99,11 @@ export class BookOpenContainer {
     this.chapters().reduce((acc, c) => acc + Math.max(1, c.pageCount), 0),
   );
   protected readonly lock = new EntityLockController(BOOK_KIND, this.active);
+  protected readonly coverUrl = signal<string | null>(null);
+  protected readonly backUrl = signal<string | null>(null);
+  protected readonly chapterImageUrls = signal<Record<string, string>>({});
+  private faceObjectUrls: string[] = [];
+  private chapterObjectUrls: string[] = [];
 
   protected readonly indexPages = computed<readonly IndexPage[]>(() => {
     const list = this.chapters();
@@ -165,6 +173,127 @@ export class BookOpenContainer {
       const max = this.spreads().length - 1;
       if (this.currentSpread() > max) this.currentSpread.set(Math.max(0, max));
     });
+    effect(() => {
+      const book = this.active();
+      void this.refreshFaceUrls(book);
+    });
+    effect(() => {
+      const chapters = this.chapters();
+      void this.refreshChapterImageUrls(chapters);
+    });
+    inject(DestroyRef).onDestroy(() => {
+      for (const url of [...this.faceObjectUrls, ...this.chapterObjectUrls]) {
+        URL.revokeObjectURL(url);
+      }
+    });
+  }
+
+  private async refreshFaceUrls(book: Book | null): Promise<void> {
+    for (const url of this.faceObjectUrls) URL.revokeObjectURL(url);
+    this.faceObjectUrls = [];
+    if (!book) {
+      this.coverUrl.set(null);
+      this.backUrl.set(null);
+      return;
+    }
+    this.coverUrl.set(await this.loadFaceUrl(book.id, book.cover));
+    this.backUrl.set(await this.loadFaceUrl(book.id, book.back));
+  }
+
+  private async loadFaceUrl(bookId: string, ref: BookFaceRef | undefined): Promise<string | null> {
+    if (!ref || ref.kind !== 'image') return null;
+    try {
+      const blob = await this.bookImages.readFaceBlob(bookId, ref);
+      const url = URL.createObjectURL(blob);
+      this.faceObjectUrls.push(url);
+      return url;
+    } catch (cause) {
+      console.warn('[books] cover/back image load failed', cause);
+      return null;
+    }
+  }
+
+  private async refreshChapterImageUrls(chapters: readonly ChapterSummary[]): Promise<void> {
+    for (const url of this.chapterObjectUrls) URL.revokeObjectURL(url);
+    this.chapterObjectUrls = [];
+    const book = this.active();
+    if (!book) {
+      this.chapterImageUrls.set({});
+      return;
+    }
+    const next: Record<string, string> = {};
+    for (const ch of chapters) {
+      if (ch.image.kind !== 'image') continue;
+      try {
+        const blob = await this.bookImages.readChapterImageBlob(book.id, ch.image);
+        const url = URL.createObjectURL(blob);
+        this.chapterObjectUrls.push(url);
+        next[ch.id] = url;
+      } catch (cause) {
+        console.warn('[books] chapter image load failed', cause);
+      }
+    }
+    this.chapterImageUrls.set(next);
+  }
+
+  protected async onPickCover(event: Event): Promise<void> {
+    await this.pickFace('cover', event);
+  }
+  protected async onPickBack(event: Event): Promise<void> {
+    await this.pickFace('back', event);
+  }
+  protected async onRemoveCover(): Promise<void> {
+    await this.clearFace('cover');
+  }
+  protected async onRemoveBack(): Promise<void> {
+    await this.clearFace('back');
+  }
+
+  private async pickFace(face: 'cover' | 'back', event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    const book = this.active();
+    if (!file || !book || !this.lock.guardWrite()) return;
+    try {
+      await this.workspace.ensureWritable();
+      this.active.set(await this.bookImages.setFace(book.id, face, file, file.name));
+    } catch (e) {
+      this.errors.report(this.withReauth(e));
+    }
+  }
+
+  private async clearFace(face: 'cover' | 'back'): Promise<void> {
+    const book = this.active();
+    if (!book || !this.lock.guardWrite()) return;
+    try {
+      this.active.set(await this.bookImages.clearFace(book.id, face));
+    } catch (e) {
+      this.errors.report(e);
+    }
+  }
+
+  protected async onPickChapterImage(chapterId: string, file: File): Promise<void> {
+    const book = this.active();
+    if (!book || !this.lock.guardWrite()) return;
+    try {
+      await this.workspace.ensureWritable();
+      await this.bookImages.setChapterImage(book.id, chapterId, file, file.name);
+      this.chapters.set(await this.booksService.listChapters(book.id));
+    } catch (e) {
+      this.errors.report(this.withReauth(e));
+    }
+  }
+
+  protected async onRemoveChapterImage(chapterId: string): Promise<void> {
+    const book = this.active();
+    if (!book || !this.lock.guardWrite()) return;
+    try {
+      await this.bookImages.clearChapterImage(book.id, chapterId);
+      this.chapters.set(await this.booksService.listChapters(book.id));
+    } catch (e) {
+      this.errors.report(e);
+    }
   }
 
   protected t(key: TranslationKey, params?: Record<string, string | number>): string {

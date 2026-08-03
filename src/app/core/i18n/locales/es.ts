@@ -1766,6 +1766,8 @@ export const es = {
   'books.chapters.delete': 'Eliminar',
   'books.chapters.deleteConfirm':
     '¿Eliminar el capítulo "{title}"? Esta acción no va a la papelera y es irreversible.',
+  'books.chapters.imagePick': 'Subir imagen del capítulo',
+  'books.chapters.imageRemove': 'Quitar imagen del capítulo',
   'books.chapters.countOne': '1 capítulo',
   'books.chapters.countMany': '{count} capítulos',
   'books.chapters.filterPlaceholder': 'Buscar capítulo...',
@@ -1827,6 +1829,10 @@ export const es = {
   'books.open.synopsisPlaceholder': 'Escribí una sinopsis…',
   'books.open.authorLabel': 'Autor',
   'books.open.authorEmptyHint': 'Agregá tu biografía de autor en Ajustes',
+  'books.open.coverPick': 'Subir foto de portada',
+  'books.open.coverRemove': 'Volver a la portada procedural',
+  'books.open.backPick': 'Subir foto de contratapa',
+  'books.open.backRemove': 'Volver a la contratapa procedural',
   'books.shortcuts.newChapter': 'Libros · Nuevo capítulo',
   'books.shortcuts.moveChapterUp': 'Libros · Subir capítulo',
   'books.shortcuts.moveChapterDown': 'Libros · Bajar capítulo',
@@ -2885,6 +2891,9 @@ export const es = {
   'errors.ui.001.message': 'Se guardó en la raíz de tus notas.',
   'errors.ui.002.title': 'Tutorial mal configurado',
   'errors.ui.002.message': 'No se encontró contenido para esta guía. Probá recargar la página.',
+  'errors.img.001.title': 'No se pudo leer la imagen',
+  'errors.img.001.message':
+    'El archivo de imagen no está o no se pudo leer del disco. Probá subirla de nuevo.',
 
   'settings.export.section.title': 'Exportar workspace',
   'settings.export.hint':

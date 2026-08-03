@@ -70,6 +70,7 @@ export const ERROR_CODES = {
   MUS_005: 'MCB-MUS-005',
   UI_001: 'MCB-UI-001',
   UI_002: 'MCB-UI-002',
+  IMG_001: 'MCB-IMG-001',
 } as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
@@ -144,4 +145,5 @@ export const ERROR_CODE_META: Record<ErrorCode, CodeMeta> = {
   'MCB-MUS-005': { titleKey: 'errors.mus.005.title', messageKey: 'errors.mus.005.message' },
   'MCB-UI-001': { titleKey: 'errors.ui.001.title', messageKey: 'errors.ui.001.message' },
   'MCB-UI-002': { titleKey: 'errors.ui.002.title', messageKey: 'errors.ui.002.message' },
+  'MCB-IMG-001': { titleKey: 'errors.img.001.title', messageKey: 'errors.img.001.message' },
 };

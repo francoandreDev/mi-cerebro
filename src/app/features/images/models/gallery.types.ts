@@ -8,9 +8,6 @@ export {
 
 export const GALLERY_SCHEMA_VERSION = 2;
 export const IMAGE_KIND = 'image';
-export const THUMB_MIME = 'image/webp';
-export const THUMB_MAX_DIM = 320;
-export const THUMB_QUALITY = 0.8;
 
 export interface GalleryImage {
   readonly id: string;

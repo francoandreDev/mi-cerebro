@@ -6,6 +6,7 @@ import { ErrorService } from '@core/errors/error.service';
 import { FsService } from '@core/fs/fs.service';
 import { ImageReaderService } from '@core/images/image-reader.service';
 import type { ImageRef, ImageRefGallery } from '@core/images/image-reader.types';
+import { guessMimeFromName, renderThumb } from '@core/images/render-thumb.util';
 import type { NativeDirRef } from '@core/fs/native-fs.types';
 import { getDirByPath, getOrCreateDirByPath, joinPath } from '@core/fs/walk';
 import { WorkspaceService } from '@core/fs/workspace.service';
@@ -25,9 +26,6 @@ import {
   ORIGINAL_DIR,
   THUMBS_DIR,
   THUMB_EXT,
-  THUMB_MAX_DIM,
-  THUMB_MIME,
-  THUMB_QUALITY,
   extFromMime,
   type Gallery,
   type GalleryImage,
@@ -571,56 +569,8 @@ const moveGalleryDir = async (
   }
 };
 
-const guessMimeFromName = (name: string): string => {
-  const dot = name.lastIndexOf('.');
-  if (dot < 0) return '';
-  const ext = name.slice(dot + 1).toLowerCase();
-  if (ext === 'jpg' || ext === 'jpeg') return 'image/jpeg';
-  if (ext === 'png') return 'image/png';
-  if (ext === 'webp') return 'image/webp';
-  if (ext === 'gif') return 'image/gif';
-  if (ext === 'avif') return 'image/avif';
-  if (ext === 'svg') return 'image/svg+xml';
-  if (ext === 'bmp') return 'image/bmp';
-  return '';
-};
-
 const extFromName = (name: string): string => {
   const dot = name.lastIndexOf('.');
   if (dot < 0) return 'bin';
   return name.slice(dot + 1).toLowerCase();
-};
-
-interface RenderedThumb {
-  readonly width: number;
-  readonly height: number;
-  readonly thumbBlob: Blob | null;
-}
-
-// why: SVG and exotic codecs may fail in createImageBitmap; we still want to
-//      record the image (sin thumb) y dejar que la UI caiga al original.
-const renderThumb = async (blob: Blob): Promise<RenderedThumb> => {
-  try {
-    const bitmap = await createImageBitmap(blob);
-    const width = bitmap.width;
-    const height = bitmap.height;
-    const longest = Math.max(width, height);
-    const scale = longest > THUMB_MAX_DIM ? THUMB_MAX_DIM / longest : 1;
-    const tw = Math.max(1, Math.round(width * scale));
-    const th = Math.max(1, Math.round(height * scale));
-    if (typeof OffscreenCanvas !== 'undefined') {
-      const canvas = new OffscreenCanvas(tw, th);
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return { width, height, thumbBlob: null };
-      ctx.drawImage(bitmap, 0, 0, tw, th);
-      bitmap.close();
-      const thumbBlob = await canvas.convertToBlob({ type: THUMB_MIME, quality: THUMB_QUALITY });
-      return { width, height, thumbBlob };
-    }
-    bitmap.close();
-    return { width, height, thumbBlob: null };
-  } catch (cause) {
-    console.warn('[images] thumb render failed', cause);
-    return { width: 0, height: 0, thumbBlob: null };
-  }
 };

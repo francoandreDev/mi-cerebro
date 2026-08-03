@@ -695,6 +695,18 @@ export class BooksService {
     return null;
   }
 
+  // why: exposed so BookImagesService can write/read cover, back and chapter
+  //      image blobs alongside the book's own JSON files without duplicating
+  //      the findLoc/getFolderDir walk (rule 10 — same-feature reuse via a
+  //      thin public wrapper, not by reaching into private state).
+  async bookDirFor(id: string): Promise<NativeDirRef> {
+    return this.bookDir(id);
+  }
+
+  async chaptersDirFor(bookId: string): Promise<NativeDirRef> {
+    return this.chaptersDir(bookId);
+  }
+
   private async booksDir(): Promise<NativeDirRef> {
     return this.fs.getOrCreateDir(this.requireRoot(), BOOKS_DIR);
   }

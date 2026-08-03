@@ -202,6 +202,8 @@
       rgba(255, 255, 255, 0) 45%
     ),
     var(--mc-book-bg, #3a2c1c);
+  background-size: cover;
+  background-position: center;
   color: var(--mc-book-fg, #f4ece1);
   border: none;
   cursor: pointer;
@@ -218,6 +220,8 @@
       rgba(255, 255, 255, 0) 45%
     ),
     var(--mc-book-bg, #3a2c1c);
+  background-size: cover;
+  background-position: center;
   color: var(--mc-book-fg, #f4ece1);
   transform: rotateY(180deg);
   align-items: stretch;
@@ -258,6 +262,29 @@
     color 0.15s ease;
 }
 .flip-btn:hover {
+  background: var(--mc-bg-elevated);
+  color: var(--mc-fg-primary);
+}
+
+.face-photo-controls {
+  display: flex;
+  gap: var(--mc-space-2);
+}
+.face-photo-btn {
+  background: transparent;
+  border: 1px solid var(--mc-border-default);
+  color: var(--mc-fg-muted);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+.face-photo-btn:hover {
   background: var(--mc-bg-elevated);
   color: var(--mc-fg-primary);
 }

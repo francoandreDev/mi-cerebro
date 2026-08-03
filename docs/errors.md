@@ -556,3 +556,13 @@ Cada error que la app puede mostrar lleva un código `MCB-<área>-<###>` (ver `d
 - **Causa típica:** bug de desarrollo — un `*.tutorial.ts` nuevo pasó un `cardKey` que no existe (typo, o `home-content.ts` cambió sin actualizar el tutorial). Nunca debería dispararse en producción con el código actual.
 - **Cómo resolver:** revisar que el `cardKey` pasado a `buildEntityTutorial` coincide con un `key` real dentro de `HOME_GROUPS`.
 - **Recuperable:** no — es un error de configuración, no de datos del usuario.
+
+## IMG — Imágenes de usuario (overrides de cover/back/capítulo)
+
+### MCB-IMG-001 — Blob de imagen ilegible o ausente
+
+- **Severidad:** error
+- **Cuándo:** `BookImagesService.readFaceBlob`/`readChapterImageBlob` no encuentra el archivo referenciado (`BookFaceRef`/`ChapterImageRef` con `kind: 'image'`) en disco, o `FsService.readFile` falla al leerlo.
+- **Causa típica:** el archivo se borró o movió fuera de la app sin actualizar el JSON del libro/capítulo (edición manual de la carpeta, restauración parcial desde backup).
+- **Cómo resolver:** subir la imagen de nuevo desde `/books`; el override vuelve al glyph/gradiente procedural mientras tanto.
+- **Recuperable:** sí — el JSON del libro/capítulo no se toca; sólo falta el binario. Volver a subir la imagen restaura el override.

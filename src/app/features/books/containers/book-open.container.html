@@ -50,6 +50,11 @@
             <button
               type="button"
               class="closed-face front"
+              [style.background-image]="
+                coverUrl()
+                  ? 'linear-gradient(rgba(0,0,0,.42),rgba(0,0,0,.5)), url(' + coverUrl() + ')'
+                  : null
+              "
               [attr.aria-label]="t('books.open.openBook')"
               [title]="t('books.open.openBook')"
               (click)="onOpenBook($event)"
@@ -87,7 +92,14 @@
               <span class="cover-stripe bottom" aria-hidden="true"></span>
               <span class="open-hint">{{ t('books.open.openBook') }}</span>
             </button>
-            <div class="closed-face back">
+            <div
+              class="closed-face back"
+              [style.background-image]="
+                backUrl()
+                  ? 'linear-gradient(rgba(0,0,0,.5),rgba(0,0,0,.58)), url(' + backUrl() + ')'
+                  : null
+              "
+            >
               <section class="back-section">
                 <h4>{{ t('books.open.synopsisLabel') }}</h4>
                 <textarea
@@ -142,6 +154,62 @@
         >
           <mc-icon name="arrows-clockwise" />
         </button>
+
+        @if (lock.editable()) {
+          <div class="face-photo-controls">
+            @if (facing() === 'front') {
+              <button
+                type="button"
+                class="face-photo-btn"
+                (click)="coverFileInput.click()"
+                [attr.aria-label]="t('books.open.coverPick')"
+                [title]="t('books.open.coverPick')"
+              >
+                <mc-icon name="image" />
+              </button>
+              @if (coverUrl()) {
+                <button
+                  type="button"
+                  class="face-photo-btn"
+                  (click)="onRemoveCover()"
+                  [attr.aria-label]="t('books.open.coverRemove')"
+                  [title]="t('books.open.coverRemove')"
+                >
+                  <mc-icon name="trash" />
+                </button>
+              }
+            } @else {
+              <button
+                type="button"
+                class="face-photo-btn"
+                (click)="backFileInput.click()"
+                [attr.aria-label]="t('books.open.backPick')"
+                [title]="t('books.open.backPick')"
+              >
+                <mc-icon name="image" />
+              </button>
+              @if (backUrl()) {
+                <button
+                  type="button"
+                  class="face-photo-btn"
+                  (click)="onRemoveBack()"
+                  [attr.aria-label]="t('books.open.backRemove')"
+                  [title]="t('books.open.backRemove')"
+                >
+                  <mc-icon name="trash" />
+                </button>
+              }
+            }
+          </div>
+          <input
+            #coverFileInput
+            type="file"
+            accept="image/*"
+            hidden
+            (change)="onPickCover($event)"
+          />
+          <input #backFileInput type="file" accept="image/*" hidden (change)="onPickBack($event)" />
+        }
       </section>
     } @else {
       <section class="open-book" [attr.aria-label]="t('books.open.indexLabel')">
@@ -187,10 +255,13 @@
                               [index]="$index + (p.pageNumber - 1) * 4"
                               [total]="chapters().length"
                               [editable]="lock.editable()"
+                              [thumbUrl]="chapterImageUrls()[ch.id] ?? null"
                               (open)="onOpenChapter(ch.id)"
                               (moveUp)="onMoveUp(ch.id)"
                               (moveDown)="onMoveDown(ch.id)"
                               (remove)="onRemoveChapter(ch.id)"
+                              (pickImage)="onPickChapterImage(ch.id, $event)"
+                              (removeImage)="onRemoveChapterImage(ch.id)"
                             />
                           </li>
                         }
@@ -234,10 +305,13 @@
                               [index]="$index + (p.pageNumber - 1) * 4"
                               [total]="chapters().length"
                               [editable]="lock.editable()"
+                              [thumbUrl]="chapterImageUrls()[ch.id] ?? null"
                               (open)="onOpenChapter(ch.id)"
                               (moveUp)="onMoveUp(ch.id)"
                               (moveDown)="onMoveDown(ch.id)"
                               (remove)="onRemoveChapter(ch.id)"
+                              (pickImage)="onPickChapterImage(ch.id, $event)"
+                              (removeImage)="onRemoveChapterImage(ch.id)"
                             />
                           </li>
                         }

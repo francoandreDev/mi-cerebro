@@ -14,8 +14,12 @@ import type { ChapterSummary } from '../models/book.types';
   template: `
     <button type="button" class="card" (click)="open.emit()">
       <span class="thumb" [style.--mc-th-bg]="palette().bg" [style.--mc-th-fg]="palette().fg">
-        <span class="thumb-num">{{ indexLabel() }}</span>
-        <span class="thumb-glyph" aria-hidden="true">{{ glyph() }}</span>
+        @if (thumbUrl(); as url) {
+          <img [src]="url" class="thumb-img" alt="" />
+        } @else {
+          <span class="thumb-num">{{ indexLabel() }}</span>
+          <span class="thumb-glyph" aria-hidden="true">{{ glyph() }}</span>
+        }
       </span>
       <span class="meta">
         <span class="title">{{ chapter().title || t('books.chapters.untitled') }}</span>
@@ -33,6 +37,27 @@ import type { ChapterSummary } from '../models/book.types';
     </button>
     @if (editable()) {
       <div class="ops">
+        <button
+          type="button"
+          class="ghost"
+          (click)="fileInput.click()"
+          [attr.aria-label]="t('books.chapters.imagePick')"
+          [title]="t('books.chapters.imagePick')"
+        >
+          <mc-icon name="image" />
+        </button>
+        @if (thumbUrl()) {
+          <button
+            type="button"
+            class="ghost"
+            (click)="removeImage.emit()"
+            [attr.aria-label]="t('books.chapters.imageRemove')"
+            [title]="t('books.chapters.imageRemove')"
+          >
+            <mc-icon name="trash" />
+          </button>
+        }
+        <input #fileInput type="file" accept="image/*" hidden (change)="onFileChange($event)" />
         <button
           type="button"
           class="ghost"
@@ -74,11 +99,14 @@ export class ChapterIndexCardComponent {
   readonly index = input.required<number>();
   readonly total = input.required<number>();
   readonly editable = input<boolean>(true);
+  readonly thumbUrl = input<string | null>(null);
 
   readonly open = output<void>();
   readonly moveUp = output<void>();
   readonly moveDown = output<void>();
   readonly remove = output<void>();
+  readonly pickImage = output<File>();
+  readonly removeImage = output<void>();
 
   private readonly i18n = inject(I18nService);
   protected t(key: TranslationKey, params?: Record<string, string | number>): string {
@@ -117,6 +145,12 @@ export class ChapterIndexCardComponent {
   }
   protected last(): boolean {
     return this.index() === this.total() - 1;
+  }
+  protected onFileChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (file) this.pickImage.emit(file);
   }
 }
 
