@@ -101,7 +101,7 @@ Polish visual, casos de baja frecuencia, o ítems que el propio `deferred/index.
 63. Estantería con forma creativa (books) (Tier 4) — visión a futuro, el shelf clásico aún no está pulido.
 64. Variantes sobre el fallback sin isomorphic-git (Tier 5) — sólo aplica si el fallback se activa; contingencia, no roadmap.
 65. `.git/` en OPFS (Tier 5) — aceptado explícitamente vivir con loading screens hasta que sea intolerable.
-66. Sala 3D real (three.js) para `/images` (Tier 5) — fase futura transversal a /images, /books, /lists.
+66. ~~Sala 3D real (three.js) para `/images`~~ — resuelto 2026-08-03, sala navegable en primera persona (three.js + angular-three/NGT: paredes/piso/techo como Mesh, cuadros con textura real, spotlight cenital con sombras reales, drag-to-look + WASD, raycasting para abrir/borrar), scopeada estrictamente a `/images` — Books/Lists 3D sigue siendo una fase futura sin tocar. Toggle `3D / Lista` mantiene el fallback 2D como vía de teclado/screen-reader (ver `deferred/lists-images.md`, archivo eliminado por quedar vacío).
 
 ---
 
