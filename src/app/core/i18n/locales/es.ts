@@ -1942,6 +1942,14 @@ export const es = {
   'images.museum.frameOfTotal': 'Obra {n} de {total}',
   'images.museum.emptyRoom': 'Esta sala todavía no tiene obras.',
   'images.museum.backToPlan': '◂ Planta',
+  'images.museum.view3d': 'Sala 3D',
+  'images.museum.viewList': 'Vista lista',
+  'images.museum.enter3d':
+    'Click para mirar alrededor · WASD para caminar · Escape para soltar el mouse',
+  'images.museum.exit3d': 'Escape para soltar el mouse',
+  'images.museum.loading3d': 'Cargando la sala…',
+  'images.museum.frameHover': 'Ver "{name}"',
+  'images.museum.deleteHint': ' · Supr borra',
 
   'files.title': 'Archivos',
   'files.new': 'Nueva colección',

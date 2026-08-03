@@ -28,6 +28,31 @@
   letter-spacing: 0.04em;
 }
 
+.view-toggle {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--mc-radius-md);
+  background: var(--mc-bg-elevated);
+}
+.view-toggle button {
+  background: transparent;
+  border: 0;
+  border-radius: var(--mc-radius-sm);
+  padding: 4px 10px;
+  font-size: var(--mc-font-size-sm);
+  color: var(--mc-fg-muted);
+  cursor: pointer;
+}
+.view-toggle button.active {
+  background: var(--mc-accent-primary);
+  color: var(--mc-accent-fg);
+}
+.view-toggle button:focus-visible {
+  outline: 2px solid var(--mc-accent-primary);
+  outline-offset: 2px;
+}
+
 .add {
   display: inline-flex;
   align-items: center;

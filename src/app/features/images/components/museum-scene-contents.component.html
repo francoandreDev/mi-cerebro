@@ -1,0 +1,70 @@
+<ngt-ambient-light [intensity]="0.4" />
+<ngt-directional-light [position]="[0, height, depth]" [intensity]="0.25" />
+<ngt-spot-light
+  [position]="[0, height - 0.3, 0]"
+  [angle]="1.0"
+  [penumbra]="0.55"
+  [intensity]="140"
+  [distance]="width() + depth"
+  [decay]="1.1"
+  [castShadow]="true"
+/>
+
+<ngt-mesh [rotation]="[halfPiNeg, 0, 0]" [receiveShadow]="true">
+  <ngt-plane-geometry *args="[width(), depth]" />
+  <ngt-mesh-standard-material [color]="floorColor" />
+</ngt-mesh>
+
+<ngt-mesh [position]="[0, height, 0]" [rotation]="[halfPi, 0, 0]" [receiveShadow]="true">
+  <ngt-plane-geometry *args="[width(), depth]" />
+  <ngt-mesh-standard-material [color]="wallColor" />
+</ngt-mesh>
+
+<ngt-mesh [position]="[0, height / 2, -depth / 2]" [receiveShadow]="true">
+  <ngt-plane-geometry *args="[width(), height]" />
+  <ngt-mesh-standard-material [color]="wallColor" />
+</ngt-mesh>
+
+<ngt-mesh
+  [position]="[0, height / 2, depth / 2]"
+  [rotation]="[0, Math.PI, 0]"
+  [receiveShadow]="true"
+>
+  <ngt-plane-geometry *args="[width(), height]" />
+  <ngt-mesh-standard-material [color]="wallColor" />
+</ngt-mesh>
+
+<ngt-mesh
+  [position]="[-width() / 2, height / 2, 0]"
+  [rotation]="[0, halfPi, 0]"
+  [receiveShadow]="true"
+>
+  <ngt-plane-geometry *args="[depth, height]" />
+  <ngt-mesh-standard-material [color]="wallColor" />
+</ngt-mesh>
+
+<ngt-mesh
+  [position]="[width() / 2, height / 2, 0]"
+  [rotation]="[0, halfPiNeg, 0]"
+  [receiveShadow]="true"
+>
+  <ngt-plane-geometry *args="[depth, height]" />
+  <ngt-mesh-standard-material [color]="wallColor" />
+</ngt-mesh>
+
+@for (p of paintings(); track p.id) {
+  <ngt-mesh [position]="[p.x, p.y, p.z - 0.03]" [castShadow]="true" [receiveShadow]="true">
+    <ngt-box-geometry *args="[p.width + 0.12, p.height + 0.12, 0.05]" />
+    <ngt-mesh-standard-material [color]="'#2a1a0c'" />
+  </ngt-mesh>
+  <ngt-mesh
+    [position]="[p.x, p.y, p.z]"
+    [castShadow]="true"
+    (click)="onOpen(p.id)"
+    (pointerover)="onEnter(p.id)"
+    (pointerout)="onLeave()"
+  >
+    <ngt-plane-geometry *args="[p.width, p.height]" />
+    <ngt-mesh-standard-material [map]="textureFor(p.url)" [toneMapped]="false" />
+  </ngt-mesh>
+}

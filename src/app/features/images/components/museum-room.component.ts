@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
@@ -6,8 +14,10 @@ import { IconComponent } from '@shared/icon/icon.component';
 import { FRAME_WIDTH_PX, type FrameSize, getFrameLayout } from '@shared/utils/museum-asymmetry';
 
 import type { GalleryImage } from '../models/gallery.types';
+import { MuseumScene3dComponent } from './museum-scene-3d.component';
 
 export type MuseumRoomMode = 'full' | 'preview';
+export type MuseumRoomView = '3d' | 'list';
 
 interface FrameView {
   readonly image: GalleryImage;
@@ -22,7 +32,7 @@ interface FrameView {
 @Component({
   selector: 'mc-museum-room',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent],
+  imports: [IconComponent, MuseumScene3dComponent],
   templateUrl: './museum-room.component.html',
   styleUrl: './museum-room.component.css',
 })
@@ -41,6 +51,12 @@ export class MuseumRoomComponent {
   readonly prevCuarto = output<void>();
 
   private readonly i18n = inject(I18nService);
+
+  // why: preview cards (gallery index) never render the WebGL canvas — one
+  //      context per card would be wasteful — so the toggle only exists in
+  //      full mode. List view doubles as the keyboard/screen-reader fallback
+  //      for the 3D room (§4.13): same buttons the 2D museum always had.
+  protected readonly view = signal<MuseumRoomView>('3d');
 
   protected readonly hasPrev = computed(() => this.cuartoIndex() > 0);
   protected readonly hasNext = computed(() => this.cuartoIndex() < this.cuartos() - 1);
@@ -81,6 +97,10 @@ export class MuseumRoomComponent {
     this.remove.emit(id);
   }
 
+  protected onRemoveId(id: string): void {
+    this.remove.emit(id);
+  }
+
   protected onDragOver(event: DragEvent): void {
     event.preventDefault();
   }
@@ -109,6 +129,10 @@ export class MuseumRoomComponent {
   }
   protected onPrev(): void {
     this.prevCuarto.emit();
+  }
+
+  protected onSetView(view: MuseumRoomView): void {
+    this.view.set(view);
   }
 }
 
