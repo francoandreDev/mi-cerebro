@@ -40,6 +40,7 @@ import { PlanterComponent } from '../components/planter.component';
 import type { TaskSummary } from '../models/task.types';
 import { type Bucket, bucketTasks } from '../services/task-buckets';
 import { TasksService } from '../services/tasks.service';
+import { registerTasksFoldersTutorial } from './tasks-folders.tutorial';
 import { registerTasksPatioTutorial } from './tasks-patio.tutorial';
 import { registerTasksTutorial } from './tasks.tutorial';
 
@@ -110,6 +111,7 @@ export class TasksGardenContainer {
   constructor() {
     registerTasksTutorial();
     registerTasksPatioTutorial();
+    registerTasksFoldersTutorial();
     const unregister = this.rowNav.register();
     this.destroyRef.onDestroy(unregister);
     effect(() => {

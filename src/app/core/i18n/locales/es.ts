@@ -989,6 +989,21 @@ export const es = {
     'Cambia el jardín por una lista plana ordenada por cantero. Con la fila enfocada: J/K mueve el cursor, Espacio cosecha, E abre la tarea, Supr la borra.',
 
   'tasks.tutorial.flow.essentials': 'Tareas: lo esencial',
+  'tasks.tutorial.flow.folders': 'Organizar en carpetas',
+  'tasks.tutorial.folders.create.title': 'Creá una carpeta',
+  'tasks.tutorial.folders.create.body':
+    'Agrupá tareas por tema o proyecto. El breadcrumb te muestra dónde estás parado dentro del árbol.',
+  'tasks.tutorial.folders.open.title': 'Entrá a una carpeta con click',
+  'tasks.tutorial.folders.open.body':
+    'El jardín muestra solo las tareas que viven dentro de esa carpeta.',
+  'tasks.tutorial.folders.manage.title': 'Renombrá, moví o borrá una carpeta',
+  'tasks.tutorial.folders.manage.body':
+    'Abrí este menú sobre cualquier subcarpeta para renombrarla, moverla dentro de otra, o eliminarla.',
+  'tasks.tutorial.folders.manage.moreDetail':
+    'Tareas no tiene arrastrar-y-soltar hacia una carpeta — mover una tarea se hace desde este mismo menú.',
+  'tasks.tutorial.folders.navigate.title': 'Volvé a la raíz con un click',
+  'tasks.tutorial.folders.navigate.body':
+    'Click en "Raíz" o en cualquier carpeta intermedia del breadcrumb salta directo a ese nivel, sin ir carpeta por carpeta.',
   'tasks.tutorial.flow.patio': 'Patio: archivo de cosechas',
   'tasks.tutorial.patio.intro.title': 'El patio archiva lo que ya cosechaste',
   'tasks.tutorial.patio.intro.body':

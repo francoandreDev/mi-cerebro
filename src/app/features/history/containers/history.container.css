@@ -3142,6 +3142,18 @@ aside.timeline {
   .split.zoom-panorama {
     grid-template-columns: 1fr;
   }
+
+  /* Mismo criterio de red de seguridad de arriba, aplicado a los dos
+   * elementos de menor riesgo que quedaron pendientes de esa pasada
+   * (docs/deferred/responsive.md): achican para dejar más aire al resto
+   * de la fila/tira en un viewport angosto, sin rediseñar la metáfora. */
+  .polaroid-btn {
+    width: 130px;
+  }
+
+  .milestone-band-name {
+    max-width: 140px;
+  }
 }
 
 /* Foco cálido de la lámpara del cuarto oscuro cayendo sobre la polaroid.
