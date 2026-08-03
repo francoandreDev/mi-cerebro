@@ -24,8 +24,8 @@ Formato por entrada:
 
 ### Paginación real persistida fila por fila (no global)
 
-- **Qué**: hoy `Chapter.pageCount` se actualiza cuando el editor abre el capítulo (totalSpreads\*2). Capítulos nunca abiertos caen a `ceil(words/250)`. Esto significa que el rango "pag X–Y" del índice puede mentir hasta la primera apertura.
-- **Por qué se difirió**: para tener páginas exactas sin abrir el capítulo habría que renderizar el editor en headless al cargar el libro (caro) o derivar la métrica de un cálculo de altura puro sobre el JSONContent (frágil, depende del CSS). Es una optimización para libros viejos que nunca pasaron por el editor v4; libros nuevos se autocorrigen apenas el usuario los abre.
+- **Qué**: hoy `Chapter.pageCount` se actualiza cuando el editor abre el capítulo (totalSpreads\*2, medido con `ResizeObserver` sobre el layout multi-columna real — ver `chapter-editor-pane.component.ts`). Capítulos nunca abiertos caen a `ceil(words/250)`.
+- **Por qué se difirió (revalidado 2026-08-03)**: no es sólo una optimización pendiente — `totalSpreads` depende del ancho real del viewport donde se abre el capítulo (columnas CSS), así que no existe un "número exacto" único e independiente del contexto. Precalcularlo off-screen a un ancho de referencia fijo produciría una cifra con apariencia de precisión que puede no coincidir con lo que el usuario ve al abrir el capítulo en su propia ventana — eso es peor que la estimación por palabras, que es honesta sobre ser aproximada (regla "la UI no debe mentir"). La estimación palabras/250 se mantiene como fallback; libros nuevos se autocorrigen apenas el usuario abre el capítulo.
 - **Target**: sin asignar.
 
 ### Subset latin-extended de Crimson Pro
