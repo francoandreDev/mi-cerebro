@@ -78,3 +78,24 @@ mc-drafts-panel.index-popover {
   box-shadow: inset 0 0 0 1px rgba(217, 119, 6, 0.4);
   border-radius: var(--mc-radius-md);
 }
+
+/* why: "vista pizarra completa" (docs/deferred/lists-images.md) — estilos
+   locales a esta instancia, no toca ningún --mc-* token global. Sólo
+   aplica cuando :host tiene la clase (gated por el input chalkboardStyle),
+   así que no filtra a otros consumidores de mc-editor ni rompe el modo
+   lectura: el lock banner vive fuera de este componente y sigue con su
+   estilo propio sin importar si esta instancia está en modo pizarra. */
+:host.chalkboard-style .editor-host {
+  background: #2f4f3e;
+  color: #f4f1ea;
+  font-family: 'Caveat', sans-serif;
+  font-size: 1.25em;
+  border-color: #1f382c;
+}
+:host.chalkboard-style .editor-host:focus-within {
+  border-color: #f4f1ea;
+  outline-color: #f4f1ea;
+}
+:host.chalkboard-style .editor-host :is(h2, h3, h4) {
+  color: #fff9e6;
+}

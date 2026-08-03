@@ -31,3 +31,15 @@
     url('/fonts/CrimsonPro-Italic.woff2') format('woff2'),
     url('/fonts/CrimsonPro-Italic.ttf') format('truetype');
 }
+
+// why: Caveat para el toggle "vista pizarra completa" de /lists/:id (ver
+//      docs/deferred/lists-images.md). Solo woff2 — app soporta únicamente
+//      navegadores Chromium (§2), no hace falta el fallback ttf que sí
+//      lleva Crimson Pro.
+@font-face {
+  font-family: 'Caveat';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/Caveat-Regular.woff2') format('woff2');
+}
