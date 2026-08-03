@@ -1,0 +1,1164 @@
+.split {
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) 1fr;
+  flex: 1;
+  min-height: 0;
+}
+
+.timeline {
+  border-right: 1px solid var(--mc-border, rgba(0, 0, 0, 0.08));
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.bucket {
+  margin-bottom: 8px;
+}
+
+/* Stratum: cada bucket es un estrato con cabecera que muestra espesor real
+ * (barra log-escalada de 20–96px) tinción por faceta y fósiles anclados.
+ * El espesor NO cambia con el filtro: la geología no miente. */
+.stratum {
+  position: relative;
+}
+
+/* Estrato activo (contiene el commit seleccionado) — ribbon lateral que
+ * conecta visualmente con la ficha de yacimiento a la derecha. */
+.stratum.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--mc-accent-primary);
+  border-radius: 0 2px 2px 0;
+  z-index: 3;
+}
+
+.stratum-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--mc-bg-base, #fff);
+  border-bottom: 1px solid var(--mc-border-subtle, rgba(0, 0, 0, 0.06));
+  padding: 4px 0 6px;
+}
+
+.stratum-head-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 12px;
+}
+
+.stratum .bucket-label {
+  position: static;
+  padding: 0;
+  border-bottom: none;
+  background: transparent;
+}
+
+.stratum-count {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--mc-fg-primary);
+  padding: 1px 8px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--mc-fg-primary) 12%, transparent);
+}
+
+.stratum-fossil-legend {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--mc-fg-primary);
+}
+
+.stratum-fossil-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px 2px 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mc-accent-primary) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--mc-accent-primary) 30%, transparent);
+}
+
+.stratum-fossil-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--mc-accent-primary);
+  box-shadow:
+    0 0 0 1.5px rgba(255, 255, 255, 0.6),
+    0 0 0 2.5px color-mix(in srgb, var(--mc-accent-primary) 50%, transparent);
+}
+
+.stratum-fossil-legend-item[data-facet='main'] .stratum-fossil-legend-dot {
+  background: var(--facet-color-main);
+}
+.stratum-fossil-legend-item[data-facet='comments'] .stratum-fossil-legend-dot {
+  background: var(--facet-color-comments);
+}
+.stratum-fossil-legend-item[data-facet='draft'] .stratum-fossil-legend-dot {
+  background: var(--facet-color-draft);
+}
+
+.stratum-fossil-legend-name {
+  background: transparent;
+  border: none;
+  color: inherit;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.stratum-fossil-legend-name:hover {
+  color: var(--mc-fg-primary);
+  text-decoration: underline;
+}
+
+/* Bedrock: pie del último estrato con el aviso de compactación pendiente,
+ * enmarcado como lecho de roca (dashed earthy border). */
+.bedrock {
+  margin: 12px 12px 24px;
+  padding: 12px 14px;
+  border: 1px dashed color-mix(in srgb, #a97b3f 55%, var(--mc-border-default));
+  border-radius: 6px;
+  background: color-mix(in srgb, #a97b3f 8%, transparent);
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  position: relative;
+}
+
+.bedrock-strata {
+  flex: 0 0 6px;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bedrock-layer {
+  flex: 1;
+  background: color-mix(in srgb, #a97b3f 40%, transparent);
+  border-radius: 2px;
+}
+
+.bedrock-layer:nth-child(2) {
+  background: color-mix(in srgb, #6d4a20 40%, transparent);
+}
+
+.bedrock-layer:nth-child(3) {
+  background: color-mix(in srgb, #3f2a14 45%, transparent);
+}
+
+.bedrock-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bedrock-body strong {
+  font-size: 0.9rem;
+}
+
+.bedrock-body p {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--mc-fg-secondary, var(--mc-text-secondary));
+}
+
+.bedrock-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-3);
+}
+
+.bedrock-cta {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--mc-accent-primary, var(--mc-accent, var(--mc-text)));
+  text-decoration: none;
+  align-self: flex-start;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.bedrock-cta:hover,
+.bedrock-cta:focus-visible {
+  text-decoration: underline;
+}
+
+.bedrock-cta-primary {
+  padding: 4px 12px;
+  border-radius: var(--mc-radius-pill, 999px);
+  background: var(--mc-accent-primary, var(--mc-accent, var(--mc-text)));
+  color: var(--mc-accent-fg, #fff);
+  text-decoration: none;
+}
+
+.bedrock-cta-primary:hover,
+.bedrock-cta-primary:focus-visible {
+  text-decoration: none;
+  filter: brightness(1.08);
+}
+
+.bedrock-cta-primary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Mini-mapa al pie del yacimiento — compressed panorama silhouette
+   con banderines de fósiles y ventana visible como marco iluminado. */
+.stratum-minimap {
+  margin: 16px 12px 8px;
+  padding: 6px 8px 8px;
+  background: var(--mc-bg-base, #fff);
+  border: 1px solid var(--mc-border-subtle, rgba(0, 0, 0, 0.08));
+  border-radius: 6px;
+}
+
+.stratum-minimap-hint {
+  margin: 0 0 4px;
+  font-size: 0.72rem;
+  color: var(--mc-fg-secondary, var(--mc-text-secondary));
+}
+
+.stratum-minimap-svg {
+  display: block;
+  width: 100%;
+  height: 56px;
+}
+
+.stratum-minimap-band {
+  opacity: 0.75;
+}
+
+.stratum-minimap-window {
+  fill: color-mix(in srgb, var(--mc-accent-primary, #d4a54a) 20%, transparent);
+  stroke: color-mix(in srgb, var(--mc-accent-primary, #d4a54a) 65%, transparent);
+  stroke-width: 1.2;
+  pointer-events: none;
+}
+
+.stratum-minimap-hit {
+  fill: transparent;
+  cursor: pointer;
+}
+
+.stratum-minimap-hit:hover {
+  fill: color-mix(in srgb, var(--mc-fg-primary) 8%, transparent);
+}
+
+.stratum-minimap-fossil {
+  cursor: pointer;
+}
+
+.stratum-minimap-fossil circle {
+  fill: color-mix(in srgb, #d4a54a 75%, transparent);
+  stroke: color-mix(in srgb, #6d4a20 60%, transparent);
+  stroke-width: 1;
+}
+
+.stratum-minimap-fossil:hover circle {
+  fill: #d4a54a;
+}
+
+.bucket-label {
+  position: sticky;
+  top: 0;
+  margin: 0;
+  padding: 6px 12px;
+  background: var(--mc-bg-base, #fff);
+  color: var(--mc-fg-primary);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--mc-border-subtle, rgba(0, 0, 0, 0.05));
+  z-index: 1;
+}
+
+.commits {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.commit {
+  display: grid;
+  grid-template-columns: 48px 1fr auto;
+  grid-template-rows: auto auto;
+  gap: 2px 8px;
+  align-items: center;
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  border-left: 3px solid transparent;
+  font: inherit;
+  font-size: 12px;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.commit:hover {
+  background: var(--mc-bg-hover, rgba(0, 0, 0, 0.04));
+}
+
+.commit.selected {
+  background: var(--mc-bg-selected, rgba(58, 123, 213, 0.12));
+}
+
+/* why: el badge "ACTUAL" ya identifica HEAD en el texto; mantener el
+        color de faceta en el borde-izq evita perder el indicador de
+        rama justo en el commit que más mirás. */
+.commit[data-facet='main'] {
+  border-left-color: var(--facet-color-main);
+}
+
+.commit[data-facet='comments'] {
+  border-left-color: var(--facet-color-comments);
+}
+
+.commit[data-facet='draft'] {
+  border-left-color: var(--facet-color-draft);
+}
+
+.commit.selected[data-facet='main'] {
+  box-shadow: inset 0 0 0 1px var(--facet-color-main);
+}
+
+.commit.selected[data-facet='comments'] {
+  box-shadow: inset 0 0 0 1px var(--facet-color-comments);
+}
+
+.commit.selected[data-facet='draft'] {
+  box-shadow: inset 0 0 0 1px var(--facet-color-draft);
+}
+
+.head-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: rgba(60, 200, 90, 0.28);
+  color: var(--mc-fg-primary);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  vertical-align: middle;
+}
+
+.commit-time {
+  font-family: ui-monospace, monospace;
+  color: var(--mc-fg-primary);
+  font-weight: 500;
+}
+
+.commit-message {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--mc-fg-primary);
+}
+
+.commit-oid {
+  grid-row: 1;
+  grid-column: 3;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--mc-fg-primary);
+  font-weight: 600;
+}
+
+.commit-chips {
+  grid-row: 2;
+  grid-column: 2 / span 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.chip {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: var(--mc-bg-hover, rgba(0, 0, 0, 0.06));
+  color: var(--mc-fg-secondary, #555);
+  font-size: 10px;
+  text-transform: lowercase;
+}
+
+.detail {
+  overflow-y: auto;
+  padding: 16px;
+}
+
+/* Head del pane: barra de herramientas del explorador. */
+.timeline-head {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--mc-border-default);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    'back search'
+    'filters filters';
+  align-items: center;
+  gap: 8px 10px;
+  background: color-mix(in srgb, var(--mc-fg-primary) 3%, transparent);
+}
+.timeline-head > .zoom-back,
+.timeline-head > .zoom-anchor {
+  grid-area: back;
+}
+.timeline-head > .timeline-search {
+  grid-area: search;
+}
+.timeline-head > .timeline-head-filters {
+  grid-area: filters;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  min-width: 0;
+}
+
+.timeline-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.timeline-search-icon {
+  position: absolute;
+  left: 10px;
+  color: var(--mc-fg-primary);
+  opacity: 0.75;
+  pointer-events: none;
+  font-size: 13px;
+}
+.timeline-search-input {
+  width: 100%;
+  padding: 7px 30px 7px 30px;
+  font: inherit;
+  font-size: 12.5px;
+  border: 1px solid var(--mc-fg-secondary);
+  border-radius: 999px;
+  background: var(--mc-bg-base);
+  color: var(--mc-fg-primary);
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.timeline-search-input::placeholder {
+  color: var(--mc-fg-primary);
+  opacity: 0.6;
+  font-style: italic;
+}
+.timeline-search-input:hover {
+  border-color: var(--mc-accent-primary);
+}
+.timeline-search-input:focus {
+  outline: none;
+  border-color: var(--mc-accent-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mc-accent-primary) 25%, transparent);
+}
+.timeline-search-clear {
+  position: absolute;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--mc-fg-primary) 10%, transparent);
+  border: none;
+  border-radius: 999px;
+  color: var(--mc-fg-primary);
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+}
+.timeline-search-clear:hover {
+  background: color-mix(in srgb, var(--mc-fg-primary) 20%, transparent);
+}
+
+.only-milestones {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 3px 6px;
+  font-size: 11.5px;
+  color: var(--mc-fg-primary);
+  border: 1px solid var(--mc-fg-secondary);
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 500;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+.only-milestones:hover {
+  background: color-mix(in srgb, var(--mc-accent-primary) 10%, transparent);
+  border-color: var(--mc-accent-primary);
+}
+.only-milestones input[type='checkbox'] {
+  accent-color: var(--mc-accent-primary);
+  cursor: pointer;
+}
+
+.facet-chips {
+  display: inline-flex;
+  gap: 6px;
+  padding: 3px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mc-fg-primary) 6%, transparent);
+}
+
+.facet-chip {
+  font-size: 11.5px;
+  padding: 3px 12px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--mc-fg-primary);
+  cursor: pointer;
+  user-select: none;
+  font-weight: 600;
+  position: relative;
+  padding-left: 22px;
+  transition: background 120ms ease;
+}
+.facet-chip::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  background: transparent;
+  transform: translateY(-50%);
+  opacity: 0.55;
+}
+.facet-chip[data-facet='main']::before {
+  color: var(--facet-color-main);
+}
+.facet-chip[data-facet='comments']::before {
+  color: var(--facet-color-comments);
+}
+.facet-chip[data-facet='draft']::before {
+  color: var(--facet-color-draft);
+}
+.facet-chip:hover {
+  background: color-mix(in srgb, var(--mc-fg-primary) 10%, transparent);
+  color: var(--mc-fg-primary);
+}
+.facet-chip:focus-visible {
+  outline: 2px solid var(--mc-accent-primary);
+  outline-offset: 1px;
+}
+.facet-chip[aria-pressed='true']::before {
+  background: currentColor;
+  opacity: 1;
+}
+
+.facet-chip[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--mc-accent-primary) 18%, transparent);
+  border-color: var(--mc-accent-primary);
+  color: var(--mc-fg-primary);
+}
+
+.facet-chip[data-facet='main'][aria-pressed='true'] {
+  background: color-mix(in srgb, var(--facet-color-main) 28%, transparent);
+}
+.facet-chip[data-facet='comments'][aria-pressed='true'] {
+  background: color-mix(in srgb, var(--facet-color-comments) 28%, transparent);
+}
+.facet-chip[data-facet='draft'][aria-pressed='true'] {
+  background: color-mix(in srgb, var(--facet-color-draft) 28%, transparent);
+}
+
+aside.timeline {
+  --facet-color-main: var(--mc-accent-primary);
+  --facet-color-comments: #6b8ce0;
+  --facet-color-draft: #d4a72c;
+}
+
+.zoom-back,
+.zoom-anchor {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px 4px 8px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mc-fg-primary);
+  border: 1px solid var(--mc-border-default);
+  background: var(--mc-bg-elevated, transparent);
+}
+.zoom-back {
+  cursor: pointer;
+}
+.zoom-back:hover {
+  background: color-mix(in srgb, var(--mc-accent-primary) 16%, var(--mc-bg-elevated));
+  border-color: var(--mc-accent-primary);
+}
+.zoom-back:focus-visible {
+  outline: 2px solid var(--mc-accent-primary);
+  outline-offset: 2px;
+}
+
+.placeholder {
+  color: var(--mc-fg-secondary, #666);
+  font-size: 13px;
+}
+
+.error {
+  color: #a30000;
+  padding: 12px;
+}
+
+.milestone-band {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 0 4px;
+  padding: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--mc-accent-primary);
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+.milestone-band::before {
+  content: '★';
+  font-size: 13px;
+  line-height: 1;
+}
+.milestone-band-label {
+  display: none;
+}
+
+.milestone-band-name {
+  color: var(--mc-fg-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 220px;
+}
+
+.commit.has-milestone {
+  border-left: 3px solid var(--mc-accent-primary);
+}
+
+.merge-group {
+  list-style: none;
+}
+
+.merge-group-row {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.commit.merge-leader {
+  flex: 1;
+}
+
+.chip-merge {
+  background: rgba(120, 140, 220, 0.18);
+  color: #8aa1e0;
+}
+
+.chip-auto-group {
+  background: rgba(160, 160, 160, 0.18);
+  color: var(--mc-fg-muted);
+}
+
+.chip-more {
+  background: transparent;
+  color: var(--mc-fg-muted);
+  font-style: italic;
+}
+
+.merge-group-members {
+  list-style: none;
+  margin: 4px 0 4px 12px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-left: 1px dashed var(--mc-border);
+  padding-left: 8px;
+}
+
+.commit-nested {
+  opacity: 0.85;
+}
+
+.commit-nested:hover {
+  opacity: 1;
+}
+
+/* Cabecera del rail: "cuaderno del geólogo" con papel manila arriba y
+ * borde tierra abajo. Filtros como pins de campo en la solapa. */
+.timeline-head {
+  background: linear-gradient(to bottom, #f0e2c4 0%, #e6d4ae 100%);
+  border-bottom: 2px solid rgba(90, 60, 30, 0.4);
+  color: #2b1a0a;
+}
+.timeline-search-input {
+  border-color: rgba(90, 60, 30, 0.5);
+  background: rgba(255, 250, 235, 0.7);
+  color: #2b1a0a;
+  font-family: 'Georgia', serif;
+}
+.timeline-search-input::placeholder {
+  color: #4a3325;
+  font-family: 'Georgia', serif;
+}
+.timeline-search-input:focus {
+  border-color: #7a5a28;
+  box-shadow: 0 0 0 3px rgba(122, 90, 40, 0.28);
+}
+.timeline-search-icon {
+  color: #4a3325;
+}
+.facet-chips {
+  background: rgba(90, 60, 30, 0.14);
+}
+.facet-chip {
+  color: #2b1a0a;
+  font-family: 'Georgia', serif;
+  font-style: italic;
+}
+.only-milestones {
+  border-color: rgba(90, 60, 30, 0.5);
+  color: #2b1a0a;
+  font-family: 'Georgia', serif;
+  font-style: italic;
+}
+.zoom-back {
+  border-color: rgba(90, 60, 30, 0.5);
+  color: #2b1a0a;
+  background: rgba(255, 250, 235, 0.5);
+  font-family: 'Georgia', serif;
+  font-variant: small-caps;
+}
+.zoom-back:hover {
+  background: rgba(255, 240, 210, 0.85);
+  border-color: #7a5a28;
+}
+
+/* Cabecera del estrato = capa de tierra real. Espesor 40-140px, con
+ * gradiente y textura de bandas horizontales sedimentarias.  */
+.stratum-head {
+  padding: 8px 16px 10px;
+  border-bottom: 2px solid rgba(90, 60, 30, 0.35);
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      color-mix(in srgb, #6b4a2a 10%, transparent) 0 2px,
+      transparent 2px 6px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, #d4b483 32%, transparent) 0%,
+      color-mix(in srgb, #a67c52 22%, transparent) 100%
+    ),
+    var(--mc-bg-base, #fff);
+}
+
+.stratum-head-top {
+  padding: 0 0 4px;
+}
+
+.stratum .bucket-label {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-variant: small-caps;
+  letter-spacing: 0.06em;
+  color: color-mix(in srgb, #3d2818 90%, transparent);
+  font-size: 15px;
+}
+
+.stratum-count {
+  background: rgba(61, 40, 24, 0.18);
+  color: #3d2818;
+  border: 1px solid rgba(61, 40, 24, 0.35);
+  font-weight: 700;
+}
+
+/* Fósiles embebidos en el estrato: no más pills flotantes, sino chips
+ * con textura de piedra y aspecto de fragmento incrustado.  */
+.stratum-fossil-button {
+  background: linear-gradient(145deg, #f5e6d0, #d9b892);
+  border: 1px solid rgba(120, 80, 40, 0.55);
+  color: #3d2818;
+  font-family: 'Georgia', serif;
+  font-style: italic;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 1px 2px rgba(0, 0, 0, 0.2);
+}
+.stratum-fossil-button:hover {
+  background: linear-gradient(145deg, #fff2dc, #e8c7a0);
+}
+.stratum-fossil-flag {
+  color: #8b4513;
+}
+
+/* Commits como "entradas de bitácora" en la lista bajo el estrato — más
+ * espaciados, tipografía con corazón geológico, borde izquierdo como veta
+ * vertical de color por faceta.  */
+.commits {
+  padding: 4px 16px 16px;
+}
+.commit {
+  border-left-width: 4px;
+  border-left-style: solid;
+  padding: 8px 10px 8px 12px;
+  background: color-mix(in srgb, #f5e6d0 8%, var(--mc-bg-base, #fff));
+  border-top: 1px solid rgba(120, 80, 40, 0.08);
+}
+.commit:hover {
+  background: color-mix(in srgb, #f5e6d0 20%, var(--mc-bg-base, #fff));
+}
+.commit.selected {
+  background: color-mix(in srgb, #d4b483 25%, var(--mc-bg-base, #fff));
+  box-shadow: inset 0 0 0 2px rgba(139, 69, 19, 0.4);
+}
+
+/* Veta lateral derecha del estrato activo — es la "muestra" que se
+ * extrae del yacimiento y viaja hacia la ficha. */
+.stratum.active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: -8px;
+  width: 10px;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      #6b4a2a 0 2px,
+      #a67c52 2px 5px,
+      #d4b483 5px 9px,
+      #a67c52 9px 12px
+    );
+  border-left: 1px solid rgba(43, 26, 10, 0.55);
+  border-right: 1px solid rgba(43, 26, 10, 0.55);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.35),
+    2px 0 6px rgba(43, 26, 10, 0.25);
+  z-index: 5;
+  pointer-events: none;
+}
+/* En estratos, el ribbon lateral izquierdo pierde protagonismo — la
+ * conexión con la ficha ahora vive en el flanco derecho. */
+.stratum.active::before {
+  opacity: 0.35;
+}
+
+/* Ficha de yacimiento (pane derecho): color manila envelope, tipografía
+ * serif para etiquetas, campos como formulario de excavación.  */
+.detail {
+  background: linear-gradient(to bottom, #f4e8d0 0%, #ead9b8 100%);
+  color: #2b1a0a;
+  border-left: 3px solid rgba(90, 60, 30, 0.4);
+  box-shadow: inset 6px 0 12px -6px rgba(90, 60, 30, 0.25);
+}
+.entity {
+  border-color: rgba(90, 60, 30, 0.2) !important;
+}
+
+/* Ficha de yacimiento (zoom estratos, detail pane): resumen del ESTRATO.
+ * Vocabulario geológico — yacimiento, veta, fósil. */
+.ficha-yacimiento {
+  padding: 0 18px 20px;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  color: #2b1a0a;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+  min-height: 0;
+}
+
+/* Tie visual entre el estrato activo (columna izquierda) y la ficha
+ * (columna derecha). Clickeable — lleva el scroll del rail al estrato
+ * activo, por si el usuario se perdió. */
+.ficha-sample-tie {
+  display: grid;
+  grid-template-columns: 14px auto 1fr;
+  align-items: center;
+  gap: 8px;
+  margin: 0 -18px 4px;
+  padding: 6px 18px 6px 0;
+  border: none;
+  border-bottom: 1px dashed rgba(90, 60, 30, 0.4);
+  background: rgba(255, 240, 210, 0.55);
+  color: #2b1a0a;
+  font: inherit;
+  font-family: 'Georgia', serif;
+  font-variant: small-caps;
+  letter-spacing: 0.1em;
+  font-size: 11px;
+  cursor: pointer;
+  text-align: left;
+}
+.ficha-sample-tie:hover {
+  background: rgba(255, 220, 170, 0.75);
+}
+.ficha-sample-tie:focus-visible {
+  outline: 2px solid #7a5a28;
+  outline-offset: -2px;
+}
+.ficha-sample-tie-vein {
+  align-self: stretch;
+  width: 14px;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      #6b4a2a 0 2px,
+      #a67c52 2px 5px,
+      #d4b483 5px 9px,
+      #a67c52 9px 12px
+    );
+  border-right: 1px solid rgba(43, 26, 10, 0.55);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.35);
+}
+.ficha-sample-tie-arrow {
+  color: #6b4423;
+  font-size: 15px;
+  line-height: 1;
+  font-weight: 700;
+}
+.ficha-sample-tie-label {
+  color: #2b1a0a;
+  font-weight: 700;
+}
+.ficha-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed rgba(90, 60, 30, 0.35);
+}
+.ficha-head h3 {
+  margin: 0;
+  font-size: 18px;
+  letter-spacing: 0.02em;
+  text-transform: capitalize;
+}
+.ficha-total {
+  font-size: 12px;
+  color: #2b1a0a;
+  font-variant: small-caps;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+}
+.ficha-facets {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.ficha-facet {
+  display: grid;
+  grid-template-columns: 90px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.ficha-facet-name {
+  color: #2b1a0a;
+  font-style: italic;
+  font-weight: 600;
+}
+.ficha-facet-bar {
+  height: 8px;
+  border-radius: 2px;
+  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.1);
+  background: linear-gradient(
+    to right,
+    var(--facet-color-main) 0 var(--facet-pct, 0%),
+    rgba(107, 68, 35, 0.15) var(--facet-pct, 0%) 100%
+  );
+}
+.ficha-facet[data-facet='comments'] .ficha-facet-bar {
+  background: linear-gradient(
+    to right,
+    var(--facet-color-comments) 0 var(--facet-pct, 0%),
+    rgba(107, 68, 35, 0.15) var(--facet-pct, 0%) 100%
+  );
+}
+.ficha-facet[data-facet='draft'] .ficha-facet-bar {
+  background: linear-gradient(
+    to right,
+    var(--facet-color-draft) 0 var(--facet-pct, 0%),
+    rgba(107, 68, 35, 0.15) var(--facet-pct, 0%) 100%
+  );
+}
+.ficha-facet-count {
+  font-variant: tabular-nums;
+  font-size: 12px;
+  color: #2b1a0a;
+  font-weight: 600;
+}
+.ficha-fossils h4,
+.ficha-commits h4 {
+  margin: 0 0 4px;
+  font-family: 'Georgia', serif;
+  font-variant: small-caps;
+  letter-spacing: 0.1em;
+  font-size: 11px;
+  color: #6b4423;
+}
+.ficha-fossils ul,
+.ficha-commits ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ficha-fossils ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.ficha-fossil {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  background: rgba(255, 240, 210, 0.55);
+  border: 1px solid rgba(107, 68, 35, 0.4);
+  border-radius: 999px;
+  font: inherit;
+  font-size: 12px;
+  color: #2b1a0a;
+  cursor: pointer;
+}
+.ficha-fossil:hover {
+  background: rgba(255, 235, 180, 0.75);
+}
+.ficha-fossil-flag {
+  color: #8b4513;
+}
+.ficha-commits {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.ficha-commits ul {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-right: 4px;
+}
+.ficha-commit {
+  display: grid;
+  grid-template-columns: 60px 1fr auto;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  border-left: 3px solid transparent;
+  background: transparent;
+  font: inherit;
+  font-family: 'Georgia', serif;
+  font-size: 12px;
+  color: #2b1a0a;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 2px;
+}
+.ficha-commit:hover {
+  background: rgba(107, 68, 35, 0.08);
+}
+.ficha-commit.selected {
+  background: rgba(107, 68, 35, 0.16);
+  border-color: rgba(107, 68, 35, 0.35);
+}
+.ficha-commit[data-facet='main'] {
+  border-left-color: var(--facet-color-main);
+}
+.ficha-commit[data-facet='comments'] {
+  border-left-color: var(--facet-color-comments);
+}
+.ficha-commit[data-facet='draft'] {
+  border-left-color: var(--facet-color-draft);
+}
+.ficha-commit-time {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: #2b1a0a;
+  font-weight: 600;
+}
+.ficha-commit-msg {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #2b1a0a;
+}
+.ficha-commit-oid {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: #4a2f14;
+  font-weight: 600;
+}
+.ficha-actions {
+  padding-top: 8px;
+  border-top: 1px dashed rgba(107, 68, 35, 0.4);
+}
+.ficha-cta {
+  background: rgba(107, 68, 35, 0.15);
+  border: 1px solid rgba(107, 68, 35, 0.5);
+  color: #2a1f0a;
+  padding: 6px 14px;
+  font: inherit;
+  font-family: 'Georgia', serif;
+  font-style: italic;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 3px;
+}
+.ficha-cta:hover {
+  background: rgba(107, 68, 35, 0.25);
+}
+
+/* Red de seguridad mobile (docs/deferred/responsive.md). */
+@media (max-width: 480px) {
+  .split {
+    grid-template-columns: 1fr;
+  }
+
+  .milestone-band-name {
+    max-width: 140px;
+  }
+}

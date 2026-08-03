@@ -1,0 +1,529 @@
+<mc-confirm-dialog
+  [request]="compactionConfirm.request()"
+  (confirmed)="compactionConfirm.accept()"
+  (cancelled)="compactionConfirm.cancel()"
+/>
+<div class="split">
+  <aside
+    class="timeline"
+    data-tutorial="history-timeline"
+    aria-label="Timeline de commits"
+    (scroll)="onTimelineScroll($event)"
+  >
+    <div class="timeline-head">
+      <button
+        type="button"
+        class="zoom-back"
+        [title]="i18n.t('versioning.history.zoom.backTo.panorama')"
+        [attr.aria-label]="i18n.t('versioning.history.zoom.backTo.panorama')"
+        (click)="zoomBack.emit()"
+      >
+        <mc-icon name="arrow-left" />
+        <span>{{ i18n.t('versioning.history.zoom.backTo.panorama') }}</span>
+      </button>
+      <div class="timeline-search">
+        <mc-icon name="magnifying-glass" class="timeline-search-icon" />
+        <input
+          type="search"
+          class="timeline-search-input"
+          [value]="query()"
+          (input)="onQueryInput($event)"
+          [placeholder]="i18n.t('versioning.history.search.placeholder.strata')"
+          [attr.aria-label]="i18n.t('versioning.history.search.placeholder.strata')"
+        />
+        @if (query()) {
+          <button
+            type="button"
+            class="timeline-search-clear mc-hover-wiggle"
+            [attr.aria-label]="i18n.t('versioning.history.search.clear')"
+            [title]="i18n.t('versioning.history.search.clear')"
+            (click)="clearQuery.emit()"
+          >
+            <mc-icon name="x" />
+          </button>
+        }
+      </div>
+      <div class="timeline-head-filters">
+        <div
+          class="facet-chips"
+          role="group"
+          [attr.aria-label]="i18n.t('versioning.history.facet.label')"
+        >
+          @for (f of allFacets(); track f) {
+            <button
+              type="button"
+              class="facet-chip"
+              [attr.data-facet]="f"
+              [attr.aria-pressed]="isFacetEnabled(f)"
+              (click)="toggleFacet.emit(f)"
+            >
+              {{ i18n.t(facetLabelKey(f)) }}
+            </button>
+          }
+        </div>
+        <label class="only-milestones" data-tutorial="history-milestones-filter">
+          <input
+            type="checkbox"
+            [checked]="onlyMilestones()"
+            (change)="toggleOnlyMilestones.emit()"
+          />
+          {{ i18n.t('versioning.history.milestone.onlyMilestones') }}
+        </label>
+      </div>
+    </div>
+    @if (loading()) {
+      <p class="placeholder">{{ i18n.t('versioning.history.loading') }}</p>
+    } @else if (error(); as err) {
+      <p class="error">{{ err }}</p>
+    } @else if (noResults()) {
+      @if (query()) {
+        <p class="placeholder">
+          {{ i18n.t('versioning.history.search.noMatches', { q: query() }) }}
+        </p>
+      } @else {
+        <p class="placeholder">{{ i18n.t('versioning.history.empty') }}</p>
+      }
+    } @else {
+      @for (b of strata(); track b.id) {
+        <section
+          class="bucket stratum"
+          [attr.data-stratum-id]="b.id"
+          [class.active]="selectedStratum()?.id === b.id"
+        >
+          <header class="stratum-head">
+            <div class="stratum-head-top">
+              <h3 class="bucket-label">{{ bucketLabel(b.id) }}</h3>
+              <span
+                class="stratum-count"
+                [attr.title]="
+                  i18n.t('versioning.history.stratum.countTitle', { n: b.density.totalCount })
+                "
+              >
+                {{ b.density.totalCount }}
+              </span>
+            </div>
+            @if (b.layers.fossils.length > 0) {
+              <ul class="stratum-fossil-legend" aria-hidden="true">
+                @for (f of b.layers.fossils; track f.oid + ':' + f.name) {
+                  <li class="stratum-fossil-legend-item" [attr.data-facet]="f.facet">
+                    <span class="stratum-fossil-legend-dot" aria-hidden="true"></span>
+                    <button
+                      type="button"
+                      class="stratum-fossil-legend-name"
+                      [attr.title]="i18n.t('versioning.history.fossilFocus.jump', { name: f.name })"
+                      (click)="onFossilClick(f.oid, f.name)"
+                    >
+                      {{ f.name }}
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+          </header>
+          <ul class="commits" [hidden]="!isBucketHydrated(b.id)">
+            @for (item of b.items; track item.kind === 'commit' ? item.entry.oid : item.id) {
+              @if (item.kind === 'commit') {
+                <li>
+                  @for (m of milestonesFor(item.entry.oid); track m.name) {
+                    <div class="milestone-band" role="separator">
+                      <span class="milestone-band-label">{{
+                        i18n.t('versioning.history.milestone.bandLabel')
+                      }}</span>
+                      <span class="milestone-band-name">{{ m.name }}</span>
+                    </div>
+                  }
+                  <button
+                    type="button"
+                    class="commit"
+                    [id]="'commit-' + item.entry.oid"
+                    [class.selected]="selectedOid() === item.entry.oid"
+                    [class.is-head]="headOid() === item.entry.oid"
+                    [class.has-milestone]="milestonesFor(item.entry.oid).length > 0"
+                    [attr.data-facet]="facetOfMessage(item.entry.message)"
+                    [style.borderLeftColor]="commitOriginColor(item.entry.oid)"
+                    [attr.title]="commitOriginName(item.entry.oid)"
+                    (click)="selectCommit.emit(item.entry.oid)"
+                    (dblclick)="activateCommit.emit(item.entry.oid)"
+                  >
+                    <span class="commit-time">{{ item.entry.date | mcDate }}</span>
+                    <span class="commit-message">
+                      {{ item.entry.message }}
+                      @if (headOid() === item.entry.oid) {
+                        <span class="head-badge">{{ i18n.t('versioning.history.headBadge') }}</span>
+                      }
+                    </span>
+                    @if (item.entry.kinds.length > 0) {
+                      <span class="commit-chips">
+                        @for (k of item.entry.kinds.slice(0, 4); track k) {
+                          <span class="chip">{{ k }}</span>
+                        }
+                        @if (item.entry.kinds.length > 4) {
+                          <span class="chip chip-more">{{
+                            i18n.t('versioning.history.kinds.more', {
+                              n: item.entry.kinds.length - 4,
+                            })
+                          }}</span>
+                        }
+                      </span>
+                    }
+                    <span class="commit-oid">{{ item.entry.shortOid }}</span>
+                  </button>
+                </li>
+              } @else if (item.kind === 'auto-group') {
+                <li class="merge-group auto-group expanded">
+                  <div class="merge-group-row">
+                    <button
+                      type="button"
+                      class="commit merge-leader auto-leader"
+                      [class.selected]="selectedOid() === item.latest.oid"
+                      [class.is-head]="headOid() === item.latest.oid"
+                      [attr.data-facet]="facetOfMessage(item.latest.message)"
+                      [style.borderLeftColor]="commitOriginColor(item.latest.oid)"
+                      [attr.title]="commitOriginName(item.latest.oid)"
+                      (click)="selectCommit.emit(item.latest.oid)"
+                    >
+                      <span class="commit-time">{{ item.latest.date | mcDate }}</span>
+                      <span class="commit-message">
+                        {{ autoGroupSubject(item.latest.message) }}
+                        @if (headOid() === item.latest.oid) {
+                          <span class="head-badge">{{
+                            i18n.t('versioning.history.headBadge')
+                          }}</span>
+                        }
+                      </span>
+                      <span class="commit-chips">
+                        <span class="chip chip-auto-group">{{
+                          i18n.t('versioning.history.autoGroup.chip', { n: item.members.length })
+                        }}</span>
+                      </span>
+                      <span class="commit-oid">{{ item.latest.shortOid }}</span>
+                    </button>
+                  </div>
+                  <ul class="merge-group-members">
+                    @for (m of item.members; track m.oid) {
+                      <li>
+                        @for (ms of milestonesFor(m.oid); track ms.name) {
+                          <div class="milestone-band" role="separator">
+                            <span class="milestone-band-label">{{
+                              i18n.t('versioning.history.milestone.bandLabel')
+                            }}</span>
+                            <span class="milestone-band-name">{{ ms.name }}</span>
+                          </div>
+                        }
+                        <button
+                          type="button"
+                          class="commit commit-nested"
+                          [class.selected]="selectedOid() === m.oid"
+                          [class.is-head]="headOid() === m.oid"
+                          [class.has-milestone]="milestonesFor(m.oid).length > 0"
+                          [attr.data-facet]="facetOfMessage(m.message)"
+                          [style.borderLeftColor]="commitOriginColor(m.oid)"
+                          [attr.title]="commitOriginName(m.oid)"
+                          (click)="selectCommit.emit(m.oid)"
+                        >
+                          <span class="commit-time">{{ m.date | mcDate }}</span>
+                          <span class="commit-message">{{ m.message.split('\n')[0] }}</span>
+                          <span class="commit-oid">{{ m.shortOid }}</span>
+                        </button>
+                      </li>
+                    }
+                  </ul>
+                </li>
+              } @else {
+                <li class="merge-group expanded">
+                  <div class="merge-group-row">
+                    <button
+                      type="button"
+                      class="commit merge-leader"
+                      [class.selected]="selectedOid() === item.latest.oid"
+                      [class.is-head]="headOid() === item.latest.oid"
+                      [attr.data-facet]="facetOfMessage(item.latest.message)"
+                      [style.borderLeftColor]="commitOriginColor(item.latest.oid)"
+                      [attr.title]="commitOriginName(item.latest.oid)"
+                      (click)="selectCommit.emit(item.latest.oid)"
+                    >
+                      <span class="commit-time">{{ item.latest.date | mcDate }}</span>
+                      <span class="commit-message">
+                        @if (item.fromName && item.intoName) {
+                          {{
+                            i18n.t('versioning.history.merge.leader', {
+                              n: item.members.length,
+                              from: item.fromName,
+                              into: item.intoName,
+                            })
+                          }}
+                        } @else {
+                          {{
+                            i18n.t('versioning.history.merge.leaderUnknown', {
+                              n: item.members.length,
+                            })
+                          }}
+                        }
+                        @if (headOid() === item.latest.oid) {
+                          <span class="head-badge">{{
+                            i18n.t('versioning.history.headBadge')
+                          }}</span>
+                        }
+                      </span>
+                      <span class="commit-chips">
+                        <span class="chip chip-merge">{{
+                          i18n.t('versioning.history.merge.chip')
+                        }}</span>
+                      </span>
+                      <span class="commit-oid">{{ item.latest.shortOid }}</span>
+                    </button>
+                  </div>
+                  <ul class="merge-group-members">
+                    @for (m of item.members; track m.oid) {
+                      <li>
+                        @for (ms of milestonesFor(m.oid); track ms.name) {
+                          <div class="milestone-band" role="separator">
+                            <span class="milestone-band-label">{{
+                              i18n.t('versioning.history.milestone.bandLabel')
+                            }}</span>
+                            <span class="milestone-band-name">{{ ms.name }}</span>
+                          </div>
+                        }
+                        <button
+                          type="button"
+                          class="commit commit-nested"
+                          [class.selected]="selectedOid() === m.oid"
+                          [class.is-head]="headOid() === m.oid"
+                          [class.has-milestone]="milestonesFor(m.oid).length > 0"
+                          [attr.data-facet]="facetOfMessage(m.message)"
+                          [style.borderLeftColor]="commitOriginColor(m.oid)"
+                          [attr.title]="commitOriginName(m.oid)"
+                          (click)="selectCommit.emit(m.oid)"
+                        >
+                          <span class="commit-time">{{ m.date | mcDate }}</span>
+                          <span class="commit-message">{{ m.message.split('\n')[0] }}</span>
+                          <span class="commit-oid">{{ m.shortOid }}</span>
+                        </button>
+                      </li>
+                    }
+                  </ul>
+                </li>
+              }
+            }
+          </ul>
+        </section>
+      }
+      @if (suggestEnableCompaction()) {
+        <aside class="bedrock" role="status">
+          <div class="bedrock-strata" aria-hidden="true">
+            <span class="bedrock-layer"></span>
+            <span class="bedrock-layer"></span>
+            <span class="bedrock-layer"></span>
+          </div>
+          <div class="bedrock-body">
+            <strong>{{ i18n.t('versioning.history.compactionBanner.title') }}</strong>
+            <p>{{ i18n.t('versioning.history.compactionBanner.body') }}</p>
+            <div class="bedrock-actions">
+              <button
+                type="button"
+                class="bedrock-cta bedrock-cta-primary"
+                [disabled]="compacting()"
+                (click)="onCompactNow()"
+              >
+                {{
+                  compacting()
+                    ? i18n.t('versioning.history.compactionBanner.compacting')
+                    : i18n.t('versioning.history.compactionBanner.compactNow')
+                }}
+              </button>
+              <a class="bedrock-cta" routerLink="/settings">
+                {{ i18n.t('versioning.history.compactionBanner.cta') }} →
+              </a>
+            </div>
+          </div>
+        </aside>
+      }
+      @if (minimapGeometry().columns.length > 0) {
+        <aside
+          class="stratum-minimap"
+          [attr.aria-label]="i18n.t('versioning.history.stratum.minimapLabel')"
+        >
+          <p class="stratum-minimap-hint">
+            {{ i18n.t('versioning.history.stratum.minimapHint') }}
+          </p>
+          <svg
+            class="stratum-minimap-svg"
+            [attr.viewBox]="
+              '0 0 ' + (minimapGeometry().width || 1) + ' ' + minimapGeometry().height
+            "
+            preserveAspectRatio="none"
+            role="img"
+          >
+            <path
+              class="stratum-minimap-band panorama-band-main"
+              [attr.d]="minimapGeometry().paths.main"
+            ></path>
+            <path
+              class="stratum-minimap-band panorama-band-comments"
+              [attr.d]="minimapGeometry().paths.comments"
+            ></path>
+            <path
+              class="stratum-minimap-band panorama-band-draft"
+              [attr.d]="minimapGeometry().paths.draft"
+            ></path>
+            @if (minimapWindow(); as win) {
+              <rect
+                class="stratum-minimap-window"
+                [attr.x]="win.x"
+                y="0"
+                [attr.width]="win.width"
+                [attr.height]="minimapGeometry().height"
+              ></rect>
+            }
+            @for (c of minimapGeometry().columns; track c.dayStart) {
+              <rect
+                class="stratum-minimap-hit"
+                [attr.x]="c.hitX"
+                y="0"
+                [attr.width]="c.hitWidth"
+                [attr.height]="minimapGeometry().height"
+                [attr.aria-label]="
+                  i18n.t('versioning.history.stratum.minimapColumnTitle', {
+                    date: c.dayStart | mcDate,
+                    n: c.count,
+                  })
+                "
+                (click)="onMinimapColumnClick(c.dayStart)"
+              >
+                <title>
+                  {{
+                    i18n.t('versioning.history.stratum.minimapColumnTitle', {
+                      date: c.dayStart | mcDate,
+                      n: c.count,
+                    })
+                  }}
+                </title>
+              </rect>
+            }
+            @for (f of minimapFossils(); track f.oid + ':' + f.name) {
+              <g
+                class="stratum-minimap-fossil"
+                role="button"
+                tabindex="0"
+                [attr.aria-label]="i18n.t('versioning.history.fossilFocus.jump', { name: f.name })"
+                [attr.transform]="'translate(' + f.x + ',' + f.y + ')'"
+                (click)="onFossilClick(f.oid, f.name)"
+                (keydown.enter)="onFossilClick(f.oid, f.name)"
+              >
+                <title>
+                  {{ i18n.t('versioning.history.fossilFocus.jump', { name: f.name }) }}
+                </title>
+                <circle r="3.2"></circle>
+              </g>
+            }
+          </svg>
+        </aside>
+      }
+    }
+  </aside>
+
+  <section class="detail" aria-live="polite">
+    @if (selectedStratum(); as s) {
+      <article class="ficha-yacimiento">
+        <button
+          type="button"
+          class="ficha-sample-tie"
+          [attr.aria-label]="i18n.t('versioning.history.stratum.jumpToActiveInRail')"
+          [title]="i18n.t('versioning.history.stratum.jumpToActiveInRail')"
+          (click)="scrollToActiveStratum()"
+        >
+          <span class="ficha-sample-tie-vein" aria-hidden="true"></span>
+          <span class="ficha-sample-tie-arrow" aria-hidden="true">◂</span>
+          <span class="ficha-sample-tie-label">{{
+            i18n.t('versioning.history.stratum.sampleFrom')
+          }}</span>
+        </button>
+        <header class="ficha-head">
+          <h3>{{ bucketLabel(s.id) }}</h3>
+          <span class="ficha-total">{{
+            s.density.totalCount === 1
+              ? i18n.t('versioning.history.stratum.rangeTotalOne')
+              : i18n.t('versioning.history.stratum.rangeTotalMany', {
+                  n: s.density.totalCount,
+                })
+          }}</span>
+        </header>
+        <section class="ficha-facets">
+          @for (f of allFacets(); track f) {
+            <div
+              class="ficha-facet"
+              [attr.data-facet]="f"
+              [style.--facet-pct.%]="stratumFacetPct(s.density.facetMix, f)"
+            >
+              <span class="ficha-facet-name">{{ i18n.t(facetLabelKey(f)) }}</span>
+              <span class="ficha-facet-bar" aria-hidden="true"></span>
+              <span class="ficha-facet-count"
+                >{{ s.density.facetMix[f] }} · {{ stratumFacetPct(s.density.facetMix, f) }}%</span
+              >
+            </div>
+          }
+        </section>
+        @if (s.layers.fossils.length > 0) {
+          <section class="ficha-fossils">
+            <h4>
+              {{
+                s.layers.fossils.length === 1
+                  ? i18n.t('versioning.history.stratum.fossilsInRangeOne')
+                  : i18n.t('versioning.history.stratum.fossilsInRangeMany', {
+                      n: s.layers.fossils.length,
+                    })
+              }}
+            </h4>
+            <ul>
+              @for (f of s.layers.fossils; track f.oid + ':' + f.name) {
+                <li>
+                  <button
+                    type="button"
+                    class="ficha-fossil"
+                    [attr.data-facet]="f.facet"
+                    [title]="i18n.t('versioning.history.fossilFocus.jump', { name: f.name })"
+                    (click)="onFossilClick(f.oid, f.name)"
+                  >
+                    <span class="ficha-fossil-flag">⚑</span>
+                    {{ f.name }}
+                  </button>
+                </li>
+              }
+            </ul>
+          </section>
+        }
+        <section class="ficha-commits">
+          <h4>{{ i18n.t('versioning.history.stratum.commitsInRange') }}</h4>
+          <ul>
+            @for (c of flattenStratumCommits(s); track c.oid) {
+              <li>
+                <button
+                  type="button"
+                  class="ficha-commit"
+                  [attr.data-facet]="facetOfMessage(c.message)"
+                  [class.selected]="selectedOid() === c.oid"
+                  [class.is-head]="headOid() === c.oid"
+                  (click)="selectCommit.emit(c.oid)"
+                  (dblclick)="activateCommit.emit(c.oid)"
+                >
+                  <span class="ficha-commit-time">{{ c.date | mcDate }}</span>
+                  <span class="ficha-commit-msg">{{ c.message.split('\n')[0] }}</span>
+                  <span class="ficha-commit-oid">{{ c.shortOid }}</span>
+                </button>
+              </li>
+            }
+          </ul>
+        </section>
+        <footer class="ficha-actions">
+          @if (selectedOid(); as oid) {
+            <button type="button" class="ficha-cta" (click)="activateCommit.emit(oid)">
+              {{ i18n.t('versioning.history.stratum.zoomToCordel') }} →
+            </button>
+          }
+        </footer>
+      </article>
+    } @else {
+      <p class="placeholder">{{ i18n.t('versioning.history.selectACommit') }}</p>
+    }
+  </section>
+</div>

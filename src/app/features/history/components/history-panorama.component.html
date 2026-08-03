@@ -1,0 +1,310 @@
+<div class="split zoom-panorama">
+  <aside class="timeline" data-tutorial="history-timeline" aria-label="Timeline de commits">
+    <div class="timeline-head">
+      <span class="zoom-anchor" aria-hidden="true">
+        {{ i18n.t('versioning.history.zoom.panorama') }}
+      </span>
+      <div class="timeline-search">
+        <mc-icon name="magnifying-glass" class="timeline-search-icon" />
+        <input
+          type="search"
+          class="timeline-search-input"
+          [value]="query()"
+          (input)="onQueryInput($event)"
+          [placeholder]="i18n.t('versioning.history.search.placeholder.panorama')"
+          [attr.aria-label]="i18n.t('versioning.history.search.placeholder.panorama')"
+        />
+        @if (query()) {
+          <button
+            type="button"
+            class="timeline-search-clear mc-hover-wiggle"
+            [attr.aria-label]="i18n.t('versioning.history.search.clear')"
+            [title]="i18n.t('versioning.history.search.clear')"
+            (click)="clearQuery.emit()"
+          >
+            <mc-icon name="x" />
+          </button>
+        }
+      </div>
+      <div class="timeline-head-filters">
+        <div
+          class="facet-chips"
+          role="group"
+          [attr.aria-label]="i18n.t('versioning.history.facet.label')"
+        >
+          @for (f of allFacets(); track f) {
+            <button
+              type="button"
+              class="facet-chip"
+              [attr.data-facet]="f"
+              [attr.aria-pressed]="isFacetEnabled(f)"
+              (click)="toggleFacet.emit(f)"
+            >
+              {{ i18n.t(facetLabelKey(f)) }}
+            </button>
+          }
+        </div>
+        <label class="only-milestones" data-tutorial="history-milestones-filter">
+          <input
+            type="checkbox"
+            [checked]="onlyMilestones()"
+            (change)="toggleOnlyMilestones.emit()"
+          />
+          {{ i18n.t('versioning.history.milestone.onlyMilestones') }}
+        </label>
+      </div>
+    </div>
+    @if (loading()) {
+      <p class="placeholder">{{ i18n.t('versioning.history.loading') }}</p>
+    } @else if (error(); as err) {
+      <p class="error">{{ err }}</p>
+    } @else if (noResults()) {
+      @if (query()) {
+        <p class="placeholder">
+          {{ i18n.t('versioning.history.search.noMatches', { q: query() }) }}
+        </p>
+      } @else {
+        <p class="placeholder">{{ i18n.t('versioning.history.empty') }}</p>
+      }
+    } @else if (aggregates().length === 0) {
+      <p class="placeholder">{{ i18n.t('versioning.history.panorama.loading') }}</p>
+    } @else if (geometry().columns.length === 0) {
+      <p class="placeholder">{{ i18n.t('versioning.history.panorama.empty') }}</p>
+    } @else {
+      <div class="panorama-scroll">
+        <div class="panorama-sky">
+          <svg
+            class="panorama-svg"
+            [attr.viewBox]="'0 0 ' + (geometry().width || 1) + ' ' + (geometry().height + 24)"
+            width="100%"
+            height="100%"
+            preserveAspectRatio="none"
+            role="img"
+            [attr.aria-label]="i18n.t('versioning.history.zoom.panoramaTitle')"
+          >
+            <path
+              class="panorama-band panorama-band-main"
+              [class.dimmed]="selectedDayStart() !== null"
+              [attr.d]="geometry().paths.main"
+            ></path>
+            <path
+              class="panorama-band panorama-band-comments"
+              [class.dimmed]="selectedDayStart() !== null"
+              [attr.d]="geometry().paths.comments"
+            ></path>
+            <path
+              class="panorama-band panorama-band-draft"
+              [class.dimmed]="selectedDayStart() !== null"
+              [attr.d]="geometry().paths.draft"
+            ></path>
+            @for (t of geometry().yTicks; track t.count) {
+              <line
+                class="panorama-y-tick"
+                x1="0"
+                [attr.x2]="geometry().width"
+                [attr.y1]="t.y"
+                [attr.y2]="t.y"
+              ></line>
+            }
+            <line
+              class="panorama-horizon"
+              x1="0"
+              [attr.x2]="geometry().width"
+              [attr.y1]="geometry().horizonY"
+              [attr.y2]="geometry().horizonY"
+            ></line>
+            @if (selectedColumn(); as sel) {
+              <rect
+                class="panorama-selected-band"
+                [attr.x]="sel.hitX"
+                y="0"
+                [attr.width]="sel.hitWidth"
+                [attr.height]="geometry().horizonY"
+              ></rect>
+            }
+            @for (t of geometry().monthTicks; track t.monthStart) {
+              <line
+                class="panorama-month-tick"
+                [attr.x1]="t.x"
+                [attr.x2]="t.x"
+                [attr.y1]="geometry().horizonY"
+                [attr.y2]="geometry().horizonY + 4"
+              ></line>
+            }
+            @for (c of geometry().columns; track c.dayStart) {
+              <rect
+                class="panorama-hit"
+                [attr.x]="c.hitX"
+                y="0"
+                [attr.width]="c.hitWidth"
+                [attr.height]="geometry().height"
+                [attr.aria-label]="columnTitle(c.dayStart, c.count)"
+                (click)="setSelectedDay(c.dayStart)"
+                (dblclick)="onColumnActivate(c.dayStart)"
+                (mouseenter)="hoverColumn.set(c)"
+                (mouseleave)="hoverColumn.set(null)"
+              >
+                <title>{{ columnTitle(c.dayStart, c.count) }}</title>
+              </rect>
+            }
+            @for (f of fossils(); track f.oid + ':' + f.name) {
+              <g
+                class="panorama-fossil"
+                role="button"
+                tabindex="0"
+                [attr.aria-label]="i18n.t('versioning.history.fossilFocus.jump', { name: f.name })"
+                [attr.transform]="'translate(' + f.x + ',' + f.y + ')'"
+                (click)="onFossilClick(f.oid, f.name)"
+                (keydown.enter)="onFossilClick(f.oid, f.name)"
+              >
+                <title>
+                  {{ i18n.t('versioning.history.fossilFocus.jump', { name: f.name }) }}
+                </title>
+                <!-- Amonita estilizada: concha exterior + cámaras internas
+                     + puntito central. Silueta de fósil, no bandera. -->
+                <circle class="panorama-fossil-shell" r="5.5"></circle>
+                <path
+                  class="panorama-fossil-chambers"
+                  d="M0,0 L5.5,0 M0,0 L3.9,3.9 M0,0 L0,5.5 M0,0 L-3.9,3.9 M0,0 L-5.5,0 M0,0 L-3.9,-3.9 M0,0 L3.9,-3.9"
+                ></path>
+                <circle class="panorama-fossil-core" r="1.2"></circle>
+              </g>
+            }
+          </svg>
+          <div class="panorama-overlay" aria-hidden="true">
+            @for (t of geometry().yTicks; track t.count) {
+              <span class="panorama-y-label" [style.top.%]="(t.y / geometry().height) * 100">{{
+                i18n.t('versioning.history.panorama.perDayScale', { n: t.count })
+              }}</span>
+            }
+            @for (t of geometry().monthTicks; track t.monthStart) {
+              <span
+                class="panorama-month-label"
+                [style.left.%]="(t.x / (geometry().width || 1)) * 100"
+                >{{ t.label }}</span
+              >
+            }
+            @if (headColumn(); as head) {
+              <span
+                class="panorama-head-marker"
+                [title]="i18n.t('versioning.history.panorama.headMarker')"
+                [style.left.%]="(head.x / (geometry().width || 1)) * 100"
+                [style.top.%]="(head.peakY / geometry().height) * 100"
+              >
+                <span class="panorama-head-dot"></span>
+              </span>
+            }
+            @if (explorerPos(); as pos) {
+              <span
+                class="panorama-explorer"
+                [class.walking]="pos.walking"
+                [title]="i18n.t('versioning.history.panorama.explorer')"
+                [style.left.%]="pos.xPct"
+                [style.top.%]="pos.yPct"
+              >
+                <svg viewBox="0 0 24 30" aria-hidden="true">
+                  <!-- Sombra al piso -->
+                  <ellipse class="explorer-shadow" cx="12" cy="27.5" rx="6" ry="1.2"></ellipse>
+                  <!-- Cabeza + gorra -->
+                  <circle class="explorer-head" cx="12" cy="6" r="3.2"></circle>
+                  <path class="explorer-cap" d="M8.5,5.5 Q12,2 15.8,5.5 Z"></path>
+                  <!-- Torso -->
+                  <path class="explorer-body" d="M9.5,9 L14.5,9 L15,18 L9,18 Z"></path>
+                  <!-- Mochila -->
+                  <rect class="explorer-pack" x="14.5" y="10" width="4" height="6" rx="1"></rect>
+                  <!-- Piernas -->
+                  <path class="explorer-leg leg-front" d="M10,18 L9.5,25"></path>
+                  <path class="explorer-leg leg-back" d="M13.5,18 L14,25"></path>
+                  <!-- Bastón -->
+                  <path class="explorer-pole" d="M6,10 L4.5,25.5"></path>
+                  <!-- Brazo -->
+                  <path class="explorer-arm" d="M10,11 L6,11"></path>
+                </svg>
+              </span>
+            }
+            @if (hoverColumn(); as hover) {
+              <div
+                class="panorama-tooltip"
+                [style.left.%]="(hover.x / (geometry().width || 1)) * 100"
+                [style.top.%]="(hover.peakY / geometry().height) * 100"
+              >
+                <strong>{{ columnTitle(hover.dayStart, hover.count) }}</strong>
+                @for (line of tooltipFacets(hover.dayStart); track line) {
+                  <span>{{ line }}</span>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+      <p class="panorama-hint">{{ i18n.t('versioning.history.panorama.zoomIntoDayHint') }}</p>
+    }
+  </aside>
+
+  <section class="detail" aria-live="polite">
+    @if (rangeSummary(); as r) {
+      <article class="panorama-notebook">
+        <header class="notebook-head">
+          <h3>{{ r.dayLabel }}</h3>
+          <span class="notebook-total">{{
+            r.total === 1
+              ? i18n.t('versioning.history.panorama.rangeTotalOne')
+              : i18n.t('versioning.history.panorama.rangeTotalMany', { n: r.total })
+          }}</span>
+        </header>
+        <section class="notebook-facets">
+          @for (f of allFacets(); track f) {
+            <div
+              class="notebook-facet"
+              [attr.data-facet]="f"
+              [style.--facet-pct.%]="facetPct(r.facetMix, f)"
+            >
+              <span class="notebook-facet-name">{{ i18n.t(facetLabelKey(f)) }}</span>
+              <span class="notebook-facet-bar" aria-hidden="true"></span>
+              <span class="notebook-facet-count"
+                >{{ r.facetMix[f] }} · {{ facetPct(r.facetMix, f) }}%</span
+              >
+            </div>
+          }
+        </section>
+        @if (r.fossils.length > 0) {
+          <section class="notebook-fossils">
+            <h4>
+              {{
+                r.fossils.length === 1
+                  ? i18n.t('versioning.history.panorama.fossilsInRangeOne')
+                  : i18n.t('versioning.history.panorama.fossilsInRangeMany', {
+                      n: r.fossils.length,
+                    })
+              }}
+            </h4>
+            <ul>
+              @for (f of r.fossils; track f.oid + ':' + f.name) {
+                <li>
+                  <button
+                    type="button"
+                    class="notebook-fossil"
+                    [title]="i18n.t('versioning.history.fossilFocus.jump', { name: f.name })"
+                    (click)="onFossilClick(f.oid, f.name)"
+                  >
+                    <span class="notebook-fossil-flag">⚑</span>
+                    {{ f.name }}
+                  </button>
+                </li>
+              }
+            </ul>
+          </section>
+        }
+        <footer class="notebook-actions">
+          <button type="button" class="notebook-cta" (click)="onZoomIntoRange()">
+            {{ i18n.t('versioning.history.panorama.zoomToStrata') }} →
+          </button>
+        </footer>
+      </article>
+    } @else {
+      <p class="panorama-notebook-empty">
+        {{ i18n.t('versioning.history.panorama.noSelection') }}
+      </p>
+    }
+  </section>
+</div>

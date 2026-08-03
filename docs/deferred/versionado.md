@@ -33,12 +33,6 @@ Formato por entrada:
 - **Por qué se difirió**: estructura y funcionalidad están; el polish entra cuando 13a-d estén cerrados y tengamos uso real para saber qué duele.
 - **Target**: §19.16f.
 
-### Refactor de `/history` a subcomponentes por zoom
-
-- **Qué**: `history.container.ts` (~946 líneas) y `history.container.html`/`.css` (`.css` con 1900+ líneas) concentran todo el estado de zoom, prefetch y revelado en un solo archivo, por encima del límite de 200 warn / 300 err de §4.4. El plan es partir en `<mc-history-panorama>`, `<mc-history-strata>`, `<mc-history-cordel>`.
-- **Por qué se difirió**: el rediseño priorizó cerrar las 5 fases funcionales antes de la extracción estructural; el refactor no cambia comportamiento, sólo baja el tamaño de archivo.
-- **Target**: §19.16f.
-
 ### Preview inline del diff en hover sobre la polaroid (zoom detalle)
 
 - **Qué**: en la vista cordel (§rediseño /history v2 Fase 4), mostrar un preview del diff al hacer hover sostenido sobre una polaroid sin necesidad de seleccionarla y esperar a que la mesa de revelado la muestre abajo.
