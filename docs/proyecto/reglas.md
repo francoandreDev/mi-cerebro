@@ -75,6 +75,7 @@ Reglas que rigen todo el desarrollo. Cualquier excepción se justifica en el com
 16. **Commits frecuentes y atómicos.** Mensaje en inglés, imperativo (`add tag filter`, no `added`).
 17. **Branches por feature.** `main` siempre funcional.
 18. **Tests donde duele, no donde es fácil.** `FsService`, `IndexService`, `AutosaveService`, `MigrationsService` y `VersioningService` se testean sí o sí. Componentes visuales solo si tienen lógica no trivial.
+    18b. **E2E: smoke funcional con Playwright, sin regresión visual por screenshot-diff.** Decisión tomada 2026-08-03 (ítem 24 del roadmap, disparado por un bug de layout — `tasks-garden` — que ni `tsc` ni `ng test`/jsdom detectaron). Playwright cubre click-through de los flujos críticos por sección (crear/editar/borrar entidad, navegación básica); explícitamente **no** se adopta regresión visual por captura de pantalla — el costo de mantenimiento (re-aprobar baselines en cada rediseño intencional, y estas secciones se rediseñan seguido) supera el beneficio hasta que haya evidencia de que los bugs puramente visuales son frecuentes, no un caso aislado. Implementación (armado de `playwright.config.ts`, primer set de specs): sin asignar — la decisión es de alcance, no de cronograma. Ver `docs/proyecto/roadmap-22-25.md` ítem 24.
 
 ### 4.8 Filosofía
 
