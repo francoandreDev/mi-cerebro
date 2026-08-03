@@ -78,12 +78,51 @@ const DAY_OFFSETS: Record<string, number> = {
   pasado: 2,
 };
 
-const applyDayKey = (base: Date, dayKey: string): boolean => {
+// "viernes que viene" means the same as "viernes" (next occurrence) — the
+// suffix is just emphasis, so it's stripped before the weekday lookup.
+const stripQueViene = (dayKey: string): string => dayKey.replace(/\s+que viene$/, '');
+
+const SATURDAY = 6;
+
+const parseAbsoluteDate = (base: Date, dayKey: string): boolean => {
+  const m = /^(\d{1,2})[/-](\d{1,2})(?:[/-](\d{2,4}))?$/.exec(dayKey);
+  if (!m || m[1] === undefined || m[2] === undefined) return false;
+  const day = Number(m[1]);
+  const month = Number(m[2]) - 1;
+  if (day < 1 || day > 31 || month < 0 || month > 11) return false;
+  let year = base.getFullYear();
+  if (m[3] !== undefined) {
+    year = Number(m[3]);
+    if (year < 100) year += 2000;
+  }
+  const candidate = new Date(year, month, day);
+  if (candidate.getMonth() !== month || candidate.getDate() !== day) return false; // invalid day (31/02, etc.)
+  // No explicit year given and the date already passed this year: roll to next year.
+  if (m[3] === undefined) {
+    const today = new Date(base.getFullYear(), base.getMonth(), base.getDate());
+    if (candidate < today) candidate.setFullYear(year + 1);
+  }
+  base.setFullYear(candidate.getFullYear(), candidate.getMonth(), candidate.getDate());
+  return true;
+};
+
+const applyDayKey = (base: Date, rawDayKey: string): boolean => {
+  const dayKey = stripQueViene(rawDayKey);
   const offset = DAY_OFFSETS[dayKey];
   if (offset !== undefined) {
     base.setDate(base.getDate() + offset);
     return true;
   }
+  if (dayKey === 'fin de semana' || dayKey === 'finde') {
+    const next = base.getDay() === SATURDAY ? new Date(base) : nextWeekday(base, SATURDAY);
+    base.setFullYear(next.getFullYear(), next.getMonth(), next.getDate());
+    return true;
+  }
+  if (dayKey === 'proximo mes' || dayKey === 'el proximo mes') {
+    base.setMonth(base.getMonth() + 1);
+    return true;
+  }
+  if (parseAbsoluteDate(base, dayKey)) return true;
   const wd = Object.entries(WEEKDAYS).find(([k]) => stripAccents(k) === dayKey)?.[1];
   if (wd === undefined) return false;
   const next = nextWeekday(base, wd);

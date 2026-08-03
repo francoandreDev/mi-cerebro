@@ -23,8 +23,8 @@ Formato por entrada:
 
 ## Escritos (origen: rediseño /writings)
 
-### Parser de fecha natural — alcance ampliado
+### Parser de fecha natural — parsing sin `@` en el título
 
-- **Qué**: el `@hint` actual soporta hoy/mañana/pasado, días de la semana, "en Nh/Nm/Nd" y horas (24h y am/pm). Faltan: "viernes que viene", "fin de semana", "próximo mes", fechas absolutas "15/07", parsing dentro del título sin `@`.
-- **Por qué se difirió**: cobertura actual cubre los casos cotidianos; lo demás suma complejidad de parser y ambigüedad UX (cuándo `Llamar 15` significa hora 15 vs día 15). Mejor evaluar uso real antes de extender.
+- **Qué**: el parser (`features/reminders/utils/parse-due.ts` — nota: vive en **reminders**, no en escritos; esta entrada quedó mal ubicada desde el origen) ahora cubre hoy/mañana/pasado, días de la semana (+ sufijo "que viene"), "fin de semana", "próximo mes", fechas absolutas `dd/mm[/aaaa]`, "en Nh/Nm/Nd" y horas (24h y am/pm) — ver `docs/sistema/calendario-recordatorios-configuracion.md`. Queda afuera únicamente detectar la fecha dentro del título sin marcador `@` (ej. `Llamar mamá mañana 9`).
+- **Por qué se difirió**: ambigüedad UX real, no falta de tiempo — `Llamar 15` puede leerse como hora 15 o día 15 sin marcador que lo distinga. Requiere una heurística explícita (o UI que confirme la interpretación) antes de implementarse, para no violar "la UI no debe mentir" adivinando mal.
 - **Target**: sin asignar.
