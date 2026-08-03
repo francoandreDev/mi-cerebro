@@ -1,3 +1,4 @@
+import type { ElementRef } from '@angular/core';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -6,6 +7,7 @@ import {
   input,
   output,
   signal,
+  viewChild,
 } from '@angular/core';
 
 import { I18nService } from '@core/i18n/i18n.service';
@@ -14,7 +16,20 @@ import { IconComponent } from '@shared/icon/icon.component';
 import { MC_INTERNAL_DND_TYPE, hasInternalDnd } from '@shared/utils/dnd';
 
 import type { FileCollection, FileItem } from '../models/file-collection.types';
-import { FileArtifactComponent, type FilePreview } from './file-artifact.component';
+import { FileArtifactComponent, type FilePreview, hash } from './file-artifact.component';
+
+const clamp = (n: number, min: number, max: number): number => Math.min(max, Math.max(min, n));
+
+interface FreeDragState {
+  readonly id: string;
+  readonly ox: number;
+  readonly oy: number;
+  readonly sx: number;
+  readonly sy: number;
+  readonly w: number;
+  readonly h: number;
+  moved: boolean;
+}
 
 @Component({
   selector: 'mc-file-grid',
@@ -34,6 +49,8 @@ export class FileGridComponent {
   readonly moveDown = output<string>();
   readonly reorder = output<{ from: string; to: string }>();
   readonly rename = output<{ id: string; name: string }>();
+  readonly toggleFreeLayout = output<boolean>();
+  readonly itemMove = output<{ id: string; x: number; y: number }>();
 
   private readonly i18n = inject(I18nService);
   protected t(key: TranslationKey): string {
@@ -125,5 +142,65 @@ export class FileGridComponent {
   protected onItemDragEnd(): void {
     this.draggingId.set(null);
     this.dropTargetId.set(null);
+  }
+
+  protected readonly freeBoardRef = viewChild<ElementRef<HTMLElement>>('freeBoardEl');
+  protected readonly dragPos = signal<{ id: string; x: number; y: number } | null>(null);
+  private dragState: FreeDragState | null = null;
+
+  protected onToggleFreeLayout(): void {
+    this.toggleFreeLayout.emit(!this.collection().freeLayout);
+  }
+
+  // why: undragged items get a deterministic hash-based scatter so free mode
+  //      never stacks everything at 0,0 — mirrors the jitter-grid precedent.
+  protected positionFor(item: FileItem): { x: number; y: number } {
+    const dragged = this.dragPos();
+    if (dragged && dragged.id === item.id) return dragged;
+    if (item.x !== undefined && item.y !== undefined) return { x: item.x, y: item.y };
+    const h = hash(item.id);
+    const x = 8 + ((h & 0xff) / 255) * 80;
+    const y = 8 + (((h >> 8) & 0xff) / 255) * 80;
+    return { x, y };
+  }
+
+  protected onItemPointerDown(event: PointerEvent, item: FileItem): void {
+    if (!this.editable()) return;
+    const board = this.freeBoardRef()?.nativeElement;
+    if (!board) return;
+    const rect = board.getBoundingClientRect();
+    const pos = this.positionFor(item);
+    this.dragState = {
+      id: item.id,
+      ox: pos.x,
+      oy: pos.y,
+      sx: event.clientX,
+      sy: event.clientY,
+      w: rect.width,
+      h: rect.height,
+      moved: false,
+    };
+    (event.target as HTMLElement).setPointerCapture(event.pointerId);
+  }
+
+  protected onItemPointerMove(event: PointerEvent): void {
+    const d = this.dragState;
+    if (!d) return;
+    const dx = event.clientX - d.sx;
+    const dy = event.clientY - d.sy;
+    if (!d.moved && Math.hypot(dx, dy) < 4) return;
+    d.moved = true;
+    const x = clamp(d.ox + (dx / d.w) * 100, 3, 97);
+    const y = clamp(d.oy + (dy / d.h) * 100, 3, 97);
+    this.dragPos.set({ id: d.id, x, y });
+  }
+
+  protected onItemPointerUp(): void {
+    const d = this.dragState;
+    this.dragState = null;
+    if (!d) return;
+    const pos = this.dragPos();
+    this.dragPos.set(null);
+    if (d.moved && pos) this.itemMove.emit({ id: d.id, x: pos.x, y: pos.y });
   }
 }

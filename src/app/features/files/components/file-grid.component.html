@@ -3,12 +3,22 @@
     <mc-icon name="folder-open" />
     <span>{{ t('files.items.title') }} ({{ collection().items.length }})</span>
   </h3>
-  @if (editable()) {
-    <button type="button" class="primary mc-hover-grow" (click)="onPick()">
-      <mc-icon name="plus" />
-      <span>{{ t('files.items.add') }}</span>
-    </button>
-  }
+  <div class="head-actions">
+    @if (editable() && orderedItems().length > 0) {
+      <button type="button" class="ghost mc-hover-grow" (click)="onToggleFreeLayout()">
+        <mc-icon name="push-pin" />
+        <span>{{
+          collection().freeLayout ? t('files.items.freeModeOff') : t('files.items.freeModeOn')
+        }}</span>
+      </button>
+    }
+    @if (editable()) {
+      <button type="button" class="primary mc-hover-grow" (click)="onPick()">
+        <mc-icon name="plus" />
+        <span>{{ t('files.items.add') }}</span>
+      </button>
+    }
+  </div>
 </header>
 
 <div
@@ -42,6 +52,34 @@
           <mc-icon name="plus" />
           <span>{{ t('files.items.add') }}</span>
         </button>
+      }
+    </div>
+  } @else if (collection().freeLayout) {
+    <div class="board-free" #freeBoardEl>
+      @for (item of orderedItems(); track item.id; let i = $index) {
+        <div
+          class="free-slot"
+          [style.left.%]="positionFor(item).x"
+          [style.top.%]="positionFor(item).y"
+          (pointerdown)="onItemPointerDown($event, item)"
+          (pointermove)="onItemPointerMove($event)"
+          (pointerup)="onItemPointerUp()"
+          (pointercancel)="onItemPointerUp()"
+        >
+          <mc-file-artifact
+            [item]="item"
+            [preview]="previewFor(item)"
+            [editable]="editable()"
+            [canMoveUp]="i > 0"
+            [canMoveDown]="i < orderedItems().length - 1"
+            [jitter]="false"
+            (download)="download.emit(item.id)"
+            (remove)="remove.emit(item.id)"
+            (moveUp)="moveUp.emit(item.id)"
+            (moveDown)="moveDown.emit(item.id)"
+            (rename)="rename.emit({ id: item.id, name: $event })"
+          />
+        </div>
       }
     </div>
   } @else {

@@ -22,6 +22,11 @@
   align-items: center;
   gap: 8px;
 }
+.head-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+}
 .primary {
   background: var(--mc-accent-primary);
   color: var(--mc-accent-fg);
@@ -33,6 +38,22 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+.ghost {
+  background: transparent;
+  color: var(--mc-fg-muted);
+  border: 1px solid var(--mc-border-subtle);
+  padding: var(--mc-space-1) var(--mc-space-3);
+  border-radius: var(--mc-radius-md);
+  cursor: pointer;
+  font-size: var(--mc-font-size-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.ghost:hover {
+  color: var(--mc-fg-primary);
+  border-color: var(--mc-fg-muted);
 }
 
 /* the board itself: cork in light theme, dark felt in dark theme via
@@ -84,6 +105,21 @@
 .slot {
   display: flex;
   justify-content: center;
+}
+.board-free {
+  position: relative;
+  min-height: 420px;
+  height: 100%;
+}
+.free-slot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  cursor: grab;
+  touch-action: none;
+}
+.free-slot:active {
+  cursor: grabbing;
+  z-index: 5;
 }
 .slot.dragging mc-file-artifact { opacity: 0.4; }
 .slot.drop-target mc-file-artifact {

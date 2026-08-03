@@ -55,7 +55,10 @@ export class FilesService {
     this.migrations.register({
       kind: FILE_KIND,
       latest: FILE_COLLECTION_SCHEMA_VERSION,
-      steps: [positionSeedMigrationStep(1)],
+      // why: v2->v3 only bumps the version — `x`/`y`/`freeLayout` are all
+      // optional and absent on old files, which the board reads as "not in
+      // free-layout mode yet". No data to backfill.
+      steps: [positionSeedMigrationStep(1), positionSeedMigrationStep(2)],
     });
   }
 
@@ -227,6 +230,22 @@ export class FilesService {
   async reorderFiles(collectionId: string, order: readonly string[]): Promise<void> {
     const collection = await this.readCollection(collectionId);
     await this.saveCollection({ ...collection, order });
+  }
+
+  async setFreeLayout(collectionId: string, enabled: boolean): Promise<FileCollection> {
+    const collection = await this.readCollection(collectionId);
+    return this.saveCollection({ ...collection, freeLayout: enabled });
+  }
+
+  async setItemPosition(
+    collectionId: string,
+    itemId: string,
+    x: number,
+    y: number,
+  ): Promise<FileCollection> {
+    const collection = await this.readCollection(collectionId);
+    const items = collection.items.map((it) => (it.id === itemId ? { ...it, x, y } : it));
+    return this.saveCollection({ ...collection, items });
   }
 
   async renameFile(collectionId: string, itemId: string, name: string): Promise<void> {

@@ -34,8 +34,9 @@ export interface FilePreview {
 }
 
 // why: cheap deterministic hash so jitter/pin colour are stable per file id
-//      across re-renders without persisting anything to disk.
-const hash = (s: string): number => {
+//      across re-renders without persisting anything to disk. Exported so
+//      file-grid can seed a scatter position for items with no persisted x/y.
+export const hash = (s: string): number => {
   let h = 2166136261;
   for (let i = 0; i < s.length; i++) {
     h ^= s.charCodeAt(i);

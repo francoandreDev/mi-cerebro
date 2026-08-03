@@ -1978,6 +1978,8 @@ export const es = {
   'files.items.empty': 'Sin archivos. Agregá el primero.',
   'files.items.dropHint': 'Arrastrá archivos acá o usá "Agregar archivos".',
   'files.items.deleteConfirm': '¿Eliminar el archivo "{name}"? No se manda a papelera.',
+  'files.items.freeModeOn': 'Fijar en el corcho',
+  'files.items.freeModeOff': 'Volver a la grilla',
   'files.confirm.deleteItem.title': 'Eliminar archivo',
   'files.confirm.deleteItem.confirm': 'Sí, eliminar',
   'files.tutorial.upload.title': '"Nueva colección" te da un casillero',

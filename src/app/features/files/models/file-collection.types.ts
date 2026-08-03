@@ -1,4 +1,4 @@
-export const FILE_COLLECTION_SCHEMA_VERSION = 2;
+export const FILE_COLLECTION_SCHEMA_VERSION = 3;
 export const FILE_KIND = 'file';
 export const FILES_DIR = 'files';
 export const COLLECTION_META_FILE = '_collection.json';
@@ -12,6 +12,14 @@ export interface FileItem {
   readonly ext: string;
   readonly bytes: number;
   readonly addedAt: string;
+  // why: percent-of-board coordinates (0-100), only meaningful when the
+  // collection has `freeLayout: true`. Undefined means "not dragged yet" —
+  // the board falls back to a deterministic hash-based scatter for display
+  // so items don't stack at the origin, without writing a position to disk
+  // until the user actually drags it (see bookshelf-projections precedent:
+  // percent-of-container avoids resize/overflow bookkeeping).
+  readonly x?: number;
+  readonly y?: number;
 }
 
 export const displayLabel = (item: FileItem): string =>
@@ -27,6 +35,7 @@ export interface FileCollection {
   readonly updatedAt: string;
   readonly schemaVersion: number;
   readonly position?: string;
+  readonly freeLayout?: boolean;
   readonly [key: string]: unknown;
 }
 

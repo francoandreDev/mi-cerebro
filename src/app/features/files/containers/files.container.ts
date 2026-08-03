@@ -336,6 +336,28 @@ export class FilesContainer {
     }
   }
 
+  protected async onToggleFreeLayout(enabled: boolean): Promise<void> {
+    const current = this.active();
+    if (!current || !this.lock.guardWrite()) return;
+    try {
+      this.active.set(await this.filesService.setFreeLayout(current.id, enabled));
+    } catch (e) {
+      this.errors.report(e);
+    }
+  }
+
+  protected async onItemMove(payload: { id: string; x: number; y: number }): Promise<void> {
+    const current = this.active();
+    if (!current || !this.lock.guardWrite()) return;
+    try {
+      this.active.set(
+        await this.filesService.setItemPosition(current.id, payload.id, payload.x, payload.y),
+      );
+    } catch (e) {
+      this.errors.report(e);
+    }
+  }
+
   protected async onReorder(payload: { from: string; to: string }): Promise<void> {
     const current = this.active();
     if (!current || !this.lock.guardWrite()) return;

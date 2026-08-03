@@ -13,14 +13,6 @@ Formato por entrada:
 
 ---
 
-## Archivos (origen: rediseño /files — tablero de evidencia)
-
-### Posición libre real (drag x/y) en el tablero
-
-- **Qué**: en lugar de grilla con jitter determinista, dejar que el usuario arrastre cada artefacto a una coordenada arbitraria del corcho y persistirla.
-- **Por qué se difirió**: implica nuevo `x,y` por item en el schema (migración + bump de `FILE_COLLECTION_SCHEMA_VERSION`), resolver overflow/colisiones al resize de ventana, hit-test de drop sobre el board, y modo "auto-acomodar" para colecciones nuevas. El jitter determinista ya transmite el feeling sin tocar disco ni schema.
-- **Target**: sin asignar.
-
 ## Escritos (origen: rediseño /writings)
 
 ### Parser de fecha natural — parsing sin `@` en el título
