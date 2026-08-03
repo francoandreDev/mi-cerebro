@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output, signal } from '@angular/core';
 import type { JSONContent } from '@tiptap/core';
 
 import { FocusModeService } from '@core/focus-mode/focus-mode.service';
@@ -48,6 +48,18 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
           />
           {{ statusLabel() }}
         </span>
+        <button
+          type="button"
+          class="board-style"
+          [class.on]="boardStyleOn()"
+          [attr.aria-pressed]="boardStyleOn()"
+          [attr.aria-label]="t('lists.boardStyle.toggleAria')"
+          [title]="t('lists.boardStyle.toggle')"
+          (click)="boardStyleOn.set(!boardStyleOn())"
+        >
+          <mc-icon name="sparkle" />
+          <span>{{ boardStyleOn() ? t('lists.boardStyle.on') : t('lists.boardStyle.off') }}</span>
+        </button>
         @if (editable()) {
           <button type="button" class="danger mc-hover-wiggle" (click)="removeList.emit()">
             <mc-icon name="trash" />
@@ -80,6 +92,7 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
         [entityId]="list().id"
         [entityTitle]="list().title"
         [entityKind]="entityKind"
+        [chalkboardStyle]="boardStyleOn()"
         (valueChange)="bodyChange.emit($event)"
       />
     </mc-chalkboard-overlay>
@@ -145,6 +158,26 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
       color: var(--mc-danger, #d04a4a);
       border-color: var(--mc-danger, #d04a4a);
     }
+    .board-style {
+      background: transparent;
+      color: var(--mc-fg-muted);
+      border: 1px solid var(--mc-border-default);
+      padding: var(--mc-space-1) var(--mc-space-3);
+      border-radius: var(--mc-radius-md);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+    .board-style:hover {
+      color: var(--mc-accent-primary);
+      border-color: var(--mc-accent-primary);
+    }
+    .board-style.on {
+      color: #fff9e6;
+      background: #2f4f3e;
+      border-color: #2f4f3e;
+    }
     .board {
       display: flex;
       flex-direction: column;
@@ -169,6 +202,12 @@ export class ListEditorPaneComponent {
   readonly addTag = output<string>();
   readonly removeTag = output<string>();
   readonly chalkLayersChange = output<readonly ChalkLayer[]>();
+
+  // why: "vista pizarra completa" (docs/deferred/lists-images.md) — sólo
+  //      UI, sesión, no persiste al JSON de la lista (a diferencia de
+  //      chalkLayers). Distinto del toggle "modo tiza" del dibujo, que
+  //      vive en ChalkboardOverlayComponent.
+  protected readonly boardStyleOn = signal(false);
 
   private readonly i18n = inject(I18nService);
   protected readonly focusMode = inject(FocusModeService);

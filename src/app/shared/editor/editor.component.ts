@@ -70,6 +70,9 @@ import { createEditorInstance, jsonEquals } from './setup-editor';
     ImagePickerDialogComponent,
     EntityLinkPickerDialogComponent,
   ],
+  host: {
+    '[class.chalkboard-style]': 'chalkboardStyle()',
+  },
   templateUrl: './editor.component.html',
   styleUrl: './editor.component.css',
 })
@@ -79,6 +82,11 @@ export class EditorComponent {
   readonly editable = input<boolean>(true);
   readonly entityId = input<string>('');
   readonly entityTitle = input<string>('');
+  // why: opt-in "vista pizarra completa" para /lists/:id (docs/deferred/
+  //      lists-images.md) — sólo restila esta instancia vía clase de host,
+  //      nunca toca los --mc-* tokens compartidos. Default false para el
+  //      resto de consumidores (notas, tareas, escritos, etc.).
+  readonly chalkboardStyle = input<boolean>(false);
   // why: kind de la entidad activa (ej. 'note', 'goal') — necesario para
   //      registrar el extremo `from` de una Relation al vincular desde el
   //      editor (§10bis). Vacío = "Vincular a…" no crea la Relation (sólo

@@ -1336,6 +1336,10 @@ export const es = {
   'lists.tutorial.tools.title': 'Al activarlo aparece un editor de capas completo',
   'lists.tutorial.tools.body':
     'Paleta de colores, tres grosores, deshacer/rehacer, capas nombradas que podés ocultar/bloquear/reordenar, y exportar a PNG o SVG. Todo vive acá, activalo cuando quieras probarlo.',
+  'lists.boardStyle.toggle': 'Vista pizarra completa',
+  'lists.boardStyle.toggleAria': 'Activar o desactivar vista pizarra completa',
+  'lists.boardStyle.on': 'Pizarra',
+  'lists.boardStyle.off': 'Vista normal',
   'lists.chalk.toggle': 'Modo tiza',
   'lists.chalk.toggleAria': 'Activar o desactivar modo tiza',
   'lists.chalk.on': 'Tiza on',
