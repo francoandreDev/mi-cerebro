@@ -39,13 +39,6 @@ Formato por entrada:
 - **Por qué se difirió**: el rediseño priorizó cerrar las 5 fases funcionales antes de la extracción estructural; el refactor no cambia comportamiento, sólo baja el tamaño de archivo.
 - **Target**: §19.16f.
 
-### Bug: rama muerta en `history.container.html` deja renombrar/borrar hito y "agrupar por tipo" inalcanzables
-
-- **Qué**: el bloque `@else if (selectedEntry(); as entry)` de la sección `.detail` (chips de renombrar/borrar milestone, resolución de colisión de nombre, checkbox "agrupar por tipo" + lista agrupada `entityFeed()`, y el párrafo de trailers `selectedBody()`) es inalcanzable en el DOM real: la cadena `@if`/`@else if` que lo precede (`zoom() === 'panorama'` → `zoom() === 'strata'` → `zoom() === 'detail' && selectedEntry()`) ya cubre los 3 valores posibles de `HistoryZoom`, así que la condición final `selectedEntry()` nunca puede ser la primera en cumplirse. Confirmado con un análisis de profundidad de llaves línea por línea sobre `history.container.html` (agosto 2026, mientras se implementaba 8.93). Reglas CSS huérfanas (`.split.zoom-strata .detail-head h3`, `.split.zoom-panorama .detail-head h3`) sugieren que este bloque sí era alcanzable antes de que la condición de "cordel" ganara el `zoom() === 'detail' &&` explícito — regresión de un refactor previo, no código nunca usado.
-- **Impacto real**: hoy es imposible renombrar o borrar un hito, o agrupar el diff por tipo de entidad, desde la UI — sólo "marcar" (que sí vive en la rama alcanzable, la polaroid de cordel) funciona. 8.93 (tutorial de Historial) documentó esto en vez de agregar steps/`action` para gestos que no se pueden practicar (violaría "la UI no debe mentir") y sólo cubrió "marcar hito" como step nuevo.
-- **Por qué se difirió**: el fix correcto es mover ese contenido a la rama de cordel (`mesa-polaroid-*`, la única alcanzable) en vez de borrar funcionalidad — trabajo de UI no trivial (reubicar markup + adaptar clases CSS) y fuera del alcance de un ítem de tutorial. Verificar visualmente requiere el dev server corriendo, que este paso no gestiona.
-- **Target**: sin asignar — bug-fix de prioridad alta, recomendado antes de retomar cualquier ítem de historial que dependa de renombrar/borrar hito o de "agrupar por tipo".
-
 ### Preview inline del diff en hover sobre la polaroid (zoom detalle)
 
 - **Qué**: en la vista cordel (§rediseño /history v2 Fase 4), mostrar un preview del diff al hacer hover sostenido sobre una polaroid sin necesidad de seleccionarla y esperar a que la mesa de revelado la muestre abajo.

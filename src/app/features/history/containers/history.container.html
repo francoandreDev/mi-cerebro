@@ -1269,11 +1269,95 @@
           <header class="mesa-polaroid-stamp">
             <span class="mesa-polaroid-date">{{ entry.date | mcDate: true }}</span>
             <span class="mesa-polaroid-oid">{{ entry.shortOid }}</span>
+            @if (headOid() === entry.oid) {
+              <span class="head-badge">{{ i18n.t('versioning.history.headBadge') }}</span>
+            }
           </header>
-          @for (m of milestonesFor(entry.oid); track m.name) {
-            <span class="mesa-polaroid-fossil">⚑ {{ m.name }}</span>
+          @if (milestonesFor(entry.oid).length > 0) {
+            @for (m of milestonesFor(entry.oid); track m.name) {
+              @if (renamingMilestoneName() === m.name) {
+                <form
+                  class="milestone-chip milestone-chip-rename"
+                  (submit)="$event.preventDefault(); commitRenameMilestone(m)"
+                >
+                  <input
+                    #renameMilestoneInput
+                    type="text"
+                    class="milestone-chip-input"
+                    [value]="renameMilestoneDraft()"
+                    (input)="renameMilestoneDraft.set(asInput($event).value)"
+                    (keydown.escape)="cancelRenameMilestone()"
+                    (blur)="commitRenameMilestone(m)"
+                  />
+                </form>
+              } @else {
+                <span class="mesa-polaroid-fossil">
+                  ⚑ {{ m.name }}
+                  <button
+                    type="button"
+                    class="milestone-chip-action"
+                    [attr.aria-label]="i18n.t('versioning.history.milestone.rename')"
+                    [title]="i18n.t('versioning.history.milestone.rename')"
+                    [disabled]="milestones.busy()"
+                    (click)="startRenameMilestone(m)"
+                  >
+                    <mc-icon name="pencil-simple" />
+                  </button>
+                  <button
+                    type="button"
+                    class="milestone-chip-action"
+                    [attr.aria-label]="i18n.t('versioning.history.milestone.delete')"
+                    [title]="i18n.t('versioning.history.milestone.delete')"
+                    [disabled]="milestones.busy()"
+                    (click)="milestones.delete(m)"
+                  >
+                    <mc-icon name="x" />
+                  </button>
+                </span>
+              }
+            }
+          }
+          @if (milestones.collision(); as collision) {
+            <div class="milestone-collision">
+              <p class="milestone-collision-body">
+                {{
+                  i18n.t('versioning.history.milestone.collisionTitle', {
+                    name: collision.attemptedName,
+                  })
+                }}
+                {{
+                  i18n.t('versioning.history.milestone.collisionBody', {
+                    shortOid: collision.existing.oid.slice(0, 7),
+                  })
+                }}
+              </p>
+              <form
+                class="milestone-collision-form"
+                (submit)="$event.preventDefault(); commitCollisionUseOther()"
+              >
+                <input
+                  type="text"
+                  class="milestone-mark-input"
+                  [value]="collisionNameDraft()"
+                  [placeholder]="i18n.t('versioning.history.milestone.namePrompt')"
+                  (input)="collisionNameDraft.set(asInput($event).value)"
+                />
+                <button type="submit" [disabled]="!collisionNameDraft().trim()">
+                  {{ i18n.t('versioning.history.milestone.collisionUseOther') }}
+                </button>
+              </form>
+              <button type="button" (click)="milestones.resolveMoveHere()">
+                {{ i18n.t('versioning.history.milestone.collisionMoveHere') }}
+              </button>
+              <button type="button" (click)="milestones.cancelCollision()">
+                {{ i18n.t('versioning.history.milestone.collisionCancel') }}
+              </button>
+            </div>
           }
           <h3 class="mesa-polaroid-message">{{ selectedSubject() }}</h3>
+          @if (selectedBody()) {
+            <pre class="commit-trailers-body">{{ selectedBody() }}</pre>
+          }
           <div class="mesa-polaroid-actions">
             <ng-container *ngTemplateOutlet="markMilestoneAction; context: { $implicit: entry }" />
             <ng-container *ngTemplateOutlet="restoreCommitAction; context: { $implicit: entry }" />
@@ -1300,162 +1384,34 @@
                   <span class="mesa-chip mesa-chip-deleted">−{{ diffSummary().deleted }}</span>
                 }
               </p>
+              <label class="diff-summary-toggle">
+                <input type="checkbox" [checked]="groupByType()" (change)="toggleGroupByType()" />
+                {{ i18n.t('versioning.history.summary.groupByType') }}
+              </label>
               <ul class="mesa-polaroid-entities entities">
-                @for (d of entityDiffs(); track d.filepath) {
-                  <ng-container *ngTemplateOutlet="entityRow; context: { $implicit: d }" />
+                @if (groupByType()) {
+                  @for (row of entityFeed(); track row.id) {
+                    @if (row.kind === 'header') {
+                      <li class="entity-group-header">
+                        <span>{{ i18n.t(groupLabelKey(row.key)) }}</span>
+                        <span class="entity-group-count">({{ row.count }})</span>
+                      </li>
+                    } @else {
+                      <ng-container
+                        *ngTemplateOutlet="entityRow; context: { $implicit: row.diff }"
+                      />
+                    }
+                  }
+                } @else {
+                  @for (d of entityDiffs(); track d.filepath) {
+                    <ng-container *ngTemplateOutlet="entityRow; context: { $implicit: d }" />
+                  }
                 }
               </ul>
             }
           </div>
         </div>
       </article>
-    } @else if (selectedEntry(); as entry) {
-      <header class="detail-head">
-        <div class="detail-head-top">
-          <h3>{{ selectedSubject() }}</h3>
-          <div class="detail-head-actions">
-            <ng-container *ngTemplateOutlet="markMilestoneAction; context: { $implicit: entry }" />
-            @if (milestonesFor(entry.oid).length > 0) {
-              @for (m of milestonesFor(entry.oid); track m.name) {
-                @if (renamingMilestoneName() === m.name) {
-                  <form
-                    class="milestone-chip milestone-chip-rename"
-                    (submit)="$event.preventDefault(); commitRenameMilestone(m)"
-                  >
-                    <input
-                      #renameMilestoneInput
-                      type="text"
-                      class="milestone-chip-input"
-                      [value]="renameMilestoneDraft()"
-                      (input)="renameMilestoneDraft.set(asInput($event).value)"
-                      (keydown.escape)="cancelRenameMilestone()"
-                      (blur)="commitRenameMilestone(m)"
-                    />
-                  </form>
-                } @else {
-                  <span class="milestone-chip">
-                    <span class="milestone-chip-name">{{ m.name }}</span>
-                    <button
-                      type="button"
-                      class="milestone-chip-action"
-                      [attr.aria-label]="i18n.t('versioning.history.milestone.rename')"
-                      [title]="i18n.t('versioning.history.milestone.rename')"
-                      [disabled]="milestones.busy()"
-                      (click)="startRenameMilestone(m)"
-                    >
-                      <mc-icon name="pencil-simple" />
-                    </button>
-                    <button
-                      type="button"
-                      class="milestone-chip-action"
-                      [attr.aria-label]="i18n.t('versioning.history.milestone.delete')"
-                      [title]="i18n.t('versioning.history.milestone.delete')"
-                      [disabled]="milestones.busy()"
-                      (click)="milestones.delete(m)"
-                    >
-                      <mc-icon name="x" />
-                    </button>
-                  </span>
-                }
-              }
-            }
-            @if (milestones.collision(); as collision) {
-              <div class="milestone-collision">
-                <p class="milestone-collision-body">
-                  {{
-                    i18n.t('versioning.history.milestone.collisionTitle', {
-                      name: collision.attemptedName,
-                    })
-                  }}
-                  {{
-                    i18n.t('versioning.history.milestone.collisionBody', {
-                      shortOid: collision.existing.oid.slice(0, 7),
-                    })
-                  }}
-                </p>
-                <form
-                  class="milestone-collision-form"
-                  (submit)="$event.preventDefault(); commitCollisionUseOther()"
-                >
-                  <input
-                    type="text"
-                    class="milestone-mark-input"
-                    [value]="collisionNameDraft()"
-                    [placeholder]="i18n.t('versioning.history.milestone.namePrompt')"
-                    (input)="collisionNameDraft.set(asInput($event).value)"
-                  />
-                  <button type="submit" [disabled]="!collisionNameDraft().trim()">
-                    {{ i18n.t('versioning.history.milestone.collisionUseOther') }}
-                  </button>
-                </form>
-                <button type="button" (click)="milestones.resolveMoveHere()">
-                  {{ i18n.t('versioning.history.milestone.collisionMoveHere') }}
-                </button>
-                <button type="button" (click)="milestones.cancelCollision()">
-                  {{ i18n.t('versioning.history.milestone.collisionCancel') }}
-                </button>
-              </div>
-            }
-            <ng-container *ngTemplateOutlet="restoreCommitAction; context: { $implicit: entry }" />
-          </div>
-        </div>
-        <div class="detail-meta">
-          <code>{{ entry.shortOid }}</code>
-          <span>{{ entry.date | mcDate: true }}</span>
-          @if (headOid() === entry.oid) {
-            <span class="head-badge">{{ i18n.t('versioning.history.headBadge') }}</span>
-          }
-        </div>
-        @if (selectedBody()) {
-          <pre class="commit-trailers-body">{{ selectedBody() }}</pre>
-        }
-      </header>
-      @if (diffLoading()) {
-        <p class="placeholder">{{ i18n.t('versioning.history.diffLoading') }}</p>
-      } @else if (entityDiffs().length === 0) {
-        <p class="placeholder">{{ i18n.t('versioning.history.diffEmpty') }}</p>
-      } @else {
-        <div class="diff-summary" aria-live="polite">
-          <span class="diff-summary-total">
-            @if (diffSummary().total === 1) {
-              {{ i18n.t('versioning.history.summary.totalOne') }}
-            } @else {
-              {{ i18n.t('versioning.history.summary.totalMany', { n: diffSummary().total }) }}
-            }
-          </span>
-          @if (diffSummary().added > 0) {
-            <span class="diff-summary-chip diff-summary-added">{{
-              i18n.t('versioning.history.summary.added', { n: diffSummary().added })
-            }}</span>
-          }
-          @if (diffSummary().modified > 0) {
-            <span class="diff-summary-chip diff-summary-modified">{{
-              i18n.t('versioning.history.summary.modified', { n: diffSummary().modified })
-            }}</span>
-          }
-          @if (diffSummary().deleted > 0) {
-            <span class="diff-summary-chip diff-summary-deleted">{{
-              i18n.t('versioning.history.summary.deleted', { n: diffSummary().deleted })
-            }}</span>
-          }
-          <label class="diff-summary-toggle">
-            <input type="checkbox" [checked]="groupByType()" (change)="toggleGroupByType()" />
-            {{ i18n.t('versioning.history.summary.groupByType') }}
-          </label>
-        </div>
-        <ul class="entities">
-          @for (row of entityFeed(); track row.id) {
-            @if (row.kind === 'header') {
-              <li class="entity-group-header">
-                <span>{{ i18n.t(groupLabelKey(row.key)) }}</span>
-                <span class="entity-group-count">({{ row.count }})</span>
-              </li>
-            } @else {
-              <ng-container *ngTemplateOutlet="entityRow; context: { $implicit: row.diff }" />
-            }
-          }
-        </ul>
-      }
     } @else if (!loading() && buckets().length > 0) {
       <p class="placeholder">{{ i18n.t('versioning.history.selectACommit') }}</p>
     }

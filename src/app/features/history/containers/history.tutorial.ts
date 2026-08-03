@@ -31,12 +31,10 @@ export const HISTORY_TUTORIAL: TutorialDefinition = {
       bodyKey: 'history.tutorial.timeline.body',
       placement: 'right',
       // why (8.93): el resto de la sintaxis/controles del timeline
-      //      (facet:/since:/sha:, chips de faceta, compactar diff, auto-
-      //      agrupar commits de ruido, banner "compactar ahora") son
-      //      demasiado situacionales para practicarse uno por uno —
-      //      mención de existencia sobre este mismo anchor. "Agrupar por
-      //      tipo" quedó afuera: se descubrió muerto en el template (ver
-      //      docs/deferred/versionado.md), no hay UI real que mencionar.
+      //      (facet:/since:/sha:, chips de faceta, compactar diff, agrupar
+      //      por tipo, auto-agrupar commits de ruido, banner "compactar
+      //      ahora") son demasiado situacionales para practicarse uno por
+      //      uno — mención de existencia sobre este mismo anchor.
       moreDetail: { bodyKey: 'history.tutorial.timeline.moreDetail' },
     },
     {

@@ -696,20 +696,6 @@
   padding: 16px;
 }
 
-.detail-head h3 {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.detail-head-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 8px;
-}
-
 .commit-restore {
   flex-shrink: 0;
   padding: 6px 12px;
@@ -735,15 +721,6 @@
 .commit-restore:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-.detail-head-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-  flex-wrap: wrap;
-  justify-content: flex-end;
 }
 
 .milestone-mark {
@@ -1709,18 +1686,6 @@ aside.timeline {
   border-left: 3px solid var(--mc-accent-primary);
 }
 
-.detail-meta {
-  display: flex;
-  gap: 12px;
-  font-size: 11px;
-  color: var(--mc-fg-secondary, #666);
-  margin-bottom: 16px;
-}
-
-.detail-meta code {
-  font-family: ui-monospace, monospace;
-}
-
 .placeholder {
   color: var(--mc-fg-secondary, #666);
   font-size: 13px;
@@ -2454,18 +2419,6 @@ aside.timeline {
   border-left: 3px solid rgba(90, 60, 30, 0.4);
   box-shadow: inset 6px 0 12px -6px rgba(90, 60, 30, 0.25);
 }
-/* El label "FICHA · YACIMIENTO" cede su lugar al `.ficha-sample-tie` —
- * el tie ya cumple ese rol de "cabecera del yacimiento" y además
- * conecta visualmente con el estrato activo a la izquierda. */
-.split.zoom-strata .detail-head h3 {
-  font-family: 'Georgia', 'Times New Roman', serif;
-  color: #2b1a0a;
-}
-.split.zoom-strata .detail-meta code {
-  background: rgba(90, 60, 30, 0.12);
-  color: #2b1a0a;
-  border: 1px solid rgba(90, 60, 30, 0.25);
-}
 .split.zoom-strata .entity {
   border-color: rgba(90, 60, 30, 0.2) !important;
 }
@@ -2922,11 +2875,6 @@ aside.timeline {
   color: #6b4423;
   border-bottom: 1px solid rgba(107, 68, 35, 0.35);
 }
-.split.zoom-panorama .detail-head h3 {
-  font-family: 'Caveat', 'Bradley Hand', cursive, serif;
-  font-size: 22px;
-  color: #2a1f0a;
-}
 .split.zoom-panorama .entity {
   border-bottom: 1px dotted rgba(107, 68, 35, 0.3) !important;
   border-radius: 0 !important;
@@ -2961,14 +2909,6 @@ aside.timeline {
   color: rgba(255, 220, 170, 0.85);
   text-align: center;
   border-bottom: 1px solid rgba(255, 220, 170, 0.2);
-}
-.split.zoom-detail-stack .detail-head h3 {
-  color: #f4e8d0;
-}
-.split.zoom-detail-stack .detail-meta code {
-  background: rgba(255, 220, 170, 0.12);
-  color: #f4e8d0;
-  border: 1px solid rgba(255, 220, 170, 0.25);
 }
 .split.zoom-detail-stack .diff-summary {
   color: #f4e8d0;
@@ -3253,9 +3193,11 @@ aside.timeline {
 }
 
 .mesa-polaroid-fossil {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
   align-self: flex-start;
-  padding: 3px 10px;
+  padding: 3px 4px 3px 10px;
   border-radius: 999px;
   background: rgba(255, 235, 180, 0.85);
   border: 1px solid rgba(122, 90, 31, 0.55);

@@ -378,7 +378,7 @@ export const es = {
   'history.tutorial.milestones.body':
     'Los autocommits se acumulan rápido. Nombrá un commit importante como milestone (botón "Marcar este punto" en el detalle) y después activá este filtro para ver solo esos hitos, sin el resto.',
   'history.tutorial.timeline.moreDetail':
-    'El buscador entiende sintaxis propia: facet:main/comments/draft, since:7d, o pegar directamente un sha. Los chips de faceta debajo filtran sin escribir nada. Dentro de un commit, "Ver sólo cambios" compacta el diff a las líneas modificadas. Tandas de autocommits consecutivos (guardados automáticos, merges) se agrupan solas en una fila con contador — no hace falta colapsarlas a mano. Si el historial crece mucho, un cartel de "Compactar ahora" aparece abajo del todo con el link a configuración.',
+    'El buscador entiende sintaxis propia: facet:main/comments/draft, since:7d, o pegar directamente un sha. Los chips de faceta debajo filtran sin escribir nada. Dentro de un commit, "Ver sólo cambios" compacta el diff a las líneas modificadas y "Agrupar por tipo" reordena la lista por tipo de entidad en vez de por orden de cambio. Tandas de autocommits consecutivos (guardados automáticos, merges) se agrupan solas en una fila con contador — no hace falta colapsarlas a mano. Si el historial crece mucho, un cartel de "Compactar ahora" aparece abajo del todo con el link a configuración.',
   'history.tutorial.nav.title': 'Saltá de hito en hito',
   'history.tutorial.nav.body':
     'Con hitos marcados, "]" salta al siguiente y "[" al anterior — sin tener que scrollear buscándolos entre el resto de los commits.',
