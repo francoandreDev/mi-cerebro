@@ -11,6 +11,8 @@ export const KIND_TITLE_KEY: Readonly<Record<string, TranslationKey>> = {
   image: 'images.title',
   file: 'files.title',
   reminder: 'reminders.title',
+  track: 'music.library',
+  playlist: 'music.playlists',
 };
 
 export interface EntityItem {

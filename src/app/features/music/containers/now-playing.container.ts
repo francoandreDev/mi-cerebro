@@ -8,10 +8,13 @@ import {
   signal,
 } from '@angular/core';
 
+import { ErrorService } from '@core/errors/error.service';
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { PlayerService } from '@core/music/player.service';
+import { TagsService } from '@core/tags/tags.service';
 import { IconComponent } from '@shared/icon/icon.component';
+import { TagPickerComponent } from '@shared/tags/tag-picker.component';
 
 import { TrackWaveformComponent } from '../components/track-waveform.component';
 import { LyricsLookupService } from '../services/lyrics-lookup.service';
@@ -35,7 +38,7 @@ interface ExternalLyricsCacheEntry {
 @Component({
   selector: 'mc-now-playing',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent, TrackWaveformComponent],
+  imports: [IconComponent, TrackWaveformComponent, TagPickerComponent],
   templateUrl: './now-playing.container.html',
   styleUrl: './now-playing.container.css',
 })
@@ -46,8 +49,11 @@ export class NowPlayingContainer {
   private readonly waveformCache = inject(WaveformCacheService);
   private readonly lyricsLookup = inject(LyricsLookupService);
   private readonly i18n = inject(I18nService);
+  private readonly errors = inject(ErrorService);
+  private readonly tagsService = inject(TagsService);
   private readonly destroyRef = inject(DestroyRef);
 
+  protected readonly availableTags = this.tagsService.tags;
   protected readonly currentTrack = this.player.currentTrack;
   protected readonly currentTime = this.player.currentTime;
   protected readonly duration = this.player.duration;
@@ -201,6 +207,27 @@ export class NowPlayingContainer {
       this.externalStatus.set('error');
       this.externalCache.set(track.id, { artist, title, lyrics: null, status: 'error' });
     }
+  }
+
+  protected async onAddTag(label: string): Promise<void> {
+    const track = this.currentTrack();
+    if (!track) return;
+    try {
+      const tag = await this.tagsService.touch(label);
+      if (track.tags.includes(tag.id)) return;
+      await this.library.setTrackTags(track.id, [...track.tags, tag.id]);
+    } catch (e) {
+      this.errors.report(e);
+    }
+  }
+
+  protected async onRemoveTag(id: string): Promise<void> {
+    const track = this.currentTrack();
+    if (!track || !track.tags.includes(id)) return;
+    await this.library.setTrackTags(
+      track.id,
+      track.tags.filter((t) => t !== id),
+    );
   }
 
   protected onSeek(value: number): void {

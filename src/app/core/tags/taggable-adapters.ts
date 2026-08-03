@@ -13,6 +13,9 @@ import { IMAGE_KIND } from '@features/images/models/gallery.types';
 import type { GalleriesService } from '@features/images/services/galleries.service';
 import { LIST_KIND } from '@features/lists/models/list.types';
 import type { ListsService } from '@features/lists/services/lists.service';
+import { PLAYLIST_KIND, TRACK_KIND } from '@features/music/models/music.types';
+import type { MusicLibraryService } from '@features/music/services/music-library.service';
+import type { PlaylistsService } from '@features/music/services/playlists.service';
 import { NOTE_KIND } from '@features/notes/models/note.types';
 import type { NotesService } from '@features/notes/services/notes.service';
 import { TASK_KIND } from '@features/tasks/models/task.types';
@@ -91,5 +94,22 @@ export const fileTaggableAdapter = (files: FilesService): TaggableAdapter => ({
   replaceTags: async (id, nextTags) => {
     const collection = await files.readCollection(id);
     await files.saveCollection({ ...collection, tags: nextTags });
+  },
+});
+
+export const trackTaggableAdapter = (music: MusicLibraryService): TaggableAdapter => ({
+  kind: TRACK_KIND,
+  summaries: () => music.tracks(),
+  replaceTags: async (id, nextTags) => {
+    await music.setTrackTags(id, nextTags);
+  },
+});
+
+export const playlistTaggableAdapter = (playlists: PlaylistsService): TaggableAdapter => ({
+  kind: PLAYLIST_KIND,
+  summaries: () => playlists.summaries(),
+  replaceTags: async (id, nextTags) => {
+    const playlist = await playlists.read(id);
+    await playlists.save({ ...playlist, tags: nextTags });
   },
 });

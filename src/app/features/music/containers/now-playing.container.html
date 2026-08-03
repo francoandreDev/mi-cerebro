@@ -55,6 +55,13 @@
       @if (sourceTitle(); as src) {
         <p class="np-source">{{ src }}</p>
       }
+      <mc-tag-picker
+        class="np-tags"
+        [availableTags]="availableTags()"
+        [selectedIds]="np.tags"
+        (addTag)="onAddTag($event)"
+        (removeTag)="onRemoveTag($event)"
+      />
       @if (showLyrics() && displayLyrics(); as lyrics) {
         <div class="np-lyrics">{{ lyrics }}</div>
       }

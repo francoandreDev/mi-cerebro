@@ -39,6 +39,9 @@ textarea {
   padding: var(--mc-space-2) var(--mc-space-3);
   font: inherit;
 }
+.context-tags {
+  display: block;
+}
 .hint {
   margin: 0;
   color: var(--mc-fg-dim);

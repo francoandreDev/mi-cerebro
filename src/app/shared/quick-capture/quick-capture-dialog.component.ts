@@ -11,12 +11,15 @@ import {
 
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
+import type { Tag } from '@core/tags/tag.types';
+import { TagPickerComponent } from '@shared/tags/tag-picker.component';
 
 @Component({
   selector: 'mc-quick-capture-dialog',
   changeDetection: ChangeDetectionStrategy.OnPush,
   // why: render fuera del flujo para no afectar el layout del padre.
   host: { style: 'display: contents' },
+  imports: [TagPickerComponent],
   template: `
     @if (visible()) {
       <button
@@ -34,6 +37,13 @@ import type { TranslationKey } from '@core/i18n/i18n.types';
           (keydown.escape)="onCancel()"
           (keydown.enter)="onEnter($event)"
         ></textarea>
+        <mc-tag-picker
+          class="context-tags"
+          [availableTags]="availableTags()"
+          [selectedIds]="contextTagIds()"
+          (addTag)="addTag.emit($event)"
+          (removeTag)="removeTag.emit($event)"
+        />
         <p class="hint">{{ t('quickCapture.hint') }}</p>
       </div>
     }
@@ -42,8 +52,12 @@ import type { TranslationKey } from '@core/i18n/i18n.types';
 })
 export class QuickCaptureDialogComponent {
   readonly visible = input(false);
+  readonly availableTags = input<readonly Tag[]>([]);
+  readonly contextTagIds = input<readonly string[]>([]);
   readonly submitted = output<string>();
   readonly cancelled = output<void>();
+  readonly addTag = output<string>();
+  readonly removeTag = output<string>();
 
   protected readonly titleId = 'mc-quick-capture-title';
   private readonly textarea = viewChild<ElementRef<HTMLTextAreaElement>>('textarea');

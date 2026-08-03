@@ -850,8 +850,11 @@ export const es = {
 
   'quickCapture.title': 'Anotar una idea',
   'quickCapture.placeholder': 'Escribí algo... la primera línea es el título',
-  'quickCapture.hint': 'Enter para guardar · Shift+Enter salto de línea · Esc cancelar',
+  'quickCapture.hint':
+    'Enter para guardar · Shift+Enter salto de línea · Esc cancelar · pegá una imagen para mandarla a una galería',
   'quickCapture.openNote': 'Abrir',
+  'quickCapture.openGallery': 'Abrir galería',
+  'quickCapture.fallbackGalleryTitle': 'Capturas rápidas',
 
   'errors.aut.005.title': 'Esta entidad está abierta en otra pestaña',
   'errors.aut.005.message':
@@ -2571,6 +2574,7 @@ export const es = {
   'music.newPlaylist': 'Nueva playlist',
   'music.newPlaylistTitle': 'Nueva playlist',
   'music.untitledPlaylist': 'Sin título',
+  'music.untitledTrack': 'Sin título',
   'music.emptyLibrary': 'Subí MP3s para empezar.',
   'music.emptyPlaylist': 'Esta playlist está vacía. Usá "+ Añadir canciones" para sumar tracks.',
   'music.addToPlaylist': 'Agregar a la playlist activa',

@@ -7,6 +7,8 @@ import { FilesService } from '@features/files/services/files.service';
 import { GoalsService } from '@features/goals/services/goals.service';
 import { GalleriesService } from '@features/images/services/galleries.service';
 import { ListsService } from '@features/lists/services/lists.service';
+import { MusicLibraryService } from '@features/music/services/music-library.service';
+import { PlaylistsService } from '@features/music/services/playlists.service';
 import { NotesService } from '@features/notes/services/notes.service';
 import { TasksService } from '@features/tasks/services/tasks.service';
 import { WritingsService } from '@features/writings/services/writings.service';
@@ -17,6 +19,7 @@ import { TaggedItemsService } from './tagged-items.service';
 //      entity services (never reads/writes), so a bare `{ summaries }` stub
 //      covers the contract without pulling in real FS/IDB plumbing.
 const stub = (items: readonly unknown[]) => ({ summaries: signal(items) });
+const stubTracks = (items: readonly unknown[]) => ({ tracks: signal(items) });
 
 describe('TaggedItemsService', () => {
   beforeEach(() => {
@@ -37,6 +40,8 @@ describe('TaggedItemsService', () => {
         { provide: BooksService, useValue: stub([]) },
         { provide: GalleriesService, useValue: stub([]) },
         { provide: FilesService, useValue: stub([]) },
+        { provide: MusicLibraryService, useValue: stubTracks([]) },
+        { provide: PlaylistsService, useValue: stub([]) },
       ],
     });
   });

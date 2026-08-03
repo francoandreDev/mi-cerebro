@@ -215,6 +215,10 @@
   color: var(--mc-fg-muted);
   font-style: italic;
 }
+.np-tags {
+  display: block;
+  margin-top: var(--mc-space-1);
+}
 .np-waveform {
   grid-area: wave;
   display: flex;

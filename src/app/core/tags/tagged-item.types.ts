@@ -3,6 +3,7 @@ import type { FileCollectionSummary } from '@features/files/models/file-collecti
 import type { GoalSummary } from '@features/goals/models/goal.types';
 import type { GallerySummary } from '@features/images/models/gallery.types';
 import type { ListSummary } from '@features/lists/models/list.types';
+import type { PlaylistSummary, Track } from '@features/music/models/music.types';
 import type { NoteSummary } from '@features/notes/models/note.types';
 import type { TaskSummary } from '@features/tasks/models/task.types';
 import type { WritingSummary } from '@features/writings/models/writing.types';
@@ -20,6 +21,8 @@ export type TaggedItem =
   | { readonly kind: 'writing'; readonly summary: WritingSummary }
   | { readonly kind: 'book'; readonly summary: BookSummary }
   | { readonly kind: 'image'; readonly summary: GallerySummary }
-  | { readonly kind: 'file'; readonly summary: FileCollectionSummary };
+  | { readonly kind: 'file'; readonly summary: FileCollectionSummary }
+  | { readonly kind: 'track'; readonly summary: Track }
+  | { readonly kind: 'playlist'; readonly summary: PlaylistSummary };
 
 export type TaggedItemKind = TaggedItem['kind'];
