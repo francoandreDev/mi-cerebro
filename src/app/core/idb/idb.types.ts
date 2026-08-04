@@ -11,3 +11,11 @@ export interface DraftRecord<P = unknown> {
   readonly payload: P;
   readonly updatedAt: string;
 }
+
+export interface LoggedErrorRecord {
+  readonly code: string;
+  readonly message: string;
+  readonly severity: string;
+  readonly context: string | undefined;
+  readonly loggedAt: string;
+}
