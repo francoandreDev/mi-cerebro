@@ -13,6 +13,8 @@ export const KIND_TITLE_KEY: Readonly<Record<string, TranslationKey>> = {
   reminder: 'reminders.title',
   track: 'music.library',
   playlist: 'music.playlists',
+  comment: 'search.kind.comment',
+  draft: 'search.kind.draft',
 };
 
 export interface EntityItem {

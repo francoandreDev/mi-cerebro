@@ -2793,6 +2793,9 @@ export const es = {
   'comments.block.preview.empty': '(bloque vacío)',
   'comments.session.branchBadge': 'Comentando en la rama Comentarios de «{name}»',
 
+  'search.kind.comment': 'Comentarios',
+  'search.kind.draft': 'Borradores',
+
   'connections.outgoing': 'Salientes',
   'connections.backlinks': 'Referenciado desde',
   'connections.orphaned': 'Entidad eliminada',

@@ -9,10 +9,13 @@
 //   (a) AutosaveService.flushAll        — no pending drafts on disk
 //   (b) VersioningService.commitAll      — capture dirty as pre-switch
 //   (c) git.checkout(target.refs.main)  — actually swap HEAD + workdir
-//   (d) WorkspaceRefreshService.refreshAll — re-walk every entity
-//   (e) (deferred: per-family persisted index — see deferred.md)
-//   (f) VariantsService.setActiveId      — persist the new selection
-// After (f), broadcast the switch so sibling tabs can update.
+//   (d) VariantsService.setActiveId      — persist the new selection first
+//       (see comment at the call site for why this precedes refreshAll)
+//   (e) WorkspaceRefreshService.refreshAll — re-walk every entity
+//   (f) SearchFamilyPrimingService.primeActiveFamily — index the new
+//       family's comments/draft branches (never on disk, so refreshAll
+//       can't cover them)
+// After (e)-(f), broadcast the switch so sibling tabs can update.
 
 import { Injectable, inject, signal } from '@angular/core';
 import * as git from 'isomorphic-git';
@@ -25,6 +28,7 @@ import { FsLockService } from '@core/fs/fs-lock.service';
 import { FsService } from '@core/fs/fs.service';
 import { WorkspaceRefreshService } from '@core/fs/workspace-refresh.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
+import { SearchFamilyPrimingService } from '@core/search/search-family-priming.service';
 
 import { GitFsAdapter } from './git-fs.adapter';
 import { VARIANTS_CHANNEL_NAME, type VariantsBroadcast } from './variants-channel';
@@ -45,6 +49,7 @@ export class SwitchVariantService {
   private readonly autosave = inject(AutosaveService);
   private readonly versioning = inject(VersioningService);
   private readonly workspaceRefresh = inject(WorkspaceRefreshService);
+  private readonly searchPriming = inject(SearchFamilyPrimingService);
   private readonly workspace = inject(WorkspaceService);
   private readonly fsLock = inject(FsLockService);
   private readonly errors = inject(ErrorService);
@@ -181,6 +186,7 @@ export class SwitchVariantService {
 
     try {
       await this.workspaceRefresh.refreshAll();
+      await this.searchPriming.primeActiveFamily();
     } catch (cause) {
       this.errors.report(
         new AppError(ERROR_CODES.VER_009, {

@@ -160,6 +160,8 @@ export class CommandPaletteContainer {
       image: 'image-square',
       writing: 'pen-nib',
       book: 'books',
+      comment: 'chat-circle',
+      draft: 'note-pencil',
     };
     return map[kind] ?? 'file';
   }
@@ -231,7 +233,20 @@ export class CommandPaletteContainer {
     }
     const text = this.parsed().text;
     if (text) this.queriesService.remember(text);
-    void this.router.navigate([...routeFor(item.kind, item.id, item.title)]);
+    const target = this.resolveNavigationTarget(item);
+    void this.router.navigate([...routeFor(target.kind, target.id, target.title)]);
     this.close();
+  }
+
+  // Comment/draft hits are annotations, not routable entities — their id
+  // is `${kind}:${entityId}:${localId}` (see CommentsService/DraftsService
+  // search wiring). Resolve to the entity they're anchored to so selecting
+  // one opens that entity instead of a broken `/notes/comment:...` route.
+  private resolveNavigationTarget(item: EntityItem): EntityItem {
+    if (item.kind !== 'comment' && item.kind !== 'draft') return item;
+    const entityId = item.id.split(':')[1] ?? item.id;
+    const kind = this.searchIndex.getKind(entityId) ?? item.kind;
+    const title = this.searchIndex.getTitle(entityId) ?? item.title;
+    return { ...item, id: entityId, kind, title };
   }
 }

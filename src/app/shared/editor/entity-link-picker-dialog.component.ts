@@ -10,7 +10,7 @@ import {
 
 import { I18nService } from '@core/i18n/i18n.service';
 import { SearchIndexService } from '@core/search/search-index.service';
-import type { SearchHit } from '@core/search/search.types';
+import { LINKABLE_ENTITY_KINDS, type SearchHit } from '@core/search/search.types';
 import { entityKindIcon } from '@shared/entity-cards/entity-kind-icon';
 import { AutofocusDirective } from '@shared/forms/autofocus.directive';
 import { IconComponent } from '@shared/icon/icon.component';
@@ -200,7 +200,7 @@ export class EntityLinkPickerDialogComponent {
   private readonly queryText = signal('');
   protected readonly results = computed<readonly SearchHit[]>(() =>
     this.searchIndex
-      .query({ text: this.queryText(), limit: RESULT_LIMIT + 1 })
+      .query({ text: this.queryText(), kinds: LINKABLE_ENTITY_KINDS, limit: RESULT_LIMIT + 1 })
       .filter((hit) => hit.id !== this.excludeId())
       .slice(0, RESULT_LIMIT),
   );

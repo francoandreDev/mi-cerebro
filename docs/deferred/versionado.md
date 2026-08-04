@@ -53,21 +53,9 @@ Formato por entrada:
 
 ### Índice de búsqueda persistido por familia (`idx-<family>-main`)
 
-- **Qué**: §12 13b-ii describe un índice MiniSearch por familia cacheado en IndexedDB, así el switch sólo paga rebuild la primera vez. En la implementación inicial elegimos rebuild-from-disk en cada switch porque (a) la latencia es del orden de la del primer boot, (b) introducir N índices ramifica la API de `SearchIndexService` y triplica el costo cuando lleguen 13c (comments) y 13d (draft), y (c) hasta no tener uso real con workspaces grandes no sabemos si la diferencia se siente.
-- **Por qué se difirió**: optimización prematura sin métricas reales. La parte crítica del switch (commit + checkout + index swap atómicos bajo FsLockService) sí entra en 13b-ii; lo cacheable se mete después si el usuario lo nota.
-- **Target**: §19.16f o sin asignar (sólo si el switch resulta lento en uso real con muchas entidades).
-
-### Índice de búsqueda global para comentarios (`idx-<family>-comments`)
-
-- **Qué**: §12 y §19.13c-iv listan un índice MiniSearch persistido por familia para comentarios, integrado al palette global. La infraestructura técnica del índice por familia ya se diferió arriba para `main`; agregar comments multiplica el costo (un MiniSearch por faceta) sin tener todavía métricas reales. En 13c-iv elegimos cerrar position tracking + merge bundle + history chips, dejando la indexación global de comentarios para cuando exista un walk explícito de la rama comments al boot/family-switch (necesario para "primear" el índice sin abrir cada entidad a mano).
-- **Por qué se difirió**: integrar `SearchIndexService` con kind nuevo `'comment'` sin un walk de priming hace que la búsqueda sólo encuentre comentarios de entidades que el usuario tocó en la sesión actual — una UX "fantasma" peor que no tenerla. Hacer el walk requiere recorrer cada `comments/*.json` de la rama activa, lo que toca el mismo plumbing que el priming por familia y conviene diseñar junto.
-- **Target**: §19.16d (pulido de búsqueda) — o un sub-paso 13c-iv-bis si surge dolor concreto antes.
-
-### Índice de búsqueda global para borradores (`idx-<family>-draft`)
-
-- **Qué**: §12 y §19.13d-iv listan un índice MiniSearch persistido por familia para diff-marks de borrador, integrado al palette global. Mismo razonamiento que el índice de comentarios diferido arriba: integrarlo sin un walk de priming de la rama `draft` al boot/family-switch dejaría la búsqueda mostrando sólo marks de entidades tocadas en la sesión actual — UX "fantasma". Hacer el walk requiere recorrer cada `drafts/*.json` de la rama activa, lo que toca el mismo plumbing que el priming por familia para `main` y `comments`.
-- **Por qué se difirió**: los tres índices (main, comments, draft) convergen sobre la misma pieza de infraestructura (walk per-faceta + cache por familia en IndexedDB). Diseñarlos juntos evita reinventar el priming tres veces y permite decidir si los tres comparten un `idx-<family>-bundle` o quedan separados. Sin métricas reales de tamaño/latencia, mejor uno solo bien hecho.
-- **Target**: §19.16d (pulido de búsqueda) — junto con los índices de `main` y `comments`.
+- **Qué**: §12 13b-ii describe un índice MiniSearch por familia cacheado en IndexedDB, así el switch sólo paga rebuild la primera vez.
+- **Por qué se difirió**: confirmado 2026-08-04 al implementar comments/draft (ver abajo) que esto **no aporta nada real** con la arquitectura actual — `WorkspaceRefreshService.refreshAll()` ya recorre disco en cada switch de variante para repoblar el estado propio de cada feature (listas, walls, no sólo el índice), así que cachear aparte el índice `main` no ahorra ese walk, sólo agrega complejidad sin beneficio medible. Dejaría de aplicar si `refreshAll()` alguna vez deja de walkear disco en cada switch por otra razón.
+- **Target**: sin asignar (no vale la pena reabrir sin un cambio de arquitectura en `refreshAll()` primero).
 
 ### Índice de búsqueda de commits (full-text sobre mensajes + entidades tocadas)
 

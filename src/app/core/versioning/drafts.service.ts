@@ -11,9 +11,13 @@ import { ERROR_CODES } from '@core/errors/error.codes';
 import { FsLockService } from '@core/fs/fs-lock.service';
 import { FsService } from '@core/fs/fs.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
+import { SearchIndexService } from '@core/search/search-index.service';
+import type { SearchDoc } from '@core/search/search.types';
+import { jsonContentToText } from '@core/tiptap/json-content-text';
 
-import { readBranchBlob, writeBranchBlob } from './branch-blob-ops';
+import { listBranchDir, readBranchBlob, writeBranchBlob } from './branch-blob-ops';
 import {
+  DRAFTS_DIR,
   DRAFTS_FILE_SCHEMA_VERSION,
   draftsFilepath,
   emptyDraftsFile,
@@ -33,6 +37,16 @@ export class DraftsService {
   private readonly variants = inject(VariantsService);
   private readonly fsLock = inject(FsLockService);
   private readonly fs = inject(FsService);
+  private readonly search = inject(SearchIndexService);
+
+  // Entity ids that have a drafts file on the active family's draft
+  // branch — used to prime the search index without knowing ids upfront.
+  async listEntityIds(): Promise<readonly string[]> {
+    const ref = this.requireActive().refs.draft;
+    const fs = this.requireAdapter();
+    const entries = await listBranchDir(fs, ref, DRAFTS_DIR);
+    return entries.map((e) => e.path.slice(DRAFTS_DIR.length + 1, -'.json'.length));
+  }
 
   async read(entityId: string): Promise<DraftsFile> {
     const ref = this.requireActive().refs.draft;
@@ -78,6 +92,11 @@ export class DraftsService {
         throw this.io(cause, entityId, 'save');
       }
     });
+    await this.search.replaceEntity(
+      'draft',
+      entityId,
+      draftSearchDocs(entityId, entityTitle, marks),
+    );
   }
 
   // Pure validation used by the panel (13d-iii) before persisting a new
@@ -130,6 +149,20 @@ export class DraftsService {
       recoverable: true,
     });
   }
+}
+
+export function draftSearchDocs(
+  entityId: string,
+  entityTitle: string,
+  marks: readonly DiffMark[],
+): readonly SearchDoc[] {
+  return marks.map((m) => ({
+    id: `draft:${entityId}:${m.id}`,
+    kind: 'draft',
+    title: entityTitle || entityId,
+    body: jsonContentToText(m.after) || jsonContentToText(m.before),
+    tagIds: [],
+  }));
 }
 
 function formatCommitMessage(label: string, count: number): string {

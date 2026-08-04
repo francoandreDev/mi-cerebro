@@ -41,3 +41,22 @@ export interface SearchQuery {
 
 export const SEARCH_INDEX_VERSION = 2;
 export const SEARCH_INDEX_KEY = 'mc-index';
+
+// Kinds that are routable entities a Relation can point at. 'comment' and
+// 'draft' are indexed for the palette (search inside annotations) but are
+// not linkable targets — they have no detail route of their own, only the
+// entity they annotate does (see command-palette.container.ts's
+// resolveNavigationTarget for how a hit on one resolves back to its entity).
+export const LINKABLE_ENTITY_KINDS: readonly EntityKind[] = [
+  'note',
+  'task',
+  'goal',
+  'list',
+  'writing',
+  'book',
+  'image',
+  'file',
+  'reminder',
+  'track',
+  'playlist',
+];

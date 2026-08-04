@@ -108,3 +108,43 @@ export async function createTreePath(
 export function splitPath(filepath: string): string[] {
   return filepath.split('/').filter((p) => p.length > 0);
 }
+
+export interface TreeBlobEntry {
+  readonly path: string;
+  readonly oid: string;
+}
+
+// Lists the blobs directly inside `dirPath` (non-recursive) at `commitOid`.
+// Returns an empty array if the directory does not exist or is empty —
+// same "missing means empty" contract as blobOidAt. Used to enumerate
+// per-entity files (`comments/<id>.json`, `drafts/<id>.json`) without
+// callers needing to know the ids up front.
+export async function listDirAt(
+  fs: GitFsAdapter,
+  commitOid: string,
+  dirPath: string,
+): Promise<readonly TreeBlobEntry[]> {
+  try {
+    const { commit } = await git.readCommit({ fs, dir: REPO_DIR, oid: commitOid });
+    const dirTreeOid = await resolveDirTree(fs, commit.tree, splitPath(dirPath));
+    if (!dirTreeOid) return [];
+    const { tree } = await git.readTree({ fs, dir: REPO_DIR, oid: dirTreeOid });
+    return tree
+      .filter((e) => e.type === 'blob')
+      .map((e) => ({ path: `${dirPath}/${e.path}`, oid: e.oid }));
+  } catch {
+    return [];
+  }
+}
+
+async function resolveDirTree(
+  fs: GitFsAdapter,
+  treeOid: string,
+  parts: readonly string[],
+): Promise<string | null> {
+  if (parts.length === 0) return treeOid;
+  const { tree } = await git.readTree({ fs, dir: REPO_DIR, oid: treeOid });
+  const entry = tree.find((e) => e.path === parts[0]);
+  if (!entry || entry.type !== 'tree') return null;
+  return resolveDirTree(fs, entry.oid, parts.slice(1));
+}

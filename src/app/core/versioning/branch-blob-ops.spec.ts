@@ -10,7 +10,7 @@ import { describe, expect, it } from 'vitest';
 import { BrowserNativeFs } from '@core/fs/adapters/browser-native-fs';
 import type { FsDirectoryHandle } from '@core/fs/fs.types';
 
-import { readBranchBlob, writeBranchBlob } from './branch-blob-ops';
+import { listBranchDir, readBranchBlob, writeBranchBlob } from './branch-blob-ops';
 import { GitFsAdapter } from './git-fs.adapter';
 
 const nativeFs = new BrowserNativeFs();
@@ -221,5 +221,47 @@ describe('branch-blob-ops', () => {
     });
     const mainAfter = await git.resolveRef({ fs, dir: DIR, ref: 'main' });
     expect(mainAfter).toBe(mainBefore);
+  });
+});
+
+describe('listBranchDir', () => {
+  it('returns an empty list when the ref does not exist', async () => {
+    const { fs } = await bootstrapRepoWithBranch();
+    expect(await listBranchDir(fs, 'variant/ghost/comments', 'comments')).toEqual([]);
+  });
+
+  it('returns an empty list when the directory has never been written', async () => {
+    const { fs } = await bootstrapRepoWithBranch();
+    expect(await listBranchDir(fs, 'variant/test/comments', 'comments')).toEqual([]);
+  });
+
+  it('lists every blob written directly under the directory, not files outside it', async () => {
+    const { fs } = await bootstrapRepoWithBranch();
+    await writeBranchBlob({
+      fs,
+      ref: 'variant/test/comments',
+      filepath: 'comments/a.json',
+      content: new TextEncoder().encode('{}'),
+      message: 'm1',
+      author: AUTHOR,
+    });
+    await writeBranchBlob({
+      fs,
+      ref: 'variant/test/comments',
+      filepath: 'comments/b.json',
+      content: new TextEncoder().encode('{}'),
+      message: 'm2',
+      author: AUTHOR,
+    });
+    await writeBranchBlob({
+      fs,
+      ref: 'variant/test/comments',
+      filepath: 'other/c.json',
+      content: new TextEncoder().encode('{}'),
+      message: 'm3',
+      author: AUTHOR,
+    });
+    const entries = await listBranchDir(fs, 'variant/test/comments', 'comments');
+    expect(entries.map((e) => e.path).sort()).toEqual(['comments/a.json', 'comments/b.json']);
   });
 });

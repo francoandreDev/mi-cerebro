@@ -13,6 +13,9 @@ import type { FsDirectoryHandle } from '@core/fs/fs.types';
 import { NATIVE_FS } from '@core/fs/native-fs';
 import { WorkspaceService } from '@core/fs/workspace.service';
 
+import { IdbService } from '@core/idb/idb.service';
+import { SearchIndexService } from '@core/search/search-index.service';
+
 import { DraftsService } from './drafts.service';
 import { DRAFTS_FILE_SCHEMA_VERSION, type DiffMark } from './drafts.types';
 import { GitFsAdapter } from './git-fs.adapter';
@@ -164,6 +167,7 @@ describe('DraftsService', () => {
         { provide: NATIVE_FS, useValue: nativeFs },
       ],
     });
+    await TestBed.inject(IdbService).clear('search-index');
     svc = TestBed.inject(DraftsService);
   });
 
@@ -293,5 +297,47 @@ describe('DraftsService', () => {
     expect(() =>
       svc.validateAnchor({ anchorType: 'block', anchor: 'present' }, new Set<string>(['present'])),
     ).not.toThrow();
+  });
+
+  it('listEntityIds is empty when nothing has been saved', async () => {
+    expect(await svc.listEntityIds()).toEqual([]);
+  });
+
+  it('listEntityIds returns every entity id that has a drafts file', async () => {
+    await svc.save('entity-1', 'Uno', []);
+    await svc.save('entity-2', 'Dos', []);
+    expect([...(await svc.listEntityIds())].sort()).toEqual(['entity-1', 'entity-2']);
+  });
+
+  it('save indexes each mark in SearchIndexService, searchable by proposed text', async () => {
+    const m: DiffMark = {
+      id: 'm-1',
+      anchorType: 'block',
+      anchor: 'block-1',
+      before: { type: 'paragraph', content: [{ type: 'text', text: 'old' }] },
+      after: { type: 'paragraph', content: [{ type: 'text', text: 'propuesta nueva' }] },
+      createdAt: '2026-06-12T00:00:00Z',
+      updatedAt: '2026-06-12T00:00:00Z',
+    };
+    await svc.save('entity-1', 'Mi nota', [m]);
+    const search = TestBed.inject(SearchIndexService);
+    const hits = search.query({ text: 'propuesta' });
+    expect(hits.map((h) => h.id)).toEqual(['draft:entity-1:m-1']);
+  });
+
+  it('a later save with fewer marks drops the removed one from the index', async () => {
+    const m: DiffMark = {
+      id: 'm-1',
+      anchorType: 'block',
+      anchor: 'block-1',
+      before: { type: 'paragraph' },
+      after: { type: 'paragraph', content: [{ type: 'text', text: 'borrame' }] },
+      createdAt: '2026-06-12T00:00:00Z',
+      updatedAt: '2026-06-12T00:00:00Z',
+    };
+    await svc.save('entity-1', 'Mi nota', [m]);
+    await svc.save('entity-1', 'Mi nota', []);
+    const search = TestBed.inject(SearchIndexService);
+    expect(search.query({ text: 'borrame' })).toEqual([]);
   });
 });

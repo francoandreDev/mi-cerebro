@@ -10,9 +10,13 @@ import { ERROR_CODES } from '@core/errors/error.codes';
 import { FsLockService } from '@core/fs/fs-lock.service';
 import { FsService } from '@core/fs/fs.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
+import { SearchIndexService } from '@core/search/search-index.service';
+import type { SearchDoc } from '@core/search/search.types';
+import { jsonContentToText } from '@core/tiptap/json-content-text';
 
-import { readBranchBlob, writeBranchBlob } from './branch-blob-ops';
+import { listBranchDir, readBranchBlob, writeBranchBlob } from './branch-blob-ops';
 import {
+  COMMENTS_DIR,
   COMMENTS_FILE_SCHEMA_VERSION,
   commentsFilepath,
   emptyCommentsFile,
@@ -32,6 +36,16 @@ export class CommentsService {
   private readonly variants = inject(VariantsService);
   private readonly fsLock = inject(FsLockService);
   private readonly fs = inject(FsService);
+  private readonly search = inject(SearchIndexService);
+
+  // Entity ids that have a comments file on the active family's comments
+  // branch — used to prime the search index without knowing ids upfront.
+  async listEntityIds(): Promise<readonly string[]> {
+    const ref = this.activeCommentsRef();
+    const fs = this.requireAdapter();
+    const entries = await listBranchDir(fs, ref, COMMENTS_DIR);
+    return entries.map((e) => e.path.slice(COMMENTS_DIR.length + 1, -'.json'.length));
+  }
 
   // Returns the parsed file or an empty placeholder if no comments have
   // ever been written for this entity on the active family.
@@ -78,6 +92,11 @@ export class CommentsService {
         throw this.io(cause, entityId, 'save');
       }
     });
+    await this.search.replaceEntity(
+      'comment',
+      entityId,
+      commentSearchDocs(entityId, entityTitle, comments),
+    );
   }
 
   // Pure validation used by the panel (13c-iii) before persisting a new
@@ -140,6 +159,20 @@ export class CommentsService {
       recoverable: true,
     });
   }
+}
+
+export function commentSearchDocs(
+  entityId: string,
+  entityTitle: string,
+  comments: readonly Comment[],
+): readonly SearchDoc[] {
+  return comments.map((c) => ({
+    id: `comment:${entityId}:${c.id}`,
+    kind: 'comment',
+    title: entityTitle || entityId,
+    body: jsonContentToText(c.body),
+    tagIds: [],
+  }));
 }
 
 function formatCommitMessage(label: string, count: number): string {

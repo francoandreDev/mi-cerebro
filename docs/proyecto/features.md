@@ -228,9 +228,11 @@ Las barreras rompen el bucket: si un tag cae en medio de un día/semana/mes, ese
 
 **Interacción con `lastCommitAt`.** Sin cambios: ya se reconstruye desde `git.log({ depth: 1 })` en boot. El footer mostrará el oid del commit fusionado más reciente.
 
-### Índice de búsqueda por familia
+### Índice de búsqueda de comentarios y borradores
 
-Cada familia tiene 3 índices independientes en IndexedDB: `idx-<family>-main`, `idx-<family>-comments`, `idx-<family>-draft`. Cuesta más memoria pero da switch de variante instantáneo (no rebuild) y permite búsqueda dentro de comentarios y drafts sin tocar disco. Las facetas borrador/comentarios suelen ser más livianas que main en contenido, así que el costo real es bastante menor que 3×.
+Corregido 2026-08-04: el diseño original de este párrafo (3 índices IndexedDB separados por familia, `idx-<family>-{main,comments,draft}`) se descartó en la implementación real por no aportar nada — `WorkspaceRefreshService.refreshAll()` ya recorre disco en cada switch de variante para repoblar el estado propio de cada feature (listas, walls), así que cachear aparte el índice `main` no ahorra ese walk, sólo agrega complejidad sin beneficio medible.
+
+Lo que sí faltaba de verdad: `comment`/`draft` son kinds nuevos en el **mismo índice global** (`SearchIndexService`, ya persistido en IndexedDB desde antes), poblados por un walk de priming (`SearchFamilyPrimingService`) de las ramas `comments`/`draft` de la familia activa — nunca checked-out, así que `refreshAll()` no las toca. El priming corre al boot (después de resolver la familia activa) y tras cada switch de variante. Cada guardado de `CommentsService`/`DraftsService` reindexa en vivo los docs de esa entidad puntual (`SearchIndexService.replaceEntity`), sin esperar al próximo priming. Los ids siguen la convención `comment:<entityId>:<commentId>` / `draft:<entityId>:<markId>`; no son rutas navegables — seleccionar un resultado en el palette resuelve a la entidad que anclan. No son objetivos válidos de "Conexiones" (`LINKABLE_ENTITY_KINDS` los excluye del picker `@`).
 
 ### Push a GitHub (opt-in)
 

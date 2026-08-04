@@ -128,6 +128,27 @@ export class SearchIndexService {
     this.ready.set(true);
   }
 
+  // Re-indexes every doc belonging to one entity within a kind, e.g. every
+  // comment or draft mark of a single entity — narrower than rebuildKind
+  // (which owns the whole kind globally) so a single entity's save doesn't
+  // wipe every other entity's docs of that kind. Relies on callers using
+  // the `${kind}:${entityId}:${localId}` id convention so membership can
+  // be determined without a second index.
+  async replaceEntity(
+    kind: EntityKind,
+    entityId: string,
+    docs: readonly SearchDoc[],
+  ): Promise<void> {
+    const prefix = `${kind}:${entityId}:`;
+    for (const [id, meta] of this.metaById) {
+      if (meta.kind !== kind || !id.startsWith(prefix)) continue;
+      if (this.mini.has(id)) this.mini.discard(id);
+      this.metaById.delete(id);
+    }
+    for (const doc of docs) this.indexOne(doc);
+    await this.persist();
+  }
+
   async upsert(doc: SearchDoc): Promise<void> {
     if (this.mini.has(doc.id)) this.mini.discard(doc.id);
     this.indexOne(doc);
@@ -147,6 +168,10 @@ export class SearchIndexService {
 
   getTitle(id: string): string | null {
     return this.metaById.get(id)?.title ?? null;
+  }
+
+  getKind(id: string): EntityKind | null {
+    return this.metaById.get(id)?.kind ?? null;
   }
 
   size(): number {

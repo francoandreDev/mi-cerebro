@@ -24,6 +24,7 @@ import type { TranslationKey } from '@core/i18n/i18n.types';
 import { PlayerService } from '@core/music/player.service';
 import { entitySlugSegment } from '@core/routing/entity-slug';
 import { CommandPaletteService } from '@core/search/command-palette.service';
+import { SearchFamilyPrimingService } from '@core/search/search-family-priming.service';
 import { KeyboardHelpService } from '@core/shortcuts/keyboard-help.service';
 import type { Tag } from '@core/tags/tag.types';
 import { TagsService } from '@core/tags/tags.service';
@@ -117,6 +118,7 @@ export class WorkspaceSidebarContainer {
   private readonly foldersService = inject(FoldersService);
   private readonly tagsService = inject(TagsService);
   private readonly variantsService = inject(VariantsService);
+  private readonly searchPriming = inject(SearchFamilyPrimingService);
   private readonly switchVariantService = inject(SwitchVariantService);
   private readonly hostEl = inject(ElementRef<HTMLElement>);
   private readonly workspaceRefresh = inject(WorkspaceRefreshService);
@@ -224,6 +226,7 @@ export class WorkspaceSidebarContainer {
       try {
         await this.workspaceRefresh.ensureReady();
         await this.variantsService.refresh();
+        await this.searchPriming.primeActiveFamily();
       } catch (e: unknown) {
         this.errors.report(e);
       }

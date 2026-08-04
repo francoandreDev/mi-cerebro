@@ -151,4 +151,42 @@ describe('SearchIndexService', () => {
       expect(ids.sort()).toEqual(['n1', 't1']);
     });
   });
+
+  describe('getKind', () => {
+    it('returns the kind of an indexed doc, null otherwise', async () => {
+      await svc.rebuild([doc('a', 'Nota', '')]);
+      expect(svc.getKind('a')).toBe('note');
+      expect(svc.getKind('missing')).toBeNull();
+    });
+  });
+
+  describe('replaceEntity', () => {
+    const commentDoc = (entityId: string, localId: string, body: string): SearchDoc => ({
+      id: `comment:${entityId}:${localId}`,
+      kind: 'comment',
+      title: 'Entidad',
+      body,
+      tagIds: [],
+    });
+
+    it('adds docs scoped to one entity under a kind', async () => {
+      await svc.replaceEntity('comment', 'e1', [commentDoc('e1', 'c1', 'primer comentario')]);
+      const hits = svc.query({ text: 'primer' });
+      expect(hits.map((h) => h.id)).toEqual(['comment:e1:c1']);
+    });
+
+    it("replacing one entity's docs does not touch another entity's docs of the same kind", async () => {
+      await svc.replaceEntity('comment', 'e1', [commentDoc('e1', 'c1', 'de e1')]);
+      await svc.replaceEntity('comment', 'e2', [commentDoc('e2', 'c1', 'de e2')]);
+      await svc.replaceEntity('comment', 'e1', [commentDoc('e1', 'c2', 'nuevo de e1')]);
+      const ids = svc.query({ text: '' }).map((h) => h.id);
+      expect(ids.sort()).toEqual(['comment:e1:c2', 'comment:e2:c1']);
+    });
+
+    it('an empty replacement clears every existing doc for that entity', async () => {
+      await svc.replaceEntity('comment', 'e1', [commentDoc('e1', 'c1', 'algo')]);
+      await svc.replaceEntity('comment', 'e1', []);
+      expect(svc.query({ text: '' })).toEqual([]);
+    });
+  });
 });

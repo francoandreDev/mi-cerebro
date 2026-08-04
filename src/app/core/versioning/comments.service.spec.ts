@@ -13,6 +13,9 @@ import type { FsDirectoryHandle } from '@core/fs/fs.types';
 import { NATIVE_FS } from '@core/fs/native-fs';
 import { WorkspaceService } from '@core/fs/workspace.service';
 
+import { IdbService } from '@core/idb/idb.service';
+import { SearchIndexService } from '@core/search/search-index.service';
+
 import { CommentsService } from './comments.service';
 import { COMMENTS_FILE_SCHEMA_VERSION, type Comment } from './comments.types';
 import { GitFsAdapter } from './git-fs.adapter';
@@ -164,6 +167,7 @@ describe('CommentsService', () => {
         { provide: NATIVE_FS, useValue: nativeFs },
       ],
     });
+    await TestBed.inject(IdbService).clear('search-index');
     svc = TestBed.inject(CommentsService);
   });
 
@@ -338,5 +342,47 @@ describe('CommentsService', () => {
         new Set<string>(['start', 'end']),
       ),
     ).not.toThrow();
+  });
+
+  it('listEntityIds is empty when nothing has been saved', async () => {
+    expect(await svc.listEntityIds()).toEqual([]);
+  });
+
+  it('listEntityIds returns every entity id that has a comments file', async () => {
+    await svc.save('entity-1', 'Uno', []);
+    await svc.save('entity-2', 'Dos', []);
+    expect([...(await svc.listEntityIds())].sort()).toEqual(['entity-1', 'entity-2']);
+  });
+
+  it('save indexes each comment in SearchIndexService, searchable by body text', async () => {
+    const c: Comment = {
+      id: 'c-1',
+      anchorType: 'entity',
+      anchor: 'entity-1',
+      body: { type: 'doc', content: [{ type: 'text', text: 'ojo con esto' }] },
+      createdAt: '2026-06-12T00:00:00Z',
+      updatedAt: '2026-06-12T00:00:00Z',
+      orphaned: false,
+    };
+    await svc.save('entity-1', 'Mi nota', [c]);
+    const search = TestBed.inject(SearchIndexService);
+    const hits = search.query({ text: 'ojo' });
+    expect(hits.map((h) => h.id)).toEqual(['comment:entity-1:c-1']);
+  });
+
+  it('a later save with fewer comments drops the removed one from the index', async () => {
+    const c: Comment = {
+      id: 'c-1',
+      anchorType: 'entity',
+      anchor: 'entity-1',
+      body: { type: 'doc', content: [{ type: 'text', text: 'borrame' }] },
+      createdAt: '2026-06-12T00:00:00Z',
+      updatedAt: '2026-06-12T00:00:00Z',
+      orphaned: false,
+    };
+    await svc.save('entity-1', 'Mi nota', [c]);
+    await svc.save('entity-1', 'Mi nota', []);
+    const search = TestBed.inject(SearchIndexService);
+    expect(search.query({ text: 'borrame' })).toEqual([]);
   });
 });

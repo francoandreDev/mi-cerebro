@@ -6,7 +6,7 @@
 import * as git from 'isomorphic-git';
 
 import type { GitFsAdapter } from './git-fs.adapter';
-import { blobOidAt, rebuildTreeAt, splitPath } from './tree-ops';
+import { blobOidAt, listDirAt, rebuildTreeAt, splitPath, type TreeBlobEntry } from './tree-ops';
 import { stripHeadsPrefix } from './variants.io';
 
 const REPO_DIR = '/';
@@ -109,6 +109,20 @@ export async function writeBranchBlob(input: WriteBranchBlobInput): Promise<stri
     force: true,
   });
   return commitOid;
+}
+
+// Lists the blobs directly inside `dirPath` on `ref`'s HEAD, or an empty
+// array if the ref or the directory does not exist. Same "priming" use
+// case as readBranchBlob: discover which entities have data on a branch
+// that is never checked out, without walking disk.
+export async function listBranchDir(
+  fs: GitFsAdapter,
+  ref: string,
+  dirPath: string,
+): Promise<readonly TreeBlobEntry[]> {
+  const headOid = await resolveOrNull(fs, ref);
+  if (!headOid) return [];
+  return listDirAt(fs, headOid, dirPath);
 }
 
 async function resolveOrNull(fs: GitFsAdapter, ref: string): Promise<string | null> {
