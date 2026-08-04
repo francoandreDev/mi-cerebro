@@ -60,16 +60,26 @@ Cerrado: ~~Responsive mobile — resto de pantallas sin `@media`~~ (esfuerzo: me
 
 Polish visual, casos de baja frecuencia, o ítems que el propio `deferred/index.md` marca como YAGNI/optimización prematura. Orden aproximado por esfuerzo ascendente, sin discriminar mucho dentro del grupo — la diferencia de impacto entre estos ítems es chica.
 
-22. Filtros por tipo de entidad (Tier 2) — bloqueado más por falta de otras entidades indexadas que por dificultad.
-23. Color picker custom para tag — ya resuelto, entrada obsoleta en `deferred/index.md` (podar).
-24. Lead-time por meta (Tier 1) — YAGNI explícito mientras un único lead-time alcance.
-25. Hora del deadline configurable (Tier 2) — 23:59 razonable para casi todo plazo.
-26. "Cargar más" en backlog / tasks (Tier 2) — aún no hay dolor de scroll real.
+Cerrado: ~~Filtros por tipo de entidad~~ (Tier 2) — ya estaba resuelto (documentación de cierre 2026-08-04): el bloqueo que citaba esta entrada ("faltan otras entidades indexadas") dejó de aplicar hace rato — `SearchIndexService` ya indexa 11 kinds y el filtro `kind:<tipo>` del palette (`parsePaletteQuery`, `command-palette.container.ts`) ya funciona, documentado en `docs/sistema/conexiones.md` ("Filtro por tipo en la búsqueda global").
+
+23. Color picker custom para tag — matiz, no podar sin más: existe un selector de swatches predefinidos (`TAG_SWATCHES`, `tag-picker.component.ts`), pero color arbitrario/hex sigue explícitamente diferido (`core/tags/tag.types.ts`: _"User-customizable colors are deferred"_). El "ya resuelto" original se refería a los swatches, no a color libre.
+
+Cerrado: ~~Lead-time por meta~~ (Tier 1) — ya estaba resuelto (documentación de cierre 2026-08-04): `Goal.reminderLeadMinutes` (schema v9→v10, `goal.types.ts`, `reminder-lead-deadline-time.migration.ts`) es un override per-goal, no un único valor global. El YAGNI original ("mientras un único lead-time alcance") ya no describe el estado real.
+
+Cerrado: ~~Hora del deadline configurable~~ (Tier 2) — ya estaba resuelto (documentación de cierre 2026-08-04): `Goal.deadlineTime` (mismo schema v10, `DEFAULT_DEADLINE_TIME = '23:59'` sólo como fallback) con UI en `goal-constellation-editor.component.ts`, usado por `goalDeadlineInstant()`/`goal-reminders-sync.service.ts`. Ya no está hardcodeado.
+
+Cerrado: ~~"Cargar más" en backlog / tasks~~ (Tier 2) — ya estaba resuelto (documentación de cierre 2026-08-04): `tasks-garden.container.ts` (`visibleBacklogCount`/`hiddenBacklogCount`/`loadMoreLabel`) ya pagina el backlog en vez de cargar todo de una.
+
 27. Atajos directos a herramientas y colores (tiza) (Tier 2) — modo tiza es deliberadamente disruptivo, no se pide teclado.
-28. Pin/fijado de estantes (books) (Tier 3) — YAGNI hasta N>10 estantes.
-29. Multi-select de pasos (goals) (Tier 3) — el caso no apareció como necesidad real.
-30. Drag-to-reposition de estrellas (goals) (Tier 3) — la creación con click ya cubre el caso principal.
-31. Layout libre de la constelación (goals wall) (Tier 3) — el hash-based ya cubre sin nuevo estado.
+
+Cerrado: ~~Pin/fijado de estantes (books)~~ (Tier 3) — ya estaba resuelto (documentación de cierre 2026-08-04): `bookshelf-prefs.ts` (`PINNED_FOLDERS_KEY`) + `bookshelf.container.ts` (`togglePin`, `pinnedFolders`) + `sortNamedFoldersPinnedFirst`. El YAGNI "hasta N>10 estantes" quedó obsoleto.
+
+29. Multi-select de pasos (goals) (Tier 3) — desactualizado: `GoalSelectionToolbarComponent` + multi-select ya existen en `goal-constellation-editor.component.ts` (bulk actions sobre pasos). Lo que sigue realmente afuera es sólo la variante **lasso** (arrastrar un rectángulo para seleccionar), no el multi-select en sí — ver `deferred/reminders-goals.md`.
+
+Cerrado: ~~Drag-to-reposition de estrellas (goals)~~ (Tier 3) — ya estaba resuelto (documentación de cierre 2026-08-04): esto es el editor `/goals/:id` reposicionando pasos, no el wall que lista metas (ver ítem siguiente, es otra feature) — `goal-constellation-editor.component.ts` (`onStarDown`/`onStarMove`/`onStarUp`) ya permite arrastrar un paso existente y persiste el nuevo `x/y` vía `stepsChange.emit(...)`, con el mismo threshold de 4px para distinguir click de drag que describía el ítem original en `deferred/reminders-goals.md`. "La creación con click ya cubre el caso principal" ya no es la única vía.
+
+Cerrado: ~~Layout libre de la constelación (goals wall)~~ (Tier 3) — ya estaba resuelto (documentación de cierre 2026-08-04, feature distinta de la anterior pese al nombre parecido — esa era el editor de una meta, ésta es el wall que lista todas): `Goal.wallCenter` (`goal.types.ts`) persiste una posición libre real por meta; `centerOf()` (`goal-wall-layout.utils.ts`) sólo cae al centroide hash-based cuando `wallCenter` está ausente. "El hash-based ya cubre sin nuevo estado" es falso — sí hay estado nuevo y ya se usa.
+
 32. Granularidad por faceta en merge bundle (Tier 3) — decisión de producto ya tomada como "no ahora".
 33. Compactación manual sobre rango específico (Tier 3) — el background con buckets ya cubre el 95%.
 34. Tooltip por-día en la panorámica (`/history`) (Tier 3) — marcado "no crítico" desde Fase 3.
