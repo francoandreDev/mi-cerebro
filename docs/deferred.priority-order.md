@@ -92,7 +92,7 @@ Polish visual, casos de baja frecuencia, o ítems que el propio `deferred/index.
 54. Pulido visual general de `/history` (Tier 4) — agrupador sin límite claro, entra cuando haya uso real.
 55. Override de imágenes para portada/miniaturas (books) (Tier 4) — los faces procedurales ya dan identidad visual.
 56. Paginación real persistida fila por fila (books) (Tier 4) — se autocorrige apenas el usuario abre el capítulo.
-57. Subset + conversión a woff2 de Crimson Pro (Tier 4) — bloqueado por tooling, perf ya aceptable para PWA.
+57. ~~Subset + conversión a woff2 de Crimson Pro~~ — resuelto 2026-08-04, `pyftsubset` (fonttools) instalado en un venv aislado (no disponible como paquete del sistema); subset a la unión de los rangos Unicode "latin" + "latin-ext" de Google Fonts sobre los 3 `.ttf` originales, recortando cada `.woff2` de ~34-35 KB a ~28-29 KB (~17%, no el ~30% estimado — la fuente ya traía pocos glyphs fuera de ese rango). Verificado con `fontTools`: los 601 glyphs resultantes cubren todos los acentos/ñ/¿¡ del español y el resto de latin-ext (ver `deferred/trash-books.md`, entrada eliminada).
 58. ~~Waveform pre-renderizado (música)~~ — ya estaba implementado (decodificado on-demand + cacheado en memoria, no persistido a disco); sólo la entrada de `deferred/` había quedado sin cerrar (documentación de cierre 2026-07-18).
 59. Crypto-at-rest para PAT en `secrets.json` (Tier 4) — el threat model real (PAT no debe entrar a git push) ya está cubierto por `.gitignore`.
 60. Índice de búsqueda persistido por familia (`idx-main`) (Tier 4) — optimización prematura sin métricas reales, dice el propio doc.

@@ -28,10 +28,4 @@ Formato por entrada:
 - **Por qué se difirió (revalidado 2026-08-03)**: no es sólo una optimización pendiente — `totalSpreads` depende del ancho real del viewport donde se abre el capítulo (columnas CSS), así que no existe un "número exacto" único e independiente del contexto. Precalcularlo off-screen a un ancho de referencia fijo produciría una cifra con apariencia de precisión que puede no coincidir con lo que el usuario ve al abrir el capítulo en su propia ventana — eso es peor que la estimación por palabras, que es honesta sobre ser aproximada (regla "la UI no debe mentir"). La estimación palabras/250 se mantiene como fallback; libros nuevos se autocorrigen apenas el usuario abre el capítulo.
 - **Target**: sin asignar.
 
-### Subset latin-extended de Crimson Pro
-
-- **Qué**: las tres variantes de Crimson Pro ya se sirven como `.woff2` (conversión local con `woff2_compress`, ~61% menos peso, `.ttf` original como fallback vía `src` en cascada) — ver `_fonts.scss`. Queda por hacer: un subset latin-extended de cada `.woff2` recortaría otro ~30%.
-- **Por qué se difirió**: el subset requiere `pyftsubset` (paquete `fonttools`), no disponible en este entorno; instalarlo agrega una dependencia de build nueva para un ahorro incremental sobre una ganancia ya conseguida.
-- **Target**: sin asignar.
-
 ---
