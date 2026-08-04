@@ -80,21 +80,36 @@ Cerrado: ~~Drag-to-reposition de estrellas (goals)~~ (Tier 3) — ya estaba resu
 
 Cerrado: ~~Layout libre de la constelación (goals wall)~~ (Tier 3) — ya estaba resuelto (documentación de cierre 2026-08-04, feature distinta de la anterior pese al nombre parecido — esa era el editor de una meta, ésta es el wall que lista todas): `Goal.wallCenter` (`goal.types.ts`) persiste una posición libre real por meta; `centerOf()` (`goal-wall-layout.utils.ts`) sólo cae al centroide hash-based cuando `wallCenter` está ausente. "El hash-based ya cubre sin nuevo estado" es falso — sí hay estado nuevo y ya se usa.
 
-32. Granularidad por faceta en merge bundle (Tier 3) — decisión de producto ya tomada como "no ahora".
-33. Compactación manual sobre rango específico (Tier 3) — el background con buckets ya cubre el 95%.
-34. Tooltip por-día en la panorámica (`/history`) (Tier 3) — marcado "no crítico" desde Fase 3.
-35. Header del editor "n commits desde milestone" (Tier 3) — valor incremental marginal, dice el propio doc.
-36. Hilos entre items relacionados (`/files`) (Tier 3) — puro decorado, sin demanda real.
-37. Posición libre real (drag x/y) en `/files` (Tier 3) — el jitter determinista ya transmite el feeling.
-38. Typewriter focus línea-por-línea (editor) (Tier 3) — la máscara CSS ya cubre ~70%.
-39. Typewriter mode en `/writings` (Tier 3) — no bloquea la migración del section pane.
-40. Parser de fecha natural — alcance ampliado (Tier 3) — cobertura actual cubre los casos cotidianos.
-41. Animaciones orgánicas de DnD (tasks) (Tier 3) — polish puro, mecánica funcional ya está.
-42. Riego con cursor regadera (tasks) (Tier 3) — bajo riesgo de uso real hasta que el jardín se llene.
-43. Cesta de cosecha con salto en arco (tasks) (Tier 3) — falta sólo la animación FLIP.
-44. Textura realista de tiza (Tier 3) — polish, entra si las capas se sienten "planchadas".
+32. Granularidad por faceta en merge bundle (Tier 3) — decisión de producto ya tomada como "no ahora". Reconfirmado 2026-08-04: `merge.service.ts`/`merge-facetas.ts` siguen operando con las 3 facetas fijas (main/borrador/comentarios), sin selección granular.
+
+33. Compactación manual sobre rango específico (Tier 3) — matiz 2026-08-04: ya existe un disparador manual (`history-strata.component.ts#onCompactNow()`, botón "compactar ahora" → `compactionScheduler.runOnce({ ignoreThreshold: true })`), pero sigue operando sobre los buckets elegibles del scheduler, no sobre un rango arbitrario elegido por el usuario — "rango específico" sigue sin existir.
+
+Cerrado: ~~Tooltip por-día en la panorámica (`/history`)~~ (Tier 3) — ya estaba resuelto (documentación de cierre 2026-08-04): `history-panorama.component.html` ya renderiza `.panorama-tooltip` (`tooltipFacets`/`columnTitle`) al hacer hover sobre una columna del día.
+
+35. Header del editor "n commits desde milestone" (Tier 3) — valor incremental marginal, dice el propio doc. Reconfirmado 2026-08-04: sin referencias a `milestone` en `shared/editor/` ni en el toolbar; `milestone.service.ts` sólo se usa hoy en `features/history`.
+
+36. Hilos entre items relacionados (`/files`) (Tier 3) — matiz 2026-08-04: `files.container.ts` ya crea una `Relation` real al soltar una casilla sobre otra (drag-and-drop), pero no hay render visual persistente del "hilo" en el corcho — el único feedback es CSS de arrastre (`.wall-slot.dragging`/`.drag-target`), sin línea dibujada entre tarjetas relacionadas. El "puro decorado, sin demanda real" ya no aplica a la relación en sí (existe y se usa), sólo a la representación visual del hilo.
+
+37. Posición libre real (drag x/y) en `/files` (Tier 3) — el jitter determinista ya transmite el feeling. Reconfirmado 2026-08-04: `files.container.ts` sigue usando drag-and-drop HTML5 sólo para reordenar/crear relaciones, sin tracking de x/y continuo ni posición libre persistida.
+
+Cerrado: ~~Typewriter focus línea-por-línea (editor)~~ (Tier 3) — ya estaba resuelto (documentación de cierre 2026-08-04): `core/tiptap/typewriter-focus/typewriter-focus.ext.ts` ya es un plugin ProseMirror por decoración que difumina (`.mc-typewriter-dim`) cada bloque salvo el que tiene el cursor (`blockIdAt`) — foco real por bloque/línea, no la "máscara CSS de rango amplio" que describía el ítem original.
+
+Cerrado: ~~Typewriter mode en `/writings`~~ (Tier 3) — ya estaba resuelto (documentación de cierre 2026-08-04): `writing-editor-pane.component.ts` ya inyecta `TypewriterModeService` y aplica `[class.typewriter-mode]` en el host, mismo toggle que el resto del editor.
+
+40. Parser de fecha natural — alcance ampliado (Tier 3) — cobertura actual cubre los casos cotidianos. Reconfirmado 2026-08-04: `parse-due.ts#parseQuickAdd` sigue requiriendo el marcador `@`; sin él cae directo a `defaultDueAt` sin intentar parsear fecha natural del título.
+
+Cerrado: ~~Animaciones orgánicas de DnD (tasks)~~ (Tier 3) — ya estaba resuelto (documentación de cierre 2026-08-04): `plant-card.component.css` ya tiene "DnD orgánico" real — raíces colgando y balanceándose mientras se arrastra (`.card--lifted::after`, `roots-sway`) y "plop" elástico al soltar en un cantero nuevo (`.card--plop`, `plant-plop`), ambos con comentario explícito citando "DnD orgánico" en el CSS.
+
+Cerrado: ~~Riego con cursor regadera (tasks)~~ (Tier 3) — ya estaba resuelto (documentación de cierre 2026-08-04): `tasks-garden.container.ts` (`WATERING_KEY`, signal `watering`) + `tasks-garden.container.css` (`.garden--watering { cursor: url(...) }` con hotspot real) ya cablean el cursor de regadera.
+
+Cerrado: ~~Cesta de cosecha con salto en arco (tasks)~~ (Tier 3) — ya estaba resuelto (documentación de cierre 2026-08-04): `TasksGardenContainer.flyToBasket()` clona la card, la anima con `plant-arc` (`plant-card.component.css`, `cubic-bezier` + keyframe de escala/rotación) desde la posición original hasta el centro de `.basket-stack .basket` — es la animación de salto en arco que pedía el ítem, no una animación FLIP genérica pero cumple el mismo objetivo visual.
+
+44. Textura realista de tiza (Tier 3) — polish, entra si las capas se sienten "planchadas". Reconfirmado 2026-08-04: sin señales de implementación (`texture`/`noise`/`grain` no aparecen en los componentes `chalk-*`).
+
 45. ~~Export PNG/SVG de las capas (listas)~~ — resuelto 2026-07-20, botón "Exportar" (`mc-menu-button`) en la toolbar de tiza serializa las capas visibles a un SVG standalone (puntos normalizados horneados a px reales) y opcionalmente rasteriza a PNG vía canvas (`svgToPngBlob`), descarga con `triggerDownload` (ver `deferred/lists-images.md`, entrada eliminada).
-46. Undo/redo dedicado para trazos (listas) (Tier 3) — panel de capas + historial git ya cubren.
+
+Cerrado: ~~Undo/redo dedicado para trazos (listas)~~ (Tier 3) — ya estaba resuelto (documentación de cierre 2026-08-04): `chalk-history.utils.ts` (`undoChalkHistory`/`redoChalkHistory`, historial local session-scoped cap 50) ya existe, deliberadamente separado del Ctrl+Z de TipTap.
+
 47. ~~Estilo "pizarra de verdad" en todo el pane~~ — resuelto 2026-08-03, toggle "vista pizarra completa" (off por default) en `/lists/:id`, restyle scopeado a esa instancia del editor compartido vía un input nuevo + host class, sin tocar `--mc-*` ni romper el modo lectura (ver `deferred/lists-images.md`, entrada eliminada).
 48. Animaciones de snooze / gestos manuales (palomar) (Tier 3) — las animaciones críticas del scheduler ya están.
 49. Detalles bonitos: plumitas, plumaje, ronroneo (palomar) (Tier 3) — pulido visual de baja prioridad.
@@ -103,12 +118,14 @@ Cerrado: ~~Layout libre de la constelación (goals wall)~~ (Tier 3) — ya estab
 52. ~~Thumbs reales 2×2 para galerías en la papelera~~ — ya estaba resuelto (documentación de cierre 2026-07-21): `trash-card-content.component.html` ya renderiza `<img [src]="url">` reales por tile (`galleryTiles()`), con `TrashService.loadGalleryCovers` → `readTrashCoverBlobs` leyendo bytes reales de disco; sólo el ícono genérico 📷 aparece en tiles vacíos (menos de 4 imágenes en la galería borrada), no como placeholder universal. Esta entrada de `deferred.priority-order.md` había quedado desactualizada.
 53. ~~Volumen real (`BookVolumeComponent`) en la papelera~~ — resuelto 2026-07-20, la card de libro en `/trash` reusa `mc-book-volume` (`shared/entity-cards/`) con `accent`/cantidad de capítulos leídos del `BookBundle` guardado, en vez del placeholder tipográfico (ver `deferred/trash-books.md`, entrada eliminada).
 54. Pulido visual general de `/history` (Tier 4) — agrupador sin límite claro, entra cuando haya uso real.
-55. Override de imágenes para portada/miniaturas (books) (Tier 4) — los faces procedurales ya dan identidad visual.
-56. Paginación real persistida fila por fila (books) (Tier 4) — se autocorrige apenas el usuario abre el capítulo.
+
+Cerrado: ~~Override de imágenes para portada/miniaturas (books)~~ (Tier 4) — ya estaba resuelto (documentación de cierre 2026-08-04): `BookImagesService.setFace()`/`clearFace()` ya sube un blob real a `cover.<ext>`/`back.<ext>`, con UI completa (subir/previsualizar/quitar) en `book-open.container.ts` (`pickFace`/`coverFileInput`); `BookFaceRef` (`book.types.ts`) soporta `kind: 'image'` además del face procedural (`kind: 'auto'`).
+
+56. Paginación real persistida fila por fila (books) (Tier 4) — se autocorrige apenas el usuario abre el capítulo. Reconfirmado 2026-08-04: sigue siendo una decisión de diseño explícita ("la UI no debe mentir" — no hay ancho de referencia único), no una tarea pendiente por falta de tiempo; la entrada de `deferred/trash-books.md` es consistente, no huérfana.
 57. ~~Subset + conversión a woff2 de Crimson Pro~~ — resuelto 2026-08-04, `pyftsubset` (fonttools) instalado en un venv aislado (no disponible como paquete del sistema); subset a la unión de los rangos Unicode "latin" + "latin-ext" de Google Fonts sobre los 3 `.ttf` originales, recortando cada `.woff2` de ~34-35 KB a ~28-29 KB (~17%, no el ~30% estimado — la fuente ya traía pocos glyphs fuera de ese rango). Verificado con `fontTools`: los 601 glyphs resultantes cubren todos los acentos/ñ/¿¡ del español y el resto de latin-ext (ver `deferred/trash-books.md`, entrada eliminada).
 58. ~~Waveform pre-renderizado (música)~~ — ya estaba implementado (decodificado on-demand + cacheado en memoria, no persistido a disco); sólo la entrada de `deferred/` había quedado sin cerrar (documentación de cierre 2026-07-18).
 59. Crypto-at-rest para PAT en `secrets.json` (Tier 4) — el threat model real (PAT no debe entrar a git push) ya está cubierto por `.gitignore`.
-60. Índice de búsqueda persistido por familia (`idx-main`) (Tier 4) — optimización prematura sin métricas reales, dice el propio doc.
+60. Índice de búsqueda persistido por familia (`idx-main`) (Tier 4) — matiz 2026-08-04: `SearchIndexService` ya persiste a IndexedDB (`IdbService.persist()`/`load()`, store `search-index`) — dejó de ser puro rebuild-in-memory. Pero es un único blob global, no separado "por familia" como pide el ítem, y cada `feature.service.refresh()` (books, notes, etc.) sigue recorriendo disco en cada refresh — la persistencia existe pero no evita el walk de disco que era el problema original. Sigue pendiente en su forma completa, ya no en la forma que describe el doc actual.
 61. Índice de búsqueda global para comentarios (Tier 4) — mismo, además requiere walk de priming nuevo.
 62. Índice de búsqueda global para borradores (Tier 4) — mismo, conviene diseñar junto con el anterior.
 63. Estantería con forma creativa (books) (Tier 4) — visión a futuro, el shelf clásico aún no está pulido.
