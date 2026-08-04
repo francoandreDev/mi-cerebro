@@ -236,7 +236,9 @@ Lo que sí faltaba de verdad: `comment`/`draft` son kinds nuevos en el **mismo �
 
 ### Push a GitHub (opt-in)
 
-Configurable en settings: URL de repo privado + PAT (guardado en IndexedDB, no en localStorage). Toggle "push tras cada autocommit" con throttle de 5 min, o sólo manual con botón. **Cero llamadas a red sin esto configurado** (regla §4.14).
+Configurable en settings: URL de repo privado + PAT. Toggle "push tras cada autocommit" con throttle de 5 min, o sólo manual con botón. **Cero llamadas a red sin esto configurado** (regla §4.14).
+
+**Dónde vive el PAT.** Corregido 2026-08-04: esta sección decía "guardado en IndexedDB, no en localStorage" — inexacto, el PAT vive en `.mi-cerebro/secrets.json` en disco (gitignoreado, nunca entra al árbol git), no en IndexedDB. Desde 13e-ii el campo `token` se persiste cifrado (AES-GCM) con una clave no-extraíble generada una sola vez y guardada en IndexedDB (`pat-crypto.ts`) — ahí sí interviene IndexedDB, pero solo para la clave, no para el secreto en sí. Sin passphrase: la clave se "desbloquea" implícitamente por correr en este mismo perfil de navegador, protegiendo el PAT si la carpeta del workspace se copia/respalda/sincroniza a otro lado sin ese perfil, pero no ante acceso completo al navegador (ya confiado hoy para permisos de FS, temas custom, etc). Archivos v1 (token en plano, de antes de 13e-ii) se siguen leyendo y se re-persisten cifrados automáticamente al primer boot.
 
 ### Costo de operaciones git sobre FS Access
 

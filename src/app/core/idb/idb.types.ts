@@ -1,7 +1,13 @@
 // Names of the IndexedDB object stores used by the app.
 // Adding a new store requires bumping IDB_VERSION in idb.service.ts.
 
-export const IDB_STORES = ['drafts', 'theme-custom', 'search-index', 'error-log'] as const;
+export const IDB_STORES = [
+  'drafts',
+  'theme-custom',
+  'search-index',
+  'error-log',
+  'crypto-keys',
+] as const;
 
 export type IdbStore = (typeof IDB_STORES)[number];
 

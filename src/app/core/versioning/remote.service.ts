@@ -12,6 +12,7 @@ import { ERROR_CODES } from '@core/errors/error.codes';
 import { FsLockService } from '@core/fs/fs-lock.service';
 import { FsService } from '@core/fs/fs.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
+import { IdbService } from '@core/idb/idb.service';
 
 import { GitFsAdapter } from './git-fs.adapter';
 import {
@@ -56,6 +57,7 @@ export class RemoteService {
   private readonly fsLock = inject(FsLockService);
   private readonly fs = inject(FsService);
   private readonly whistle = inject(SyncWhistleService);
+  private readonly idb = inject(IdbService);
 
   private readonly stateSignal = signal<RemoteSecretsFile>(emptyRemoteSecrets());
   private readonly pushingSignal = signal(false);
@@ -108,14 +110,14 @@ export class RemoteService {
       remote: { url, token },
       ...(this.stateSignal().lastPushAt ? { lastPushAt: this.stateSignal().lastPushAt! } : {}),
     };
-    await writeRemoteSecrets(fs, next);
+    await writeRemoteSecrets(fs, this.idb, next);
     this.stateSignal.set(next);
   }
 
   async clear(): Promise<void> {
     const fs = this.requireConfigFs();
     const next = emptyRemoteSecrets();
-    await writeRemoteSecrets(fs, next);
+    await writeRemoteSecrets(fs, this.idb, next);
     this.stateSignal.set(next);
   }
 
@@ -309,7 +311,7 @@ export class RemoteService {
       lastPushAt: new Date().toISOString(),
       dispatchCount: bumpDispatchCount(this.stateSignal().dispatchCount),
     };
-    await writeRemoteSecrets(fs, next);
+    await writeRemoteSecrets(fs, this.idb, next);
     this.stateSignal.set(next);
     this.whistle.play();
   }
@@ -317,8 +319,12 @@ export class RemoteService {
   private async loadFromDisk(): Promise<void> {
     try {
       const fs = this.requireConfigFs();
-      const file = await readRemoteSecrets(fs);
+      const { file, migrated } = await readRemoteSecrets(fs, this.idb);
       this.stateSignal.set(file);
+      // why: a v1 (plaintext-token) file was upgraded in memory — persist
+      //      it encrypted right away instead of leaving it in plaintext
+      //      on disk until some unrelated future write.
+      if (migrated) await writeRemoteSecrets(fs, this.idb, file);
     } catch {
       // workspace not ready, keep default state — effect will retry.
     }

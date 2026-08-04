@@ -1,7 +1,13 @@
-// 13e-i — config IO + URL validation tests. No DI; the in-memory fs
-// stub matches the ConfigFs interface so we exercise the real code path.
+// 13e-i — config IO + URL validation tests. No DI for the fs layer; the
+// in-memory fs stub matches the ConfigFs interface so we exercise the
+// real code path. IdbService (13e-ii, token encryption) comes from
+// TestBed since pat-crypto.ts needs a real IndexedDB (fake-indexeddb in
+// tests) to store the device key.
 
+import { TestBed } from '@angular/core/testing';
 import { describe, expect, it } from 'vitest';
+
+import { IdbService } from '@core/idb/idb.service';
 
 import type { ConfigFs } from './remote.config.io';
 import {
@@ -32,6 +38,12 @@ class MemFs implements ConfigFs {
   }
 }
 
+function idb(): IdbService {
+  TestBed.resetTestingModule();
+  TestBed.configureTestingModule({});
+  return TestBed.inject(IdbService);
+}
+
 describe('isValidRemoteUrl', () => {
   it.each([
     ['https://github.com/owner/repo.git', true],
@@ -51,18 +63,21 @@ describe('isValidRemoteUrl', () => {
 describe('readRemoteSecrets', () => {
   it('returns empty file when secrets.json is missing', async () => {
     const fs = new MemFs();
-    const file = await readRemoteSecrets(fs);
+    const { file, migrated } = await readRemoteSecrets(fs, idb());
     expect(file.remote).toBeNull();
     expect(file.schemaVersion).toBe(REMOTE_SECRETS_SCHEMA_VERSION);
+    expect(migrated).toBe(false);
   });
 
-  it('round-trips a configured file', async () => {
+  it('round-trips a configured file, storing the token encrypted on disk', async () => {
     const fs = new MemFs();
-    await writeRemoteSecrets(fs, {
+    const store = idb();
+    await writeRemoteSecrets(fs, store, {
       schemaVersion: REMOTE_SECRETS_SCHEMA_VERSION,
       remote: { url: 'https://github.com/owner/repo.git', token: 'ghp_abc' },
     });
-    const file = await readRemoteSecrets(fs);
+    expect(fs.text('.mi-cerebro/secrets.json')).not.toContain('ghp_abc');
+    const { file } = await readRemoteSecrets(fs, store);
     expect(file.remote).toEqual({ url: 'https://github.com/owner/repo.git', token: 'ghp_abc' });
   });
 
@@ -74,26 +89,28 @@ describe('readRemoteSecrets', () => {
         JSON.stringify({ schemaVersion: 999, remote: { url: 'x', token: 'y' } }),
       ),
     );
-    expect((await readRemoteSecrets(fs)).remote).toBeNull();
+    expect((await readRemoteSecrets(fs, idb())).file.remote).toBeNull();
   });
 
   it('discards malformed remote payloads', async () => {
     const fs = new MemFs();
     await fs.writeFile(
       '.mi-cerebro/secrets.json',
-      new TextEncoder().encode(JSON.stringify({ schemaVersion: 1, remote: { url: 'x' } })),
+      new TextEncoder().encode(
+        JSON.stringify({ schemaVersion: REMOTE_SECRETS_SCHEMA_VERSION, remote: { url: 'x' } }),
+      ),
     );
-    expect((await readRemoteSecrets(fs)).remote).toBeNull();
+    expect((await readRemoteSecrets(fs, idb())).file.remote).toBeNull();
   });
 
   it('round-trips dispatchCount ("N envíos hoy")', async () => {
     const fs = new MemFs();
-    await writeRemoteSecrets(fs, {
+    await writeRemoteSecrets(fs, idb(), {
       schemaVersion: REMOTE_SECRETS_SCHEMA_VERSION,
       remote: null,
       dispatchCount: { date: '2026-07-31', count: 3 },
     });
-    const file = await readRemoteSecrets(fs);
+    const { file } = await readRemoteSecrets(fs, idb());
     expect(file.dispatchCount).toEqual({ date: '2026-07-31', count: 3 });
   });
 
@@ -102,11 +119,69 @@ describe('readRemoteSecrets', () => {
     await fs.writeFile(
       '.mi-cerebro/secrets.json',
       new TextEncoder().encode(
-        JSON.stringify({ schemaVersion: 1, remote: null, dispatchCount: { date: 5, count: 'x' } }),
+        JSON.stringify({
+          schemaVersion: REMOTE_SECRETS_SCHEMA_VERSION,
+          remote: null,
+          dispatchCount: { date: 5, count: 'x' },
+        }),
       ),
     );
-    const file = await readRemoteSecrets(fs);
+    const { file } = await readRemoteSecrets(fs, idb());
     expect(file.dispatchCount).toBeUndefined();
+  });
+
+  describe('v1 → v2 migration (plaintext token → encrypted)', () => {
+    it('reads a v1 plaintext-token file and flags it for re-persist', async () => {
+      const fs = new MemFs();
+      await fs.writeFile(
+        '.mi-cerebro/secrets.json',
+        new TextEncoder().encode(
+          JSON.stringify({
+            schemaVersion: 1,
+            remote: { url: 'https://github.com/owner/repo.git', token: 'ghp_legacy' },
+          }),
+        ),
+      );
+      const { file, migrated } = await readRemoteSecrets(fs, idb());
+      expect(file.remote).toEqual({
+        url: 'https://github.com/owner/repo.git',
+        token: 'ghp_legacy',
+      });
+      expect(file.schemaVersion).toBe(REMOTE_SECRETS_SCHEMA_VERSION);
+      expect(migrated).toBe(true);
+    });
+
+    it('re-persisting a migrated file encrypts it, and it still round-trips', async () => {
+      const fs = new MemFs();
+      const store = idb();
+      await fs.writeFile(
+        '.mi-cerebro/secrets.json',
+        new TextEncoder().encode(
+          JSON.stringify({
+            schemaVersion: 1,
+            remote: { url: 'https://github.com/owner/repo.git', token: 'ghp_legacy' },
+          }),
+        ),
+      );
+      const first = await readRemoteSecrets(fs, store);
+      await writeRemoteSecrets(fs, store, first.file);
+      expect(fs.text('.mi-cerebro/secrets.json')).not.toContain('ghp_legacy');
+      const second = await readRemoteSecrets(fs, store);
+      expect(second.file.remote?.token).toBe('ghp_legacy');
+      expect(second.migrated).toBe(false);
+    });
+  });
+
+  it('a token encrypted under one device key cannot be decrypted after the key is lost', async () => {
+    const fs = new MemFs();
+    const storeA = idb();
+    await writeRemoteSecrets(fs, storeA, {
+      schemaVersion: REMOTE_SECRETS_SCHEMA_VERSION,
+      remote: { url: 'https://github.com/owner/repo.git', token: 'ghp_abc' },
+    });
+    await storeA.clear('crypto-keys');
+    const { file } = await readRemoteSecrets(fs, storeA);
+    expect(file.remote).toBeNull();
   });
 });
 

@@ -2,9 +2,16 @@
 // `.mi-cerebro/secrets.json` (gitignored by default — never enters the
 // repo tree). Schema version is here so future additions (refresh tokens,
 // multiple remotes) don't silently break older files.
+//
+// v2 (13e-ii): `token` is stored on disk as an AES-GCM envelope encrypted
+// with a device-bound key (see pat-crypto.ts) instead of plaintext — but
+// this in-memory type always holds the decrypted plaintext string. The
+// encrypt/decrypt boundary lives entirely inside remote.config.io.ts;
+// nothing else in the app (RemoteService, settings UI, push/fetch auth)
+// needs to know the on-disk shape changed.
 
 export const REMOTE_SECRETS_FILE = '.mi-cerebro/secrets.json';
-export const REMOTE_SECRETS_SCHEMA_VERSION = 1 as const;
+export const REMOTE_SECRETS_SCHEMA_VERSION = 2 as const;
 
 export interface RemoteConfig {
   readonly url: string;

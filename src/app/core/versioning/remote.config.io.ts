@@ -1,9 +1,18 @@
 // 13e-i — read/write `.mi-cerebro/secrets.json` and keep the
 // `.gitignore` line for it in place. Pure-ish: takes a `FileSystem`-
-// like object so tests can pass a fake without DI. The atomic-write
-// promise comes from the caller (FsService.writeFileAtomic in prod, a
-// stub in tests).
+// like object (and, since 13e-ii, an `IdbService` instance) as params
+// instead of injecting them, so tests can pass fakes without DI. The
+// atomic-write promise comes from the caller (FsService.writeFileAtomic
+// in prod, a stub in tests).
+//
+// 13e-ii — the on-disk `remote.token` is an AES-GCM envelope (see
+// pat-crypto.ts), encrypted/decrypted at this read/write boundary only.
+// v1 files (plaintext token) are still readable — read as-is, flagged
+// `migrated: true` so the caller re-persists them encrypted.
 
+import type { IdbService } from '@core/idb/idb.service';
+
+import { decryptToken, encryptToken, type EncryptedToken } from './pat-crypto';
 import {
   REMOTE_SECRETS_FILE,
   REMOTE_SECRETS_SCHEMA_VERSION,
@@ -26,31 +35,72 @@ export interface ConfigFs {
   writeFile(path: string, content: Uint8Array): Promise<void>;
 }
 
-export async function readRemoteSecrets(fs: ConfigFs): Promise<RemoteSecretsFile> {
+export interface ReadRemoteSecretsResult {
+  readonly file: RemoteSecretsFile;
+  // why: true when the on-disk shape was an older schema (v1 plaintext
+  //      token) upgraded in memory to the current one — the caller should
+  //      persist it back so the plaintext-on-disk window closes promptly
+  //      instead of lingering until the next unrelated write.
+  readonly migrated: boolean;
+}
+
+export async function readRemoteSecrets(
+  fs: ConfigFs,
+  idb: IdbService,
+): Promise<ReadRemoteSecretsResult> {
   let bytes: Uint8Array;
   try {
     bytes = await fs.readFile(REMOTE_SECRETS_FILE);
   } catch {
-    return emptyRemoteSecrets();
+    return { file: emptyRemoteSecrets(), migrated: false };
   }
-  if (bytes.byteLength === 0) return emptyRemoteSecrets();
+  if (bytes.byteLength === 0) return { file: emptyRemoteSecrets(), migrated: false };
   try {
-    const parsed = JSON.parse(TEXT_DECODER.decode(bytes)) as Partial<RemoteSecretsFile>;
-    if (parsed.schemaVersion !== REMOTE_SECRETS_SCHEMA_VERSION) return emptyRemoteSecrets();
+    const parsed = JSON.parse(TEXT_DECODER.decode(bytes)) as {
+      schemaVersion?: unknown;
+      remote?: unknown;
+      lastPushAt?: unknown;
+      dispatchCount?: unknown;
+    };
     const dispatchCount = normalizeDispatchCount(parsed.dispatchCount);
-    return {
-      schemaVersion: REMOTE_SECRETS_SCHEMA_VERSION,
-      remote: normalizeRemote(parsed.remote ?? null),
-      ...(parsed.lastPushAt ? { lastPushAt: parsed.lastPushAt } : {}),
+    const rest = {
+      ...(typeof parsed.lastPushAt === 'string' ? { lastPushAt: parsed.lastPushAt } : {}),
       ...(dispatchCount ? { dispatchCount } : {}),
     };
+    if (parsed.schemaVersion === 1) {
+      const remote = normalizeLegacyRemote(parsed.remote);
+      return {
+        file: { schemaVersion: REMOTE_SECRETS_SCHEMA_VERSION, remote, ...rest },
+        migrated: remote !== null,
+      };
+    }
+    if (parsed.schemaVersion === REMOTE_SECRETS_SCHEMA_VERSION) {
+      const remote = await normalizeEncryptedRemote(parsed.remote, idb);
+      return {
+        file: { schemaVersion: REMOTE_SECRETS_SCHEMA_VERSION, remote, ...rest },
+        migrated: false,
+      };
+    }
+    return { file: emptyRemoteSecrets(), migrated: false };
   } catch {
-    return emptyRemoteSecrets();
+    return { file: emptyRemoteSecrets(), migrated: false };
   }
 }
 
-export async function writeRemoteSecrets(fs: ConfigFs, file: RemoteSecretsFile): Promise<void> {
-  const bytes = TEXT_ENCODER.encode(JSON.stringify(file, null, 2));
+export async function writeRemoteSecrets(
+  fs: ConfigFs,
+  idb: IdbService,
+  file: RemoteSecretsFile,
+): Promise<void> {
+  const onDisk = {
+    schemaVersion: REMOTE_SECRETS_SCHEMA_VERSION,
+    remote: file.remote
+      ? { url: file.remote.url, token: await encryptToken(idb, file.remote.token) }
+      : null,
+    ...(file.lastPushAt ? { lastPushAt: file.lastPushAt } : {}),
+    ...(file.dispatchCount ? { dispatchCount: file.dispatchCount } : {}),
+  };
+  const bytes = TEXT_ENCODER.encode(JSON.stringify(onDisk, null, 2));
   await fs.writeFile(REMOTE_SECRETS_FILE, bytes);
 }
 
@@ -81,10 +131,29 @@ function normalizeDispatchCount(dc: unknown): RemoteSecretsFile['dispatchCount']
   return { date: d.date, count: Math.max(0, Math.round(d.count)) };
 }
 
-function normalizeRemote(remote: unknown): RemoteSecretsFile['remote'] {
+function normalizeLegacyRemote(remote: unknown): RemoteSecretsFile['remote'] {
   if (!remote || typeof remote !== 'object') return null;
   const r = remote as { url?: unknown; token?: unknown };
   if (typeof r.url !== 'string' || typeof r.token !== 'string') return null;
   if (r.url.length === 0 || r.token.length === 0) return null;
   return { url: r.url, token: r.token };
+}
+
+async function normalizeEncryptedRemote(
+  remote: unknown,
+  idb: IdbService,
+): Promise<RemoteSecretsFile['remote']> {
+  if (!remote || typeof remote !== 'object') return null;
+  const r = remote as { url?: unknown; token?: unknown };
+  if (typeof r.url !== 'string' || r.url.length === 0 || !r.token || typeof r.token !== 'object') {
+    return null;
+  }
+  const enc = r.token as { iv?: unknown; ciphertext?: unknown };
+  if (typeof enc.iv !== 'string' || typeof enc.ciphertext !== 'string') return null;
+  const token = await decryptToken(idb, {
+    iv: enc.iv,
+    ciphertext: enc.ciphertext,
+  } as EncryptedToken);
+  if (token === null || token.length === 0) return null;
+  return { url: r.url, token };
 }

@@ -172,7 +172,7 @@ El schema en disco de `comments/` y `drafts/` no cambió con este rediseño (mis
 
 Primera fase de apertura de red del sistema — sigue vigente la regla §4.14 de `reglas.md`: cero llamadas de red salvo configuración explícita del usuario.
 
-**Auth.** El usuario pega un Personal Access Token (PAT), persistido en `.mi-cerebro/secrets.json` (agregado automáticamente al `.gitignore`). No hay cifrado at-rest del PAT en esta fase.
+**Auth.** El usuario pega un Personal Access Token (PAT), persistido en `.mi-cerebro/secrets.json` (agregado automáticamente al `.gitignore`). Desde 13e-ii el token se cifra at-rest (AES-GCM) con una clave no-extraíble por dispositivo guardada en IndexedDB (`pat-crypto.ts`) — sin passphrase, protege contra copiar/respaldar la carpeta del workspace sin ese perfil de navegador, no contra acceso completo al navegador. Archivos previos con token en plano se migran solos al leerlos.
 
 **Modelo del remoto.** El remoto replica fielmente el estado local: todas las variantes × sus 3 ramas (`main` + `comments` + `draft`). Funciona como backup remoto end-to-end — levantar en otro dispositivo trae entidades, comentarios y borradores completos.
 
@@ -204,4 +204,4 @@ Un indicador de estado (dot) en el sidebar/footer resume el estado del remoto: v
 
 ## Fuera de alcance / diferido
 
-Cifrado at-rest del PAT con passphrase del usuario; proxy CORS propio (se usa el público de isomorphic-git); índice de búsqueda global para comentarios y drafts (`idx-<family>-comments`, `idx-<family>-draft` — requieren un walk de priming al boot/family-switch, diferido junto con el índice por familia de `main`); ghost rendering inline de inserciones puras de borrador; granularidad por faceta como opción por default en el merge (existe como opción avanzada); re-mapeo de offsets de `range` en comentarios ante ediciones del bloque.
+Proxy CORS propio (se usa el público de isomorphic-git); ghost rendering inline de inserciones puras de borrador; granularidad por faceta como opción por default en el merge (existe como opción avanzada); re-mapeo de offsets de `range` en comentarios ante ediciones del bloque.
