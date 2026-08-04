@@ -12,6 +12,7 @@ import { I18nService } from '@core/i18n/i18n.service';
 import { SearchIndexService } from '@core/search/search-index.service';
 import type { SearchHit } from '@core/search/search.types';
 import { entityKindIcon } from '@shared/entity-cards/entity-kind-icon';
+import { AutofocusDirective } from '@shared/forms/autofocus.directive';
 import { IconComponent } from '@shared/icon/icon.component';
 
 export interface EntityLinkPicked {
@@ -29,7 +30,7 @@ const RESULT_LIMIT = 8;
 @Component({
   selector: 'mc-entity-link-picker-dialog',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent],
+  imports: [IconComponent, AutofocusDirective],
   template: `
     <div class="backdrop" (click)="dismiss.emit()" role="presentation"></div>
     <div class="dialog" role="dialog" aria-modal="true">
@@ -37,6 +38,7 @@ const RESULT_LIMIT = 8;
         <mc-icon name="magnifying-glass" />
         <input
           #searchInput
+          mcAutofocus
           type="text"
           [placeholder]="t('editor.linkPicker.placeholder')"
           [attr.aria-label]="t('editor.linkPicker.placeholder')"

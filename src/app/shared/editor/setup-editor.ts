@@ -24,6 +24,10 @@ import {
 } from '@core/tiptap/comment-range-mapping/comment-range-mapping.ext';
 import { createDraftDecorationsExtension } from '@core/tiptap/draft-decorations/draft-decorations.ext';
 import {
+  createEntityMentionExtension,
+  type EntityMentionRange,
+} from '@core/tiptap/entity-mention/entity-mention.ext';
+import {
   createEntityRefNode,
   type EntityRefOpenPayload,
 } from '@core/tiptap/entity-ref/entity-ref.node';
@@ -78,6 +82,7 @@ export interface SetupEditorContext {
   readonly bookmarkPinAriaLabel: () => string;
   readonly bookmarkMarkerAriaLabel: () => string;
   readonly onEntityRefOpen: (payload: EntityRefOpenPayload) => void;
+  readonly onEntityMentionTrigger: (range: EntityMentionRange) => void;
 }
 
 export const createEditorInstance = (ctx: SetupEditorContext): Editor =>
@@ -103,6 +108,7 @@ export const createEditorInstance = (ctx: SetupEditorContext): Editor =>
       createTypewriterFocusExtension(),
       createImageRefNode(ctx.reader),
       createEntityRefNode(ctx.onEntityRefOpen),
+      createEntityMentionExtension(ctx.onEntityMentionTrigger),
       createDraftDecorationsExtension({
         onClick: ctx.onDraftInsertClick,
         ariaLabel: ctx.draftInsertAriaLabel,

@@ -24,6 +24,7 @@ import { BOOKMARK_PIN_META_KEY } from '@core/tiptap/bookmark-pin/bookmark-pin.ex
 import { COMMENT_CLOUDS_META_KEY } from '@core/tiptap/comment-clouds/comment-clouds.ext';
 import { COMMENT_RANGE_MAPPING_META_KEY } from '@core/tiptap/comment-range-mapping/comment-range-mapping.ext';
 import { DRAFT_DECORATIONS_META_KEY } from '@core/tiptap/draft-decorations/draft-decorations.ext';
+import type { EntityMentionRange } from '@core/tiptap/entity-mention/entity-mention.ext';
 import {
   ENTITY_REF_NAME,
   type EntityRefOpenPayload,
@@ -254,7 +255,19 @@ export class EditorComponent {
     const ed = this.editor;
     if (!ed) return;
     const { from, to } = ed.state.selection;
-    this.pendingLinkRange = { from, to, text: ed.state.doc.textBetween(from, to, ' ') };
+    this.openLinkPickerFor(from, to, ed.state.doc.textBetween(from, to, ' '));
+  }
+
+  // why: entity-mention.ext's InputRule fires this on typing "@" at a word
+  //      boundary — same picker as triggerLink(), but the range is just the
+  //      "@" character itself (no selection, no contextSnippet) instead of
+  //      whatever text was selected.
+  private onEntityMentionTrigger(range: EntityMentionRange): void {
+    this.openLinkPickerFor(range.from, range.to, '');
+  }
+
+  private openLinkPickerFor(from: number, to: number, text: string): void {
+    this.pendingLinkRange = { from, to, text };
     this.linkPickerOpen.set(true);
   }
 
@@ -572,6 +585,7 @@ export class EditorComponent {
       bookmarkMarkerAriaLabel: () => this.i18n.t('editor.bookmark.unset'),
       onEntityRefOpen: (payload: EntityRefOpenPayload) =>
         void this.router.navigate([...routeFor(payload.kind, payload.entityId, payload.label)]),
+      onEntityMentionTrigger: (range) => this.onEntityMentionTrigger(range),
     });
     this.suppressEmit = false;
 
