@@ -26,6 +26,11 @@
   background: rgba(107, 114, 128, 0.12);
   border: 1px solid var(--comment-accent);
 }
+.milestone-badge {
+  margin: 0 0 var(--mc-space-2) 0;
+  font-size: 0.78em;
+  color: var(--mc-fg-muted, #6b7280);
+}
 .shell {
   position: relative;
   display: flex;

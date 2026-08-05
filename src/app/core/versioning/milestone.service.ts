@@ -19,6 +19,7 @@ import { CompactionService } from './compaction.service';
 import { GitFsAdapter } from './git-fs.adapter';
 import { buildMilestoneCompactionPlan } from './milestone-compaction-plan';
 import { RemoteService } from './remote.service';
+import { stripHeadsPrefix } from './variants.io';
 import { VersioningService } from './versioning.service';
 import { DEFAULT_GIT_AUTHOR } from './versioning.constants';
 
@@ -295,6 +296,24 @@ export class MilestoneService {
         recoverable: true,
       });
     }
+  }
+
+  // why: editor header ambient status ("n commits desde <milestone>") —
+  //      milestone tags are plain git refs, not scoped to a single ref/
+  //      branch, so this walks `ref`'s full log newest→oldest looking for
+  //      the first commit oid that any milestone points to. Null when no
+  //      milestone in this ref's history at all (nothing to compare
+  //      against — the header stays hidden rather than inventing a
+  //      "since the beginning" framing nobody asked to see).
+  async commitsSinceLastMilestone(ref: string): Promise<{ name: string; count: number } | null> {
+    const bare = stripHeadsPrefix(ref);
+    const [log, milestones] = await Promise.all([this.versioning.logFull(bare), this.list()]);
+    const oidToName = new Map(milestones.map((m) => [m.oid, m.name] as const));
+    for (let i = 0; i < log.length; i++) {
+      const name = oidToName.get(log[i]!.oid);
+      if (name) return { name, count: i };
+    }
+    return null;
   }
 
   private async read(name: string): Promise<Milestone | null> {

@@ -32,10 +32,12 @@ import {
 import { IMAGE_REF_NAME } from '@core/tiptap/image-ref/image-ref.node';
 import { TTS_HIGHLIGHT_META_KEY } from '@core/tiptap/tts-highlight/tts-highlight.ext';
 import { TYPEWRITER_FOCUS_META_KEY } from '@core/tiptap/typewriter-focus/typewriter-focus.ext';
+import { AutocommitService } from '@core/versioning/autocommit.service';
 import { CommentsService } from '@core/versioning/comments.service';
 import type { Comment } from '@core/versioning/comments.types';
 import { DraftsService } from '@core/versioning/drafts.service';
 import type { DiffMark } from '@core/versioning/drafts.types';
+import { MilestoneService } from '@core/versioning/milestone.service';
 import { VariantsService } from '@core/versioning/variants.service';
 
 import { BubbleMenuComponent } from './bubble-menu.component';
@@ -114,6 +116,8 @@ export class EditorComponent {
   private readonly drafts = inject(DraftsService);
   private readonly comments = inject(CommentsService);
   private readonly variants = inject(VariantsService);
+  private readonly milestones = inject(MilestoneService);
+  private readonly autocommit = inject(AutocommitService);
   private readonly relations = inject(RelationsService);
   private readonly router = inject(Router);
   protected readonly typewriterMode = inject(TypewriterModeService);
@@ -183,8 +187,34 @@ export class EditorComponent {
   private suppressEmit = false;
   private selectingWithMouse = false;
 
+  // why: ambient "n commits desde <milestone>" pill next to the branch
+  //      badge — was only ever surfaced in /history before this. Refetched
+  //      whenever the active variant changes or a new commit lands
+  //      (`AutocommitService.lastCommitAt`), not per keystroke — it's the
+  //      same value for every editor open on the same variant, no need to
+  //      recompute per entityId switch. Null (hidden) until the active
+  //      variant's main ref has at least one milestone in its history.
+  private readonly milestoneDistance = signal<{ name: string; count: number } | null>(null);
+  protected readonly milestoneBadgeText = computed<string | null>(() => {
+    const d = this.milestoneDistance();
+    if (!d) return null;
+    return this.i18n.t('editor.milestoneDistance', { n: d.count, name: d.name });
+  });
+
   constructor() {
     afterNextRender(() => this.mount());
+    effect(() => {
+      const active = this.variants.getActive();
+      this.autocommit.lastCommitAt();
+      if (!active) {
+        this.milestoneDistance.set(null);
+        return;
+      }
+      void this.milestones
+        .commitsSinceLastMilestone(active.refs.main)
+        .then((d) => this.milestoneDistance.set(d))
+        .catch(() => this.milestoneDistance.set(null));
+    });
   }
 
   protected setView(next: 'clean' | 'combined'): void {

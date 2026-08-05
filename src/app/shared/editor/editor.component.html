@@ -41,6 +41,11 @@
     {{ badge }}
   </p>
 }
+@if (milestoneBadgeText(); as milestoneBadge) {
+  <p class="milestone-badge" data-testid="milestone-badge">
+    {{ milestoneBadge }}
+  </p>
+}
 <div class="shell" [class.has-popover]="commentsIndexOpen() || draftsIndexOpen()">
   <div
     #host

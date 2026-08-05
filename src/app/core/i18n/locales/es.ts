@@ -2164,6 +2164,7 @@ export const es = {
   'tree.type.books': 'Libros',
   'tree.type.images': 'Imágenes',
   'tree.type.files': 'Archivos',
+  'editor.milestoneDistance': '{n} commits desde «{name}»',
   'editor.bookmark.set': 'Marcar este párrafo',
   'editor.bookmark.unset': 'Quitar marcador',
   'editor.insertImage': 'Insertar imagen',
