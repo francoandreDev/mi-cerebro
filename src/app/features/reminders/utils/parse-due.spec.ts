@@ -70,4 +70,33 @@ describe('parseQuickAdd', () => {
     expect(result.title).toBe('Pagar alquiler');
     expect(result.dueAt).toBe('2026-08-01T09:00');
   });
+
+  it('parses a trailing natural-date phrase without the @ marker', () => {
+    // Wed 2026-07-01
+    const now = new Date(2026, 6, 1, 10, 0, 0);
+    const result = parseQuickAdd('Pagar alquiler viernes', now);
+    expect(result.title).toBe('Pagar alquiler');
+    expect(result.dueAt).toBe('2026-07-03T09:00');
+  });
+
+  it('parses a trailing weekday + time without the @ marker', () => {
+    const now = new Date(2026, 6, 1, 10, 0, 0);
+    const result = parseQuickAdd('Reunion equipo viernes 9', now);
+    expect(result.title).toBe('Reunion equipo');
+    expect(result.dueAt).toBe('2026-07-03T09:00');
+  });
+
+  it('leaves a plain title untouched when no trailing word is a date', () => {
+    const now = new Date(2026, 6, 1, 10, 0, 0);
+    const result = parseQuickAdd('Llamar al plomero', now);
+    expect(result.title).toBe('Llamar al plomero');
+    expect(result.dueAt).toBe('2026-07-01T11:00');
+  });
+
+  it('does not consume a lone-word title as a date', () => {
+    const now = new Date(2026, 6, 1, 10, 0, 0);
+    const result = parseQuickAdd('viernes', now);
+    expect(result.title).toBe('viernes');
+    expect(result.dueAt).toBe('2026-07-01T11:00');
+  });
 });

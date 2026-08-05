@@ -153,11 +153,35 @@ const DEFAULT_OFFSET_MS = 60 * 60 * 1000;
 
 const defaultDueAt = (now: Date): string => toLocalIso(new Date(now.getTime() + DEFAULT_OFFSET_MS));
 
+// why: without an explicit `@` marker, try the trailing words of the title
+//      as a date/time phrase before giving up — "Pagar alquiler viernes"
+//      should work same as "Pagar alquiler @viernes". Greedy from longest
+//      to shortest trailing slice (cap 4 words) so "9" alone doesn't eat a
+//      title that happens to end in a number unrelated to a date, and a
+//      suffix is only consumed when parseDueHint actually recognizes it —
+//      an unmatched trailing word (e.g. a plain title with no date at all)
+//      leaves the full original title untouched.
+const MAX_TRAILING_HINT_WORDS = 4;
+
+const parseTrailingHint = (raw: string, now: Date): ParsedQuickAdd | null => {
+  const tokens = raw.trim().split(/\s+/);
+  if (tokens.length < 2) return null;
+  const maxLen = Math.min(MAX_TRAILING_HINT_WORDS, tokens.length - 1);
+  for (let len = maxLen; len >= 1; len--) {
+    const hint = tokens.slice(tokens.length - len).join(' ');
+    const dueAt = parseDueHint(hint, now);
+    if (dueAt) return { title: tokens.slice(0, tokens.length - len).join(' '), dueAt };
+  }
+  return null;
+};
+
 export const parseQuickAdd = (raw: string, now: Date = new Date()): ParsedQuickAdd => {
   const at = raw.lastIndexOf('@');
-  if (at < 0) return { title: raw.trim(), dueAt: defaultDueAt(now) };
-  const title = raw.slice(0, at).trim();
-  const hint = raw.slice(at + 1).trim();
-  const parsed = parseDueHint(hint, now);
-  return { title, dueAt: parsed ?? defaultDueAt(now) };
+  if (at >= 0) {
+    const title = raw.slice(0, at).trim();
+    const hint = raw.slice(at + 1).trim();
+    const parsed = parseDueHint(hint, now);
+    return { title, dueAt: parsed ?? defaultDueAt(now) };
+  }
+  return parseTrailingHint(raw, now) ?? { title: raw.trim(), dueAt: defaultDueAt(now) };
 };
