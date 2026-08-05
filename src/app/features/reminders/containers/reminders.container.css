@@ -323,6 +323,26 @@
   stroke-width: 0.5;
 }
 
+/* why: plumaje rico (docs/deferred/reminders-goals.md) — plumas y
+   jaspeado extra sobre el ala para recurrentes con muchos ciclos
+   cumplidos (`plumageTier`, reminders.container.ts). Puramente
+   decorativo: color derivado de `--paloma-wing` para no introducir un
+   tono nuevo que desentone con el tema activo. */
+.paloma .wing-feather {
+  fill: none;
+  stroke: var(--paloma-wing);
+  stroke-width: 0.9;
+  stroke-linecap: round;
+  opacity: 0.85;
+}
+.paloma .plume-fleck {
+  fill: var(--paloma-wing);
+  opacity: 0.55;
+}
+.paloma.plumage-elder .wing {
+  filter: drop-shadow(0 0 1.5px rgba(255, 235, 180, 0.6));
+}
+
 .nicho.is-paused .paloma { filter: brightness(0.6); }
 
 /* why: gestos manuales de snooze — la paloma se sacude y asiente en su

@@ -55,7 +55,23 @@ interface Paloma {
   //      writing) — title is synced from the source entity, so it's
   //      read-only in the detail editor and gets a badge dot in the wall.
   readonly fromSource: boolean;
+  // why: docs/deferred/reminders-goals.md "plumaje rico" — 0 = normal
+  //      plumage (one-shot, or recurring with few cycles), 1 = veteran
+  //      (some extra plumage detail), 2 = elder (richest plumage). Purely
+  //      cosmetic, thresholds are arbitrary "feels earned" points, not a
+  //      spec'd product number.
+  readonly plumageTier: 0 | 1 | 2;
 }
+
+const PLUMAGE_VETERAN_CYCLES = 5;
+const PLUMAGE_ELDER_CYCLES = 20;
+
+const plumageTierFor = (cyclesCompleted: number | undefined): 0 | 1 | 2 => {
+  const n = cyclesCompleted ?? 0;
+  if (n >= PLUMAGE_ELDER_CYCLES) return 2;
+  if (n >= PLUMAGE_VETERAN_CYCLES) return 1;
+  return 0;
+};
 
 interface PendingUndo {
   readonly reminder: Reminder;
@@ -333,8 +349,19 @@ export class RemindersContainer {
     try {
       await this.workspace.ensureWritable();
       const current = await this.reminders.read(id);
+      // why: preserve cyclesCompleted across an unrelated edit-save (title,
+      //      dueAt, paused…) — without this, saving the detail panel for
+      //      any reason would silently reset "plumaje rico" progress back
+      //      to 0 every time, since this always builds a fresh object.
+      const priorCycles = current.recurrence?.cyclesCompleted;
       const recurrence: Recurrence | null =
-        draft.recurrence === 'none' ? null : { every: draft.every, unit: draft.recurrence };
+        draft.recurrence === 'none'
+          ? null
+          : {
+              every: draft.every,
+              unit: draft.recurrence,
+              ...(priorCycles !== undefined ? { cyclesCompleted: priorCycles } : {}),
+            };
       await this.reminders.save({
         ...current,
         title: draft.readOnlyTitle ? current.title : draft.title,
@@ -632,6 +659,7 @@ const toPaloma = (r: ReminderSummary): Paloma => {
     door: r.paused ? 0 : DOOR_BY_BUCKET[b],
     ringColor,
     fromSource: r.sourceKind != null,
+    plumageTier: plumageTierFor(r.recurrence?.cyclesCompleted),
   };
 };
 

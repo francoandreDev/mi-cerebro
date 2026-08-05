@@ -184,9 +184,15 @@ type RescheduleOp =
 //      unparseable dueAt), fall back to marking done — better than
 //      looping the reminder forever on the same instant.
 const rollover = (current: Reminder, nowMs: number): Reminder => {
-  const next = current.recurrence ? nextDueAfter(current.dueAt, current.recurrence, nowMs) : null;
+  const rec = current.recurrence;
+  const next = rec ? nextDueAfter(current.dueAt, rec, nowMs) : null;
   if (next === null) return { ...current, done: true };
-  return { ...current, dueAt: next, nextPingAt: next };
+  return {
+    ...current,
+    dueAt: next,
+    nextPingAt: next,
+    recurrence: rec ? { ...rec, cyclesCompleted: (rec.cyclesCompleted ?? 0) + 1 } : rec,
+  };
 };
 
 const isStaleFilename = (e: unknown): boolean =>

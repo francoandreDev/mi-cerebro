@@ -83,10 +83,32 @@
               [title]="(p.summary.title || t('reminders.untitled')) + ' · ' + bucketLabel(p.bucket)"
             >
               <span class="nicho-mouth"></span>
-              <span class="paloma" [style.--ring]="p.ringColor">
+              <span
+                class="paloma"
+                [style.--ring]="p.ringColor"
+                [class.plumage-veteran]="p.plumageTier >= 1"
+                [class.plumage-elder]="p.plumageTier === 2"
+              >
                 <svg viewBox="0 0 60 60" aria-hidden="true">
                   <ellipse class="body" cx="30" cy="38" rx="18" ry="13" />
                   <ellipse class="wing" cx="26" cy="38" rx="10" ry="6" />
+                  @if (p.plumageTier >= 1) {
+                    <!-- why: plumaje rico (docs/deferred/reminders-goals.md) —
+                         cada ciclo cumplido de una recurrente se acumula en
+                         `recurrence.cyclesCompleted`; a partir de cierto
+                         umbral se dibujan detalles extra de plumas sobre el
+                         ala, y a partir de otro más alto un jaspeado en el
+                         cuerpo. Puramente cosmético, no afecta la lectura
+                         del estado (puerta/anillo siguen siendo la fuente
+                         de verdad). -->
+                    <path class="wing-feather" d="M20 34 Q17 38 20 42" />
+                    <path class="wing-feather" d="M24 32 Q21 38 24 44" />
+                  }
+                  @if (p.plumageTier === 2) {
+                    <path class="wing-feather" d="M28 31 Q25 38 28 45" />
+                    <ellipse class="plume-fleck" cx="32" cy="36" rx="1.4" ry="0.9" />
+                    <ellipse class="plume-fleck" cx="27" cy="41" rx="1.2" ry="0.8" />
+                  }
                   <circle class="head" cx="42" cy="22" r="8" />
                   <polygon class="beak" points="50,22 56,21 50,25" />
                   @if (p.summary.paused) {

@@ -22,6 +22,12 @@ export type RecurrenceUnit = 'day' | 'week' | 'month' | 'year';
 export interface Recurrence {
   readonly every: number;
   readonly unit: RecurrenceUnit;
+  // why: docs/deferred/reminders-goals.md "Detalles bonitos: plumaje rico"
+  //      — incremented by RemindersCadenceService each time a recurring
+  //      reminder rolls its dueAt forward (see `rollover()`). Optional
+  //      instead of a migration bump: absence reads as 0 everywhere it's
+  //      consumed, so old files don't need to be touched to gain it.
+  readonly cyclesCompleted?: number;
 }
 
 export interface Reminder {

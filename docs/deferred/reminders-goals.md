@@ -15,11 +15,11 @@ Formato por entrada:
 
 ## Recordatorios — Palomar (origen: rediseño palomar 2026-06-25)
 
-### Detalles bonitos: plumaje rico, ronroneo
+### Detalles bonitos: ronroneo
 
-- **Qué**: paso 6 del plan. El aleteo ya quedó, y las plumitas que caen al pasar la paloma se resolvieron 2026-08-05 (`spawnFeathers()` en `paloma-flight.ts`, disparado en el vuelo de disparo del scheduler y en el vuelo manual de "tomar papelito"). Falta: plumaje más detallado en palomas recurrentes con muchos ciclos cumplidos, ronroneo/preview de mensaje en hover sostenido.
-- **Por qué se difirió**: pulido visual de baja prioridad. El plumaje rico requiere modelo extra (`recurrence.cyclesCompleted`, migración de schema) que no entra en el MVP del palomar; el "ronroneo" no tiene contenido real que previsualizar todavía — `Reminder`/`ReminderSummary` sólo tienen `title`, no un campo de nota/mensaje separado, así que un preview de "mensaje" hoy repetiría el título ya visible.
-- **Target**: sin asignar.
+- **Qué**: paso 6 del plan. El aleteo, las plumitas que caen y el plumaje rico ya quedaron: `spawnFeathers()` en `paloma-flight.ts` (2026-08-05, vuelo de disparo del scheduler y vuelo manual de "tomar papelito"); `Recurrence.cyclesCompleted` nuevo (2026-08-05, sin migración — campo opcional, incrementado por `RemindersCadenceService`'s `rollover()` en cada ciclo cumplido) alimenta `plumageTier` en `reminders.container.ts`, que dibuja plumas extra sobre el ala (≥5 ciclos) y jaspeado adicional (≥20 ciclos) en el nicho activo — el `.paloma-perch` de la repisa (overdue) se dejó sin este detalle, es transitorio por diseño. Falta sólo: ronroneo/preview de mensaje en hover sostenido.
+- **Por qué se difirió**: el "ronroneo" no tiene contenido real que previsualizar todavía — `Reminder`/`ReminderSummary` sólo tienen `title`, no un campo de nota/mensaje separado, así que un preview de "mensaje" hoy repetiría el título ya visible sin agregar nada. Resolverlo bien requeriría primero decidir si los recordatorios ganan un campo de nota (decisión de producto, no de ejecución) — no es un bloqueo técnico, es una pregunta abierta.
+- **Target**: sin asignar — requiere decisión de producto (¿reminders necesitan notas?) antes de ser un ítem de ejecución.
 
 ### Palomares temáticos por categoría (como salas del museo)
 
