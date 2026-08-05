@@ -70,6 +70,10 @@
     inset 0 0 60px rgba(0, 0, 0, 0.65);
 }
 
+.wall-canvas {
+  position: relative;
+}
+
 .wall-grid {
   list-style: none;
   margin: 0;
@@ -77,6 +81,25 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: var(--mc-space-3);
+}
+
+/* why: hilos manuales (§10bis) — línea persistente entre dos casillas
+   vinculadas por Relation, posiciones medidas en vivo (files.container.ts).
+   pointer-events: none para no interceptar el drag-and-drop de las
+   casillas ni el click de abrir. */
+.thread-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+.thread-layer line {
+  stroke: var(--mc-accent-primary);
+  stroke-width: 2;
+  stroke-linecap: round;
+  opacity: 0.5;
 }
 
 @media (max-width: 480px) {

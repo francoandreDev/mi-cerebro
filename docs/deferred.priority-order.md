@@ -120,24 +120,25 @@ Cerrado: ~~Atajos directos a herramientas y colores (tiza) (Tier 2)~~ — ya est
 
 Cerrado: ~~Posición libre real (drag x/y) en `/files` (Tier 3)~~ — ya estaba resuelto (documentación de cierre 2026-08-05): `files.container.ts` (`onToggleFreeLayout`/`onItemMove`) + `FilesService.setFreeLayout`/`setItemPosition` ya persisten un x/y continuo opcional por casilla, el jitter determinista sigue siendo el default. Esta entrada había quedado desactualizada.
 
+Cerrado: ~~Hilos entre items relacionados (`/files`) (Tier 3)~~ — resuelto 2026-08-05: `files.container.ts` agrega una capa SVG (`.thread-layer`, dentro de `.wall-canvas` nuevo envolviendo `.wall-grid`) que dibuja una línea persistente entre cada par de casillas visibles con una `Relation` real entre sí (mismo mecanismo de creación por drag-and-drop que ya existía). Posiciones medidas en vivo vía `getBoundingClientRect()` sobre `viewChildren('slot')`, recalculadas con `ResizeObserver` sobre el contenedor (mismo patrón que `chapter-editor-pane.component.ts`) — no hay layout x/y guardado para el índice de colecciones, sólo dentro de una colección vía `freeLayout` (ítem separado, ya cerrado). No verificado visualmente en navegador (sin dev server corriendo en esta sesión) — sólo `tsc --noEmit` limpio.
+
 Orden de toma, Tier ascendente:
 
-1. Hilos entre items relacionados (`/files`) (Tier 3) — `files.container.ts` ya crea una `Relation` real al soltar una casilla sobre otra (drag-and-drop), pero no hay render visual persistente del "hilo" en el corcho — el único feedback es CSS de arrastre (`.wall-slot.dragging`/`.drag-target`), sin línea dibujada entre tarjetas relacionadas.
-2. Lasso selection para multi-select de pasos (goals) (Tier 3) — el multi-select en sí ya existe (`GoalSelectionToolbarComponent`); falta sólo la variante de arrastrar un rectángulo para seleccionar.
-3. Granularidad por faceta en merge bundle (Tier 3) — reactivado 2026-08-05: la nota original decía "decisión de producto ya tomada como 'no ahora'"; se reabre a pedido explícito del usuario. `merge.service.ts`/`merge-facetas.ts` siguen operando con las 3 facetas fijas (main/borrador/comentarios), sin selección granular.
-4. Compactación manual sobre rango específico (Tier 3) — ya existe un disparador manual (`history-strata.component.ts#onCompactNow()`, botón "compactar ahora" → `compactionScheduler.runOnce({ ignoreThreshold: true })`), pero sigue operando sobre los buckets elegibles del scheduler, no sobre un rango arbitrario elegido por el usuario. Cercano a #3 (versionado/history).
-5. Header del editor "n commits desde milestone" (Tier 3) — sin referencias a `milestone` en `shared/editor/` ni en el toolbar; `milestone.service.ts` sólo se usa hoy en `features/history`. Cercano a #4 (history).
-6. Parser de fecha natural — alcance ampliado (Tier 3) — `parse-due.ts#parseQuickAdd` sigue requiriendo el marcador `@`; sin él cae directo a `defaultDueAt` sin intentar parsear fecha natural del título.
-7. Textura realista de tiza (Tier 3) — sin señales de implementación (`texture`/`noise`/`grain` no aparecen en los componentes `chalk-*`).
-8. Animaciones de snooze / gestos manuales (palomar) (Tier 3) — las animaciones críticas del scheduler ya están, esto es polish adicional.
-9. Detalles bonitos: plumitas, plumaje, ronroneo (palomar) (Tier 3) — pulido visual de baja prioridad. Cercano a #8 (palomar).
-10. Palomares temáticos por categoría (Tier 3) — los filtros del MVP ya resuelven la saturación, esto sería un layer visual encima. Cercano a #8/#9 (palomar).
-11. Pulido visual general de `/history` (Tier 4) — agrupador sin límite claro, entra cuando haya uso real. Cercano a #4/#5 (history).
-12. Paginación real persistida fila por fila (books) (Tier 4) — reactivado 2026-08-05: la decisión de diseño explícita ("la UI no debe mentir" — no hay ancho de referencia único) sigue siendo la restricción de implementación a respetar, no un veto a que se aborde; cualquier solución debe seguir sin fingir un ancho de referencia que no existe.
-13. Estantería con forma creativa (books) (Tier 4) — visión a futuro, el shelf clásico aún no está pulido. Cercano a #12 (books).
-14. Índice de búsqueda persistido por familia (`idx-main`) (Tier 4) — reactivado 2026-08-05, con salvedad: sigue siendo arquitectónicamente de bajo valor mientras `refreshAll()` recorra disco en cada switch de variante (ver `deferred/versionado.md`) — si se toma, empezar por confirmar si esa precondición cambió, o el trabajo no rinde.
-15. Variantes sobre el fallback sin isomorphic-git (Tier 5) — contingencia, sólo aplica si el fallback de snapshots se activa en 13a; no es un ítem tomable por decisión propia salvo que eso ocurra.
-16. `.git/` en OPFS (Tier 5) — aceptado explícitamente vivir con loading screens hasta que sea intolerable; contingencia, no roadmap.
+1. Lasso selection para multi-select de pasos (goals) (Tier 3) — el multi-select en sí ya existe (`GoalSelectionToolbarComponent`); falta sólo la variante de arrastrar un rectángulo para seleccionar.
+2. Granularidad por faceta en merge bundle (Tier 3) — reactivado 2026-08-05: la nota original decía "decisión de producto ya tomada como 'no ahora'"; se reabre a pedido explícito del usuario. `merge.service.ts`/`merge-facetas.ts` siguen operando con las 3 facetas fijas (main/borrador/comentarios), sin selección granular.
+3. Compactación manual sobre rango específico (Tier 3) — ya existe un disparador manual (`history-strata.component.ts#onCompactNow()`, botón "compactar ahora" → `compactionScheduler.runOnce({ ignoreThreshold: true })`), pero sigue operando sobre los buckets elegibles del scheduler, no sobre un rango arbitrario elegido por el usuario. Cercano a #2 (versionado/history).
+4. Header del editor "n commits desde milestone" (Tier 3) — sin referencias a `milestone` en `shared/editor/` ni en el toolbar; `milestone.service.ts` sólo se usa hoy en `features/history`. Cercano a #3 (history).
+5. Parser de fecha natural — alcance ampliado (Tier 3) — `parse-due.ts#parseQuickAdd` sigue requiriendo el marcador `@`; sin él cae directo a `defaultDueAt` sin intentar parsear fecha natural del título.
+6. Textura realista de tiza (Tier 3) — sin señales de implementación (`texture`/`noise`/`grain` no aparecen en los componentes `chalk-*`).
+7. Animaciones de snooze / gestos manuales (palomar) (Tier 3) — las animaciones críticas del scheduler ya están, esto es polish adicional.
+8. Detalles bonitos: plumitas, plumaje, ronroneo (palomar) (Tier 3) — pulido visual de baja prioridad. Cercano a #7 (palomar).
+9. Palomares temáticos por categoría (Tier 3) — los filtros del MVP ya resuelven la saturación, esto sería un layer visual encima. Cercano a #7/#8 (palomar).
+10. Pulido visual general de `/history` (Tier 4) — agrupador sin límite claro, entra cuando haya uso real. Cercano a #3/#4 (history).
+11. Paginación real persistida fila por fila (books) (Tier 4) — reactivado 2026-08-05: la decisión de diseño explícita ("la UI no debe mentir" — no hay ancho de referencia único) sigue siendo la restricción de implementación a respetar, no un veto a que se aborde; cualquier solución debe seguir sin fingir un ancho de referencia que no existe.
+12. Estantería con forma creativa (books) (Tier 4) — visión a futuro, el shelf clásico aún no está pulido. Cercano a #11 (books).
+13. Índice de búsqueda persistido por familia (`idx-main`) (Tier 4) — reactivado 2026-08-05, con salvedad: sigue siendo arquitectónicamente de bajo valor mientras `refreshAll()` recorra disco en cada switch de variante (ver `deferred/versionado.md`) — si se toma, empezar por confirmar si esa precondición cambió, o el trabajo no rinde.
+14. Variantes sobre el fallback sin isomorphic-git (Tier 5) — contingencia, sólo aplica si el fallback de snapshots se activa en 13a; no es un ítem tomable por decisión propia salvo que eso ocurra.
+15. `.git/` en OPFS (Tier 5) — aceptado explícitamente vivir con loading screens hasta que sea intolerable; contingencia, no roadmap.
 
 ---
 

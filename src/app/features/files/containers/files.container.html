@@ -44,37 +44,47 @@
         </button>
       </div>
     } @else {
-      <ul class="wall-grid">
-        @for (summary of visibleCollections(); track summary.id; let i = $index) {
-          <li
-            class="wall-slot"
-            draggable="true"
-            [class.dragging]="draggingCollectionId() === summary.id"
-            [class.drag-target]="
-              draggingCollectionId() !== null && draggingCollectionId() !== summary.id
-            "
-            (dragstart)="onLockerDragStart($event, summary.id)"
-            (dragover)="onLockerDragOver($event, summary.id)"
-            (drop)="onLockerDrop($event, summary.id)"
-            (dragend)="onLockerDragEnd()"
-          >
-            <mc-file-locker
-              [summary]="summary"
-              [availableTags]="tags()"
-              [untitledLabel]="t('files.untitledTitle')"
-              [number]="i + 1"
-              [isOpen]="active()?.id === summary.id"
-              [theme]="resolvedTheme()"
-              (open)="onOpenCollection(summary.id, summary.title)"
-            />
-          </li>
-          @if (active() && active()!.id === summary.id && inlineMode()) {
-            <li class="wall-drawer" aria-live="polite">
-              <ng-container *ngTemplateOutlet="drawerContent; context: { $implicit: active()! }" />
-            </li>
+      <div class="wall-canvas" #canvas>
+        <svg class="thread-layer" aria-hidden="true">
+          @for (line of threadLines(); track line.key) {
+            <line [attr.x1]="line.x1" [attr.y1]="line.y1" [attr.x2]="line.x2" [attr.y2]="line.y2" />
           }
-        }
-      </ul>
+        </svg>
+        <ul class="wall-grid">
+          @for (summary of visibleCollections(); track summary.id; let i = $index) {
+            <li
+              class="wall-slot"
+              #slot
+              draggable="true"
+              [class.dragging]="draggingCollectionId() === summary.id"
+              [class.drag-target]="
+                draggingCollectionId() !== null && draggingCollectionId() !== summary.id
+              "
+              (dragstart)="onLockerDragStart($event, summary.id)"
+              (dragover)="onLockerDragOver($event, summary.id)"
+              (drop)="onLockerDrop($event, summary.id)"
+              (dragend)="onLockerDragEnd()"
+            >
+              <mc-file-locker
+                [summary]="summary"
+                [availableTags]="tags()"
+                [untitledLabel]="t('files.untitledTitle')"
+                [number]="i + 1"
+                [isOpen]="active()?.id === summary.id"
+                [theme]="resolvedTheme()"
+                (open)="onOpenCollection(summary.id, summary.title)"
+              />
+            </li>
+            @if (active() && active()!.id === summary.id && inlineMode()) {
+              <li class="wall-drawer" aria-live="polite">
+                <ng-container
+                  *ngTemplateOutlet="drawerContent; context: { $implicit: active()! }"
+                />
+              </li>
+            }
+          }
+        </ul>
+      </div>
     }
   </div>
 </div>

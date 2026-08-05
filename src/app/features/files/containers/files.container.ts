@@ -3,11 +3,14 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  type ElementRef,
   computed,
   effect,
   inject,
   input,
   signal,
+  viewChild,
+  viewChildren,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -116,6 +119,68 @@ export class FilesContainer {
   //      resaltado más preciso del target puntual.
   protected readonly draggingCollectionId = signal<string | null>(null);
 
+  // why: render visual de los hilos (§10bis) — la Relation ya se crea al
+  //      soltar una casilla sobre otra (ver onLockerDrop), esto sólo agrega
+  //      el feedback persistente: una línea SVG entre las dos casillas
+  //      relacionadas que siguen visibles en la carpeta actual. Posiciones
+  //      medidas en vivo (no hay layout x/y guardado para el índice de
+  //      colecciones, sólo dentro de una colección vía freeLayout) —
+  //      recalculadas con ResizeObserver sobre el contenedor, mismo patrón
+  //      que chapter-editor-pane.component.ts.
+  private readonly canvasRef = viewChild<ElementRef<HTMLElement>>('canvas');
+  private readonly slotRefs = viewChildren<ElementRef<HTMLElement>>('slot');
+  protected readonly threadPositions = signal<ReadonlyMap<string, { x: number; y: number }>>(
+    new Map(),
+  );
+  protected readonly threads = computed(() => {
+    const ids = new Set(this.visibleCollections().map((c) => c.id));
+    const seen = new Set<string>();
+    const pairs: { key: string; from: string; to: string }[] = [];
+    for (const r of this.relations.relations()) {
+      if (r.from.kind !== this.entityKind || r.to.kind !== this.entityKind) continue;
+      if (!ids.has(r.from.id) || !ids.has(r.to.id) || r.from.id === r.to.id) continue;
+      const key = [r.from.id, r.to.id].sort().join('::');
+      if (seen.has(key)) continue;
+      seen.add(key);
+      pairs.push({ key, from: r.from.id, to: r.to.id });
+    }
+    return pairs;
+  });
+  protected readonly threadLines = computed(() => {
+    const pos = this.threadPositions();
+    return this.threads()
+      .map((t) => {
+        const a = pos.get(t.from);
+        const b = pos.get(t.to);
+        if (!a || !b) return null;
+        return { key: t.key, x1: a.x, y1: a.y, x2: b.x, y2: b.y };
+      })
+      .filter(
+        (l): l is { key: string; x1: number; y1: number; x2: number; y2: number } => l !== null,
+      );
+  });
+
+  private updateThreadPositions(): void {
+    const canvas = this.canvasRef()?.nativeElement;
+    if (!canvas) {
+      this.threadPositions.set(new Map());
+      return;
+    }
+    const canvasRect = canvas.getBoundingClientRect();
+    const ids = this.visibleCollections().map((c) => c.id);
+    const next = new Map<string, { x: number; y: number }>();
+    this.slotRefs().forEach((ref, i) => {
+      const id = ids[i];
+      if (id === undefined) return;
+      const r = ref.nativeElement.getBoundingClientRect();
+      next.set(id, {
+        x: r.left - canvasRect.left + r.width / 2,
+        y: r.top - canvasRect.top + r.height / 2,
+      });
+    });
+    this.threadPositions.set(next);
+  }
+
   constructor() {
     registerFilesTutorial();
     registerFilesFoldersTutorial();
@@ -128,6 +193,18 @@ export class FilesContainer {
         return;
       }
       if (current?.id !== wanted) void this.loadCollection(wanted);
+    });
+    effect(() => {
+      this.visibleCollections();
+      this.slotRefs();
+      queueMicrotask(() => this.updateThreadPositions());
+    });
+    effect(() => {
+      const canvas = this.canvasRef()?.nativeElement;
+      if (!canvas) return;
+      const ro = new ResizeObserver(() => this.updateThreadPositions());
+      ro.observe(canvas);
+      this.destroyRef.onDestroy(() => ro.disconnect());
     });
     this.destroyRef.onDestroy(() => this.revokeAllPreviews());
   }
