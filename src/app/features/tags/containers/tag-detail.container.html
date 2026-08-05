@@ -222,4 +222,24 @@
       </div>
     </section>
   }
+
+  @if (reminderItems().length) {
+    <section class="group">
+      <h2><mc-icon name="bell" />{{ t('reminders.title') }} ({{ reminderItems().length }})</h2>
+      <div class="cards">
+        @for (reminder of reminderItems(); track reminder.id) {
+          <mc-tagged-generic-card
+            [id]="reminder.id"
+            [title]="reminder.title"
+            [untitledLabel]="untitledLabel('reminder')"
+            [subtitle]="reminderSubtitle(reminder.dueAt)"
+            icon="bell"
+            [tagIds]="reminder.tags"
+            [availableTags]="availableTags()"
+            (open)="open('reminder', reminder.id, reminder.title)"
+          />
+        }
+      </div>
+    </section>
+  }
 </div>

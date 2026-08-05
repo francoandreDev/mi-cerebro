@@ -118,6 +118,11 @@ export class TagDetailContainer {
       .filter((i): i is Extract<TaggedItem, { kind: 'playlist' }> => i.kind === 'playlist')
       .map((i) => i.summary),
   );
+  protected readonly reminderItems = computed(() =>
+    this.items()
+      .filter((i): i is Extract<TaggedItem, { kind: 'reminder' }> => i.kind === 'reminder')
+      .map((i) => i.summary),
+  );
 
   protected readonly isEmpty = computed(
     () =>
@@ -130,7 +135,8 @@ export class TagDetailContainer {
       this.imageItems().length === 0 &&
       this.fileItems().length === 0 &&
       this.trackItems().length === 0 &&
-      this.playlistItems().length === 0,
+      this.playlistItems().length === 0 &&
+      this.reminderItems().length === 0,
   );
 
   protected t(key: TranslationKey, params?: Record<string, string | number>): string {
@@ -140,6 +146,7 @@ export class TagDetailContainer {
   private static readonly UNTITLED_KEY: Readonly<Record<string, TranslationKey>> = {
     track: 'music.untitledTrack',
     playlist: 'music.untitledPlaylist',
+    reminder: 'reminders.untitled',
   };
 
   protected untitledLabel(kind: TaggedItemKind): string {
@@ -166,6 +173,11 @@ export class TagDetailContainer {
   protected taskSubtitle(dueDates: readonly string[]): string {
     const first = dueDates[0];
     return first ? formatDateOnly(first) : '';
+  }
+
+  protected reminderSubtitle(dueAt: string): string {
+    const datePart = dueAt.slice(0, 10);
+    return datePart ? formatDateOnly(datePart) : '';
   }
 
   protected open(kind: TaggedItemKind, id: string, title: string): void {

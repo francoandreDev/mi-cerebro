@@ -7,6 +7,9 @@ import { FsService } from '@core/fs/fs.service';
 import type { NativeDirRef } from '@core/fs/native-fs.types';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { MigrationsService } from '@core/migrations/migrations.service';
+import { SearchIndexService } from '@core/search/search-index.service';
+import type { SearchDoc } from '@core/search/search.types';
+import { TagsService } from '@core/tags/tags.service';
 
 import {
   REMINDER_FILE_SUFFIX,
@@ -33,6 +36,8 @@ export class RemindersService {
   private readonly workspace = inject(WorkspaceService);
   private readonly migrations = inject(MigrationsService);
   private readonly errors = inject(ErrorService);
+  private readonly search = inject(SearchIndexService);
+  private readonly tags = inject(TagsService);
 
   private readonly idToFile = new Map<string, string>();
   private readonly summariesSignal = signal<readonly ReminderSummary[]>([]);
@@ -79,6 +84,7 @@ export class RemindersService {
     const dir = await this.remindersDir();
     this.idToFile.clear();
     const summaries: ReminderSummary[] = [];
+    const indexDocs: SearchDoc[] = [];
     let skipped = 0;
     for await (const name of this.fs.listFiles(dir, REMINDER_FILE_SUFFIX)) {
       try {
@@ -86,6 +92,7 @@ export class RemindersService {
         const reminder = await this.migrations.migrate<Reminder>(REMINDER_KIND, raw);
         this.idToFile.set(reminder.id, name);
         summaries.push(this.toSummary(reminder));
+        indexDocs.push(this.toSearchDoc(reminder));
       } catch (cause) {
         const dropped = await this.dropIfEmpty(dir, name, cause);
         if (!dropped) skipped++;
@@ -94,6 +101,7 @@ export class RemindersService {
     this.errors.reportSkippedEntries(skipped, { area: 'reminders' });
     summaries.sort(compareSummaries);
     this.summariesSignal.set(summaries);
+    await this.search.rebuildKind(REMINDER_KIND, indexDocs);
     return summaries;
   }
 
@@ -138,6 +146,7 @@ export class RemindersService {
     await this.fs.writeFileAtomic(dir, filename, JSON.stringify(reminder, null, 2));
     this.idToFile.set(reminder.id, filename);
     this.summariesSignal.update((curr) => sortSummaries([this.toSummary(reminder), ...curr]));
+    await this.search.upsert(this.toSearchDoc(reminder));
     return reminder;
   }
 
@@ -162,6 +171,7 @@ export class RemindersService {
     this.summariesSignal.update((curr) =>
       sortSummaries(curr.map((s) => (s.id === reminder.id ? this.toSummary(updated) : s))),
     );
+    await this.search.upsert(this.toSearchDoc(updated));
     return updated;
   }
 
@@ -172,6 +182,7 @@ export class RemindersService {
       await this.fs.writeFileAtomic(dir, filename, JSON.stringify(reminder, null, 2));
       this.idToFile.set(reminder.id, filename);
       this.summariesSignal.update((curr) => sortSummaries([this.toSummary(reminder), ...curr]));
+      await this.search.upsert(this.toSearchDoc(reminder));
       return reminder;
     });
   }
@@ -189,6 +200,7 @@ export class RemindersService {
     await this.fs.moveFile(dir, filename, trashDir, dest);
     this.idToFile.delete(id);
     this.summariesSignal.update((curr) => curr.filter((s) => s.id !== id));
+    await this.search.remove(id);
   }
 
   // why: zero-byte JSONs come from aborted writes and can't be parsed —
@@ -240,6 +252,20 @@ export class RemindersService {
       cursor = await this.fs.getOrCreateDir(cursor, part);
     }
     return cursor;
+  }
+
+  private toSearchDoc(r: Reminder): SearchDoc {
+    const tagLabels = r.tags
+      .map((id) => this.tags.byId(id)?.label ?? '')
+      .filter((l) => l !== '')
+      .join(' ');
+    return {
+      id: r.id,
+      kind: REMINDER_KIND,
+      title: r.title,
+      body: tagLabels,
+      tagIds: r.tags,
+    };
   }
 
   private toSummary(r: Reminder): ReminderSummary {

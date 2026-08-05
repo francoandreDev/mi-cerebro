@@ -10,12 +10,13 @@ import { ListsService } from '@features/lists/services/lists.service';
 import { MusicLibraryService } from '@features/music/services/music-library.service';
 import { PlaylistsService } from '@features/music/services/playlists.service';
 import { NotesService } from '@features/notes/services/notes.service';
+import { RemindersService } from '@features/reminders/services/reminders.service';
 import { TasksService } from '@features/tasks/services/tasks.service';
 import { WritingsService } from '@features/writings/services/writings.service';
 
 import { TaggedItemsService } from './tagged-items.service';
 
-// why: TaggedItemsService only ever calls .summaries() on each of the 8
+// why: TaggedItemsService only ever calls .summaries() on each of the 9
 //      entity services (never reads/writes), so a bare `{ summaries }` stub
 //      covers the contract without pulling in real FS/IDB plumbing.
 const stub = (items: readonly unknown[]) => ({ summaries: signal(items) });
@@ -42,6 +43,7 @@ describe('TaggedItemsService', () => {
         { provide: FilesService, useValue: stub([]) },
         { provide: MusicLibraryService, useValue: stubTracks([]) },
         { provide: PlaylistsService, useValue: stub([]) },
+        { provide: RemindersService, useValue: stub([]) },
       ],
     });
   });

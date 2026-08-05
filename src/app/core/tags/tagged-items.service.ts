@@ -8,6 +8,7 @@ import { ListsService } from '@features/lists/services/lists.service';
 import { MusicLibraryService } from '@features/music/services/music-library.service';
 import { PlaylistsService } from '@features/music/services/playlists.service';
 import { NotesService } from '@features/notes/services/notes.service';
+import { RemindersService } from '@features/reminders/services/reminders.service';
 import { TasksService } from '@features/tasks/services/tasks.service';
 import { WritingsService } from '@features/writings/services/writings.service';
 
@@ -28,6 +29,7 @@ export class TaggedItemsService {
   private readonly files = inject(FilesService);
   private readonly tracks = inject(MusicLibraryService);
   private readonly playlists = inject(PlaylistsService);
+  private readonly reminders = inject(RemindersService);
 
   readonly allItems = computed<readonly TaggedItem[]>(() => [
     ...this.notes.summaries().map((summary) => ({ kind: 'note' as const, summary })),
@@ -40,6 +42,7 @@ export class TaggedItemsService {
     ...this.files.summaries().map((summary) => ({ kind: 'file' as const, summary })),
     ...this.tracks.tracks().map((summary) => ({ kind: 'track' as const, summary })),
     ...this.playlists.summaries().map((summary) => ({ kind: 'playlist' as const, summary })),
+    ...this.reminders.summaries().map((summary) => ({ kind: 'reminder' as const, summary })),
   ]);
 
   forTag(tagId: string): readonly TaggedItem[] {
