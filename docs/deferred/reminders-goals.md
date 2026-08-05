@@ -13,29 +13,13 @@ Formato por entrada:
 
 ---
 
-## Metas — pasos como estrellas (origen: schema v6, 2026-06-24; canvas editor v7, 2026-06-24)
-
-### Lasso selection para multi-select de pasos
-
-- **Qué**: shift+click para selección múltiple de pasos (toggle/eliminar en lote) ya está resuelto (`createMultiSelect`, `GoalSelectionToolbarComponent`). Queda afuera la variante "lasso" (arrastrar un rectángulo sobre el lienzo para seleccionar todo lo que cae adentro).
-- **Por qué se difirió**: el `<svg>` del lienzo ya sobrecarga `(click)` para crear pasos y drag de estrella (`onStarDown/Move/Up` con `stopPropagation` + flag `suppressCanvasClick` para no disparar el click sintetizado). Meter un lasso de fondo ahí requeriría rehacer esa coreografía de pointer events sin romper pan/drag/creación — shift+click ya cubre el caso principal.
-- **Target**: sin asignar.
-
----
-
 ## Recordatorios — Palomar (origen: rediseño palomar 2026-06-25)
 
-### Animaciones de snooze / "tomar papelito" manual
+### Detalles bonitos: plumaje rico, ronroneo
 
-- **Qué**: gestos manuales del paso 5 todavía sin cablear. El disparo del scheduler ya está implementado (puerta de la jaula se abre progresivamente, paloma vuela hasta el rail icon de `/reminders`, picotea, vuelve a la jaula si es recurrente o cae si es puntual). Falta: snooze posa la paloma en la repisa con animación; marcar hecho manual hace volar la paloma fuera de pantalla.
-- **Por qué se difirió**: las animaciones disparadas por el scheduler son las críticas para que el palomar "funcione" como metáfora; los gestos manuales pueden quedar para una pasada de pulido sin perder lectura del estado.
-- **Target**: sin asignar — corregido 2026-08-04, esta entrada decía "sesión siguiente" pero `docs/sistema/calendario-recordatorios-configuracion.md` (más reciente) ya la lista en "Fuera de alcance" como "pulido visual de baja prioridad, sin fecha asignada"; los dos docs se contradecían (regla §4.11.24), gana el de sistema.
-
-### Detalles bonitos: plumitas que caen, plumaje rico, ronroneo
-
-- **Qué**: paso 6 del plan. El aleteo ya quedó (la paloma voladora flapea el ala durante el vuelo). Faltan: plumitas que caen al pasar la paloma, plumaje más detallado en palomas recurrentes con muchos ciclos cumplidos, ronroneo/preview de mensaje en hover sostenido.
-- **Por qué se difirió**: pulido visual de baja prioridad. Requiere modelo extra (`recurrence.cyclesCompleted`) para el plumaje y SVG más rico — no entra en el MVP del palomar.
-- **Target**: sin asignar — mismo motivo de corrección que el ítem anterior.
+- **Qué**: paso 6 del plan. El aleteo ya quedó, y las plumitas que caen al pasar la paloma se resolvieron 2026-08-05 (`spawnFeathers()` en `paloma-flight.ts`, disparado en el vuelo de disparo del scheduler y en el vuelo manual de "tomar papelito"). Falta: plumaje más detallado en palomas recurrentes con muchos ciclos cumplidos, ronroneo/preview de mensaje en hover sostenido.
+- **Por qué se difirió**: pulido visual de baja prioridad. El plumaje rico requiere modelo extra (`recurrence.cyclesCompleted`, migración de schema) que no entra en el MVP del palomar; el "ronroneo" no tiene contenido real que previsualizar todavía — `Reminder`/`ReminderSummary` sólo tienen `title`, no un campo de nota/mensaje separado, así que un preview de "mensaje" hoy repetiría el título ya visible.
+- **Target**: sin asignar.
 
 ### Palomares temáticos por categoría (como salas del museo)
 

@@ -324,6 +324,58 @@
 }
 
 .nicho.is-paused .paloma { filter: brightness(0.6); }
+
+/* why: gestos manuales de snooze — la paloma se sacude y asiente en su
+   propio nicho al reagendarse, distinto del vuelo cross-viewport de
+   launchPaloma() (disparo del scheduler). Anima el <svg> hijo, no
+   `.paloma` en sí, porque ese elemento ya tiene su propio `transform` de
+   posición por puerta (`data-door`) — animarlo ahí pisaría esa transición. */
+@keyframes mc-nicho-snooze-kf {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  20% {
+    transform: rotate(-6deg) scale(1.03);
+  }
+  45% {
+    transform: rotate(5deg) scale(1.02);
+  }
+  70% {
+    transform: rotate(-2deg) scale(1.01);
+  }
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+}
+@keyframes mc-nicho-snooze-paper-kf {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  35% {
+    opacity: 0.35;
+  }
+  55% {
+    opacity: 1;
+  }
+}
+.nicho.is-snoozing .paloma svg,
+.paloma-perch.is-snoozing .paloma svg {
+  animation: mc-nicho-snooze-kf 620ms ease-out;
+  transform-origin: 50% 70%;
+}
+.nicho.is-snoozing .paloma .paper,
+.paloma-perch.is-snoozing .paloma .paper {
+  animation: mc-nicho-snooze-paper-kf 620ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .nicho.is-snoozing .paloma svg,
+  .paloma-perch.is-snoozing .paloma svg,
+  .nicho.is-snoozing .paloma .paper,
+  .paloma-perch.is-snoozing .paloma .paper {
+    animation: none;
+  }
+}
 .curtain {
   position: absolute;
   inset: 0;

@@ -270,6 +270,19 @@
   }
 }
 
+// why: manual "tomar papelito" on a one-shot reminder (dismissPalomaManually
+//      in paloma-flight.ts) — bird flies up and off-screen, fading out
+//      during the back 40% of the flight so it's already clear of the
+//      cages by the time it disappears.
+@keyframes mc-paloma-dismiss-fade-kf {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
 // Flap rate drives perceived flight power. ~2.4Hz (0.42s/cycle) reads
 // clearly without looking robotic. fly/recall/peck/die durations live in
 // paloma-flight.ts because keyframes are generated at runtime; only flap
@@ -341,6 +354,31 @@ $mc-paloma-flap: 0.42s;
   fill: #e9d99c;
   stroke: #a48f4a;
   stroke-width: 0.6;
+}
+
+// why: "plumitas que caen al pasar la paloma" — spawned by
+//      paloma-flight.ts along the flight path, one per element (disposable,
+//      self-removes on animationend). Independent of the bird's own
+//      animation, so timing drift between the two reads as natural.
+@keyframes mc-paloma-feather-fall-kf {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(8px, 46px) rotate(160deg);
+    opacity: 0;
+  }
+}
+.mc-paloma-feather {
+  position: fixed;
+  width: 6px;
+  height: 10px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(200, 200, 200, 0.35));
+  border-radius: 50% 50% 50% 0;
+  pointer-events: none;
+  z-index: 999;
+  animation: mc-paloma-feather-fall-kf 900ms ease-in forwards;
 }
 
 @media (prefers-reduced-motion: reduce) {

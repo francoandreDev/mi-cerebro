@@ -11,6 +11,10 @@
 // Public surface:
 //   launchPaloma(reminder)            — spawn a bird & fly to the rail icon
 //   recallPaloma(reminderId): boolean — fly a perched bird home; true if one
+//   dismissPalomaManually(reminderId) — manual "tomar papelito" on a
+//     one-shot: bird flies up and off-screen, fading out. Distinct from
+//     launchPaloma (scheduler firing an actual due date) — see
+//     docs/deferred/reminders-goals.md "Animaciones de snooze".
 
 import type { ReminderSummary } from '../models/reminder.types';
 
@@ -99,12 +103,86 @@ export const launchPaloma = (reminder: ReminderSummary): void => {
   void runFlight(reminder.id, fromX, fromY, toX, toY, willReturn);
 };
 
+const DISMISS_DUR = 1.1;
+
+export const dismissPalomaManually = (reminderId: string): void => {
+  if (typeof document === 'undefined') return;
+  const cage = document.querySelector<HTMLElement>(`[data-paloma-id="${cssEscape(reminderId)}"]`);
+  if (!cage) return;
+  const src = cage.getBoundingClientRect();
+  const fromX = src.left + src.width / 2 - HALF_W;
+  const fromY = src.top + src.height / 2 - HALF_H;
+  // why: flies up and toward whichever side has more room, so the wander
+  //      wobble has space to swing without doubling back over the cages.
+  const dir = fromX < window.innerWidth / 2 ? -1 : 1;
+  const toX = fromX + dir * (window.innerWidth * 0.4 + 200);
+  const toY = fromY - window.innerHeight * 0.5 - 120;
+  void runDismissFlight(fromX, fromY, toX, toY);
+};
+
+const runDismissFlight = async (
+  fromX: number,
+  fromY: number,
+  toX: number,
+  toY: number,
+): Promise<void> => {
+  const out = buildWanderPath(fromX, fromY, toX, toY, 20, 'tangent', 'tangent');
+  spawnFeathers(out);
+  const flightId = Math.random().toString(36).slice(2, 10);
+  const flyKfName = `mc-paloma-dismiss-${flightId}`;
+  const styleEl = document.createElement('style');
+  styleEl.textContent = keyframesFor(flyKfName, fromX, fromY, toX, toY, out);
+  document.head.appendChild(styleEl);
+
+  const fly = document.createElement('div');
+  fly.className = 'mc-flying-paloma';
+  fly.dataset['fate'] = 'die';
+  fly.style.transform = `translate(${fromX}px, ${fromY}px) rotate(${out.fromR}deg)`;
+  fly.innerHTML = FLYING_PALOMA_SVG;
+  document.body.appendChild(fly);
+
+  // why: same duration on both animations, fade delayed to the back 40% —
+  //      the bird is fully away by the time it disappears, not fading in
+  //      the middle of the flight.
+  fly.style.animation =
+    `${flyKfName} ${DISMISS_DUR}s ease-in forwards, ` +
+    `mc-paloma-dismiss-fade-kf ${DISMISS_DUR * 0.4}s ease-in ${DISMISS_DUR * 0.6}s forwards`;
+  await onceAnimationEnd(fly, flyKfName);
+  fly.remove();
+  styleEl.remove();
+};
+
 export const recallPaloma = (reminderId: string): boolean => {
   const bird = PERCHED.get(reminderId);
   if (!bird) return false;
   PERCHED.delete(reminderId);
   void runRecall(bird);
   return true;
+};
+
+// why: "plumitas que caen al pasar la paloma" (docs/deferred/reminders-goals.md)
+//      — a few feathers dropped along the flight's sampled path, staggered
+//      so they don't all spawn at once. Independent CSS keyframe (fall +
+//      fade), not tied to the bird's own animation — cheap and disposable,
+//      self-removes on animationend.
+const spawnFeathers = (out: FlightPath): void => {
+  if (typeof document === 'undefined') return;
+  // why: the feathers' own removal is animationend-driven (see below) — if
+  //      reduced-motion suppressed the CSS animation on .mc-flying-paloma
+  //      globally, doing the same here would leak the feather elements
+  //      forever (animationend never fires). Simplest correct fix: don't
+  //      spawn them at all when the user asked for less motion.
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+  const points = out.samples.filter((_, i) => i % 6 === 0);
+  points.forEach((p, i) => {
+    const feather = document.createElement('div');
+    feather.className = 'mc-paloma-feather';
+    feather.style.left = `${p.x + HALF_W}px`;
+    feather.style.top = `${p.y + HALF_H}px`;
+    feather.style.animationDelay = `${i * 90}ms`;
+    document.body.appendChild(feather);
+    feather.addEventListener('animationend', () => feather.remove(), { once: true });
+  });
 };
 
 const runFlight = async (
@@ -116,6 +194,7 @@ const runFlight = async (
   willReturn: boolean,
 ): Promise<void> => {
   const out = buildWanderPath(fromX, fromY, toX, toY, 50, 'tangent', 'nearest-360');
+  spawnFeathers(out);
   const flightId = Math.random().toString(36).slice(2, 10);
   const flyKfName = `mc-paloma-fly-${flightId}`;
   const styleEl = document.createElement('style');

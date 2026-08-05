@@ -37,7 +37,7 @@ import type {
 } from '../models/reminder.types';
 import { RemindersService } from '../services/reminders.service';
 import { bucketOf, type BucketKey } from '../utils/buckets';
-import { recallPaloma } from '../utils/paloma-flight';
+import { dismissPalomaManually, recallPaloma } from '../utils/paloma-flight';
 import { parseQuickAdd } from '../utils/parse-due';
 import { MONDAY, SATURDAY, nextWeekdayAfter } from '../utils/snooze-presets';
 import { registerRemindersShortcutsTutorial } from './reminders-shortcuts.tutorial';
@@ -116,6 +116,23 @@ export class RemindersContainer {
   protected readonly selectedId = signal<string | null>(null);
   protected readonly showRegistry = signal(false);
   protected readonly overflowOpenId = signal<string | null>(null);
+  // why: gestos manuales (§14, "Animaciones de snooze") — snooze y
+  //      desmarcar/re-marcar un recurrente no dejan el palomar (eso es
+  //      dismissPalomaManually, sólo para un puntual que se marca hecho de
+  //      verdad), así que sólo se sacuden/asienten en su propio nicho
+  //      reconociendo el cambio. Clase temporal en vez de estado
+  //      persistido: el re-render que sigue (dueAt cambió → puede recalcular
+  //      bucket/puerta) puede cortar la animación a mitad de camino, y está
+  //      bien — es un guiño, no algo que deba completarse sí o sí.
+  protected readonly snoozingId = signal<string | null>(null);
+  private static readonly SNOOZE_ANIM_MS = 620;
+
+  private flashSnooze(id: string): void {
+    this.snoozingId.set(id);
+    setTimeout(() => {
+      if (this.snoozingId() === id) this.snoozingId.set(null);
+    }, RemindersContainer.SNOOZE_ANIM_MS);
+  }
   protected readonly editing = signal<EditingState | null>(null);
   protected readonly undo = signal<PendingUndo | null>(null);
   protected readonly cursor = createListCursor();
@@ -348,6 +365,14 @@ export class RemindersContainer {
     try {
       await this.workspace.ensureWritable();
       const current = await this.reminders.read(summary.id);
+      const marking = !current.done;
+      // why: gestos manuales (§14, "Animaciones de snooze") — sólo un
+      //      puntual que se está marcando (no desmarcando) deja el palomar
+      //      de verdad, así que sólo ahí vale la pena el vuelo fuera de
+      //      pantalla; uno recurrente reaparece con la próxima fecha vía
+      //      cadence service, no "se va" — mismo flutter que el snooze.
+      if (marking && !current.recurrence) dismissPalomaManually(summary.id);
+      else this.flashSnooze(summary.id);
       await this.reminders.save({ ...current, done: !current.done });
     } catch (e) {
       this.errors.report(this.withReauth(e));
@@ -356,6 +381,7 @@ export class RemindersContainer {
 
   protected async onSnooze(summary: ReminderSummary, hours: number): Promise<void> {
     this.overflowOpenId.set(null);
+    this.flashSnooze(summary.id);
     try {
       await this.workspace.ensureWritable();
       const current = await this.reminders.read(summary.id);
@@ -370,6 +396,7 @@ export class RemindersContainer {
 
   protected async onSnoozeToWeekday(summary: ReminderSummary, targetDow: number): Promise<void> {
     this.overflowOpenId.set(null);
+    this.flashSnooze(summary.id);
     try {
       await this.workspace.ensureWritable();
       const current = await this.reminders.read(summary.id);
