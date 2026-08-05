@@ -128,20 +128,21 @@ Cerrado: ~~Granularidad por faceta en merge bundle (Tier 3)~~ — resuelto 2026-
 
 Cerrado: ~~Parser de fecha natural — alcance ampliado (Tier 3)~~ — resuelto 2026-08-05: `parse-due.ts#parseQuickAdd` agrega `parseTrailingHint()` — sin `@`, prueba la cola del título (hasta 4 palabras, de la más larga a la más corta) contra `parseDueHint()` y sólo la consume si matchea una fecha/hora real ("Pagar alquiler viernes" ⇒ título "Pagar alquiler" + próximo viernes 9am); un título sin fecha reconocible, o de una sola palabra, queda intacto (no confunde un título de 1 palabra con una fecha). Con `@` explícito el comportamiento previo no cambia. 5 tests nuevos en `parse-due.spec.ts` (15 total, todos verdes vía `ng test`).
 
+Cerrado: ~~Textura realista de tiza (Tier 3)~~ — ya estaba resuelto (documentación de cierre 2026-08-05): `chalk-board.component.html` ya tiene un filtro SVG `#chalk-grain` (`feTurbulence` fractalNoise + `feColorMatrix` + `feComposite`) aplicado a cada `<g>` de capa, compartido entre todas para mantenerlo barato en trazos largos — el propio comentario `why` del filtro cita textualmente "Textura realista de tiza" como el ítem que resuelve. Esta entrada de `priority-order.md` había quedado desactualizada (el grep que la originó buscaba mal el patrón, o corría antes de que esto se implementara).
+
 Orden de toma, Tier ascendente:
 
 1. Compactación manual sobre rango específico (Tier 3) — ya existe un disparador manual (`history-strata.component.ts#onCompactNow()`, botón "compactar ahora" → `compactionScheduler.runOnce({ ignoreThreshold: true })`), pero sigue operando sobre los buckets elegibles del scheduler, no sobre un rango arbitrario elegido por el usuario.
 2. Header del editor "n commits desde milestone" (Tier 3) — sin referencias a `milestone` en `shared/editor/` ni en el toolbar; `milestone.service.ts` sólo se usa hoy en `features/history`. Cercano a #1 (history).
-3. Textura realista de tiza (Tier 3) — sin señales de implementación (`texture`/`noise`/`grain` no aparecen en los componentes `chalk-*`).
-4. Animaciones de snooze / gestos manuales (palomar) (Tier 3) — las animaciones críticas del scheduler ya están, esto es polish adicional.
-5. Detalles bonitos: plumitas, plumaje, ronroneo (palomar) (Tier 3) — pulido visual de baja prioridad. Cercano a #4 (palomar).
-6. Palomares temáticos por categoría (Tier 3) — los filtros del MVP ya resuelven la saturación, esto sería un layer visual encima. Cercano a #4/#5 (palomar).
-7. Pulido visual general de `/history` (Tier 4) — agrupador sin límite claro, entra cuando haya uso real. Cercano a #1/#2 (history).
-8. Paginación real persistida fila por fila (books) (Tier 4) — reactivado 2026-08-05: la decisión de diseño explícita ("la UI no debe mentir" — no hay ancho de referencia único) sigue siendo la restricción de implementación a respetar, no un veto a que se aborde; cualquier solución debe seguir sin fingir un ancho de referencia que no existe.
-9. Estantería con forma creativa (books) (Tier 4) — visión a futuro, el shelf clásico aún no está pulido. Cercano a #8 (books).
-10. Índice de búsqueda persistido por familia (`idx-main`) (Tier 4) — reactivado 2026-08-05, con salvedad: sigue siendo arquitectónicamente de bajo valor mientras `refreshAll()` recorra disco en cada switch de variante (ver `deferred/versionado.md`) — si se toma, empezar por confirmar si esa precondición cambió, o el trabajo no rinde.
-11. Variantes sobre el fallback sin isomorphic-git (Tier 5) — contingencia, sólo aplica si el fallback de snapshots se activa en 13a; no es un ítem tomable por decisión propia salvo que eso ocurra.
-12. `.git/` en OPFS (Tier 5) — aceptado explícitamente vivir con loading screens hasta que sea intolerable; contingencia, no roadmap.
+3. Animaciones de snooze / gestos manuales (palomar) (Tier 3) — las animaciones críticas del scheduler ya están, esto es polish adicional.
+4. Detalles bonitos: plumitas, plumaje, ronroneo (palomar) (Tier 3) — pulido visual de baja prioridad. Cercano a #3 (palomar).
+5. Palomares temáticos por categoría (Tier 3) — los filtros del MVP ya resuelven la saturación, esto sería un layer visual encima. Cercano a #3/#4 (palomar).
+6. Pulido visual general de `/history` (Tier 4) — agrupador sin límite claro, entra cuando haya uso real. Cercano a #1/#2 (history).
+7. Paginación real persistida fila por fila (books) (Tier 4) — reactivado 2026-08-05: la decisión de diseño explícita ("la UI no debe mentir" — no hay ancho de referencia único) sigue siendo la restricción de implementación a respetar, no un veto a que se aborde; cualquier solución debe seguir sin fingir un ancho de referencia que no existe.
+8. Estantería con forma creativa (books) (Tier 4) — visión a futuro, el shelf clásico aún no está pulido. Cercano a #7 (books).
+9. Índice de búsqueda persistido por familia (`idx-main`) (Tier 4) — reactivado 2026-08-05, con salvedad: sigue siendo arquitectónicamente de bajo valor mientras `refreshAll()` recorra disco en cada switch de variante (ver `deferred/versionado.md`) — si se toma, empezar por confirmar si esa precondición cambió, o el trabajo no rinde.
+10. Variantes sobre el fallback sin isomorphic-git (Tier 5) — contingencia, sólo aplica si el fallback de snapshots se activa en 13a; no es un ítem tomable por decisión propia salvo que eso ocurra.
+11. `.git/` en OPFS (Tier 5) — aceptado explícitamente vivir con loading screens hasta que sea intolerable; contingencia, no roadmap.
 
 ---
 
