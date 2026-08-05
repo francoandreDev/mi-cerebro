@@ -76,6 +76,60 @@ export class HistoryStrataComponent implements OnInit, OnDestroy {
   protected readonly compactionConfirm = new ConfirmController();
   protected readonly compacting = signal(false);
 
+  // why: §12 "Compactación manual sobre rango específico" — unlike
+  //      onCompactNow (whole workspace, age-bucketed), this lets the user
+  //      pick an explicit [from, to] date window; every non-barrier commit
+  //      inside it fuses into one commit per ref regardless of the 7-day
+  //      recency floor. Same confirm/compacting machinery as the banner.
+  protected readonly rangePanelOpen = signal(false);
+  protected readonly rangeFrom = signal('');
+  protected readonly rangeTo = signal('');
+  protected readonly rangeValid = computed(() => {
+    const from = this.rangeFrom();
+    const to = this.rangeTo();
+    return from !== '' && to !== '' && from <= to;
+  });
+
+  protected toggleRangePanel(): void {
+    this.rangePanelOpen.update((v) => !v);
+  }
+
+  protected onRangeFromInput(ev: Event): void {
+    this.rangeFrom.set((ev.target as HTMLInputElement).value);
+  }
+
+  protected onRangeToInput(ev: Event): void {
+    this.rangeTo.set((ev.target as HTMLInputElement).value);
+  }
+
+  protected onCompactRange(): void {
+    if (!this.rangeValid()) return;
+    const from = this.rangeFrom();
+    const to = this.rangeTo();
+    const fromMs = new Date(`${from}T00:00:00`).getTime();
+    const toMs = new Date(`${to}T23:59:59.999`).getTime();
+    this.compactionConfirm.ask(
+      {
+        title: this.i18n.t('versioning.history.rangeCompaction.confirm.title'),
+        message: this.i18n.t('versioning.history.rangeCompaction.confirm.body', { from, to }),
+        confirmLabel: this.i18n.t('versioning.history.rangeCompaction.confirm.confirm'),
+        cancelLabel: this.i18n.t('versioning.history.rangeCompaction.confirm.cancel'),
+        tone: 'default',
+      },
+      async () => {
+        this.compacting.set(true);
+        try {
+          await this.compactionScheduler.runOnce({ range: { fromMs, toMs } });
+          this.rangePanelOpen.set(false);
+        } catch (e) {
+          this.errors.report(e);
+        } finally {
+          this.compacting.set(false);
+        }
+      },
+    );
+  }
+
   protected isFacetEnabled(f: Facet): boolean {
     return this.enabledFacets().has(f);
   }

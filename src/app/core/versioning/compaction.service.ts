@@ -19,7 +19,7 @@ import { FsService } from '@core/fs/fs.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
 
 import type { CompactionPlan, FuseGroup } from './compaction-plan';
-import { buildCompactionPlan } from './compaction-plan';
+import { buildCompactionPlan, buildRangeCompactionPlan } from './compaction-plan';
 import { GitFsAdapter } from './git-fs.adapter';
 import { stripHeadsPrefix } from './variants.io';
 import { VersioningService } from './versioning.service';
@@ -52,6 +52,17 @@ export class CompactionService {
     const commits = await this.versioning.logFull(bare);
     const tagOids = await this.versioning.listTagOids();
     return buildCompactionPlan({ commits, tagOids, now: Date.now() });
+  }
+
+  // §12 "Compactación manual sobre rango específico" — same shape as
+  // planForBranch, but every non-barrier commit inside [fromMs, toMs] fuses
+  // into a single group regardless of the 7-day recency floor. Applied via
+  // the same generic applyPlan() as the scheduler's plan.
+  async planForBranchRange(ref: string, fromMs: number, toMs: number): Promise<CompactionPlan> {
+    const bare = stripHeadsPrefix(ref);
+    const commits = await this.versioning.logFull(bare);
+    const tagOids = await this.versioning.listTagOids();
+    return buildRangeCompactionPlan({ commits, tagOids, fromMs, toMs });
   }
 
   // Applies a plan to `ref` in place. No-op when the plan has no

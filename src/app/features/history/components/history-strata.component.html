@@ -71,6 +71,35 @@
         </label>
       </div>
     </div>
+    <div class="range-compaction" data-tutorial="history-range-compaction">
+      <button type="button" class="range-compaction-toggle" (click)="toggleRangePanel()">
+        <span>{{ i18n.t('versioning.history.rangeCompaction.toggle') }}</span>
+      </button>
+      @if (rangePanelOpen()) {
+        <div class="range-compaction-panel">
+          <label>
+            {{ i18n.t('versioning.history.rangeCompaction.from') }}
+            <input type="date" [value]="rangeFrom()" (change)="onRangeFromInput($event)" />
+          </label>
+          <label>
+            {{ i18n.t('versioning.history.rangeCompaction.to') }}
+            <input type="date" [value]="rangeTo()" (change)="onRangeToInput($event)" />
+          </label>
+          <button
+            type="button"
+            class="range-compaction-cta"
+            [disabled]="!rangeValid() || compacting()"
+            (click)="onCompactRange()"
+          >
+            {{
+              compacting()
+                ? i18n.t('versioning.history.rangeCompaction.compacting')
+                : i18n.t('versioning.history.rangeCompaction.cta')
+            }}
+          </button>
+        </div>
+      }
+    </div>
     @if (loading()) {
       <p class="placeholder">{{ i18n.t('versioning.history.loading') }}</p>
     } @else if (error(); as err) {

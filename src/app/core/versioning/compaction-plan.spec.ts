@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildCompactionPlan, isBarrier } from './compaction-plan';
+import { buildCompactionPlan, buildRangeCompactionPlan, isBarrier } from './compaction-plan';
 import type { CommitSummary } from './versioning.service';
 
 const NOW = Date.UTC(2026, 5, 20, 12, 0, 0); // 2026-06-20T12:00:00Z
@@ -218,5 +218,92 @@ describe('buildCompactionPlan', () => {
     const plan = buildCompactionPlan({ commits, tagOids: new Set(), now: NOW });
     expect(plan.fuseGroups).toHaveLength(1);
     expect(plan.fuseGroups[0]!.newestTimestamp).toBe(NOW - 14 * DAY);
+  });
+});
+
+describe('buildRangeCompactionPlan', () => {
+  it('fuses every non-barrier commit inside the range into a single group, ignoring the 7-day floor', () => {
+    const commits = [
+      c({ oid: 'a', daysAgo: 1 }), // inside the 7-day floor, but manual range overrides it
+      c({ oid: 'b', daysAgo: 3 }),
+      c({ oid: 'd', daysAgo: 5 }),
+    ];
+    const plan = buildRangeCompactionPlan({
+      commits,
+      tagOids: new Set(),
+      fromMs: NOW - 6 * DAY,
+      toMs: NOW,
+    });
+    expect(plan.fuseGroups).toHaveLength(1);
+    expect(plan.fuseGroups[0]!.oids).toEqual(['d', 'b', 'a']); // oldest → newest
+    expect(plan.preservedOids).toEqual([]);
+  });
+
+  it('spans day/week/month boundaries as one group instead of splitting like the scheduler plan', () => {
+    const commits = [
+      c({ oid: 'daily', daysAgo: 10 }),
+      c({ oid: 'weekly', daysAgo: 90 }),
+      c({ oid: 'monthly', daysAgo: 200 }),
+    ];
+    const plan = buildRangeCompactionPlan({
+      commits,
+      tagOids: new Set(),
+      fromMs: NOW - 250 * DAY,
+      toMs: NOW,
+    });
+    expect(plan.fuseGroups).toHaveLength(1);
+    expect(plan.fuseGroups[0]!.oids).toEqual(['monthly', 'weekly', 'daily']);
+  });
+
+  it('leaves commits outside the range untouched', () => {
+    const commits = [
+      c({ oid: 'outside-newer', daysAgo: 1 }),
+      c({ oid: 'inside-a', daysAgo: 10 }),
+      c({ oid: 'inside-b', daysAgo: 12 }),
+      c({ oid: 'outside-older', daysAgo: 40 }),
+    ];
+    const plan = buildRangeCompactionPlan({
+      commits,
+      tagOids: new Set(),
+      fromMs: NOW - 20 * DAY,
+      toMs: NOW - 8 * DAY,
+    });
+    expect(plan.fuseGroups).toHaveLength(1);
+    expect(plan.fuseGroups[0]!.oids).toEqual(['inside-b', 'inside-a']);
+    expect([...plan.preservedOids].sort()).toEqual(['outside-newer', 'outside-older']);
+  });
+
+  it('still never fuses a barrier commit inside the range, splitting it into 2 groups', () => {
+    const commits = [
+      c({ oid: 'newer-1', daysAgo: 9 }),
+      c({ oid: 'newer-2', daysAgo: 10 }),
+      c({ oid: 'tag', daysAgo: 12 }),
+      c({ oid: 'older-1', daysAgo: 14 }),
+      c({ oid: 'older-2', daysAgo: 15 }),
+    ];
+    const plan = buildRangeCompactionPlan({
+      commits,
+      tagOids: new Set(['tag']),
+      fromMs: NOW - 20 * DAY,
+      toMs: NOW,
+    });
+    expect(plan.fuseGroups).toHaveLength(2);
+    expect(plan.fuseGroups.map((g) => g.oids)).toEqual([
+      ['older-2', 'older-1'],
+      ['newer-2', 'newer-1'],
+    ]);
+    expect(plan.preservedOids).toEqual(['tag']);
+  });
+
+  it('preserves a singleton match instead of "fusing" 1 commit', () => {
+    const commits = [c({ oid: 'a', daysAgo: 10 })];
+    const plan = buildRangeCompactionPlan({
+      commits,
+      tagOids: new Set(),
+      fromMs: NOW - 20 * DAY,
+      toMs: NOW,
+    });
+    expect(plan.fuseGroups).toEqual([]);
+    expect(plan.preservedOids).toEqual(['a']);
   });
 });

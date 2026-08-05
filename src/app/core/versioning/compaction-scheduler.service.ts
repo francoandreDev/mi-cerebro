@@ -46,6 +46,12 @@ const COMPACTION_TICK_MS = 60 * 60 * 1000;
 
 export interface RunOnceOptions {
   readonly ignoreThreshold?: boolean;
+  // why: §12 "Compactación manual sobre rango específico" — when set,
+  //      every ref's plan comes from planForBranchRange(fromMs, toMs)
+  //      instead of the age-bucketed planForBranch. Same gate bypass as
+  //      ignoreThreshold (below-threshold/throttle never apply to an
+  //      explicit manual run) — remote-gated/divergent/in-flight still do.
+  readonly range?: { readonly fromMs: number; readonly toMs: number };
 }
 
 @Injectable({ providedIn: 'root' })
@@ -110,7 +116,10 @@ export class CompactionSchedulerService {
   // (in-flight, remote-divergence, remote-gated) still apply.
   async runOnce(options: RunOnceOptions = {}): Promise<void> {
     if (!this.stateLoaded) await this.loadState();
-    await this.evaluate({ ignoreThreshold: options.ignoreThreshold ?? false });
+    await this.evaluate({
+      ignoreThreshold: options.ignoreThreshold ?? false,
+      range: options.range,
+    });
   }
 
   private async bootstrap(): Promise<void> {
@@ -132,7 +141,9 @@ export class CompactionSchedulerService {
   }
 
   private async evaluate(
-    opts: { ignoreThreshold: boolean } = { ignoreThreshold: false },
+    opts: { ignoreThreshold: boolean; range?: RunOnceOptions['range'] } = {
+      ignoreThreshold: false,
+    },
   ): Promise<void> {
     if (this.inFlight) return;
     if (!this.workspace.isReady()) return;
@@ -165,7 +176,7 @@ export class CompactionSchedulerService {
 
   private async evaluateRef(
     ref: string,
-    opts: { ignoreThreshold: boolean },
+    opts: { ignoreThreshold: boolean; range?: RunOnceOptions['range'] },
     leases: Map<string, string | null>,
   ): Promise<{ ran: boolean; commitCount: number }> {
     let commitCount: number;
@@ -176,11 +187,12 @@ export class CompactionSchedulerService {
       // ref doesn't exist yet (fresh variant facet) — nothing to compact.
       return { ran: false, commitCount: 0 };
     }
+    const bypassGates = opts.ignoreThreshold || opts.range !== undefined;
     const decision = decideCompaction({
-      commitCount: opts.ignoreThreshold ? Number.MAX_SAFE_INTEGER : commitCount,
+      commitCount: bypassGates ? Number.MAX_SAFE_INTEGER : commitCount,
       thresholdCommits: this.threshold(),
       now: Date.now(),
-      lastRunAt: opts.ignoreThreshold ? null : this.lastRunAt,
+      lastRunAt: bypassGates ? null : this.lastRunAt,
       throttleMs: COMPACTION_THROTTLE_MS,
       remoteConfigured: this.remote.isConfigured(),
       compactWithRemote: this.settings.state().versioning.compactWithRemote,
@@ -198,7 +210,9 @@ export class CompactionSchedulerService {
       if (this.remote.isConfigured()) {
         leases.set(ref, await this.remote.snapshotRemoteOid(ref));
       }
-      const plan = await this.compaction.planForBranch(ref);
+      const plan = opts.range
+        ? await this.compaction.planForBranchRange(ref, opts.range.fromMs, opts.range.toMs)
+        : await this.compaction.planForBranch(ref);
       const result = await this.compaction.applyPlan(ref, plan);
       return { ran: result.rewrote, commitCount };
     } catch (cause) {

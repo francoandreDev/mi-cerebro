@@ -53,8 +53,20 @@ export function isBarrier(commit: CommitSummary, tagOids: ReadonlySet<string>): 
   return false;
 }
 
-export function buildCompactionPlan(input: CompactionPlanInput): CompactionPlan {
-  // Process oldest → newest so contiguous same-bucket runs are obvious.
+// why: shared by the age-bucketed scheduler plan and the user-picked date
+//      range plan (see buildRangeCompactionPlan below) — both walk the same
+//      barrier-respecting oldest→newest loop, only "is this commit eligible
+//      at all" and "which group key does it fall into" differ.
+interface EligibilityPolicy {
+  isEligible(commit: CommitSummary, now: number): boolean;
+  groupFor(commit: CommitSummary, now: number): { bucket: FuseBucket; key: string };
+}
+
+function buildPlanWithPolicy(
+  input: CompactionPlanInput,
+  policy: EligibilityPolicy,
+): CompactionPlan {
+  // Process oldest → newest so contiguous same-group runs are obvious.
   const ordered = [...input.commits].reverse();
   const fuseGroups: FuseGroup[] = [];
   const preservedOids: string[] = [];
@@ -84,8 +96,7 @@ export function buildCompactionPlan(input: CompactionPlanInput): CompactionPlan 
   };
 
   for (const commit of ordered) {
-    const ageMs = input.now - commit.authorTimestamp;
-    if (ageMs <= 7 * DAY_MS) {
+    if (!policy.isEligible(commit, input.now)) {
       flush();
       preservedOids.push(commit.oid);
       continue;
@@ -95,8 +106,7 @@ export function buildCompactionPlan(input: CompactionPlanInput): CompactionPlan 
       preservedOids.push(commit.oid);
       continue;
     }
-    const bucket = classifyBucket(ageMs);
-    const key = bucketKey(bucket, commit.authorTimestamp);
+    const { bucket, key } = policy.groupFor(commit, input.now);
     if (pending && pending.bucket === bucket && pending.key === key) {
       pending.oids.push(commit.oid);
       if (commit.authorTimestamp > pending.newest) pending.newest = commit.authorTimestamp;
@@ -108,6 +118,44 @@ export function buildCompactionPlan(input: CompactionPlanInput): CompactionPlan 
   flush();
 
   return { fuseGroups, preservedOids };
+}
+
+export function buildCompactionPlan(input: CompactionPlanInput): CompactionPlan {
+  return buildPlanWithPolicy(input, {
+    isEligible: (commit, now) => now - commit.authorTimestamp > 7 * DAY_MS,
+    groupFor: (commit) => {
+      const ageMs = input.now - commit.authorTimestamp;
+      const bucket = classifyBucket(ageMs);
+      return { bucket, key: bucketKey(bucket, commit.authorTimestamp) };
+    },
+  });
+}
+
+export interface RangeCompactionPlanInput {
+  readonly commits: readonly CommitSummary[];
+  readonly tagOids: ReadonlySet<string>;
+  // why: manual override (§12 "Compactación manual sobre rango específico")
+  //      — the 7-day recency floor and daily/weekly/monthly bucketing are
+  //      the scheduler's defaults, not hard invariants. The user is picking
+  //      a deliberate window (e.g. "flatten last month's noise"), so every
+  //      non-barrier commit inside [fromMs, toMs] fuses into ONE group
+  //      instead of being split by day/week/month — barriers (tags,
+  //      before-restore, Merge-Group) are still never fused, same as the
+  //      scheduler's plan.
+  readonly fromMs: number;
+  readonly toMs: number;
+}
+
+export function buildRangeCompactionPlan(input: RangeCompactionPlanInput): CompactionPlan {
+  const key = `range:${input.fromMs}-${input.toMs}`;
+  return buildPlanWithPolicy(
+    { commits: input.commits, tagOids: input.tagOids, now: input.toMs },
+    {
+      isEligible: (commit) =>
+        commit.authorTimestamp >= input.fromMs && commit.authorTimestamp <= input.toMs,
+      groupFor: () => ({ bucket: 'daily', key }),
+    },
+  );
 }
 
 function classifyBucket(ageMs: number): FuseBucket {

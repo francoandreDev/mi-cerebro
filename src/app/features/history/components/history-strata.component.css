@@ -222,6 +222,59 @@
   cursor: default;
 }
 
+.range-compaction {
+  padding: 0 12px 8px;
+}
+
+.range-compaction-toggle {
+  font-size: 0.8rem;
+  color: var(--mc-fg-muted, var(--mc-text-secondary));
+  background: transparent;
+  border: none;
+  padding: 2px 0;
+  cursor: pointer;
+}
+
+.range-compaction-toggle:hover,
+.range-compaction-toggle:focus-visible {
+  text-decoration: underline;
+}
+
+.range-compaction-panel {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: var(--mc-space-3, 12px);
+  margin-top: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--mc-border-default, var(--mc-border));
+  border-radius: var(--mc-radius-md, 8px);
+  background: var(--mc-bg-elevated, var(--mc-surface-2));
+}
+
+.range-compaction-panel label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.78rem;
+  color: var(--mc-fg-muted, var(--mc-text-secondary));
+}
+
+.range-compaction-cta {
+  padding: 4px 12px;
+  border-radius: var(--mc-radius-pill, 999px);
+  background: var(--mc-accent-primary, var(--mc-accent, var(--mc-text)));
+  color: var(--mc-accent-fg, #fff);
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.range-compaction-cta:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 /* Mini-mapa al pie del yacimiento — compressed panorama silhouette
    con banderines de fósiles y ventana visible como marco iluminado. */
 .stratum-minimap {
