@@ -6,7 +6,7 @@ import { ERROR_CODES } from '@core/errors/error.codes';
 import { IDB_STORES, type IdbStore } from './idb.types';
 
 const DB_NAME = 'mc-app';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 @Injectable({ providedIn: 'root' })
 export class IdbService {
