@@ -94,6 +94,25 @@ export class GoalConstellationEditorComponent {
   } | null = null;
   private suppressCanvasClick = false;
 
+  // why: lasso selection (drag a rectangle to multi-select) — pointerdown on
+  //      the canvas backdrop only (stars stopPropagation their own
+  //      pointerdown, see the template comment above the star `<g>`), same
+  //      4px-move threshold as star drag to distinguish it from a plain
+  //      click that seeds a new step. `additive` is a snapshot of the
+  //      selection at drag-start, so a shift-drag adds to it instead of
+  //      replacing it — same modifier convention as shift+click.
+  protected readonly lassoRect = signal<{ x: number; y: number; w: number; h: number } | null>(
+    null,
+  );
+  private lassoRef: {
+    sx: number;
+    sy: number;
+    w: number;
+    h: number;
+    additive: ReadonlySet<string>;
+    moved: boolean;
+  } | null = null;
+
   protected readonly stars = computed<readonly StarVm[]>(() => {
     const g = this.goal();
     const dp = this.dragPos();
@@ -204,6 +223,51 @@ export class GoalConstellationEditorComponent {
     const y = Math.max(8, Math.min(92, ((event.clientY - rect.top) / rect.height) * 100));
     this.creating.set({ x, y });
     this.draft.set('');
+  }
+
+  protected onCanvasPointerDown(event: PointerEvent): void {
+    if (!this.editable() || event.button !== 0) return;
+    if (this.popoverId() || this.renamingId() || this.creating()) return;
+    const t = event.currentTarget as Element;
+    t.setPointerCapture(event.pointerId);
+    const rect = (t as SVGGraphicsElement).getBoundingClientRect();
+    this.lassoRef = {
+      sx: ((event.clientX - rect.left) / rect.width) * 100,
+      sy: ((event.clientY - rect.top) / rect.height) * 100,
+      w: rect.width,
+      h: rect.height,
+      additive: event.shiftKey ? this.selection.selectedIds() : new Set(),
+      moved: false,
+    };
+  }
+
+  protected onCanvasPointerMove(event: PointerEvent): void {
+    const d = this.lassoRef;
+    if (!d) return;
+    const t = event.currentTarget as SVGGraphicsElement;
+    const rect = t.getBoundingClientRect();
+    const cx = ((event.clientX - rect.left) / rect.width) * 100;
+    const cy = ((event.clientY - rect.top) / rect.height) * 100;
+    if (!d.moved && Math.hypot(cx - d.sx, cy - d.sy) < 2) return;
+    d.moved = true;
+    const box = {
+      x: Math.min(d.sx, cx),
+      y: Math.min(d.sy, cy),
+      w: Math.abs(cx - d.sx),
+      h: Math.abs(cy - d.sy),
+    };
+    this.lassoRect.set(box);
+    const inBox = this.stars()
+      .filter((s) => s.x >= box.x && s.x <= box.x + box.w && s.y >= box.y && s.y <= box.y + box.h)
+      .map((s) => s.id);
+    this.selection.setSelected(new Set([...d.additive, ...inBox]));
+  }
+
+  protected onCanvasPointerUp(): void {
+    const d = this.lassoRef;
+    this.lassoRef = null;
+    this.lassoRect.set(null);
+    if (d?.moved) this.suppressCanvasClick = true;
   }
 
   protected onCanvasKey(event?: Event): void {

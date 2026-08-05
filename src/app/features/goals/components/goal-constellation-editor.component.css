@@ -36,6 +36,13 @@
   stroke: var(--tone-stroke); stroke-width: 0.25; stroke-linecap: round;
   filter: drop-shadow(0 0 0.6px var(--tone-glow)); pointer-events: none;
 }
+.lasso {
+  fill: rgba(160, 200, 255, 0.12);
+  stroke: rgba(200, 225, 255, 0.85);
+  stroke-width: 0.3;
+  stroke-dasharray: 1.2 0.8;
+  pointer-events: none;
+}
 .star { cursor: grab; pointer-events: auto; transition: transform 220ms ease; touch-action: none; }
 .star:focus { outline: none; }
 .star:focus-visible { outline: none; }

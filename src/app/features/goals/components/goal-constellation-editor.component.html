@@ -126,6 +126,9 @@
     tabindex="0"
     [attr.aria-label]="t('goals.editor.canvasAria')"
     (click)="onCanvasClick($event)"
+    (pointerdown)="onCanvasPointerDown($event)"
+    (pointermove)="onCanvasPointerMove($event)"
+    (pointerup)="onCanvasPointerUp()"
     (keydown.enter)="onCanvasKey($event)"
     (keydown.escape)="onEscape()"
   >
@@ -185,6 +188,15 @@
         <ellipse class="spike diag" rx="2.2" ry="0.12" transform="rotate(-45)" />
         <circle class="core" r="0.7" />
       </g>
+    }
+    @if (lassoRect(); as box) {
+      <rect
+        class="lasso"
+        [attr.x]="box.x"
+        [attr.y]="box.y"
+        [attr.width]="box.w"
+        [attr.height]="box.h"
+      />
     }
   </svg>
 

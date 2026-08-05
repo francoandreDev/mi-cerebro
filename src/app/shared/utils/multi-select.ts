@@ -11,6 +11,10 @@ export interface MultiSelectController {
   isSelected(id: string): boolean;
   toggle(id: string): void;
   clear(): void;
+  // why: bulk replace for rectangle/lasso selection — a drag gesture picks
+  //      up a whole batch in one go, so it needs to set the set directly
+  //      instead of toggling ids one at a time.
+  setSelected(ids: Iterable<string>): void;
 }
 
 export const createMultiSelect = (): MultiSelectController => {
@@ -28,6 +32,9 @@ export const createMultiSelect = (): MultiSelectController => {
     clear() {
       if (selectedIds().size === 0) return;
       selectedIds.set(new Set());
+    },
+    setSelected(ids) {
+      selectedIds.set(new Set(ids));
     },
   };
 };
