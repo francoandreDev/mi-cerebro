@@ -21,8 +21,8 @@ Formato por entrada:
 - **Por qué se difirió**: el "ronroneo" no tiene contenido real que previsualizar todavía — `Reminder`/`ReminderSummary` sólo tienen `title`, no un campo de nota/mensaje separado, así que un preview de "mensaje" hoy repetiría el título ya visible sin agregar nada. Resolverlo bien requeriría primero decidir si los recordatorios ganan un campo de nota (decisión de producto, no de ejecución) — no es un bloqueo técnico, es una pregunta abierta.
 - **Target**: sin asignar — requiere decisión de producto (¿reminders necesitan notas?) antes de ser un ítem de ejecución.
 
-### Palomares temáticos por categoría (como salas del museo)
+### Índice global de búsqueda / vista cross-tag para reminders
 
-- **Qué**: opcional mencionado en el plan original: separar el palomar en sub-palomares por tag/categoría, navegables como las salas del museo. Hoy se resuelve con filtros (fecha + nombre) sobre un único palomar.
-- **Por qué se difirió**: los filtros del MVP ya resuelven el riesgo de saturación visual. Multi-palomar agrega complejidad de navegación que sólo vale si el usuario lo pide.
+- **Qué**: descubierto al resolver "Palomares temáticos por categoría" (ver `Cerrado:` en `priority-order.md`) — los recordatorios ahora tienen `tags` como cualquier otra entidad, pero se quedaron afuera de `TaggedItemsService` (`core/tags/tagged-items.service.ts`, el fan-out que alimenta `/tags/:id`) y del índice de búsqueda global (`SearchIndexService` no indexa `reminder` en absoluto todavía). `routeFor('reminder', ...)` ya existe y resuelve a `/reminders` (igual que track/playlist, sin detalle propio) así que la integración con `TaggedItemsService` sería mecánica — agregar un branch más al `allItems()` fan-out y a `tag-detail.container.ts`/`.html` (10+ puntos de contacto: el tipo `TaggedItem`, el computed + `isEmpty`, el bloque de card en el template). No se hizo en la misma sesión por alcance — el pedido original era sólo la agrupación visual dentro del propio palomar.
+- **Por qué se difirió**: alcance — completar la integración cross-section es una tarea propia con varios puntos de contacto, no una consecuencia automática de agregar el campo `tags`.
 - **Target**: sin asignar.

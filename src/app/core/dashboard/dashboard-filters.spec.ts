@@ -64,6 +64,7 @@ const reminder = (overrides: Partial<ReminderSummary>): ReminderSummary => ({
   recurrence: null,
   sourceKind: null,
   sourceId: null,
+  tags: [],
   updatedAt: '2026-07-01T00:00:00.000Z',
   ...overrides,
 });

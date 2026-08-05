@@ -1,4 +1,4 @@
-export const REMINDER_SCHEMA_VERSION = 4;
+export const REMINDER_SCHEMA_VERSION = 5;
 export const REMINDER_KIND = 'reminder';
 export const REMINDERS_DIR = 'reminders';
 export const REMINDER_FILE_SUFFIX = '.json';
@@ -46,6 +46,11 @@ export interface Reminder {
   readonly recurrence: Recurrence | null;
   readonly sourceKind?: ReminderSourceKind | null;
   readonly sourceId?: string | null;
+  // why: docs/deferred/reminders-goals.md "Palomares temáticos por
+  //      categoría" — tag ids, same TagsService every other taggeable
+  //      entity uses. v4→v5 migration (`reminder-tags.migration.ts`)
+  //      defaults legacy files to `[]`.
+  readonly tags: readonly string[];
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly schemaVersion: number;
@@ -62,5 +67,6 @@ export interface ReminderSummary {
   readonly recurrence: Recurrence | null;
   readonly sourceKind: ReminderSourceKind | null;
   readonly sourceId: string | null;
+  readonly tags: readonly string[];
   readonly updatedAt: string;
 }

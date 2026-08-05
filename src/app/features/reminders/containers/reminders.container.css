@@ -197,6 +197,22 @@
   gap: 14px 12px;
 }
 
+/* why: palomares temáticos por categoría — cada tag es una "sala" propia
+   dentro del mismo palomar (docs/deferred/reminders-goals.md), no una
+   navegación separada; sólo separa visualmente la grilla existente. */
+.nicho-group + .nicho-group {
+  margin-top: 22px;
+}
+.nicho-group-label {
+  margin: 0 0 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--paloma-paper, var(--mc-fg-muted));
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
 /* one cage = a dark archway carved into the wall, gated by a metal grille */
 .nicho {
   position: relative;
@@ -671,6 +687,11 @@
   color: var(--mc-fg-muted);
 }
 .ghost.icon:hover { color: var(--mc-fg-primary); }
+.ghost.icon.is-active {
+  color: var(--mc-accent-primary, var(--mc-accent));
+  background: var(--mc-bg-hover, rgba(0, 0, 0, 0.06));
+  border-radius: var(--mc-radius-sm);
+}
 .ghost.danger { color: var(--mc-danger, #d04a4a); border-color: var(--mc-danger, #d04a4a); }
 
 .overflow-wrap {

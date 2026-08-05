@@ -22,6 +22,7 @@ import { bucketOf } from '../utils/buckets';
 import { reminderCadenceMigrationStep } from './reminder-cadence.migration';
 import { reminderRecurrenceMigrationStep } from './reminder-recurrence.migration';
 import { reminderSourceMigrationStep } from './reminder-source.migration';
+import { reminderTagsMigrationStep } from './reminder-tags.migration';
 
 const TRASH_DIR = '.mi-cerebro';
 const TRASH_SUBDIR = 'trash';
@@ -65,6 +66,7 @@ export class RemindersService {
         reminderSourceMigrationStep(1),
         reminderCadenceMigrationStep(2),
         reminderRecurrenceMigrationStep(3),
+        reminderTagsMigrationStep(4),
       ],
     });
   }
@@ -127,6 +129,7 @@ export class RemindersService {
       recurrence: options?.recurrence ?? null,
       sourceKind: source?.kind ?? null,
       sourceId: source?.id ?? null,
+      tags: [],
       createdAt: now,
       updatedAt: now,
       schemaVersion: REMINDER_SCHEMA_VERSION,
@@ -250,6 +253,7 @@ export class RemindersService {
       recurrence: r.recurrence ?? null,
       sourceKind: r.sourceKind ?? null,
       sourceId: r.sourceId ?? null,
+      tags: r.tags ?? [],
       updatedAt: r.updatedAt,
     };
   }

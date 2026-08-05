@@ -2393,6 +2393,9 @@ export const es = {
   'reminders.dateClear': 'Limpiar fechas',
   'reminders.emptyPalomar': 'El palomar está en silencio. Soltá una paloma con un papelito.',
   'reminders.repisaEmpty': 'La repisa está vacía — ninguna paloma cansada.',
+  'reminders.category.untagged': 'Sin categoría',
+  'reminders.category.toggle': 'Agrupar por categoría',
+  'reminders.category.tagsLabel': 'Categorías',
   'reminders.tutorial.compose.title': 'Escribí y enviá: soltá una paloma',
   'reminders.tutorial.compose.body':
     'Escribí el recordatorio y enviá el formulario. Se enrolla en un papelito y una paloma nueva ocupa una jaula — anillo de color si es recurrente, transparente si es puntual.',

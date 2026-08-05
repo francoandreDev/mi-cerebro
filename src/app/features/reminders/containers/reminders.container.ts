@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -23,10 +24,12 @@ import { TaskRemindersSyncService } from '@core/reminders/task-reminders-sync.se
 import { WritingRemindersSyncService } from '@core/reminders/writing-reminders-sync.service';
 import { ShortcutsService } from '@core/shortcuts/shortcuts.service';
 import type { ShortcutBinding } from '@core/shortcuts/shortcuts.types';
+import { TagsService } from '@core/tags/tags.service';
 import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
 import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
 import { IconComponent } from '@shared/icon/icon.component';
 import { McDatePipe } from '@shared/pipes/mc-date.pipe';
+import { TagPickerComponent } from '@shared/tags/tag-picker.component';
 import { createListCursor } from '@shared/utils/list-cursor';
 
 import type {
@@ -100,13 +103,20 @@ const DOOR_BY_BUCKET: Record<BucketKey, 0 | 1 | 2 | 3> = {
 @Component({
   selector: 'mc-reminders',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [McDatePipe, IconComponent, ConfirmDialogComponent],
+  imports: [
+    McDatePipe,
+    IconComponent,
+    ConfirmDialogComponent,
+    TagPickerComponent,
+    NgTemplateOutlet,
+  ],
   templateUrl: './reminders.container.html',
   styleUrl: './reminders.container.css',
 })
 export class RemindersContainer {
   private readonly reminders = inject(RemindersService);
   private readonly workspace = inject(WorkspaceService);
+  protected readonly tagsService = inject(TagsService);
   private readonly errors = inject(ErrorService);
   private readonly i18n = inject(I18nService);
   private readonly creationIntent = inject(CreationIntentService);
@@ -131,6 +141,13 @@ export class RemindersContainer {
   protected readonly quickAdd = signal('');
   protected readonly selectedId = signal<string | null>(null);
   protected readonly showRegistry = signal(false);
+  // why: docs/deferred/reminders-goals.md "Palomares temáticos por
+  //      categoría" — off by default (preserves the single-palomar layout
+  //      everyone's used to); toggling groups `inNichos()` into a labeled
+  //      section per tag instead of one flat grid. A reminder with 2+ tags
+  //      appears once per matching section, same convention as the
+  //      cross-section `/tags/:id` view.
+  protected readonly groupByCategory = signal(false);
   protected readonly overflowOpenId = signal<string | null>(null);
   // why: gestos manuales (§14, "Animaciones de snooze") — snooze y
   //      desmarcar/re-marcar un recurrente no dejan el palomar (eso es
@@ -205,6 +222,30 @@ export class RemindersContainer {
       .filter((r) => bucketOf(r) === 'overdue')
       .map((r) => toPaloma(r)),
   );
+
+  protected readonly nichoGroups = computed<
+    readonly { label: string; palomas: readonly Paloma[] }[]
+  >(() => {
+    const list = this.inNichos();
+    const byId = new Map(this.tagsService.tags().map((t) => [t.id, t] as const));
+    const groups = new Map<string, Paloma[]>();
+    for (const p of list) {
+      for (const tagId of p.summary.tags) {
+        const label = byId.get(tagId)?.label ?? tagId;
+        const arr = groups.get(label);
+        if (arr) arr.push(p);
+        else groups.set(label, [p]);
+      }
+    }
+    const untagged = list.filter((p) => p.summary.tags.length === 0);
+    const out = [...groups.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([label, palomas]) => ({ label, palomas }));
+    if (untagged.length > 0) {
+      out.push({ label: this.t('reminders.category.untagged'), palomas: untagged });
+    }
+    return out;
+  });
 
   protected readonly registry = computed<readonly ReminderSummary[]>(() => {
     const q = this.query().trim().toLowerCase();
@@ -320,7 +361,28 @@ export class RemindersContainer {
       paused: p.summary.paused,
       readOnlyTitle: p.fromSource,
       sourceKind: p.summary.sourceKind,
+      tags: p.summary.tags,
     });
+  }
+
+  protected async onAddTag(label: string): Promise<void> {
+    const id = this.selectedId();
+    const draft = this.editing();
+    if (!id || !draft) return;
+    try {
+      await this.workspace.ensureWritable();
+      const tag = await this.tagsService.touch(label);
+      if (draft.tags.includes(tag.id)) return;
+      this.editing.set({ ...draft, tags: [...draft.tags, tag.id] });
+    } catch (e) {
+      this.errors.report(this.withReauth(e));
+    }
+  }
+
+  protected onRemoveTag(tagId: string): void {
+    const draft = this.editing();
+    if (!draft) return;
+    this.editing.set({ ...draft, tags: draft.tags.filter((t) => t !== tagId) });
   }
 
   protected onCloseDetail(): void {
@@ -368,6 +430,7 @@ export class RemindersContainer {
         dueAt: draft.dueAt,
         paused: draft.paused,
         recurrence,
+        tags: draft.tags,
       });
       this.onCloseDetail();
     } catch (e) {
@@ -648,6 +711,7 @@ interface EditingState {
   readonly paused: boolean;
   readonly readOnlyTitle: boolean;
   readonly sourceKind: ReminderSummary['sourceKind'];
+  readonly tags: readonly string[];
 }
 
 const toPaloma = (r: ReminderSummary): Paloma => {
