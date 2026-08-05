@@ -122,4 +122,28 @@ describe('TagsService', () => {
   it('caches and unused vi import is satisfied', () => {
     expect(vi).toBeDefined();
   });
+
+  it('setCustomColor and setSwatch are mutually exclusive', async () => {
+    const svc = TestBed.inject(TagsService);
+    await svc.refresh();
+    const t = await svc.touch('Ideas');
+    await svc.setSwatch(t.id, 'red');
+    expect(svc.byId(t.id)?.colorSwatchId).toBe('red');
+    await svc.setCustomColor(t.id, '#abcdef');
+    expect(svc.byId(t.id)?.colorHex).toBe('#abcdef');
+    expect(svc.byId(t.id)?.colorSwatchId).toBeUndefined();
+    await svc.setSwatch(t.id, 'blue');
+    expect(svc.byId(t.id)?.colorSwatchId).toBe('blue');
+    expect(svc.byId(t.id)?.colorHex).toBeUndefined();
+  });
+
+  it('setCustomColor(null) reverts to the deterministic default', async () => {
+    const svc = TestBed.inject(TagsService);
+    await svc.refresh();
+    const t = await svc.touch('Ideas');
+    await svc.setCustomColor(t.id, '#abcdef');
+    await svc.setCustomColor(t.id, null);
+    expect(svc.byId(t.id)?.colorHex).toBeUndefined();
+    expect(svc.byId(t.id)?.colorSwatchId).toBeUndefined();
+  });
 });

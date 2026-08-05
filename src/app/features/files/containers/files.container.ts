@@ -24,6 +24,7 @@ import { EntityLockController } from '@core/locks/entity-lock.controller';
 import { RelationsService } from '@core/relations/relations.service';
 import { entitySlugSegment, extractEntityId } from '@core/routing/entity-slug';
 import { TagsService } from '@core/tags/tags.service';
+import { ThemeService } from '@core/theme/theme.service';
 import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
 import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
 import { ConnectionsPanelContainer } from '@shared/connections/connections-panel.container';
@@ -83,8 +84,10 @@ export class FilesContainer {
   private readonly i18n = inject(I18nService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly relations = inject(RelationsService);
+  private readonly theme = inject(ThemeService);
 
   protected readonly tags = this.tagsService.tags;
+  protected readonly resolvedTheme = this.theme.resolved;
   protected readonly active = signal<FileCollection | null>(null);
 
   private readonly params = toSignal(this.route.queryParamMap, {

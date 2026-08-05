@@ -146,6 +146,20 @@ export function tagHexFor(theme: ResolvedTheme, id: string | undefined): string 
   return theme === 'dark' ? sw.dark : sw.light;
 }
 
+// why: single priority order for tag color everywhere it's rendered — custom
+//      hex (user-picked) beats curated swatch (theme-aware) beats the
+//      deterministic hash fallback stored in `tag.color`. Centralized so
+//      every consumer (chip, picker palette, tags list/detail, file locker
+//      cards) stays in sync — previously the file locker cards read
+//      `tag.color` directly and silently ignored `colorSwatchId`.
+export function resolveTagColor(
+  theme: ResolvedTheme,
+  tag: { readonly color: string; readonly colorSwatchId?: string; readonly colorHex?: string },
+): string {
+  if (tag.colorHex) return tag.colorHex;
+  return tagHexFor(theme, tag.colorSwatchId) ?? tag.color;
+}
+
 export interface ContrastReport {
   readonly ratio: number;
   readonly passesAA: boolean;

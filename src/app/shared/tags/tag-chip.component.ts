@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 
 import type { Tag } from '@core/tags/tag.types';
-import { tagHexFor } from '@core/theme/theme-palette';
+import { resolveTagColor } from '@core/theme/theme-palette';
 import { ThemeService } from '@core/theme/theme.service';
 import { BgColorDirective } from '@shared/directives/bg-color.directive';
 
@@ -122,7 +122,6 @@ export class TagChipComponent {
   protected readonly color = computed(() => {
     const t = this.tag();
     if (!t) return 'var(--mc-fg-muted)';
-    const swatchHex = tagHexFor(this.theme.resolved(), t.colorSwatchId);
-    return swatchHex ?? t.color;
+    return resolveTagColor(this.theme.resolved(), t);
   });
 }

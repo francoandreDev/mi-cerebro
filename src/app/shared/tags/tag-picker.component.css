@@ -84,3 +84,33 @@
   line-height: 16px;
   text-align: center;
 }
+.custom {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+}
+.custom-input {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid var(--mc-border-default);
+  border-radius: 50%;
+  overflow: hidden;
+  cursor: pointer;
+  background: none;
+}
+.custom-input::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+.custom-input::-webkit-color-swatch {
+  border: 0;
+  border-radius: 50%;
+}
+.warning {
+  margin: var(--mc-space-1) 0 0;
+  padding: 0 var(--mc-space-2) var(--mc-space-1);
+  font-size: var(--mc-font-size-xs);
+  color: var(--mc-state-danger);
+}

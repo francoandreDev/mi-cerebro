@@ -3,6 +3,8 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, output } f
 import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { colorForId, type Tag } from '@core/tags/tag.types';
+import { resolveTagColor } from '@core/theme/theme-palette';
+import type { ResolvedTheme } from '@core/theme/theme.types';
 
 import type { FileCollectionSummary } from '../models/file-collection.types';
 
@@ -43,6 +45,7 @@ export class FileLockerComponent {
   readonly untitledLabel = input.required<string>();
   readonly number = input.required<number>();
   readonly isOpen = input<boolean>(false);
+  readonly theme = input<ResolvedTheme>('light');
   readonly open = output<string>();
 
   private readonly i18n = inject(I18nService);
@@ -66,7 +69,7 @@ export class FileLockerComponent {
       const byId = new Map(this.availableTags().map((t) => [t.id, t] as const));
       for (const id of tagIds) {
         const tag = byId.get(id);
-        if (tag) return tag.color;
+        if (tag) return resolveTagColor(this.theme(), tag);
       }
     }
     return colorForId(this.summary().id);

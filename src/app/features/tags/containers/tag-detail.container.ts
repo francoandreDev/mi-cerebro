@@ -8,7 +8,7 @@ import type { TaggedItem, TaggedItemKind } from '@core/tags/tagged-item.types';
 import { TaggedItemsService } from '@core/tags/tagged-items.service';
 import type { Tag } from '@core/tags/tag.types';
 import { TagsService } from '@core/tags/tags.service';
-import { tagHexFor } from '@core/theme/theme-palette';
+import { resolveTagColor } from '@core/theme/theme-palette';
 import { ThemeService } from '@core/theme/theme.service';
 import { BgColorDirective } from '@shared/directives/bg-color.directive';
 import { BookVolumeComponent } from '@shared/entity-cards/book-volume.component';
@@ -47,6 +47,7 @@ export class TagDetailContainer {
   private readonly taggedItems = inject(TaggedItemsService);
   private readonly tagsService = inject(TagsService);
   private readonly theme = inject(ThemeService);
+  protected readonly resolvedTheme = this.theme.resolved;
   private readonly router = inject(Router);
   private readonly i18n = inject(I18nService);
 
@@ -59,7 +60,7 @@ export class TagDetailContainer {
   protected readonly tagColor = computed(() => {
     const t = this.tag();
     if (!t) return 'var(--mc-fg-muted)';
-    return tagHexFor(this.theme.resolved(), t.colorSwatchId) ?? t.color;
+    return resolveTagColor(this.theme.resolved(), t);
   });
 
   private readonly items = computed(() => {

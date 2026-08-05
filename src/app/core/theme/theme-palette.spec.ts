@@ -10,6 +10,7 @@ import {
   findAccent,
   findTagSwatch,
   reportContrast,
+  resolveTagColor,
 } from './theme-palette';
 import { contrastHex } from './wcag';
 
@@ -109,5 +110,22 @@ describe('reportContrast', () => {
   it('reports fail for low contrast', () => {
     const r = reportContrast('#888', '#999');
     expect(r.passesAA).toBe(false);
+  });
+});
+
+describe('resolveTagColor', () => {
+  it('prefers custom hex over swatch and fallback color', () => {
+    const tag = { color: '#111111', colorSwatchId: 'red', colorHex: '#abcdef' };
+    expect(resolveTagColor('light', tag)).toBe('#abcdef');
+    expect(resolveTagColor('dark', tag)).toBe('#abcdef');
+  });
+  it('falls back to the curated swatch when no custom hex is set', () => {
+    const tag = { color: '#111111', colorSwatchId: 'red' };
+    expect(resolveTagColor('light', tag)).toBe(findTagSwatch('red')!.light);
+    expect(resolveTagColor('dark', tag)).toBe(findTagSwatch('red')!.dark);
+  });
+  it('falls back to the deterministic hash color when nothing is set', () => {
+    const tag = { color: '#111111' };
+    expect(resolveTagColor('light', tag)).toBe('#111111');
   });
 });

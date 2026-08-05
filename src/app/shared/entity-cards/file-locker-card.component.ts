@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
 import { colorForId, type Tag } from '@core/tags/tag.types';
+import { resolveTagColor } from '@core/theme/theme-palette';
+import type { ResolvedTheme } from '@core/theme/theme.types';
 
 // why: read-only twin of features/files/components/file-locker.component.ts
 //      for the cross-tag view (features/tags/tag-detail) — same locker
@@ -39,6 +41,7 @@ export class FileLockerCardComponent {
   readonly number = input.required<number>();
   readonly tagIds = input.required<readonly string[]>();
   readonly availableTags = input.required<readonly Tag[]>();
+  readonly theme = input<ResolvedTheme>('light');
 
   readonly open = output<string>();
 
@@ -50,7 +53,7 @@ export class FileLockerCardComponent {
       const byId = new Map(this.availableTags().map((t) => [t.id, t] as const));
       for (const id of tagIds) {
         const tag = byId.get(id);
-        if (tag) return tag.color;
+        if (tag) return resolveTagColor(this.theme(), tag);
       }
     }
     return colorForId(this.id());

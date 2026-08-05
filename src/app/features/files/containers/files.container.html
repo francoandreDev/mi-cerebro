@@ -64,6 +64,7 @@
               [untitledLabel]="t('files.untitledTitle')"
               [number]="i + 1"
               [isOpen]="active()?.id === summary.id"
+              [theme]="resolvedTheme()"
               (open)="onOpenCollection(summary.id, summary.title)"
             />
           </li>

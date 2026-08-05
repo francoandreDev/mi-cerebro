@@ -2583,6 +2583,8 @@ export const es = {
   'settings.theme.reset': 'Restaurar tema por defecto',
   'tags.color.label': 'Color del tag',
   'tags.color.default': 'Volver al color por defecto',
+  'tags.color.custom': 'Color personalizado',
+  'tags.color.contrastWarning': 'Este color se distingue poco del fondo.',
 
   'music.title': 'Música',
   'music.library': 'Biblioteca',

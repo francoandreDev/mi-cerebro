@@ -15,7 +15,12 @@ import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import { TagsService } from '@core/tags/tags.service';
 import type { Tag } from '@core/tags/tag.types';
-import { TAG_SWATCHES, tagHexFor } from '@core/theme/theme-palette';
+import {
+  TAG_SWATCHES,
+  reportContrast,
+  resolveTagColor,
+  tagHexFor,
+} from '@core/theme/theme-palette';
 import { ThemeService } from '@core/theme/theme.service';
 import { BgColorDirective } from '@shared/directives/bg-color.directive';
 
@@ -72,7 +77,19 @@ const norm = (s: string): string => s.normalize('NFKD').replace(/\p{M}/gu, '').t
             (click)="pickSwatch(rid, sw.id)"
           ></button>
         }
+        <label class="custom">
+          <input
+            type="color"
+            class="custom-input"
+            [value]="customColorFor(rid)"
+            [attr.aria-label]="t('tags.color.custom')"
+            (input)="onCustomColor(rid, $event)"
+          />
+        </label>
       </div>
+      @if (contrastWarning()) {
+        <p class="warning">{{ t('tags.color.contrastWarning') }}</p>
+      }
     }
     @if (editable() && open() && suggestions().length + (canCreate() ? 1 : 0) > 0) {
       <ul class="menu" role="listbox">
@@ -115,6 +132,10 @@ export class TagPickerComponent {
   protected readonly cursor = signal(0);
   protected readonly recoloringId = signal<string | null>(null);
   protected readonly swatches = TAG_SWATCHES;
+  // why: ephemeral, only set while the palette is open — the contrast
+  //      warning needs the just-picked hex, not a re-derived value that
+  //      could momentarily disagree with the color input's own state.
+  private readonly lastCustomHex = signal<string | null>(null);
 
   private readonly inputEl = viewChild<ElementRef<HTMLInputElement>>('input');
   private readonly i18n = inject(I18nService);
@@ -123,15 +144,50 @@ export class TagPickerComponent {
 
   protected toggleRecolor(id: string): void {
     this.recoloringId.set(this.recoloringId() === id ? null : id);
+    this.lastCustomHex.set(null);
   }
 
   protected pickSwatch(id: string, swatchId: string | null): void {
     void this.tags.setSwatch(id, swatchId);
     this.recoloringId.set(null);
+    this.lastCustomHex.set(null);
   }
 
   protected swatchHex(id: string): string {
     return tagHexFor(this.theme.resolved(), id) ?? '#888';
+  }
+
+  protected customColorFor(id: string): string {
+    const tag = this.tags.byId(id);
+    if (!tag) return '#888888';
+    return this.lastCustomHex() ?? resolveTagColor(this.theme.resolved(), tag);
+  }
+
+  protected onCustomColor(id: string, event: Event): void {
+    const hex = (event.target as HTMLInputElement).value;
+    this.lastCustomHex.set(hex);
+    void this.tags.setCustomColor(id, hex);
+  }
+
+  // why: 3:1 non-text contrast — same threshold the curated TAG_SWATCHES
+  //      were validated against (theme-palette.ts) — checked live against
+  //      the actual rendered chip background, so it stays correct under a
+  //      user's custom theme too, not just the default palette. Advises,
+  //      never blocks (reglas.md §4.13.29).
+  protected readonly contrastWarning = computed(() => {
+    const hex = this.lastCustomHex();
+    if (!hex) return false;
+    const bg = this.chipBgHex();
+    if (!bg) return false;
+    return reportContrast(hex, bg).ratio < 3;
+  });
+
+  private chipBgHex(): string | null {
+    if (typeof document === 'undefined') return null;
+    const value = getComputedStyle(document.documentElement)
+      .getPropertyValue('--mc-bg-elevated')
+      .trim();
+    return value || null;
   }
 
   protected readonly selectedTags = computed(() => {

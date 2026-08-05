@@ -173,6 +173,7 @@
             [number]="i + 1"
             [tagIds]="file.tags"
             [availableTags]="availableTags()"
+            [theme]="resolvedTheme()"
             (open)="open('file', file.id, file.title)"
           />
         }
@@ -202,7 +203,9 @@
 
   @if (playlistItems().length) {
     <section class="group">
-      <h2><mc-icon name="music-notes" />{{ t('music.playlists') }} ({{ playlistItems().length }})</h2>
+      <h2>
+        <mc-icon name="music-notes" />{{ t('music.playlists') }} ({{ playlistItems().length }})
+      </h2>
       <div class="cards">
         @for (playlist of playlistItems(); track playlist.id) {
           <mc-tagged-generic-card

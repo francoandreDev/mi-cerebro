@@ -14,7 +14,7 @@ import type { TranslationKey } from '@core/i18n/i18n.types';
 import type { Tag } from '@core/tags/tag.types';
 import { TagsAdminService } from '@core/tags/tags-admin.service';
 import { TagsService } from '@core/tags/tags.service';
-import { TAG_SWATCHES, tagHexFor } from '@core/theme/theme-palette';
+import { TAG_SWATCHES, resolveTagColor, tagHexFor } from '@core/theme/theme-palette';
 import { ThemeService } from '@core/theme/theme.service';
 import { TutorialService } from '@core/tutorials/tutorial.service';
 import { registerTagsOrganizeTutorial } from './tags-organize.tutorial';
@@ -108,7 +108,7 @@ export class TagsContainer {
   }
 
   protected tagColor(tag: Tag): string {
-    return tagHexFor(this.theme.resolved(), tag.colorSwatchId) ?? tag.color;
+    return resolveTagColor(this.theme.resolved(), tag);
   }
 
   protected mergeTargets(excludeId: string): readonly Tag[] {

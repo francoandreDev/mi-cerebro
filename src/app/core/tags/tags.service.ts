@@ -90,7 +90,19 @@ export class TagsService {
     const current = this.byId(id);
     if (!current) return;
     const next: Tag =
-      swatchId === null ? withoutSwatch(current) : { ...current, colorSwatchId: swatchId };
+      swatchId === null
+        ? withoutColorOverrides(current)
+        : { ...withoutKey(current, 'colorHex'), colorSwatchId: swatchId };
+    await this.persist(this.tagsSignal().map((t) => (t.id === id ? next : t)));
+  }
+
+  async setCustomColor(id: string, hex: string | null): Promise<void> {
+    const current = this.byId(id);
+    if (!current) return;
+    const next: Tag =
+      hex === null
+        ? withoutColorOverrides(current)
+        : { ...withoutKey(current, 'colorSwatchId'), colorHex: hex };
     await this.persist(this.tagsSignal().map((t) => (t.id === id ? next : t)));
   }
 
@@ -109,8 +121,12 @@ export class TagsService {
   }
 }
 
-function withoutSwatch(tag: Tag): Tag {
+function withoutKey(tag: Tag, key: 'colorSwatchId' | 'colorHex'): Tag {
   const next: Record<string, unknown> = { ...tag };
-  delete next['colorSwatchId'];
+  delete next[key];
   return next as Tag;
+}
+
+function withoutColorOverrides(tag: Tag): Tag {
+  return withoutKey(withoutKey(tag, 'colorSwatchId'), 'colorHex');
 }

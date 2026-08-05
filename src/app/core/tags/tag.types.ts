@@ -7,6 +7,7 @@ export interface Tag {
   readonly label: string;
   readonly color: string;
   readonly colorSwatchId?: string;
+  readonly colorHex?: string;
   readonly createdAt: string;
   readonly [key: string]: unknown;
 }
@@ -17,8 +18,8 @@ export interface TagsFile {
   readonly [key: string]: unknown;
 }
 
-// why: deterministic palette so a tag id consistently maps to the same hue.
-//      User-customizable colors are deferred (see docs/deferred/index.md).
+// why: deterministic palette so a tag id consistently maps to the same hue
+//      before the user ever picks anything (fallback of the fallback).
 export const TAG_PALETTE: readonly string[] = [
   '#e57373',
   '#f06292',
