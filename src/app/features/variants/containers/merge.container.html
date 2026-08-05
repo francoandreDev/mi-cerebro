@@ -142,6 +142,19 @@
       }
     </div>
 
+    @if (!remote) {
+      <div class="facets-bar">
+        <label class="facet-toggle">
+          <input type="checkbox" [(ngModel)]="includeComments" [disabled]="applying()" />
+          {{ t('merge.facets.comments') }}
+        </label>
+        <label class="facet-toggle">
+          <input type="checkbox" [(ngModel)]="includeDraft" [disabled]="applying()" />
+          {{ t('merge.facets.draft') }}
+        </label>
+      </div>
+    }
+
     <footer class="merge-foot">
       <button type="button" class="ghost" (click)="back()" [disabled]="applying()">
         {{ t('merge.cancel') }}

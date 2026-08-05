@@ -570,6 +570,8 @@ export const es = {
   'merge.choice.into': 'Conservar la versión de {name}',
   'merge.choice.skip': 'No tocar esta ruta',
   'merge.choice.skip.short': 'Saltar',
+  'merge.facets.comments': 'Traer comentarios',
+  'merge.facets.draft': 'Traer borrador',
   'merge.cancel': 'Cancelar',
   'merge.apply': 'Aplicar ({n})',
   'merge.apply.pending': 'La aplicación se habilita en el siguiente paso (13b-iv #3).',

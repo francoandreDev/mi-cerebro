@@ -26,6 +26,18 @@ export interface MergeSelection {
   readonly choice: MergeChoice;
 }
 
+// why: comments/drafts used to ride along unconditionally with every "from"
+//      selection (see mergeCommentsFaceta/mergeDraftsFaceta in
+//      merge-facetas.ts) — this makes that a per-run choice instead of the
+//      3 fixed facets always merging together. Defaults preserve the old
+//      all-or-nothing behavior.
+export interface MergeFacetOptions {
+  readonly comments: boolean;
+  readonly draft: boolean;
+}
+
+export const DEFAULT_MERGE_FACETS: MergeFacetOptions = { comments: true, draft: true };
+
 export interface MergePlan {
   readonly fromVariantId: string;
   readonly intoVariantId: string;

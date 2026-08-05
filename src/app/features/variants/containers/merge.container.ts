@@ -17,6 +17,7 @@ import { MergeService } from '@core/versioning/merge.service';
 import type {
   MergeChoice,
   MergeDiffEntry,
+  MergeFacetOptions,
   MergeOutcome,
   MergePlan,
   MergeSelection,
@@ -49,6 +50,14 @@ export class MergeContainer implements OnInit {
   protected readonly plan = signal<MergePlan | null>(null);
   protected readonly selections = signal<Map<string, MergeChoice>>(new Map());
   protected readonly outcome = signal<MergeOutcome | null>(null);
+  // why: granularidad por faceta (docs/deferred.priority-order.md) — antes
+  //      comentarios y borrador viajaban siempre junto al contenido
+  //      principal en cada selección "from". No hay diff por-entidad de
+  //      estas facetas (no se listan en el plan), así que el control es un
+  //      toggle global por corrida de merge, no por fila — sólo aplica a
+  //      merges variant→variant, un remote nunca mergeó estas facetas.
+  protected readonly includeComments = signal(true);
+  protected readonly includeDraft = signal(true);
   // 13e-iii — when set, "from" is a remote tracking ref instead of a variant.
   protected readonly remoteRefName = signal<string | null>(null);
   // why: fed back to /variants as a queryParam so the delta can play the
@@ -225,10 +234,14 @@ export class MergeContainer implements OnInit {
     try {
       const remoteRef = this.remoteRefName();
       const into = this.into();
+      const facets: MergeFacetOptions = {
+        comments: this.includeComments(),
+        draft: this.includeDraft(),
+      };
       const result =
         remoteRef && into
           ? await this.merge.applyFromRemoteMainSelections(into, remoteRef, selections)
-          : await this.merge.apply(plan, selections);
+          : await this.merge.apply(plan, selections, facets);
       this.outcome.set(result);
       if (remoteRef && result.failedAt === null) this.remote.clearDivergence();
       if (!remoteRef && result.failedAt === null) this.lastMergedFromId = this.fromId();

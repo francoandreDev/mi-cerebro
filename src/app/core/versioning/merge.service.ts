@@ -26,11 +26,13 @@ import { type Variant } from './variants.types';
 import type {
   MergeChoice,
   MergeDiffEntry,
+  MergeFacetOptions,
   MergeOutcome,
   MergePlan,
   MergeSelection,
   MergeStatus,
 } from './merge.types';
+import { DEFAULT_MERGE_FACETS } from './merge.types';
 
 export const REMOTE_SOURCE_PREFIX = 'remote:';
 const REMOTE_TRACKING_PREFIX = 'refs/remotes/origin/';
@@ -128,14 +130,19 @@ export class MergeService {
   // other tabs can't race; rollback is per-commit (each selection that
   // commits is independently revertable from /history via the shared
   // Merge-Group trailer).
-  async apply(plan: MergePlan, selections: readonly MergeSelection[]): Promise<MergeOutcome> {
+  async apply(
+    plan: MergePlan,
+    selections: readonly MergeSelection[],
+    facets: MergeFacetOptions = DEFAULT_MERGE_FACETS,
+  ): Promise<MergeOutcome> {
     await this.autocommit.commitNow('pre-merge');
-    return this.fsLock.withLock(() => this.applyLocked(plan, selections));
+    return this.fsLock.withLock(() => this.applyLocked(plan, selections, facets));
   }
 
   private async applyLocked(
     plan: MergePlan,
     selections: readonly MergeSelection[],
+    facets: MergeFacetOptions,
   ): Promise<MergeOutcome> {
     const fs = this.requireAdapter();
     const from = this.findVariant(plan.fromVariantId);
@@ -160,6 +167,7 @@ export class MergeService {
           from,
           into,
           groupId,
+          facets,
         );
         if (ok) applied.push(actionable[i]!.filepath);
       }
@@ -189,6 +197,7 @@ export class MergeService {
     from: Variant,
     into: Variant,
     groupId: string,
+    facets: MergeFacetOptions,
   ): Promise<boolean> {
     const baseOid = await git.resolveRef({ fs, dir: REPO_DIR, ref: intoRef });
     const newOid = await buildMergeCommit({
@@ -219,8 +228,8 @@ export class MergeService {
       into,
       groupId,
     };
-    await mergeCommentsFaceta(facetaArgs);
-    await mergeDraftsFaceta(facetaArgs);
+    if (facets.comments) await mergeCommentsFaceta(facetaArgs);
+    if (facets.draft) await mergeDraftsFaceta(facetaArgs);
     return true;
   }
 
