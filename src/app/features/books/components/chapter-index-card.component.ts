@@ -127,11 +127,13 @@ export class ChapterIndexCardComponent {
     return String(this.index() + 1).padStart(2, '0');
   }
   protected pagesLabel(): string {
-    const { pageStart, pageEnd, pageCount } = this.chapter();
+    const { pageStart, pageEnd, pageCount, pageCountEstimated } = this.chapter();
     if (pageStart === pageEnd) {
-      return this.t('books.index.pagesOne', { page: pageStart, count: pageCount });
+      const key = pageCountEstimated ? 'books.index.pagesOneEstimated' : 'books.index.pagesOne';
+      return this.t(key, { page: pageStart, count: pageCount });
     }
-    return this.t('books.index.pagesRange', {
+    const key = pageCountEstimated ? 'books.index.pagesRangeEstimated' : 'books.index.pagesRange';
+    return this.t(key, {
       start: pageStart,
       end: pageEnd,
       count: pageCount,

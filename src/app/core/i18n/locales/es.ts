@@ -1823,6 +1823,8 @@ export const es = {
   'books.index.empty': 'Este libro todavía no tiene capítulos.',
   'books.index.pagesOne': 'pag. {page} ({count} p.)',
   'books.index.pagesRange': 'pag. {start} – {end} ({count} p.)',
+  'books.index.pagesOneEstimated': 'pag. {page} (~{count} p.)',
+  'books.index.pagesRangeEstimated': 'pag. {start} – {end} (~{count} p.)',
   'books.index.pageOf': 'Página {page} de {total}',
   'books.open.subtitlePlaceholder': 'Subtítulo (opcional)…',
   'books.open.backTitle': 'Reverso',

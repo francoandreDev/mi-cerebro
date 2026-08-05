@@ -93,6 +93,14 @@ export interface ChapterSummary {
   readonly words: number;
   readonly preview: ChapterPreview;
   readonly pageCount: number;
+  // why: `pageCount` is a real measurement (real column layout at the width
+  //      the editor was opened at) once the chapter has been opened, and a
+  //      words/250 guess otherwise — see `Chapter.pageCount` and "la UI no
+  //      debe mentir" (docs/deferred/trash-books.md "Paginación real
+  //      persistida"). This flag lets the index card show the guess as a
+  //      guess (`~N`) instead of presenting it with the same false
+  //      precision as a measured count.
+  readonly pageCountEstimated: boolean;
   readonly pageStart: number;
   readonly pageEnd: number;
   readonly image: ChapterImageRef;

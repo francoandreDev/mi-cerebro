@@ -397,6 +397,7 @@ export class BooksService {
       readonly words: number;
       readonly preview: ChapterPreview;
       readonly pageCount: number;
+      readonly pageCountEstimated: boolean;
       readonly image: ChapterImageRef;
     }
     const map = new Map<string, Draft>();
@@ -415,6 +416,7 @@ export class BooksService {
           words,
           preview: buildChapterPreview(plain),
           pageCount: ch.pageCount ?? estimatePageCount(words),
+          pageCountEstimated: ch.pageCount === undefined,
           image: ch.image ?? { kind: 'auto' },
         });
         idToFile.set(ch.id, filename);
