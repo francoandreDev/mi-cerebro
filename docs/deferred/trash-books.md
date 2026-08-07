@@ -15,13 +15,6 @@ Formato por entrada:
 
 ## Books / UI (origen: rediseño de /books)
 
-### Drag-and-drop en modo árbol
-
-- **Qué**: el modo `tree` (ver `docs/sistema/entidades.md`, sección Libros) permite abrir libros y navegar carpetas, pero no reordenar/mover libros arrastrando — a diferencia de `shelf`, que sí lo soporta (`bookshelf-dnd.ts`).
-- **Por qué se difirió**: el hit-testing de drop sobre puntos dispersos en una curva SVG (en vez de una fila lineal) es una coreografía de pointer events más compleja que la de `shelf`; el modo árbol es principalmente una vista panorámica de navegación/lectura, `shelf` ya cubre el caso de reordenar.
-- **Target**: sin asignar — abrir si el usuario nota falta de reordenar sin salir del modo árbol.
-- **Origen**: sesión 2026-08-03 (implementación del árbol, ítem original de 2026-06-29 cerrado).
-
 ### Paginación real persistida fila por fila (no global)
 
 - **Qué**: hoy `Chapter.pageCount` se actualiza cuando el editor abre el capítulo (totalSpreads\*2, medido con `ResizeObserver` sobre el layout multi-columna real — ver `chapter-editor-pane.component.ts`). Capítulos nunca abiertos caen a `ceil(words/250)`.
