@@ -2952,6 +2952,13 @@ export const es = {
   'settings.remote.errors.invalidUrl':
     'La URL tiene que apuntar a un repo HTTPS de GitHub (https://github.com/owner/repo[.git]).',
   'settings.remote.errors.emptyToken': 'El PAT no puede estar vacío.',
+  'settings.remote.proxy.label': 'Proxy CORS propio (opcional)',
+  'settings.remote.proxy.placeholder': 'https://tu-proxy.workers.dev',
+  'settings.remote.proxy.hint':
+    'Push/fetch a GitHub pasan por un proxy CORS porque el navegador no puede hablarle directo. Por defecto se usa el proxy público de isomorphic-git — dejá esto vacío salvo que hayas desplegado el tuyo (ver docs/proyecto/features.md).',
+  'settings.remote.proxy.active.public': 'Proxy CORS: público (cors.isomorphic-git.org).',
+  'settings.remote.proxy.active.custom': 'Proxy CORS: propio ({url}).',
+  'settings.remote.errors.invalidProxy': 'Tiene que ser una URL https:// válida.',
   'settings.remote.confirmClear':
     '¿Borrar la configuración del remoto? El PAT se va a borrar del disco.',
   'settings.remote.confirm.clear.title': 'Borrar configuración remota',

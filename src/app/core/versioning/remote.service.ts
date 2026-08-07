@@ -18,6 +18,7 @@ import { GitFsAdapter } from './git-fs.adapter';
 import {
   type ConfigFs,
   ensureGitignoredSecrets,
+  isValidProxyUrl,
   isValidRemoteUrl,
   readRemoteSecrets,
   writeRemoteSecrets,
@@ -96,6 +97,7 @@ export class RemoteService {
   async configure(input: RemoteConfig): Promise<void> {
     const url = input.url.trim();
     const token = input.token.trim();
+    const corsProxyUrl = input.corsProxyUrl?.trim();
     if (!isValidRemoteUrl(url) || token.length === 0) {
       throw new AppError(ERROR_CODES.NET_001, {
         severity: 'error',
@@ -103,11 +105,18 @@ export class RemoteService {
         recoverable: true,
       });
     }
+    if (corsProxyUrl && !isValidProxyUrl(corsProxyUrl)) {
+      throw new AppError(ERROR_CODES.NET_001, {
+        severity: 'error',
+        context: { reason: 'invalid-proxy-url' },
+        recoverable: true,
+      });
+    }
     const fs = this.requireConfigFs();
     await ensureGitignoredSecrets(fs);
     const next: RemoteSecretsFile = {
       schemaVersion: REMOTE_SECRETS_SCHEMA_VERSION,
-      remote: { url, token },
+      remote: { url, token, ...(corsProxyUrl ? { corsProxyUrl } : {}) },
       ...(this.stateSignal().lastPushAt ? { lastPushAt: this.stateSignal().lastPushAt! } : {}),
     };
     await writeRemoteSecrets(fs, this.idb, next);

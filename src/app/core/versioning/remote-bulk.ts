@@ -18,8 +18,15 @@ import { stripHeadsPrefix } from './variants.io';
 import type { Variant } from './variants.types';
 
 const REPO_DIR = '/';
-const CORS_PROXY = 'https://cors.isomorphic-git.org';
+// why: fallback when the user hasn't configured their own proxy
+//      (RemoteConfig.corsProxyUrl) — see docs/proyecto/features.md
+//      "Proxy CORS para push/fetch a GitHub".
+const PUBLIC_CORS_PROXY = 'https://cors.isomorphic-git.org';
 const REMOTE_NAME = 'origin';
+
+function corsProxyFor(cfg: RemoteConfig): string {
+  return cfg.corsProxyUrl || PUBLIC_CORS_PROXY;
+}
 
 export interface RefTarget {
   readonly variantId: string;
@@ -152,7 +159,7 @@ export function gitPushOne(adapter: GitFsAdapter, cfg: RemoteConfig): SyncOneFn 
         url: cfg.url,
         ref,
         remoteRef: ref,
-        corsProxy: CORS_PROXY,
+        corsProxy: corsProxyFor(cfg),
         onAuth: () => ({ username: cfg.token, password: 'x-oauth-basic' }),
       });
       return classifyPushResult(result, ref);
@@ -193,7 +200,7 @@ export function gitPushWithLeaseOne(
         ref,
         remoteRef: ref,
         force: true,
-        corsProxy: CORS_PROXY,
+        corsProxy: corsProxyFor(cfg),
         onAuth: () => ({ username: cfg.token, password: 'x-oauth-basic' }),
         onPrePush: ({ remoteRef }) => {
           if (expectedRemoteOid === null) return true;
@@ -224,7 +231,7 @@ export function gitFetchOne(adapter: GitFsAdapter, cfg: RemoteConfig): SyncOneFn
         ref,
         singleBranch: true,
         tags: false,
-        corsProxy: CORS_PROXY,
+        corsProxy: corsProxyFor(cfg),
         onAuth: () => ({ username: cfg.token, password: 'x-oauth-basic' }),
       });
       return { status: 'ok' };

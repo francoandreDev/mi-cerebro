@@ -25,9 +25,18 @@ const GITIGNORE_LINE = '/.mi-cerebro/secrets.json';
 const TEXT_ENCODER = new TextEncoder();
 const TEXT_DECODER = new TextDecoder();
 const URL_RE = /^https:\/\/github\.com\/[^/]+\/[^/]+?(?:\.git)?\/?$/i;
+const PROXY_URL_RE = /^https:\/\/[^/\s]+\/?$/i;
 
 export function isValidRemoteUrl(url: string): boolean {
   return URL_RE.test(url.trim());
+}
+
+// why: not scoped to a specific host like isValidRemoteUrl — a self-hosted
+//      proxy can live on any domain (Cloudflare Workers, Deno Deploy,
+//      etc.). Just needs to be a bare https origin (isomorphic-git appends
+//      the target path itself).
+export function isValidProxyUrl(url: string): boolean {
+  return PROXY_URL_RE.test(url.trim());
 }
 
 export interface ConfigFs {
@@ -95,7 +104,11 @@ export async function writeRemoteSecrets(
   const onDisk = {
     schemaVersion: REMOTE_SECRETS_SCHEMA_VERSION,
     remote: file.remote
-      ? { url: file.remote.url, token: await encryptToken(idb, file.remote.token) }
+      ? {
+          url: file.remote.url,
+          token: await encryptToken(idb, file.remote.token),
+          ...(file.remote.corsProxyUrl ? { corsProxyUrl: file.remote.corsProxyUrl } : {}),
+        }
       : null,
     ...(file.lastPushAt ? { lastPushAt: file.lastPushAt } : {}),
     ...(file.dispatchCount ? { dispatchCount: file.dispatchCount } : {}),
@@ -131,12 +144,17 @@ function normalizeDispatchCount(dc: unknown): RemoteSecretsFile['dispatchCount']
   return { date: d.date, count: Math.max(0, Math.round(d.count)) };
 }
 
+function normalizeCorsProxyUrl(v: unknown): string | undefined {
+  return typeof v === 'string' && v.length > 0 ? v : undefined;
+}
+
 function normalizeLegacyRemote(remote: unknown): RemoteSecretsFile['remote'] {
   if (!remote || typeof remote !== 'object') return null;
-  const r = remote as { url?: unknown; token?: unknown };
+  const r = remote as { url?: unknown; token?: unknown; corsProxyUrl?: unknown };
   if (typeof r.url !== 'string' || typeof r.token !== 'string') return null;
   if (r.url.length === 0 || r.token.length === 0) return null;
-  return { url: r.url, token: r.token };
+  const corsProxyUrl = normalizeCorsProxyUrl(r.corsProxyUrl);
+  return { url: r.url, token: r.token, ...(corsProxyUrl ? { corsProxyUrl } : {}) };
 }
 
 async function normalizeEncryptedRemote(
@@ -144,7 +162,7 @@ async function normalizeEncryptedRemote(
   idb: IdbService,
 ): Promise<RemoteSecretsFile['remote']> {
   if (!remote || typeof remote !== 'object') return null;
-  const r = remote as { url?: unknown; token?: unknown };
+  const r = remote as { url?: unknown; token?: unknown; corsProxyUrl?: unknown };
   if (typeof r.url !== 'string' || r.url.length === 0 || !r.token || typeof r.token !== 'object') {
     return null;
   }
@@ -155,5 +173,6 @@ async function normalizeEncryptedRemote(
     ciphertext: enc.ciphertext,
   } as EncryptedToken);
   if (token === null || token.length === 0) return null;
-  return { url: r.url, token };
+  const corsProxyUrl = normalizeCorsProxyUrl(r.corsProxyUrl);
+  return { url: r.url, token, ...(corsProxyUrl ? { corsProxyUrl } : {}) };
 }

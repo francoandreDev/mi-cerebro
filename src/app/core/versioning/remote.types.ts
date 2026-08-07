@@ -13,9 +13,14 @@
 export const REMOTE_SECRETS_FILE = '.mi-cerebro/secrets.json';
 export const REMOTE_SECRETS_SCHEMA_VERSION = 2 as const;
 
+// why: corsProxyUrl is optional — absent means "use the public
+//      isomorphic-git proxy" (see remote-bulk.ts PUBLIC_CORS_PROXY). Not a
+//      secret, but it lives alongside the token in secrets.json since it's
+//      part of the same remote config the user fills in on one form.
 export interface RemoteConfig {
   readonly url: string;
   readonly token: string;
+  readonly corsProxyUrl?: string;
 }
 
 // why: "N envíos hoy" (docs/deferred/sync.md) — count resets when `date`

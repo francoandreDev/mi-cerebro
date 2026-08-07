@@ -115,6 +115,13 @@
                 {{ t('settings.remote.lastPush').replace('{when}', when) }}
               </p>
             }
+            <p class="muted">
+              {{
+                cfg.corsProxyUrl
+                  ? t('settings.remote.proxy.active.custom').replace('{url}', cfg.corsProxyUrl)
+                  : t('settings.remote.proxy.active.public')
+              }}
+            </p>
           } @else {
             <p class="muted">{{ t('settings.remote.notConfigured') }}</p>
           }
@@ -148,6 +155,22 @@
             <span class="hint">{{ t('settings.remote.token.hint') }}</span>
             @if (remoteTokenError()) {
               <span class="error">{{ t('settings.remote.errors.emptyToken') }}</span>
+            }
+          </label>
+
+          <label class="field">
+            <span class="label">{{ t('settings.remote.proxy.label') }}</span>
+            <input
+              type="url"
+              [value]="remoteProxyDraft()"
+              (input)="onRemoteProxyInput($event)"
+              [placeholder]="t('settings.remote.proxy.placeholder')"
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <span class="hint">{{ t('settings.remote.proxy.hint') }}</span>
+            @if (remoteProxyError()) {
+              <span class="error">{{ t('settings.remote.errors.invalidProxy') }}</span>
             }
           </label>
 

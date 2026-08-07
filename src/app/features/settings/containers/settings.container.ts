@@ -36,7 +36,7 @@ import { registerSettingsRemindersGoalsTutorial } from './settings-reminders-goa
 import { registerSettingsRemoteVersioningTutorial } from './settings-remote-versioning.tutorial';
 import { registerSettingsThemeExportTutorial } from './settings-theme-export.tutorial';
 import { registerSettingsTutorial } from './settings.tutorial';
-import { isValidRemoteUrl } from '@core/versioning/remote.config.io';
+import { isValidProxyUrl, isValidRemoteUrl } from '@core/versioning/remote.config.io';
 import { RemoteService } from '@core/versioning/remote.service';
 
 @Component({
@@ -138,8 +138,10 @@ export class SettingsContainer {
   protected readonly isPushing = this.remote.isPushing;
   protected readonly remoteUrlDraft = signal('');
   protected readonly remoteTokenDraft = signal('');
+  protected readonly remoteProxyDraft = signal('');
   protected readonly remoteUrlError = signal(false);
   protected readonly remoteTokenError = signal(false);
+  protected readonly remoteProxyError = signal(false);
 
   constructor() {
     registerSettingsTutorial();
@@ -260,16 +262,24 @@ export class SettingsContainer {
     this.remoteTokenError.set(false);
   }
 
+  protected onRemoteProxyInput(event: Event): void {
+    this.remoteProxyDraft.set((event.target as HTMLInputElement).value);
+    this.remoteProxyError.set(false);
+  }
+
   protected async saveRemote(): Promise<void> {
     const url = this.remoteUrlDraft().trim();
     const token = this.remoteTokenDraft().trim();
+    const corsProxyUrl = this.remoteProxyDraft().trim();
     const urlOk = isValidRemoteUrl(url);
     const tokenOk = token.length > 0;
+    const proxyOk = corsProxyUrl.length === 0 || isValidProxyUrl(corsProxyUrl);
     this.remoteUrlError.set(!urlOk);
     this.remoteTokenError.set(!tokenOk);
-    if (!urlOk || !tokenOk) return;
+    this.remoteProxyError.set(!proxyOk);
+    if (!urlOk || !tokenOk || !proxyOk) return;
     try {
-      await this.remote.configure({ url, token });
+      await this.remote.configure({ url, token, ...(corsProxyUrl ? { corsProxyUrl } : {}) });
       this.remoteTokenDraft.set('');
     } catch (e) {
       this.errors.report(e);
@@ -290,6 +300,7 @@ export class SettingsContainer {
           await this.remote.clear();
           this.remoteUrlDraft.set('');
           this.remoteTokenDraft.set('');
+          this.remoteProxyDraft.set('');
         } catch (e) {
           this.errors.report(e);
         }

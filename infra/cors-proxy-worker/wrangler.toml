@@ -1,0 +1,15 @@
+# Cloudflare Worker config for the self-hosted CORS proxy (see README.md).
+# `name` becomes part of your Worker's default URL:
+#   https://<name>.<your-subdomain>.workers.dev
+# Change it if you want, it's cosmetic — nothing in mi-cerebro depends on
+# this exact name, only on whatever final URL you paste into /settings.
+name = "mi-cerebro-cors-proxy"
+main = "worker.js"
+compatibility_date = "2024-09-23"
+
+# Optional: restrict which origins may call this proxy (defaults to "*",
+# i.e. any origin, same as the public isomorphic-git proxy). Uncomment and
+# set to your app's actual origin if you want it locked down — e.g. if
+# you're serving mi-cerebro from a fixed URL instead of localhost.
+# [vars]
+# ALLOW_ORIGIN = "https://your-mi-cerebro-origin.example"

@@ -12,6 +12,7 @@ import { IdbService } from '@core/idb/idb.service';
 import type { ConfigFs } from './remote.config.io';
 import {
   ensureGitignoredSecrets,
+  isValidProxyUrl,
   isValidRemoteUrl,
   readRemoteSecrets,
   writeRemoteSecrets,
@@ -60,6 +61,19 @@ describe('isValidRemoteUrl', () => {
   });
 });
 
+describe('isValidProxyUrl', () => {
+  it.each([
+    ['https://mi-cerebro-cors-proxy.example.workers.dev', true],
+    ['https://mi-cerebro-cors-proxy.example.workers.dev/', true],
+    ['http://mi-cerebro-cors-proxy.example.workers.dev', false],
+    ['mi-cerebro-cors-proxy.example.workers.dev', false],
+    ['https://a/b', false],
+    ['', false],
+  ])('isValidProxyUrl(%s) === %s', (url, expected) => {
+    expect(isValidProxyUrl(url)).toBe(expected);
+  });
+});
+
 describe('readRemoteSecrets', () => {
   it('returns empty file when secrets.json is missing', async () => {
     const fs = new MemFs();
@@ -79,6 +93,36 @@ describe('readRemoteSecrets', () => {
     expect(fs.text('.mi-cerebro/secrets.json')).not.toContain('ghp_abc');
     const { file } = await readRemoteSecrets(fs, store);
     expect(file.remote).toEqual({ url: 'https://github.com/owner/repo.git', token: 'ghp_abc' });
+  });
+
+  it('round-trips an optional corsProxyUrl alongside the remote config', async () => {
+    const fs = new MemFs();
+    const store = idb();
+    await writeRemoteSecrets(fs, store, {
+      schemaVersion: REMOTE_SECRETS_SCHEMA_VERSION,
+      remote: {
+        url: 'https://github.com/owner/repo.git',
+        token: 'ghp_abc',
+        corsProxyUrl: 'https://mi-cerebro-cors-proxy.example.workers.dev',
+      },
+    });
+    const { file } = await readRemoteSecrets(fs, store);
+    expect(file.remote).toEqual({
+      url: 'https://github.com/owner/repo.git',
+      token: 'ghp_abc',
+      corsProxyUrl: 'https://mi-cerebro-cors-proxy.example.workers.dev',
+    });
+  });
+
+  it('omits corsProxyUrl from the round-tripped remote when not configured', async () => {
+    const fs = new MemFs();
+    const store = idb();
+    await writeRemoteSecrets(fs, store, {
+      schemaVersion: REMOTE_SECRETS_SCHEMA_VERSION,
+      remote: { url: 'https://github.com/owner/repo.git', token: 'ghp_abc' },
+    });
+    const { file } = await readRemoteSecrets(fs, store);
+    expect(file.remote?.corsProxyUrl).toBeUndefined();
   });
 
   it('discards files with future schemaVersion', async () => {
