@@ -195,9 +195,14 @@
   <mc-bookshelf-tree
     [shelves]="catalogShelves()"
     [untitledLabel]="t('books.untitledTitle')"
+    [draggingId]="draggingId()"
     (openBook)="onTreeOpenBook($event)"
     (openFolder)="onTreeOpenFolder($event)"
     (togglePin)="toggleFolderPin($event)"
+    (dragStart)="onDragStart($event.id, $event.event)"
+    (dragEnd)="onDragEnd()"
+    (dropOnBook)="onTreeDropOnBook($event.targetId, $event.event)"
+    (dropOnFolder)="onTreeDropOnFolder($event.folder, $event.event)"
   />
 }
 @if (catalogOpen()) {

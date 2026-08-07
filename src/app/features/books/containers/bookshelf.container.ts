@@ -303,6 +303,25 @@ export class BookshelfContainer {
     const target = shelfDropTarget(this.summaries(), payload.path, id);
     await this.applyMove(id, target.folder, target.position);
   }
+  // why: modo árbol muestra la biblioteca entera (todas las carpetas a la
+  //      vez), a diferencia del estante que sólo ve la carpeta actual —
+  //      mismos helpers de bookshelf-dnd.ts, sin scoping a currentFolder.
+  protected async onTreeDropOnBook(targetId: string, event: DragEvent): Promise<void> {
+    event.preventDefault();
+    const id = readDragId(event, this.draggingId());
+    this.onDragEnd();
+    if (id === null || id === targetId) return;
+    const target = slotDropTarget(this.summaries(), targetId, id);
+    if (target) await this.applyMove(id, target.folder, target.position);
+  }
+  protected async onTreeDropOnFolder(folder: string, event: DragEvent): Promise<void> {
+    event.preventDefault();
+    const id = readDragId(event, this.draggingId());
+    this.onDragEnd();
+    if (id === null) return;
+    const target = shelfDropTarget(this.summaries(), folder, id);
+    await this.applyMove(id, target.folder, target.position);
+  }
   private async applyMove(id: string, folder: string, position: string): Promise<void> {
     try {
       const dragged = this.summaries().find((s) => s.id === id);

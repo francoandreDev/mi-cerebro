@@ -59,6 +59,12 @@
   cursor: pointer;
   padding: 0 2px;
   font-family: var(--mc-font-serif);
+  border-radius: var(--mc-radius-sm);
+}
+/* why: recibe el drop de un libro arrastrado desde otra rama — mismo
+ * lenguaje visual que .row.drag-over en modo estantería. */
+.branch-name.drag-over {
+  background: color-mix(in srgb, var(--mc-accent-primary) 22%, transparent);
 }
 .pin-btn {
   background: transparent;
@@ -86,6 +92,13 @@
 .book-node:hover {
   transform: translate(-50%, -50%) scale(1.6);
   z-index: 3;
+}
+.book-node:active {
+  cursor: grabbing;
+}
+.book-node.dragging {
+  opacity: 0.35;
+  filter: blur(0.5px);
 }
 
 @media (max-width: 480px) {

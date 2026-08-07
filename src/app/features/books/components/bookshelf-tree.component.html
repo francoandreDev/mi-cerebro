@@ -1,4 +1,4 @@
-<div class="tree" data-tutorial="books-tree">
+<div class="tree" data-tutorial="books-tree" (dragover)="onTreeDragOver($event)">
   <svg class="branches" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
     <path class="trunk" [attr.d]="trunkPath" />
     @for (branch of branches(); track branch.folder) {
@@ -16,7 +16,11 @@
       <button
         type="button"
         class="branch-name"
+        [class.drag-over]="dragOverFolder() === branch.folder"
         (click)="onFolderClick(branch.folder, $event)"
+        (dragenter)="onFolderDragEnter(branch.folder)"
+        (dragleave)="onFolderDragLeave()"
+        (drop)="onFolderDrop(branch.folder, $event)"
         [attr.aria-label]="branch.label"
         [title]="branch.label"
       >
@@ -37,11 +41,16 @@
       <button
         type="button"
         class="book-node"
+        [class.dragging]="draggingId() === point.book.id"
         [style.left.%]="point.x"
         [style.top.%]="point.y"
         [attr.aria-label]="displayTitle(point.book)"
         [title]="displayTitle(point.book)"
+        draggable="true"
         (click)="onBookClick(point.book)"
+        (dragstart)="onBookDragStart(point.book.id, $event)"
+        (dragend)="dragEnd.emit()"
+        (drop)="onBookDrop(point.book.id, $event)"
       >
         <mc-book-volume
           [bookId]="point.book.id"
