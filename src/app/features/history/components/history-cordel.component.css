@@ -225,6 +225,53 @@ aside.timeline {
   text-align: left;
 }
 
+/* Preview de diff en hover sostenido: `position: fixed` para escapar el
+ * `overflow-y: hidden` de `.cordel-scroll` (necesario para el scroll
+ * horizontal-only de la tira) sin tocar ese overflow. Ancla en el punto
+ * medio-superior de la polaroid hovereada (ver hoverAnchor en el .ts). */
+.polaroid-hover-preview {
+  position: fixed;
+  transform: translate(-50%, calc(-100% - 12px));
+  z-index: 20;
+  width: 220px;
+  padding: 10px 12px;
+  background: var(--mc-bg-elevated, #fff);
+  border: 1px solid var(--mc-border-default, rgba(0, 0, 0, 0.15));
+  border-radius: var(--mc-radius-sm, 6px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.22);
+  pointer-events: none;
+  font-size: 12px;
+}
+.polaroid-hover-status {
+  margin: 0;
+  color: var(--mc-fg-secondary, #666);
+}
+.polaroid-hover-summary {
+  margin: 0 0 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  color: var(--mc-fg-primary, inherit);
+}
+.polaroid-hover-paths {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--mc-fg-secondary, #666);
+}
+.polaroid-hover-paths li {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.polaroid-hover-more {
+  opacity: 0.7;
+}
+
 /* Sin imagen falsa ni flip: la polaroid es una ficha compacta con papel
  * marfil y anotación manuscrita. */
 .polaroid-card {

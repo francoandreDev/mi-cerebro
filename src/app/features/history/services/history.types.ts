@@ -58,3 +58,20 @@ export interface MilestoneEntry {
   readonly oid: string;
   readonly message: string;
 }
+
+export interface DiffSummary {
+  readonly total: number;
+  readonly added: number;
+  readonly modified: number;
+  readonly deleted: number;
+}
+
+// why: preview shown on sustained hover over a cordel polaroid, before the
+//      user clicks through to the full mesa de revelado (see
+//      deferred/versionado.md "Preview inline del diff en hover").
+export interface HoverPreview {
+  readonly oid: string;
+  readonly loading: boolean;
+  readonly summary: DiffSummary;
+  readonly topPaths: readonly string[];
+}

@@ -29,7 +29,14 @@ import { ALL_FACETS, facetOf, type Facet } from '../services/facet';
 import { HistoryLoader } from '../services/history-loader.service';
 import type { DayAggregate } from '../services/history-loader.service';
 import { HistoryService } from '../services/history.service';
-import type { BucketId, CommitBucket, CommitEntry, TimelineItem } from '../services/history.types';
+import type {
+  BucketId,
+  CommitBucket,
+  CommitEntry,
+  DiffSummary,
+  HoverPreview,
+  TimelineItem,
+} from '../services/history.types';
 import { MilestoneController } from '../services/milestone.controller';
 import { readSS, writeSS } from '../services/session-store';
 import {
@@ -71,6 +78,24 @@ const SS_KEY = {
 } as const;
 
 const FOSSIL_FOCUS_HALF_MS = 12 * 60 * 60 * 1000;
+
+// why: hover sostenido antes de mostrar el preview — evita recomputar/parpadear
+//      mientras el mouse sólo está de paso por la tira de polaroids.
+const HOVER_PREVIEW_DELAY_MS = 400;
+const HOVER_PREVIEW_MAX_PATHS = 4;
+const EMPTY_DIFF_SUMMARY: DiffSummary = { total: 0, added: 0, modified: 0, deleted: 0 };
+
+function summarizeDiffs(diffs: readonly EntityDiff[]): DiffSummary {
+  let added = 0;
+  let modified = 0;
+  let deleted = 0;
+  for (const d of diffs) {
+    if (d.status === 'added') added++;
+    else if (d.status === 'deleted') deleted++;
+    else modified++;
+  }
+  return { total: diffs.length, added, modified, deleted };
+}
 
 interface PersistedState {
   query: string;
@@ -445,6 +470,10 @@ export class HistoryContainer implements OnInit, OnDestroy {
   private readonly revealingOidsSignal = signal<ReadonlySet<string>>(new Set());
   protected readonly revealedOids = this.revealedOidsSignal.asReadonly();
   protected readonly revealingOids = this.revealingOidsSignal.asReadonly();
+  // why: revealPolaroid ya trae el diff completo por commit (para el estado
+  //      visual "revelado"); cachearlo acá deja que el preview de hover lo
+  //      reuse sin pegarle una segunda vez a git.
+  private readonly diffCacheSignal = signal<ReadonlyMap<string, readonly EntityDiff[]>>(new Map());
   protected readonly polaroids = computed<readonly CommitEntry[]>(() => {
     const noise = this.noiseOidsSignal();
     const byOid = this.milestonesByOid();
@@ -466,8 +495,9 @@ export class HistoryContainer implements OnInit, OnDestroy {
     this.revealingOidsSignal.update((s) => new Set(s).add(oid));
     void this.diff
       .loadForCommit(oid)
-      .then(() => {
+      .then((diffs) => {
         this.revealedOidsSignal.update((s) => new Set(s).add(oid));
+        this.diffCacheSignal.update((m) => new Map(m).set(oid, diffs));
       })
       .catch((e: unknown) => this.errors.report(e))
       .finally(() => {
@@ -477,6 +507,40 @@ export class HistoryContainer implements OnInit, OnDestroy {
           return next;
         });
       });
+  }
+
+  // ---- Preview de diff en hover sostenido (cordel) -----------------------
+  // why: click + mesa de revelado cubre el flujo principal; este preview es
+  //      pulido opcional para no forzar ese viaje sólo para chusmear qué
+  //      tocó un commit. Se apoya en el mismo diffCache que revealPolaroid.
+  private hoverPreviewTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly hoverPreviewOidSignal = signal<string | null>(null);
+  protected readonly hoverPreview = computed<HoverPreview | null>(() => {
+    const oid = this.hoverPreviewOidSignal();
+    if (!oid) return null;
+    const cached = this.diffCacheSignal().get(oid);
+    if (!cached) return { oid, loading: true, summary: EMPTY_DIFF_SUMMARY, topPaths: [] };
+    return {
+      oid,
+      loading: false,
+      summary: summarizeDiffs(cached),
+      topPaths: cached.slice(0, HOVER_PREVIEW_MAX_PATHS).map((d) => d.filepath),
+    };
+  });
+  protected onPolaroidHoverStart(entry: CommitEntry): void {
+    const oid = entry.oid;
+    if (this.hoverPreviewTimer) clearTimeout(this.hoverPreviewTimer);
+    this.hoverPreviewTimer = setTimeout(() => {
+      this.hoverPreviewTimer = null;
+      this.hoverPreviewOidSignal.set(oid);
+    }, HOVER_PREVIEW_DELAY_MS);
+  }
+  protected onPolaroidHoverEnd(): void {
+    if (this.hoverPreviewTimer) {
+      clearTimeout(this.hoverPreviewTimer);
+      this.hoverPreviewTimer = null;
+    }
+    this.hoverPreviewOidSignal.set(null);
   }
 
   // why: doble-click en un commit (estratos o cordel) baja al cordel con
@@ -539,18 +603,9 @@ export class HistoryContainer implements OnInit, OnDestroy {
   protected toggleGroupByType(): void {
     this.groupByTypeSignal.update((v) => !v);
   }
-  protected readonly diffSummary = computed(() => {
-    const diffs = this.entityDiffsSignal();
-    let added = 0;
-    let modified = 0;
-    let deleted = 0;
-    for (const d of diffs) {
-      if (d.status === 'added') added++;
-      else if (d.status === 'deleted') deleted++;
-      else modified++;
-    }
-    return { total: diffs.length, added, modified, deleted };
-  });
+  protected readonly diffSummary = computed<DiffSummary>(() =>
+    summarizeDiffs(this.entityDiffsSignal()),
+  );
   protected readonly groupedDiffs = computed<
     readonly { key: GroupKey; items: readonly EntityDiff[] }[]
   >(() => {
@@ -707,6 +762,7 @@ export class HistoryContainer implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.noiseScanAbort?.abort();
+    if (this.hoverPreviewTimer) clearTimeout(this.hoverPreviewTimer);
     for (const fn of this.unregisterShortcuts) fn();
     this.unregisterShortcuts = [];
     for (const fn of this.unregisterTutorials) fn();

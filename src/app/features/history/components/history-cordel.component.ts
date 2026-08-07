@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   inject,
   input,
@@ -30,7 +31,7 @@ import {
   type InlineDiffChunk,
 } from '../services/diff.utils';
 import { facetOf, type Facet } from '../services/facet';
-import type { CommitEntry, MilestoneEntry } from '../services/history.types';
+import type { CommitEntry, HoverPreview, MilestoneEntry } from '../services/history.types';
 import type { EntityDiff } from '../services/diff.service';
 import type { MilestoneController } from '../services/milestone.controller';
 import { readSS, writeSS } from '../services/session-store';
@@ -59,6 +60,7 @@ export class HistoryCordelComponent {
   readonly fossilFocusName = input.required<string | null>();
   readonly revealedOids = input.required<ReadonlySet<string>>();
   readonly revealingOids = input.required<ReadonlySet<string>>();
+  readonly hoverPreview = input.required<HoverPreview | null>();
   readonly entityDiffs = input.required<readonly EntityDiff[]>();
   readonly diffLoading = input.required<boolean>();
   readonly diffSummary = input.required<{
@@ -83,6 +85,8 @@ export class HistoryCordelComponent {
 
   readonly selectCommit = output<string>();
   readonly reveal = output<CommitEntry>();
+  readonly hoverStart = output<CommitEntry>();
+  readonly hoverEnd = output<void>();
   readonly clearFossilFocus = output<void>();
   readonly toggleExpanded = output<string>();
   readonly toggleGroupByType = output<void>();
@@ -127,6 +131,32 @@ export class HistoryCordelComponent {
   }
   protected isPolaroidRevealing(oid: string): boolean {
     return this.revealingOids().has(oid);
+  }
+
+  // ---- Preview de diff en hover sostenido ---------------------------------
+  // why: la posición del popover es puro cálculo de layout (no depende de
+  //      datos), así que vive acá en vez de subir al container; el contenido
+  //      (hoverPreview) sí viaja por input porque requiere el diff cacheado.
+  protected readonly hoverAnchor = signal<{
+    readonly oid: string;
+    readonly left: number;
+    readonly top: number;
+  } | null>(null);
+  protected readonly activeHoverPreview = computed(() => {
+    const anchor = this.hoverAnchor();
+    const preview = this.hoverPreview();
+    if (!anchor || !preview || preview.oid !== anchor.oid) return null;
+    return { anchor, preview };
+  });
+
+  protected onPolaroidEnter(event: MouseEvent, p: CommitEntry): void {
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    this.hoverAnchor.set({ oid: p.oid, left: rect.left + rect.width / 2, top: rect.top });
+    this.hoverStart.emit(p);
+  }
+  protected onPolaroidLeave(): void {
+    this.hoverAnchor.set(null);
+    this.hoverEnd.emit();
   }
 
   protected visibleKinds(kinds: readonly string[]): readonly string[] {

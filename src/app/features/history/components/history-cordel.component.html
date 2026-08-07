@@ -84,7 +84,8 @@
                     type="button"
                     class="polaroid-btn"
                     (click)="selectCommit.emit(p.oid); reveal.emit(p)"
-                    (mouseenter)="reveal.emit(p)"
+                    (mouseenter)="reveal.emit(p); onPolaroidEnter($event, p)"
+                    (mouseleave)="onPolaroidLeave()"
                     (focus)="reveal.emit(p)"
                     (dblclick)="selectCommit.emit(p.oid); reveal.emit(p)"
                   >
@@ -108,6 +109,53 @@
                 </li>
               }
             </ul>
+            @if (activeHoverPreview(); as hp) {
+              <div
+                class="polaroid-hover-preview"
+                role="tooltip"
+                [style.left.px]="hp.anchor.left"
+                [style.top.px]="hp.anchor.top"
+              >
+                @if (hp.preview.loading) {
+                  <p class="polaroid-hover-status">
+                    {{ i18n.t('versioning.history.diffLoading') }}
+                  </p>
+                } @else if (hp.preview.summary.total === 0) {
+                  <p class="polaroid-hover-status">{{ i18n.t('versioning.history.diffEmpty') }}</p>
+                } @else {
+                  <p class="polaroid-hover-summary">
+                    {{
+                      hp.preview.summary.total === 1
+                        ? i18n.t('versioning.history.summary.totalOne')
+                        : i18n.t('versioning.history.summary.totalMany', {
+                            n: hp.preview.summary.total,
+                          })
+                    }}
+                    @if (hp.preview.summary.added > 0) {
+                      <span class="mesa-chip mesa-chip-added">+{{ hp.preview.summary.added }}</span>
+                    }
+                    @if (hp.preview.summary.modified > 0) {
+                      <span class="mesa-chip mesa-chip-modified"
+                        >✎{{ hp.preview.summary.modified }}</span
+                      >
+                    }
+                    @if (hp.preview.summary.deleted > 0) {
+                      <span class="mesa-chip mesa-chip-deleted"
+                        >−{{ hp.preview.summary.deleted }}</span
+                      >
+                    }
+                  </p>
+                  <ul class="polaroid-hover-paths">
+                    @for (path of hp.preview.topPaths; track path) {
+                      <li>{{ path }}</li>
+                    }
+                    @if (hp.preview.summary.total > hp.preview.topPaths.length) {
+                      <li class="polaroid-hover-more">…</li>
+                    }
+                  </ul>
+                }
+              </div>
+            }
           </div>
         </div>
       </div>
