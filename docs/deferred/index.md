@@ -15,7 +15,6 @@ Este índice es sólo un mapa de temas — no lista ítems individuales. Para es
 
 - [`trash-books.md`](./trash-books.md) — papelera y biblioteca de libros.
 - [`reminders-goals.md`](./reminders-goals.md) — recordatorios (incluido el "palomar") y metas/constelaciones.
-- [`files-writings-tasks.md`](./files-writings-tasks.md) — archivos sueltos, escritos y tareas.
 - [`responsive.md`](./responsive.md) — pantallas mobile pendientes de verificación/rediseño.
 - [`versionado.md`](./versionado.md) — versionado, variantes, historial, merges. **Sección más extensa/compleja — atacar al final.**
 

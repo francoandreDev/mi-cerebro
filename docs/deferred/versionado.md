@@ -15,12 +15,6 @@ Formato por entrada:
 
 ## Versionado y variantes (origen: paso 13)
 
-### Granularidad por faceta dentro del bundle de merge
-
-- **Qué**: en 13b–d el merge ofrece elegir por entidad el bundle entero (main + draft + comments de la variante origen). Una versión avanzada permitiría tomar `main` de la variante origen pero quedarse con el `draft` o los `comments` de la variante destino.
-- **Por qué**: cubre un caso raro y agrega 3× botones por delta en la UI de merge. Decisión explícita de "simple gana".
-- **Target**: sin asignar (se agrega si aparece demanda real).
-
 ### Variantes sobre el fallback sin isomorphic-git
 
 - **Qué**: si el adapter de isomorphic-git resulta inviable en 13a y se cae al fallback de snapshots en `.mi-cerebro/history/`, las variantes (13b en adelante) no son soportables. La app degrada a una sola "Principal" implícita.
@@ -29,14 +23,9 @@ Formato por entrada:
 
 ### Pulido visual general de `/history`
 
-- **Qué**: cuando cerramos 13a el usuario confirmó que la información está completa y legible pero "mucha info, poco visual". Queda como ítem único agrupador para futuras iteraciones de tipografía, densidad, jerarquía y micro-interacciones del historial (anchos de columna, separadores entre buckets, hover states, animación del cambio de selección, etc.).
+- **Qué**: cuando cerramos 13a el usuario confirmó que la información está completa y legible pero "mucha info, poco visual". Queda como ítem único agrupador para futuras iteraciones de tipografía, densidad, jerarquía y micro-interacciones del historial.
 - **Por qué se difirió**: estructura y funcionalidad están; el polish entra cuando 13a-d estén cerrados y tengamos uso real para saber qué duele.
-- **Target**: §19.16f.
-
-### Preview inline del diff en hover sobre la polaroid (zoom detalle)
-
-- **Qué**: en la vista cordel (§rediseño /history v2 Fase 4), mostrar un preview del diff al hacer hover sostenido sobre una polaroid sin necesidad de seleccionarla y esperar a que la mesa de revelado la muestre abajo.
-- **Por qué se difirió**: pulido visual evaluado como posible upgrade después de cerrar Fase 4; no se abordó porque click+mesa de revelado ya cubre el flujo principal sin estado adicional de hover.
+- **Resuelto parcialmente 2026-08-06**: la vista de estratos (`history-strata.component.css`) era la única de las 3 LOD sin transición de hover/selección — panorama y cordel ya las tenían. Se agregó separador visual entre estratos, transición de hover/selección en `.commit`/`.ficha-commit`, animación `commit-select-pop` al cambiar de selección, y columna del rail ensanchada. El resto del grab-bag (densidad, jerarquía) sigue abierto.
 - **Target**: §19.16f.
 
 ### Vista secundaria de constelaciones ("mapa de patrones de trabajo")
@@ -44,12 +33,6 @@ Formato por entrada:
 - **Qué**: vista alternativa tipo cielo estrellado que revele patrones de trabajo emergentes (ritmo, picos, gaps) en vez de commits individuales navegables. Se descartó como vista principal del rediseño de `/history` v2 porque encontrar un commit específico en un layout 2D estrellado es peor que en la cordillera/estratos/cordel, pero quedó anotada como posible vista secundaria.
 - **Por qué se difirió**: opcional, muy posterior — sólo si el rediseño principal (cordillera/estratos/cordel) deja "hambre" de ese eje analítico distinto (patrones en vez de hechos puntuales).
 - **Target**: sin asignar.
-
-### Header del editor: "n commits desde {milestone}"
-
-- **Qué**: 13a-bis grabó milestones como git tags anotados pero no expone "estás a n commits desde el milestone más cercano" en el header del editor de cada entidad. El roadmap lo describe como "contexto leve".
-- **Por qué se difirió**: requiere walk del log desde HEAD hasta el primer commit con tag (por entidad o global), un computed que reacciona a cada autocommit, y un slot visual en el header del editor que hoy ya está cargado de chips (autosave, lock, tags). Sumado a que `/history` ya muestra los milestones inline, el valor incremental es marginal hasta tener varios milestones reales en uso.
-- **Target**: §19.16f (pulido del historial).
 
 ### Índice de búsqueda persistido por familia (`idx-<family>-main`)
 
@@ -62,12 +45,6 @@ Formato por entrada:
 - **Qué**: un índice MiniSearch sobre el log de commits (mensaje + entidades tocadas) integrado al palette global, para poder buscar "¿cuándo toqué X?" sin abrir `/history` y escanear estratos a mano.
 - **Por qué se difirió**: misma familia de problema que los índices de `main`/`comments`/`draft` diferidos arriba — requiere decidir priming al boot y si comparte infraestructura con esos índices. Se agrupa con ellos para diseñarse una sola vez.
 - **Target**: §19.16d (pulido de búsqueda) — junto con los índices por familia ya diferidos.
-
-### Compactación manual sobre rango específico
-
-- **Qué**: además de la pasada background automática, una acción "Compactar este rango" desde `/history` que permita al usuario seleccionar un span de commits y forzar la fusión, respetando las barreras (tags, `before-restore`, `Merge-Group`).
-- **Por qué se difirió**: la compactación background con buckets por edad cubre el caso 95%. Compactación manual es una herramienta avanzada que se justifica si el usuario quiere "limpiar" un período específico sin esperar al auto. Sin uso real no hay forma de saber si vale la UI.
-- **Target**: sin asignar.
 
 ### `.git/` en OPFS para acelerar operaciones git
 
