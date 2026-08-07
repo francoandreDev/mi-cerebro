@@ -1,6 +1,6 @@
 .split {
   display: grid;
-  grid-template-columns: minmax(240px, 300px) 1fr;
+  grid-template-columns: minmax(240px, 340px) 1fr;
   flex: 1;
   min-height: 0;
 }
@@ -20,6 +20,13 @@
  * El espesor NO cambia con el filtro: la geología no miente. */
 .stratum {
   position: relative;
+}
+
+/* Separador entre estratos: veta de sedimento fina, más marcada que el
+ * simple margin-bottom — lee como el corte real entre dos capas de tierra. */
+.stratum:not(:last-child) {
+  border-bottom: 3px double color-mix(in srgb, #6b4a2a 30%, var(--mc-border-subtle, transparent));
+  padding-bottom: 2px;
 }
 
 /* Estrato activo (contiene el commit seleccionado) — ribbon lateral que
@@ -368,6 +375,7 @@
   color: inherit;
   cursor: pointer;
   text-align: left;
+  transition: background 140ms ease, box-shadow 140ms ease;
 }
 
 .commit:hover {
@@ -376,6 +384,19 @@
 
 .commit.selected {
   background: var(--mc-bg-selected, rgba(58, 123, 213, 0.12));
+  animation: commit-select-pop 220ms ease;
+}
+
+/* Disparo de foco al cambiar de selección: un breve "pop" en vez de un
+ * salto seco — se reproduce solo cuando la clase se agrega (no en re-renders
+ * mientras ya está seleccionado). */
+@keyframes commit-select-pop {
+  from {
+    transform: scale(0.98);
+  }
+  to {
+    transform: scale(1);
+  }
 }
 
 /* why: el badge "ACTUAL" ya identifica HEAD en el texto; mantener el
@@ -1150,6 +1171,7 @@ aside.timeline {
   text-align: left;
   cursor: pointer;
   border-radius: 2px;
+  transition: background 140ms ease;
 }
 .ficha-commit:hover {
   background: rgba(107, 68, 35, 0.08);
