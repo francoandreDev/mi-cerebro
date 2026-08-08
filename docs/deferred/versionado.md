@@ -15,12 +15,6 @@ Formato por entrada:
 
 ## Versionado y variantes (origen: paso 13)
 
-### Variantes sobre el fallback sin isomorphic-git
-
-- **Qué**: si el adapter de isomorphic-git resulta inviable en 13a y se cae al fallback de snapshots en `.mi-cerebro/history/`, las variantes (13b en adelante) no son soportables. La app degrada a una sola "Principal" implícita.
-- **Por qué**: implementar variantes sin git significaría reinventar branching + merge desde cero. No vale la pena hasta confirmar que isomorphic-git no funciona.
-- **Target**: sin asignar (sólo se aborda si el fallback se activa en 13a).
-
 ### Pulido visual general de `/history`
 
 - **Qué**: cuando cerramos 13a el usuario confirmó que la información está completa y legible pero "mucha info, poco visual". Queda como ítem único agrupador para futuras iteraciones de tipografía, densidad, jerarquía y micro-interacciones del historial.
