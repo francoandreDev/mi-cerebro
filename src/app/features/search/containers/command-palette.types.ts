@@ -15,6 +15,7 @@ export const KIND_TITLE_KEY: Readonly<Record<string, TranslationKey>> = {
   playlist: 'music.playlists',
   comment: 'search.kind.comment',
   draft: 'search.kind.draft',
+  commit: 'search.kind.commit',
 };
 
 export interface EntityItem {

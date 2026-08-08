@@ -174,6 +174,38 @@ export class VersioningService {
     const matrix = await git.statusMatrix({ fs, dir: REPO_DIR });
     return matrix.some(([, head, work, stage]) => head !== work || head !== stage);
   }
+
+  // why: lightweight sibling of HistoryDiffService.collectChanges (features/
+  //      history) — same tree-oid comparison, but returns paths only, no
+  //      blob reads/status classification. Lives here (not in the history
+  //      feature) because core/search's commit-index priming needs it and
+  //      features never import each other / core never imports a feature.
+  async changedPaths(oid: string): Promise<readonly string[]> {
+    const fs = this.requireAdapter();
+    const commit = await git.readCommit({ fs, dir: REPO_DIR, oid });
+    const parent = commit.commit.parent[0] ?? null;
+    const trees = parent
+      ? [git.TREE({ ref: parent }), git.TREE({ ref: oid })]
+      : [git.TREE({ ref: oid })];
+    const result = await git.walk({
+      fs,
+      dir: REPO_DIR,
+      trees,
+      map: async (filepath, entries) => {
+        if (filepath === '.') return;
+        if (parent) {
+          const [a, b] = entries;
+          if ((await a?.type()) === 'tree' || (await b?.type()) === 'tree') return;
+          if ((await a?.oid()) === (await b?.oid())) return;
+          return filepath;
+        }
+        const [b] = entries;
+        if (!b || (await b.type()) === 'tree') return;
+        return filepath;
+      },
+    });
+    return result.filter((p: unknown): p is string => typeof p === 'string');
+  }
 }
 
 function toSummary(e: {

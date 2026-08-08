@@ -2825,6 +2825,7 @@ export const es = {
 
   'search.kind.comment': 'Comentarios',
   'search.kind.draft': 'Borradores',
+  'search.kind.commit': 'Commits',
 
   'connections.outgoing': 'Salientes',
   'connections.backlinks': 'Referenciado desde',

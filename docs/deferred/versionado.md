@@ -29,12 +29,6 @@ Formato por entrada:
 - **Por qué se difirió**: confirmado 2026-08-04 al implementar comments/draft (ver abajo) que esto **no aporta nada real** con la arquitectura actual — `WorkspaceRefreshService.refreshAll()` ya recorre disco en cada switch de variante para repoblar el estado propio de cada feature (listas, walls, no sólo el índice), así que cachear aparte el índice `main` no ahorra ese walk, sólo agrega complejidad sin beneficio medible. Dejaría de aplicar si `refreshAll()` alguna vez deja de walkear disco en cada switch por otra razón.
 - **Target**: sin asignar (no vale la pena reabrir sin un cambio de arquitectura en `refreshAll()` primero).
 
-### Índice de búsqueda de commits (full-text sobre mensajes + entidades tocadas)
-
-- **Qué**: un índice MiniSearch sobre el log de commits (mensaje + entidades tocadas) integrado al palette global, para poder buscar "¿cuándo toqué X?" sin abrir `/history` y escanear estratos a mano.
-- **Por qué se difirió**: misma familia de problema que los índices de `main`/`comments`/`draft` diferidos arriba — requiere decidir priming al boot y si comparte infraestructura con esos índices. Se agrupa con ellos para diseñarse una sola vez.
-- **Target**: §19.16d (pulido de búsqueda) — junto con los índices por familia ya diferidos.
-
 ### `.git/` en OPFS para acelerar operaciones git
 
 - **Qué**: mover `.git/` (loose objects + refs + index) al Origin Private File System del browser, dejando sólo el workdir visible en la carpeta del usuario via FS Access. isomorphic-git acepta nativamente `dir` (workdir) y `gitdir` separados. La ganancia esperada es 10-100×: cada syscall sobre OPFS cuesta ~5-10 ms vs ~100-200 ms sobre FS Access. Eso bajaría el commit base de ~3 s a ~200 ms.

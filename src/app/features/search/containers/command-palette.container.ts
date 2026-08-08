@@ -162,6 +162,7 @@ export class CommandPaletteContainer {
       book: 'books',
       comment: 'chat-circle',
       draft: 'note-pencil',
+      commit: 'clock-counter-clockwise',
     };
     return map[kind] ?? 'file';
   }
@@ -233,6 +234,12 @@ export class CommandPaletteContainer {
     }
     const text = this.parsed().text;
     if (text) this.queriesService.remember(text);
+    if (item.kind === 'commit') {
+      const oid = item.id.split(':')[1] ?? item.id;
+      void this.router.navigate(['/history'], { queryParams: { oid } });
+      this.close();
+      return;
+    }
     const target = this.resolveNavigationTarget(item);
     void this.router.navigate([...routeFor(target.kind, target.id, target.title)]);
     this.close();
