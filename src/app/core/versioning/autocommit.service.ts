@@ -24,6 +24,7 @@ import {
   deriveAutocommitMessage,
 } from './autocommit.constants';
 import { GitFsAdapter } from './git-fs.adapter';
+import { OpfsGitRootService } from './opfs-git-root';
 import { VersioningService } from './versioning.service';
 
 type AutocommitState = 'idle' | 'committing';
@@ -38,6 +39,7 @@ export class AutocommitService {
   private readonly errors = inject(ErrorService);
   private readonly settings = inject(SettingsService);
   private readonly fs = inject(FsService);
+  private readonly opfsGitRoot = inject(OpfsGitRootService);
 
   private readonly stateSignal = signal<AutocommitState>('idle');
   private readonly lastCommitAtSignal = signal<Date | null>(null);
@@ -172,7 +174,7 @@ export class AutocommitService {
   }
 
   private async commitWithMessage(reason: string, customMessage?: string): Promise<string | null> {
-    const adapter = this.adapter();
+    const adapter = await this.adapter();
     if (!adapter) return null;
     const matrix = await git.statusMatrix({ fs: adapter, dir: '/' });
     const dirty = matrix.filter(([, h, w, s]) => h !== w || h !== s);
@@ -185,9 +187,11 @@ export class AutocommitService {
     return this.versioning.commitAll(message);
   }
 
-  private adapter(): GitFsAdapter | null {
+  private async adapter(): Promise<GitFsAdapter | null> {
     const root = this.workspace.root();
-    return root ? new GitFsAdapter(root, this.fs) : null;
+    if (!root) return null;
+    const gitDirRoot = await this.opfsGitRoot.getGitDir();
+    return new GitFsAdapter(root, this.fs, gitDirRoot);
   }
 
   private wrapError(cause: unknown, reason: string): AppError {

@@ -6,6 +6,7 @@ import { ERROR_CODES } from '@core/errors/error.codes';
 import { FsService } from '@core/fs/fs.service';
 import type { NativeDirRef } from '@core/fs/native-fs.types';
 import { WorkspaceService } from '@core/fs/workspace.service';
+import { OpfsGitRootService } from '@core/versioning/opfs-git-root';
 
 import { buildZipFilename, shouldIncludeEntry } from './export-zip';
 import type { ExportOptions, ExportProgress } from './export-zip.types';
@@ -14,6 +15,7 @@ import type { ExportOptions, ExportProgress } from './export-zip.types';
 export class ExportZipService {
   private readonly fs = inject(FsService);
   private readonly workspace = inject(WorkspaceService);
+  private readonly opfsGitRoot = inject(OpfsGitRootService);
 
   private readonly progressSignal = signal<ExportProgress>({ phase: 'idle', count: 0, total: 0 });
   readonly progress = this.progressSignal.asReadonly();
@@ -56,6 +58,20 @@ export class ExportZipService {
     await walkAndCollect(this.fs, root, '', opts, out, (count) => {
       this.progressSignal.set({ phase: 'walking', count, total: count });
     });
+    // why: once `.git` lives on OPFS (docs/deferred/versionado.md), the
+    //      walk above — rooted at the real FS workspace — never finds it;
+    //      shouldIncludeEntry()'s '.git' top-segment check exists
+    //      specifically for `includeAllVariants`, so honor it by walking
+    //      the OPFS side too, under the same '.git/' prefix the real-FS
+    //      case would have produced.
+    if (opts.includeAllVariants) {
+      const gitDir = await this.opfsGitRoot.getGitDir();
+      if (gitDir) {
+        await walkAndCollect(this.fs, gitDir, '.git', opts, out, (count) => {
+          this.progressSignal.set({ phase: 'walking', count, total: count });
+        });
+      }
+    }
     return out;
   }
 }

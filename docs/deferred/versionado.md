@@ -23,11 +23,4 @@ Formato por entrada:
 - **Resuelto parcialmente 2026-08-08**: cordel ya estaba completo (transición + `.selected` con detach animado + dimming de hermanas + hover preview) y no necesitó cambios. Panorama sí tenía un gap real: el marcador de fósil (`<g class="panorama-fossil">`) heredaba `pointer-events: none` de su propia regla, así que un click de mouse nunca disparaba `onFossilClick()` — caía al hit-rect del día debajo; sólo Enter (foco+teclado) andaba. Corregido a `pointer-events: auto` + hover/focus-visible con scale-pop en la concha/núcleo del fósil, transición de fill en el hit-rect del día, animación `band-select-pop` al aparecer la banda de selección de día, y hover feedback en los chips `.notebook-fossil` (no tenían ninguno). El resto del grab-bag (densidad, jerarquía general) sigue abierto — sin caso concreto que lo pida todavía.
 - **Target**: §19.16f.
 
-### `.git/` en OPFS para acelerar operaciones git
-
-- **Qué**: mover `.git/` (loose objects + refs + index) al Origin Private File System del browser, dejando sólo el workdir visible en la carpeta del usuario via FS Access. isomorphic-git acepta nativamente `dir` (workdir) y `gitdir` separados. La ganancia esperada es 10-100×: cada syscall sobre OPFS cuesta ~5-10 ms vs ~100-200 ms sobre FS Access. Eso bajaría el commit base de ~3 s a ~200 ms.
-- **Por qué se difirió**: las mediciones del validador en 13a (`DevPerfService`) confirmaron el piso de 3 s/commit, pero la decisión de producto fue aceptar pantallas de carga contextuales para las operaciones git disparadas por el usuario (switch de variante, merge, accept de diff-mark, crear/borrar variante) en vez de invertir 2-3 horas y duplicar el modelo de FS clients. Patrón estándar de clientes git; se entiende como aceptable hasta que el uso real demuestre lo contrario.
-- **Implicaciones si se aborda**: el export ZIP (paso 14) tiene que leer también OPFS. Si el usuario limpia datos del sitio, pierde el historial git (pero conserva sus notas y puede recuperar el historial desde GitHub si tenía push configurado en 13e). Riesgo nuevo: races entre main thread (autosave) y posibles workers de git — habría que serializar accesos.
-- **Target**: sin asignar (sólo si la UX con loading screens resulta intolerable en uso real, especialmente en 13b switches frecuentes o 13d accept-spam).
-
 ---

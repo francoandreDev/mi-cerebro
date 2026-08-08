@@ -229,4 +229,43 @@ describe('GitFsAdapter', () => {
     await expect(fs.promises.symlink('/a', '/b')).rejects.toBeInstanceOf(GitFsError);
     await expect(fs.promises.readlink('/a')).rejects.toMatchObject({ code: 'ENOENT' });
   });
+
+  describe('gitDirRoot split (docs/deferred/versionado.md — .git on OPFS)', () => {
+    it('routes /.git paths to gitDirRoot, leaving workdir root untouched', async () => {
+      const { root: workdirRoot, mock: workdirMock } = makeRoot();
+      const { root: gitRoot, mock: gitMock } = makeRoot();
+      const fs = new GitFsAdapter(workdirRoot, nativeFs, gitRoot);
+
+      await fs.promises.writeFile('/.git/HEAD', 'ref: refs/heads/main\n');
+      await fs.promises.writeFile('/notes/n1.json', '{}');
+
+      expect(workdirMock.children.has('.git')).toBe(false);
+      expect((gitMock.children.get('HEAD') as MockFileHandle).contents).toEqual(
+        new TextEncoder().encode('ref: refs/heads/main\n'),
+      );
+      expect(workdirMock.children.has('notes')).toBe(true);
+      expect(gitMock.children.has('notes')).toBe(false);
+    });
+
+    it('reads back what it wrote through the same routing', async () => {
+      const { root: workdirRoot } = makeRoot();
+      const { root: gitRoot } = makeRoot();
+      const fs = new GitFsAdapter(workdirRoot, nativeFs, gitRoot);
+
+      await fs.promises.mkdir('/.git/objects');
+      await fs.promises.writeFile('/.git/objects/ab', 'blob-bytes');
+      const text = (await fs.promises.readFile('/.git/objects/ab', { encoding: 'utf8' })) as string;
+      expect(text).toBe('blob-bytes');
+
+      const names = await fs.promises.readdir('/.git');
+      expect(names).toContain('objects');
+    });
+
+    it('with no gitDirRoot, /.git resolves under the single root as before', async () => {
+      const { root, mock } = makeRoot();
+      const fs = new GitFsAdapter(root, nativeFs);
+      await fs.promises.writeFile('/.git/HEAD', 'x');
+      expect(mock.children.has('.git')).toBe(true);
+    });
+  });
 });

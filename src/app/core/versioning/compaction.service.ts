@@ -21,6 +21,7 @@ import { WorkspaceService } from '@core/fs/workspace.service';
 import type { CompactionPlan, FuseGroup } from './compaction-plan';
 import { buildCompactionPlan, buildRangeCompactionPlan } from './compaction-plan';
 import { GitFsAdapter } from './git-fs.adapter';
+import { OpfsGitRootService } from './opfs-git-root';
 import { stripHeadsPrefix } from './variants.io';
 import { VersioningService } from './versioning.service';
 import { DEFAULT_GIT_AUTHOR } from './versioning.constants';
@@ -45,6 +46,7 @@ export class CompactionService {
   private readonly autosave = inject(AutosaveService);
   private readonly fsLock = inject(FsLockService);
   private readonly fs = inject(FsService);
+  private readonly opfsGitRoot = inject(OpfsGitRootService);
 
   // Pure-planner-shaped: full log of `ref` + peeled tag oids → plan.
   async planForBranch(ref: string): Promise<CompactionPlan> {
@@ -71,7 +73,7 @@ export class CompactionService {
   async applyPlan(ref: string, plan: CompactionPlan): Promise<ApplyPlanResult> {
     await this.autosave.flushAll();
     return this.fsLock.withLock(async () => {
-      const fs = this.requireAdapter();
+      const fs = await this.requireAdapter();
       const bare = stripHeadsPrefix(ref);
       const originalTipOid = await git.resolveRef({ fs, dir: REPO_DIR, ref: bare });
       if (plan.fuseGroups.length === 0) {
@@ -194,7 +196,7 @@ export class CompactionService {
     }
   }
 
-  private requireAdapter(): GitFsAdapter {
+  private async requireAdapter(): Promise<GitFsAdapter> {
     const root = this.workspace.root();
     if (!root) {
       throw new AppError(ERROR_CODES.VER_001, {
@@ -203,7 +205,8 @@ export class CompactionService {
         recoverable: true,
       });
     }
-    return new GitFsAdapter(root, this.fs);
+    const gitDirRoot = await this.opfsGitRoot.getGitDir();
+    return new GitFsAdapter(root, this.fs, gitDirRoot);
   }
 }
 

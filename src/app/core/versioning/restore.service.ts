@@ -16,6 +16,7 @@ import { WorkspaceService } from '@core/fs/workspace.service';
 
 import { AutocommitService } from './autocommit.service';
 import { GitFsAdapter } from './git-fs.adapter';
+import { OpfsGitRootService } from './opfs-git-root';
 import { GitFsError } from './git-fs.errors';
 import { collectSnapshotChanges } from './restore.snapshot';
 import { VersioningService } from './versioning.service';
@@ -30,12 +31,13 @@ export class RestoreService {
   private readonly autocommit = inject(AutocommitService);
   private readonly fsLock = inject(FsLockService);
   private readonly fs = inject(FsService);
+  private readonly opfsGitRoot = inject(OpfsGitRootService);
 
   async restoreEntity(commitOid: string, filepath: string, mode: RestoreMode): Promise<void> {
     try {
       await this.autosave.flushAll();
       await this.fsLock.withLock(async () => {
-        const adapter = this.adapter();
+        const adapter = await this.adapter();
         const absPath = filepath.startsWith('/') ? filepath : '/' + filepath;
         if (mode === 'present') {
           const blob = await this.versioning.readBlob(commitOid, filepath);
@@ -76,7 +78,7 @@ export class RestoreService {
       );
       await this.autosave.flushAll();
       await this.fsLock.withLock(async () => {
-        const adapter = this.adapter();
+        const adapter = await this.adapter();
         const headOid = await git.resolveRef({ fs: adapter, dir: '/', ref: 'HEAD' });
         const changes = await collectSnapshotChanges(adapter, headOid, commitOid);
         for (const change of changes) await this.applyChange(adapter, change);
@@ -110,7 +112,7 @@ export class RestoreService {
     }
   }
 
-  private adapter(): GitFsAdapter {
+  private async adapter(): Promise<GitFsAdapter> {
     const root = this.workspace.root();
     if (!root) {
       throw new AppError(ERROR_CODES.VER_003, {
@@ -119,6 +121,7 @@ export class RestoreService {
         recoverable: true,
       });
     }
-    return new GitFsAdapter(root, this.fs);
+    const gitDirRoot = await this.opfsGitRoot.getGitDir();
+    return new GitFsAdapter(root, this.fs, gitDirRoot);
   }
 }

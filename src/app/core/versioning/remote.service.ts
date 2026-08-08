@@ -15,6 +15,7 @@ import { WorkspaceService } from '@core/fs/workspace.service';
 import { IdbService } from '@core/idb/idb.service';
 
 import { GitFsAdapter } from './git-fs.adapter';
+import { OpfsGitRootService } from './opfs-git-root';
 import {
   type ConfigFs,
   ensureGitignoredSecrets,
@@ -57,6 +58,7 @@ export class RemoteService {
   private readonly variants = inject(VariantsService);
   private readonly fsLock = inject(FsLockService);
   private readonly fs = inject(FsService);
+  private readonly opfsGitRoot = inject(OpfsGitRootService);
   private readonly whistle = inject(SyncWhistleService);
   private readonly idb = inject(IdbService);
 
@@ -112,7 +114,7 @@ export class RemoteService {
         recoverable: true,
       });
     }
-    const fs = this.requireConfigFs();
+    const fs = await this.requireConfigFs();
     await ensureGitignoredSecrets(fs);
     const next: RemoteSecretsFile = {
       schemaVersion: REMOTE_SECRETS_SCHEMA_VERSION,
@@ -124,7 +126,7 @@ export class RemoteService {
   }
 
   async clear(): Promise<void> {
-    const fs = this.requireConfigFs();
+    const fs = await this.requireConfigFs();
     const next = emptyRemoteSecrets();
     await writeRemoteSecrets(fs, this.idb, next);
     this.stateSignal.set(next);
@@ -160,7 +162,7 @@ export class RemoteService {
     return this.fsLock.withLock(async () => {
       this.pushingSignal.set(true);
       try {
-        const adapter = this.requireGitFs();
+        const adapter = await this.requireGitFs();
         const outcomes = await runBulk(targets, gitPushOne(adapter, cfg));
         this.lastPushOutcomesSignal.set(outcomes);
         this.lastBulkAtSignal.set(new Date().toISOString());
@@ -178,7 +180,7 @@ export class RemoteService {
   async snapshotRemoteOid(ref: string): Promise<string | null> {
     if (!this.workspace.isReady()) return null;
     try {
-      const adapter = this.requireGitFs();
+      const adapter = await this.requireGitFs();
       return await git.resolveRef({
         fs: adapter,
         dir: '/',
@@ -201,7 +203,7 @@ export class RemoteService {
     return this.fsLock.withLock(async () => {
       this.pushingSignal.set(true);
       try {
-        const adapter = this.requireGitFs();
+        const adapter = await this.requireGitFs();
         const outcomes: RefSyncOutcome[] = [];
         for (const t of targets) {
           const fn = leases.has(t.ref)
@@ -234,7 +236,7 @@ export class RemoteService {
     return this.fsLock.withLock(async () => {
       this.fetchingSignal.set(true);
       try {
-        const adapter = this.requireGitFs();
+        const adapter = await this.requireGitFs();
         await ensureRemoteConfigured(adapter, cfg.url);
         const outcomes = await runBulk(targets, gitFetchOne(adapter, cfg));
         this.lastFetchOutcomesSignal.set(outcomes);
@@ -291,7 +293,7 @@ export class RemoteService {
   private async runSinglePush(cfg: RemoteConfig, ref: string): Promise<PushOutcome> {
     this.pushingSignal.set(true);
     try {
-      const adapter = this.requireGitFs();
+      const adapter = await this.requireGitFs();
       const result = await gitPushOne(adapter, cfg)(ref);
       if (result.status === 'error') {
         throw this.classifyPushError(result.error ?? '', ref);
@@ -314,7 +316,7 @@ export class RemoteService {
   }
 
   private async persistLastPushAt(): Promise<void> {
-    const fs = this.requireConfigFs();
+    const fs = await this.requireConfigFs();
     const next: RemoteSecretsFile = {
       ...this.stateSignal(),
       lastPushAt: new Date().toISOString(),
@@ -327,7 +329,7 @@ export class RemoteService {
 
   private async loadFromDisk(): Promise<void> {
     try {
-      const fs = this.requireConfigFs();
+      const fs = await this.requireConfigFs();
       const { file, migrated } = await readRemoteSecrets(fs, this.idb);
       this.stateSignal.set(file);
       // why: a v1 (plaintext-token) file was upgraded in memory — persist
@@ -339,7 +341,7 @@ export class RemoteService {
     }
   }
 
-  private requireGitFs(): GitFsAdapter {
+  private async requireGitFs(): Promise<GitFsAdapter> {
     const root = this.workspace.root();
     if (!root) {
       throw new AppError(ERROR_CODES.NET_001, {
@@ -348,11 +350,12 @@ export class RemoteService {
         recoverable: true,
       });
     }
-    return new GitFsAdapter(root, this.fs);
+    const gitDirRoot = await this.opfsGitRoot.getGitDir();
+    return new GitFsAdapter(root, this.fs, gitDirRoot);
   }
 
-  private requireConfigFs(): ConfigFs {
-    const adapter = this.requireGitFs();
+  private async requireConfigFs(): Promise<ConfigFs> {
+    const adapter = await this.requireGitFs();
     return {
       readFile: async (path) => {
         const data = await adapter.readFile(path);

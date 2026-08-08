@@ -17,6 +17,7 @@ import { SettingsService } from '@core/settings/settings.service';
 
 import { CompactionService } from './compaction.service';
 import { GitFsAdapter } from './git-fs.adapter';
+import { OpfsGitRootService } from './opfs-git-root';
 import { buildMilestoneCompactionPlan } from './milestone-compaction-plan';
 import { RemoteService } from './remote.service';
 import { stripHeadsPrefix } from './variants.io';
@@ -56,9 +57,10 @@ export class MilestoneService {
   private readonly remote = inject(RemoteService);
   private readonly settings = inject(SettingsService);
   private readonly fs = inject(FsService);
+  private readonly opfsGitRoot = inject(OpfsGitRootService);
   private adapter: GitFsAdapter | null = null;
 
-  private requireAdapter(): GitFsAdapter {
+  private async requireAdapter(): Promise<GitFsAdapter> {
     if (this.adapter) return this.adapter;
     const root = this.workspace.root();
     if (!root) {
@@ -68,7 +70,8 @@ export class MilestoneService {
         recoverable: true,
       });
     }
-    this.adapter = new GitFsAdapter(root, this.fs);
+    const gitDirRoot = await this.opfsGitRoot.getGitDir();
+    this.adapter = new GitFsAdapter(root, this.fs, gitDirRoot);
     return this.adapter;
   }
 
@@ -77,7 +80,7 @@ export class MilestoneService {
   }
 
   async list(): Promise<Milestone[]> {
-    const fs = this.requireAdapter();
+    const fs = await this.requireAdapter();
     const names = await git.listTags({ fs, dir: REPO_DIR });
     const out: Milestone[] = [];
     for (const name of names) {
@@ -178,7 +181,7 @@ export class MilestoneService {
     name: string,
     description: string | undefined,
   ): Promise<Milestone> {
-    const fs = this.requireAdapter();
+    const fs = await this.requireAdapter();
     const message = buildMessage(name, description);
     try {
       await git.annotatedTag({
@@ -204,7 +207,7 @@ export class MilestoneService {
   // collision flow ("mover este milestone") uses the same mechanic but
   // against a different target oid.
   async rename(currentName: string, newName: string): Promise<RenameMilestoneResult> {
-    const fs = this.requireAdapter();
+    const fs = await this.requireAdapter();
     const current = await this.read(currentName);
     if (!current) {
       throw new AppError(ERROR_CODES.VER_018, {
@@ -254,7 +257,7 @@ export class MilestoneService {
   // option 2 of the collision flow when the user picks "mover el
   // milestone existente a este commit".
   async moveTo(name: string, newOid: string): Promise<Milestone> {
-    const fs = this.requireAdapter();
+    const fs = await this.requireAdapter();
     const current = await this.read(name);
     if (!current) {
       throw new AppError(ERROR_CODES.VER_018, {
@@ -285,7 +288,7 @@ export class MilestoneService {
   }
 
   async delete(name: string): Promise<void> {
-    const fs = this.requireAdapter();
+    const fs = await this.requireAdapter();
     try {
       await git.deleteTag({ fs, dir: REPO_DIR, ref: name });
     } catch (e) {
@@ -317,7 +320,7 @@ export class MilestoneService {
   }
 
   private async read(name: string): Promise<Milestone | null> {
-    const fs = this.requireAdapter();
+    const fs = await this.requireAdapter();
     try {
       const tagOid = await git.resolveRef({ fs, dir: REPO_DIR, ref: `refs/tags/${name}` });
       const { tag } = await git.readTag({ fs, dir: REPO_DIR, oid: tagOid });

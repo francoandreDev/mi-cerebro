@@ -12,6 +12,7 @@ import { Injectable, inject, signal } from '@angular/core';
 
 import { FsService } from '@core/fs/fs.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
+import type { NativeDirRef } from '@core/fs/native-fs.types';
 
 import type { Caso7Detail } from './dev-perf.casos';
 import {
@@ -28,6 +29,7 @@ import {
 } from './dev-perf.casos';
 import type { CaseResult, PerfReport, ProgressState } from './dev-perf.types';
 import { GitFsAdapter } from './git-fs.adapter';
+import { OpfsGitRootService } from './opfs-git-root';
 
 export type { CaseResult, CaseStatus, PerfReport, ProgressState } from './dev-perf.types';
 
@@ -36,10 +38,20 @@ const COMMIT_THRESHOLD_MS = 3000;
 const LOG_THRESHOLD_MS = 500;
 const TOTAL_CASES = 10;
 
+export interface OpfsComparisonReport {
+  readonly real: Caso7Detail;
+  readonly opfs: Caso7Detail | null;
+  // why: null when OPFS is unavailable (Tauri/Capacitor, or a browser
+  //      without navigator.storage.getDirectory) — not a failed
+  //      measurement, just nothing to compare against.
+  readonly commitSpeedup: number | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class DevPerfService {
   private readonly workspace = inject(WorkspaceService);
   private readonly fs = inject(FsService);
+  private readonly opfsGitRoot = inject(OpfsGitRootService);
   private readonly progressSignal = signal<ProgressState>({
     phase: 'idle',
     currentId: null,
@@ -127,6 +139,41 @@ export class DevPerfService {
       verdict,
       thresholds: { commitAllMs: COMMIT_THRESHOLD_MS, logMs: LOG_THRESHOLD_MS },
     };
+  }
+
+  // docs/deferred/versionado.md — validates the promised OPFS speedup
+  // in dev before calling the item closed. Runs caso7 (init + N
+  // synthetic notes + commitAll + log + readBlob) twice against
+  // *separate* scratch repos: one with `.git` on the real FS (today's
+  // behavior), one with `.git` routed to a throwaway OPFS dir via the
+  // same GitFsAdapter.gitDirRoot seam production uses — both rooted so
+  // `dir: '/'` puts `.git` exactly where that routing checks for it
+  // (nested scratch dirs, like runAll()'s cases use, wouldn't trigger
+  // the routing at all, since it only matches `.git` at the adapter's
+  // own root).
+  async runOpfsComparison(n: number): Promise<OpfsComparisonReport> {
+    const realRoot = await this.scratchWorkdir('case-cmp-real');
+    const realFs = new GitFsAdapter(realRoot, this.fs);
+    await this.rmRecursive(realFs, '/').catch(() => undefined);
+    const real = await caso7(realFs, '/', n);
+
+    const opfsScratch = await this.opfsGitRoot.getScratchDir('perf-scratch-git');
+    if (!opfsScratch) return { real, opfs: null, commitSpeedup: null };
+
+    const opfsRoot = await this.scratchWorkdir('case-cmp-opfs');
+    const opfsFs = new GitFsAdapter(opfsRoot, this.fs, opfsScratch);
+    await this.rmRecursive(opfsFs, '/').catch(() => undefined);
+    const opfs = await caso7(opfsFs, '/', n);
+
+    return { real, opfs, commitSpeedup: real.commitAllMs / opfs.commitAllMs };
+  }
+
+  private async scratchWorkdir(name: string): Promise<NativeDirRef> {
+    const root = this.workspace.root();
+    if (!root) throw new Error('Workspace not ready');
+    const mc = await this.fs.getOrCreateDir(root, '.mi-cerebro');
+    const perf = await this.fs.getOrCreateDir(mc, 'perf');
+    return this.fs.getOrCreateDir(perf, name);
   }
 
   async cleanup(fs?: GitFsAdapter): Promise<void> {

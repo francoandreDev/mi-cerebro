@@ -2,6 +2,16 @@
 // backed by NativeFs (browser File System Access API, Tauri plugin-fs, or
 // Capacitor Filesystem depending on platform). Paths are interpreted as
 // POSIX strings relative to `root` ('/' = root).
+//
+// Optional `gitDirRoot` (docs/deferred/versionado.md — `.git/` on OPFS):
+// when set, any path under `/.git` resolves against `gitDirRoot` instead
+// of `root` — the workdir (user's files) stays on the real FS, only git's
+// own objects/refs/index move. isomorphic-git itself never knows; it
+// keeps calling `dir: '/'` and defaults `gitdir` to `dir + '/.git'`, which
+// is exactly the prefix this routes on. When `gitDirRoot` is omitted
+// (OPFS unavailable — Tauri/Capacitor, or the browser lacks OPFS) this
+// behaves exactly as before, single root, no routing overhead beyond one
+// string check per call.
 
 import type { NativeFs } from '@core/fs/native-fs';
 import type { NativeDirRef } from '@core/fs/native-fs.types';
@@ -9,13 +19,15 @@ import type { NativeDirRef } from '@core/fs/native-fs.types';
 import { GitFsError, type GitFsStat, makeStat, splitPath } from './git-fs.errors';
 
 const TEXT_DECODER = new TextDecoder();
+const GIT_PREFIX = '/.git';
 
-type ReadOpts = { encoding?: 'utf8' } | 'utf8' | undefined;
+export type ReadOpts = { encoding?: 'utf8' } | 'utf8' | undefined;
 
 export class GitFsAdapter {
   constructor(
     private readonly root: NativeDirRef,
     private readonly fs: NativeFs,
+    private readonly gitDirRoot: NativeDirRef | null = null,
   ) {}
 
   readonly promises = {
@@ -31,6 +43,20 @@ export class GitFsAdapter {
     symlink: (t: string, p: string) => this.symlink(t, p),
   };
 
+  // why: routes by the ORIGINAL path (before splitting into segments) —
+  //      `/.git` itself maps to the gitDirRoot's own root ('/'), anything
+  //      under `/.git/` maps to that same path with the prefix stripped.
+  //      Anything else (workdir files) is untouched, base = this.root.
+  private baseFor(path: string): { base: NativeDirRef; rel: string } {
+    if (this.gitDirRoot) {
+      if (path === GIT_PREFIX) return { base: this.gitDirRoot, rel: '/' };
+      if (path.startsWith(`${GIT_PREFIX}/`)) {
+        return { base: this.gitDirRoot, rel: path.slice(GIT_PREFIX.length) };
+      }
+    }
+    return { base: this.root, rel: path };
+  }
+
   private split(path: string): { dirSegs: string[]; name: string | null } {
     const segs = splitPath(path);
     if (segs.length === 0) return { dirSegs: [], name: null };
@@ -42,10 +68,11 @@ export class GitFsAdapter {
   //      a platform-neutral stat() shape rather than DOMException.name (which
   //      only browser adapters produce).
   private async resolveDir(
+    base: NativeDirRef,
     segments: string[],
     opts: { create?: boolean } = {},
   ): Promise<NativeDirRef> {
-    let dir = this.root;
+    let dir = base;
     for (let i = 0; i < segments.length; i++) {
       const seg = segments[i]!;
       const info = await this.fs.stat(dir, seg);
@@ -67,9 +94,10 @@ export class GitFsAdapter {
   }
 
   async readFile(path: string, opts?: ReadOpts): Promise<Uint8Array | string> {
-    const { dirSegs, name } = this.split(path);
+    const { base, rel } = this.baseFor(path);
+    const { dirSegs, name } = this.split(rel);
     if (!name) throw new GitFsError('EISDIR', path, 'open');
-    const dir = await this.resolveDir(dirSegs);
+    const dir = await this.resolveDir(base, dirSegs);
     const info = await this.fs.stat(dir, name);
     if (!info) throw new GitFsError('ENOENT', path, 'open');
     if (info.kind !== 'file') throw new GitFsError('EISDIR', path, 'open');
@@ -80,9 +108,10 @@ export class GitFsAdapter {
   }
 
   async writeFile(path: string, data: Uint8Array | string): Promise<void> {
-    const { dirSegs, name } = this.split(path);
+    const { base, rel } = this.baseFor(path);
+    const { dirSegs, name } = this.split(rel);
     if (!name) throw new GitFsError('EISDIR', path, 'open');
-    const dir = await this.resolveDir(dirSegs, { create: true });
+    const dir = await this.resolveDir(base, dirSegs, { create: true });
     if (typeof data === 'string') {
       await this.fs.writeFileAtomic(dir, name, data);
     } else {
@@ -93,9 +122,10 @@ export class GitFsAdapter {
   }
 
   async unlink(path: string): Promise<void> {
-    const { dirSegs, name } = this.split(path);
+    const { base, rel } = this.baseFor(path);
+    const { dirSegs, name } = this.split(rel);
     if (!name) throw new GitFsError('EISDIR', path, 'unlink');
-    const dir = await this.resolveDir(dirSegs);
+    const dir = await this.resolveDir(base, dirSegs);
     // why: node fs unlink() throws EISDIR on a directory instead of silently
     //      removing it — stat first so that keeps holding under NativeFs too.
     const info = await this.fs.stat(dir, name);
@@ -105,9 +135,10 @@ export class GitFsAdapter {
   }
 
   async rmdir(path: string): Promise<void> {
-    const { dirSegs, name } = this.split(path);
+    const { base, rel } = this.baseFor(path);
+    const { dirSegs, name } = this.split(rel);
     if (!name) throw new GitFsError('EBUSY', path, 'rmdir');
-    const dir = await this.resolveDir(dirSegs);
+    const dir = await this.resolveDir(base, dirSegs);
     const info = await this.fs.stat(dir, name);
     if (!info) throw new GitFsError('ENOENT', path, 'rmdir');
     const target = await this.fs.getDir(dir, name);
@@ -118,9 +149,10 @@ export class GitFsAdapter {
   }
 
   async mkdir(path: string): Promise<void> {
-    const { dirSegs, name } = this.split(path);
+    const { base, rel } = this.baseFor(path);
+    const { dirSegs, name } = this.split(rel);
     if (!name) return;
-    const parent = await this.resolveDir(dirSegs, { create: true });
+    const parent = await this.resolveDir(base, dirSegs, { create: true });
     if (await this.fs.hasEntry(parent, name)) {
       throw new GitFsError('EEXIST', path, 'mkdir');
     }
@@ -128,8 +160,9 @@ export class GitFsAdapter {
   }
 
   async readdir(path: string): Promise<string[]> {
-    const segs = splitPath(path);
-    const dir = await this.resolveDir(segs);
+    const { base, rel } = this.baseFor(path);
+    const segs = splitPath(rel);
+    const dir = await this.resolveDir(base, segs);
     const out: string[] = [];
     for await (const name of this.fs.listFiles(dir)) out.push(name);
     for await (const name of this.fs.listSubdirs(dir)) out.push(name);
@@ -137,8 +170,9 @@ export class GitFsAdapter {
   }
 
   async stat(path: string): Promise<GitFsStat> {
-    const { dirSegs, name } = this.split(path);
-    const parent = await this.resolveDir(dirSegs);
+    const { base, rel } = this.baseFor(path);
+    const { dirSegs, name } = this.split(rel);
+    const parent = await this.resolveDir(base, dirSegs);
     if (!name) return makeStat('dir', 0, 0);
     const info = await this.fs.stat(parent, name);
     if (!info) throw new GitFsError('ENOENT', path, 'stat');

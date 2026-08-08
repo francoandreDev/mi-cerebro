@@ -9,6 +9,7 @@ import * as git from 'isomorphic-git';
 import { FsService } from '@core/fs/fs.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { GitFsAdapter } from '@core/versioning/git-fs.adapter';
+import { OpfsGitRootService } from '@core/versioning/opfs-git-root';
 import { MilestoneService } from '@core/versioning/milestone.service';
 import { resolveOrNull, stripHeadsPrefix } from '@core/versioning/variants.io';
 import { PRINCIPAL_VARIANT_ID, type Variant } from '@core/versioning/variants.types';
@@ -40,12 +41,13 @@ export class VariantsStatsService {
   private readonly workspace = inject(WorkspaceService);
   private readonly milestones = inject(MilestoneService);
   private readonly fs = inject(FsService);
+  private readonly opfsGitRoot = inject(OpfsGitRootService);
   private readonly cache = new Map<string, { headOid: string; data: VariantOverview }>();
 
   // Returns the number of commits on `variant.main` that are not yet
   // reachable from `main`. Used to warn before deletion.
   async unmergedAgainstPrincipal(variant: Variant): Promise<number> {
-    const fs = this.adapter();
+    const fs = await this.adapter();
     if (!fs) return 0;
     try {
       const principal = await git.log({ fs, dir: REPO_DIR, ref: 'main', depth: COUNT_DEPTH });
@@ -73,7 +75,7 @@ export class VariantsStatsService {
   // dormant tile or scrolling the list doesn't redo the git walk
   // unless the underlying ref actually moved.
   async overview(variant: Variant): Promise<VariantOverview> {
-    const fs = this.adapter();
+    const fs = await this.adapter();
     if (!fs) return emptyOverview();
     const headOid = await resolveOrNull(fs, variant.refs.main);
     if (!headOid) return emptyOverview();
@@ -166,10 +168,11 @@ export class VariantsStatsService {
     return null;
   }
 
-  private adapter(): GitFsAdapter | null {
+  private async adapter(): Promise<GitFsAdapter | null> {
     const root = this.workspace.root();
     if (!root) return null;
-    return new GitFsAdapter(root, this.fs);
+    const gitDirRoot = await this.opfsGitRoot.getGitDir();
+    return new GitFsAdapter(root, this.fs, gitDirRoot);
   }
 }
 

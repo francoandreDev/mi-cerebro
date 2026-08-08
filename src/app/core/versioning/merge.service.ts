@@ -16,6 +16,7 @@ import { blobToText, isLikelyBinary } from '@features/history/services/diff.util
 
 import { AutocommitService } from './autocommit.service';
 import { GitFsAdapter } from './git-fs.adapter';
+import { OpfsGitRootService } from './opfs-git-root';
 import { mergeCommentsFaceta, mergeDraftsFaceta } from './merge-facetas';
 import { buildMergeCommit } from './merge-apply';
 import { applyFromRemoteMain, diffMainAgainstRemote } from './merge-remote';
@@ -48,11 +49,12 @@ export class MergeService {
   private readonly variants = inject(VariantsService);
   private readonly settings = inject(SettingsService);
   private readonly fs = inject(FsService);
+  private readonly opfsGitRoot = inject(OpfsGitRootService);
 
   // Compares main refs of two families and returns the list of paths
   // that differ, with a short preview of each side.
   async diffMains(from: Variant, into: Variant): Promise<MergePlan> {
-    const fs = this.requireAdapter();
+    const fs = await this.requireAdapter();
     const fromRef = stripHeadsPrefix(from.refs.main);
     const intoRef = stripHeadsPrefix(into.refs.main);
     const raw = await git.walk({
@@ -87,7 +89,7 @@ export class MergeService {
   // is encoded as `remote:<ref>` so /variants/merge can render the
   // remote side without faking a Variant.
   async diffAgainstRemoteMain(into: Variant, remoteRefName: string): Promise<MergePlan> {
-    const entries = await diffMainAgainstRemote(this.remoteCtx(into, remoteRefName));
+    const entries = await diffMainAgainstRemote(await this.remoteCtx(into, remoteRefName));
     return {
       fromVariantId: `${REMOTE_SOURCE_PREFIX}${remoteRefName}`,
       intoVariantId: into.id,
@@ -103,7 +105,7 @@ export class MergeService {
     await this.autocommit.commitNow('pre-merge');
     return this.fsLock.withLock(async () => {
       const outcome = await applyFromRemoteMain(
-        this.remoteCtx(into, remoteRefName),
+        await this.remoteCtx(into, remoteRefName),
         selections,
         crypto.randomUUID(),
       );
@@ -114,9 +116,9 @@ export class MergeService {
     });
   }
 
-  private remoteCtx(into: Variant, remoteRefName: string) {
+  private async remoteCtx(into: Variant, remoteRefName: string) {
     return {
-      fs: this.requireAdapter(),
+      fs: await this.requireAdapter(),
       intoRef: stripHeadsPrefix(into.refs.main),
       remoteRef: `${REMOTE_TRACKING_PREFIX}${remoteRefName}`,
       author: DEFAULT_GIT_AUTHOR,
@@ -144,7 +146,7 @@ export class MergeService {
     selections: readonly MergeSelection[],
     facets: MergeFacetOptions,
   ): Promise<MergeOutcome> {
-    const fs = this.requireAdapter();
+    const fs = await this.requireAdapter();
     const from = this.findVariant(plan.fromVariantId);
     const into = this.findVariant(plan.intoVariantId);
     const intoRef = stripHeadsPrefix(into.refs.main);
@@ -271,7 +273,7 @@ export class MergeService {
     }
   }
 
-  private requireAdapter(): GitFsAdapter {
+  private async requireAdapter(): Promise<GitFsAdapter> {
     const root = this.workspace.root();
     if (!root) {
       throw new AppError(ERROR_CODES.VER_010, {
@@ -280,7 +282,8 @@ export class MergeService {
         recoverable: true,
       });
     }
-    return new GitFsAdapter(root, this.fs);
+    const gitDirRoot = await this.opfsGitRoot.getGitDir();
+    return new GitFsAdapter(root, this.fs, gitDirRoot);
   }
 }
 

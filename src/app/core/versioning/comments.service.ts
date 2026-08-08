@@ -24,6 +24,7 @@ import {
   type CommentsFile,
 } from './comments.types';
 import { GitFsAdapter } from './git-fs.adapter';
+import { OpfsGitRootService } from './opfs-git-root';
 import { VariantsService } from './variants.service';
 import { DEFAULT_GIT_AUTHOR } from './versioning.constants';
 
@@ -36,13 +37,14 @@ export class CommentsService {
   private readonly variants = inject(VariantsService);
   private readonly fsLock = inject(FsLockService);
   private readonly fs = inject(FsService);
+  private readonly opfsGitRoot = inject(OpfsGitRootService);
   private readonly search = inject(SearchIndexService);
 
   // Entity ids that have a comments file on the active family's comments
   // branch — used to prime the search index without knowing ids upfront.
   async listEntityIds(): Promise<readonly string[]> {
     const ref = this.activeCommentsRef();
-    const fs = this.requireAdapter();
+    const fs = await this.requireAdapter();
     const entries = await listBranchDir(fs, ref, COMMENTS_DIR);
     return entries.map((e) => e.path.slice(COMMENTS_DIR.length + 1, -'.json'.length));
   }
@@ -51,7 +53,7 @@ export class CommentsService {
   // ever been written for this entity on the active family.
   async read(entityId: string): Promise<CommentsFile> {
     const ref = this.activeCommentsRef();
-    const fs = this.requireAdapter();
+    const fs = await this.requireAdapter();
     let bytes: Uint8Array | null;
     try {
       bytes = await readBranchBlob(fs, ref, commentsFilepath(entityId));
@@ -69,7 +71,7 @@ export class CommentsService {
   async save(entityId: string, entityTitle: string, comments: readonly Comment[]): Promise<void> {
     const active = this.requireActive();
     const ref = active.refs.comments;
-    const fs = this.requireAdapter();
+    const fs = await this.requireAdapter();
     const file: CommentsFile = {
       schemaVersion: COMMENTS_FILE_SCHEMA_VERSION,
       entityId,
@@ -138,7 +140,7 @@ export class CommentsService {
     return active;
   }
 
-  private requireAdapter(): GitFsAdapter {
+  private async requireAdapter(): Promise<GitFsAdapter> {
     const root = this.workspace.root();
     if (!root) {
       throw new AppError(ERROR_CODES.VER_019, {
@@ -147,7 +149,8 @@ export class CommentsService {
         recoverable: true,
       });
     }
-    return new GitFsAdapter(root, this.fs);
+    const gitDirRoot = await this.opfsGitRoot.getGitDir();
+    return new GitFsAdapter(root, this.fs, gitDirRoot);
   }
 
   private io(cause: unknown, entityId: string, op: 'read' | 'save'): AppError {

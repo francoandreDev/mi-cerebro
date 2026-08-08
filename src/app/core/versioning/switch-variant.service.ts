@@ -32,6 +32,7 @@ import { SearchFamilyPrimingService } from '@core/search/search-family-priming.s
 import { SearchIndexService } from '@core/search/search-index.service';
 
 import { GitFsAdapter } from './git-fs.adapter';
+import { OpfsGitRootService } from './opfs-git-root';
 import { VARIANTS_CHANNEL_NAME, type VariantsBroadcast } from './variants-channel';
 import { VariantsService } from './variants.service';
 import { type Variant } from './variants.types';
@@ -56,6 +57,7 @@ export class SwitchVariantService {
   private readonly fsLock = inject(FsLockService);
   private readonly errors = inject(ErrorService);
   private readonly fs = inject(FsService);
+  private readonly opfsGitRoot = inject(OpfsGitRootService);
 
   private readonly switchingSignal = signal<SwitchingState | null>(null);
   readonly switching = this.switchingSignal.asReadonly();
@@ -90,7 +92,8 @@ export class SwitchVariantService {
     if (!active) return;
     const root = this.workspace.root();
     if (!root) return;
-    const fs = new GitFsAdapter(root, this.fs);
+    const gitDirRoot = await this.opfsGitRoot.getGitDir();
+    const fs = new GitFsAdapter(root, this.fs, gitDirRoot);
     let current: string | undefined;
     try {
       const ret = await git.currentBranch({ fs, dir: REPO_DIR });
@@ -151,7 +154,8 @@ export class SwitchVariantService {
         recoverable: true,
       });
     }
-    const fs = new GitFsAdapter(root, this.fs);
+    const gitDirRoot = await this.opfsGitRoot.getGitDir();
+    const fs = new GitFsAdapter(root, this.fs, gitDirRoot);
 
     try {
       await this.autosave.flushAll();

@@ -13,6 +13,7 @@ import * as git from 'isomorphic-git';
 import { FsService } from '@core/fs/fs.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { GitFsAdapter } from '@core/versioning/git-fs.adapter';
+import { OpfsGitRootService } from '@core/versioning/opfs-git-root';
 
 import type {
   AnchorChange,
@@ -83,9 +84,10 @@ export interface EntityDiff {
 export class HistoryDiffService {
   private readonly workspace = inject(WorkspaceService);
   private readonly fs = inject(FsService);
+  private readonly opfsGitRoot = inject(OpfsGitRootService);
 
   async loadForCommit(oid: string): Promise<readonly EntityDiff[]> {
-    const adapter = this.adapter();
+    const adapter = await this.adapter();
     if (!adapter) return [];
     const parent = await this.parentOidOf(adapter, oid);
     const changes = await this.collectChanges(adapter, oid, parent);
@@ -105,7 +107,7 @@ export class HistoryDiffService {
       readonly signal?: AbortSignal;
     },
   ): Promise<ReadonlySet<string>> {
-    const adapter = this.adapter();
+    const adapter = await this.adapter();
     if (!adapter) return new Set();
     const noise = new Set<string>();
     let sinceYield = 0;
@@ -154,9 +156,11 @@ export class HistoryDiffService {
     return fields.every((f) => /^variants\[\d+\]\.(lastActivityAt|state)$/.test(f.key));
   }
 
-  private adapter(): GitFsAdapter | null {
+  private async adapter(): Promise<GitFsAdapter | null> {
     const root = this.workspace.root();
-    return root ? new GitFsAdapter(root, this.fs) : null;
+    if (!root) return null;
+    const gitDirRoot = await this.opfsGitRoot.getGitDir();
+    return new GitFsAdapter(root, this.fs, gitDirRoot);
   }
 
   private async parentOidOf(fs: GitFsAdapter, oid: string): Promise<string | null> {

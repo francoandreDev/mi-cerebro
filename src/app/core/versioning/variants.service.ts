@@ -14,6 +14,7 @@ import { computeLastActivityAt, isDormant } from './variants-activity';
 import { deleteFamilyRefs, forkFamilyAtomic } from './variants-branch-ops';
 import { renameVariant } from './variants-rename';
 import { GitFsAdapter } from './git-fs.adapter';
+import { OpfsGitRootService } from './opfs-git-root';
 import { isNotFound, sanitizeVariantsFile } from './variants.io';
 import {
   DEFAULT_VARIANTS_FILE,
@@ -36,6 +37,7 @@ export interface CreateVariantOptions {
 @Injectable({ providedIn: 'root' })
 export class VariantsService {
   private readonly fs = inject(FsService);
+  private readonly opfsGitRoot = inject(OpfsGitRootService);
   private readonly workspace = inject(WorkspaceService);
   private adapter: GitFsAdapter | null = null;
 
@@ -83,7 +85,7 @@ export class VariantsService {
         recoverable: true,
       });
     }
-    const fs = this.requireAdapter();
+    const fs = await this.requireAdapter();
     const { nextFile, nextVariant } = await renameVariant(fs, current, variant, newName);
     await this.writeFile(nextFile);
     return nextVariant;
@@ -100,7 +102,7 @@ export class VariantsService {
   // why: Principal is exempt from the dormant lifecycle per PROYECTO §19 13b-iii.
   async refreshActivity(thresholdDays: number, now = Date.now()): Promise<void> {
     await this.ensureLoaded();
-    const fs = this.requireAdapter();
+    const fs = await this.requireAdapter();
     const current = this.fileSignal();
     const updated: Variant[] = [];
     for (const v of current.variants) {
@@ -183,7 +185,7 @@ export class VariantsService {
       });
     }
     const newRefs = refsForSlug(slug);
-    const { forkOid } = await forkFamilyAtomic(this.requireAdapter(), parent.refs, newRefs);
+    const { forkOid } = await forkFamilyAtomic(await this.requireAdapter(), parent.refs, newRefs);
     const variant: Variant = {
       id: slug,
       name: opts.name.trim(),
@@ -272,12 +274,12 @@ export class VariantsService {
     const current = this.fileSignal();
     const variant = current.variants.find((v) => v.id === id);
     if (!variant) return;
-    await deleteFamilyRefs(this.requireAdapter(), variant.refs);
+    await deleteFamilyRefs(await this.requireAdapter(), variant.refs);
     const next = current.variants.filter((v) => v.id !== id);
     await this.writeFile({ ...current, variants: next });
   }
 
-  private requireAdapter(): GitFsAdapter {
+  private async requireAdapter(): Promise<GitFsAdapter> {
     if (this.adapter) return this.adapter;
     const root = this.workspace.root();
     if (!root) {
@@ -287,7 +289,8 @@ export class VariantsService {
         recoverable: true,
       });
     }
-    this.adapter = new GitFsAdapter(root, this.fs);
+    const gitDirRoot = await this.opfsGitRoot.getGitDir();
+    this.adapter = new GitFsAdapter(root, this.fs, gitDirRoot);
     return this.adapter;
   }
 
