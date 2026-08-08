@@ -21,6 +21,7 @@ import { HistoryPanoramaComponent } from '../components/history-panorama.compone
 import type { FlatFossil } from '../components/history-panorama.component';
 import { HistoryStrataComponent } from '../components/history-strata.component';
 import { HistoryCordelComponent } from '../components/history-cordel.component';
+import { HistoryConstellationComponent } from '../components/history-constellation.component';
 import { HISTORY_RESTORE_TUTORIAL } from './history-restore.tutorial';
 import { HISTORY_TUTORIAL } from './history.tutorial';
 import { HistoryDiffService } from '../services/diff.service';
@@ -218,6 +219,7 @@ function groupKeyForPath(path: string): GroupKey {
     HistoryPanoramaComponent,
     HistoryStrataComponent,
     HistoryCordelComponent,
+    HistoryConstellationComponent,
   ],
   templateUrl: './history.container.html',
   styleUrl: './history.container.css',
@@ -398,6 +400,15 @@ export class HistoryContainer implements OnInit, OnDestroy {
   //      visible debajo del header nombra los tres niveles a la vez.
   protected zoomLegendKey(z: HistoryZoom): TranslationKey {
     return `versioning.history.zoom.legend.${z}` as TranslationKey;
+  }
+
+  // why: vista secundaria (docs/deferred/versionado.md), fuera del
+  //      continuum panorama→strata→detail — no consume/afecta
+  //      unlockedLevel ni el deep-link `?zoom=`, sólo se superpone.
+  private readonly showConstellationSignal = signal(false);
+  protected readonly showConstellation = this.showConstellationSignal.asReadonly();
+  protected toggleConstellation(): void {
+    this.showConstellationSignal.update((v) => !v);
   }
   private stepZoom(delta: 1 | -1): void {
     const cur = this.zoomSignal();
@@ -639,11 +650,12 @@ export class HistoryContainer implements OnInit, OnDestroy {
 
   constructor() {
     // why: al subir a panorámica o entrar a estratos por primera vez tras
-    //      cada reloadAll, buscamos el aggregate por día (ambas vistas lo
-    //      necesitan). Se cachea hasta el próximo reload.
+    //      cada reloadAll, buscamos el aggregate por día (esas vistas y la
+    //      constelación lo necesitan). Se cachea hasta el próximo reload.
     effect(() => {
       const z = this.zoomSignal();
-      if ((z !== 'panorama' && z !== 'strata') || this.panoramaFetchedForLoad) return;
+      const needsAggregate = z === 'panorama' || z === 'strata' || this.showConstellationSignal();
+      if (!needsAggregate || this.panoramaFetchedForLoad) return;
       this.panoramaFetchedForLoad = true;
       this.panoramaLoadingSignal.set(true);
       void this.loader

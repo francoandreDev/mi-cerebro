@@ -408,6 +408,16 @@ export const es = {
   'history.tutorial.restore.confirm.title': 'Confirmá con el sha exacto',
   'history.tutorial.restore.confirm.body':
     'Esta acción es irreversible: pisa el estado actual con el del commit elegido. Por eso pide que tipees el sha corto exacto (se ve arriba) antes de habilitar el botón — no es un gesto para practicar en el tutorial, hacelo sólo cuando de verdad quieras restaurar.',
+  'versioning.history.constellation.toggle': 'Ver constelación',
+  'versioning.history.constellation.title': 'Constelación',
+  'versioning.history.constellation.subtitle':
+    'Vista secundaria: ritmo de trabajo en vez de commits individuales. Cada estrella es un día — el tamaño es cuántos commits tuvo, la posición horizontal es cuándo. No es navegable: para ver un commit puntual, volvé a cordillera, estratos o cordel.',
+  'versioning.history.constellation.close': 'Cerrar constelación',
+  'versioning.history.constellation.loading': 'Cargando constelación…',
+  'versioning.history.constellation.empty': 'Todavía no hay commits para dibujar una constelación.',
+  'versioning.history.constellation.statDays': '{n} días con actividad',
+  'versioning.history.constellation.statCommits': '{n} commits en total',
+  'versioning.history.constellation.statPeak': 'Pico: {n} commits el {date}',
   'versioning.history.zoom.legend.aria': 'Referencia de niveles de zoom',
   'versioning.history.zoom.legend.panorama': 'todo el año, un pico por día',
   'versioning.history.zoom.legend.strata': 'corte por bucket de commits',

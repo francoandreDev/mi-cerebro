@@ -1,0 +1,47 @@
+<div class="constellation-head">
+  <h3>
+    <mc-icon name="sparkle" class="constellation-title-icon" />
+    {{ i18n.t('versioning.history.constellation.title') }}
+  </h3>
+  <p class="constellation-subtitle">
+    {{ i18n.t('versioning.history.constellation.subtitle') }}
+  </p>
+  <button type="button" class="constellation-close" (click)="dismiss.emit()">
+    {{ i18n.t('versioning.history.constellation.close') }}
+  </button>
+</div>
+
+@if (loading()) {
+  <p class="constellation-loading">{{ i18n.t('versioning.history.constellation.loading') }}</p>
+} @else if (stars().length === 0) {
+  <p class="constellation-empty">{{ i18n.t('versioning.history.constellation.empty') }}</p>
+} @else {
+  <div class="constellation-stats">
+    <span>{{ i18n.t('versioning.history.constellation.statDays', { n: activeDaySpan() }) }}</span>
+    <span>{{ i18n.t('versioning.history.constellation.statCommits', { n: totalCommits() }) }}</span>
+    @if (busiestDay(); as peak) {
+      <span>
+        {{
+          i18n.t('versioning.history.constellation.statPeak', {
+            n: peak.count,
+            date: (peak.dayStart | mcDate),
+          })
+        }}
+      </span>
+    }
+  </div>
+
+  <svg class="constellation-sky" viewBox="0 0 100 100" preserveAspectRatio="none">
+    @for (s of stars(); track s.dayStart) {
+      <circle
+        class="constellation-star"
+        [attr.data-facet]="s.dominantFacet"
+        [attr.cx]="s.x"
+        [attr.cy]="s.y"
+        [attr.r]="s.radius"
+      >
+        <title>{{ (s.dayStart | mcDate) + ' — ' + s.count }}</title>
+      </circle>
+    }
+  </svg>
+}

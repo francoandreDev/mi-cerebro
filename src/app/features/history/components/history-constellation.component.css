@@ -1,0 +1,96 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+  background: radial-gradient(ellipse at 50% 0%, #12182b 0%, #05060d 70%);
+  color: #e8ecff;
+  --facet-color-main: var(--mc-accent-primary);
+  --facet-color-comments: #6b8ce0;
+  --facet-color-draft: #d4a72c;
+}
+
+.constellation-head {
+  position: relative;
+  padding: 16px 20px 10px;
+  border-bottom: 1px solid rgba(232, 236, 255, 0.12);
+}
+.constellation-head h3 {
+  margin: 0 0 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+}
+.constellation-title-icon {
+  color: #ffd76a;
+}
+.constellation-subtitle {
+  margin: 0;
+  font-size: 12px;
+  opacity: 0.65;
+  max-width: 60ch;
+}
+.constellation-close {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(232, 236, 255, 0.3);
+  background: rgba(232, 236, 255, 0.06);
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+.constellation-close:hover {
+  background: rgba(232, 236, 255, 0.14);
+  border-color: rgba(232, 236, 255, 0.5);
+}
+
+.constellation-loading,
+.constellation-empty {
+  margin: auto;
+  padding: 32px;
+  text-align: center;
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+.constellation-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  padding: 10px 20px;
+  font-size: 12px;
+  opacity: 0.8;
+  font-variant-numeric: tabular-nums;
+}
+
+.constellation-sky {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
+.constellation-star {
+  fill: var(--facet-color-main);
+  filter: drop-shadow(0 0 2px currentColor);
+  opacity: 0.92;
+}
+.constellation-star[data-facet='comments'] {
+  fill: var(--facet-color-comments);
+}
+.constellation-star[data-facet='draft'] {
+  fill: var(--facet-color-draft);
+}
+
+@media (max-width: 480px) {
+  .constellation-close {
+    position: static;
+    margin-top: 8px;
+  }
+}

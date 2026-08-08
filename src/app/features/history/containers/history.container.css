@@ -95,6 +95,31 @@
   white-space: nowrap;
 }
 
+/* Vista secundaria — toggle independiente del continuum de zoom, no un
+ * cuarto nivel dentro de él (ver docs/deferred/versionado.md). */
+.constellation-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--mc-fg-primary) 18%, transparent);
+  background: transparent;
+  color: var(--mc-fg-primary);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+.constellation-toggle:hover {
+  background: color-mix(in srgb, var(--mc-fg-primary) 8%, transparent);
+}
+.constellation-toggle.active {
+  background: #12182b;
+  border-color: #12182b;
+  color: #ffd76a;
+}
+
 /* Leyenda siempre visible de los 3 niveles de zoom — antes sólo el nivel
  * activo tenía nombre visible (`.zoom-current-label`); los otros dos sólo
  * se explicaban vía title/aria-label del botón, que exige hover/foco.

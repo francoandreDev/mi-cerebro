@@ -29,6 +29,17 @@
     }
     <span class="zoom-current-label">{{ i18n.t(zoomLabelKey(zoom())) }}</span>
   </div>
+  <button
+    type="button"
+    class="constellation-toggle"
+    [class.active]="showConstellation()"
+    [attr.aria-pressed]="showConstellation()"
+    [title]="i18n.t('versioning.history.constellation.toggle')"
+    (click)="toggleConstellation()"
+  >
+    <mc-icon name="sparkle" />
+    {{ i18n.t('versioning.history.constellation.toggle') }}
+  </button>
 </header>
 
 <ul class="zoom-legend" [attr.aria-label]="i18n.t('versioning.history.zoom.legend.aria')">
@@ -40,7 +51,13 @@
   }
 </ul>
 
-@if (zoom() === 'panorama') {
+@if (showConstellation()) {
+  <mc-history-constellation
+    [aggregates]="panoramaAggregates()"
+    [loading]="panoramaLoading()"
+    (dismiss)="toggleConstellation()"
+  />
+} @else if (zoom() === 'panorama') {
   <mc-history-panorama
     [entries]="entries()"
     [aggregates]="panoramaAggregates()"

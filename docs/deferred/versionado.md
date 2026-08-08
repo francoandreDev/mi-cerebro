@@ -23,12 +23,6 @@ Formato por entrada:
 - **Resuelto parcialmente 2026-08-08**: cordel ya estaba completo (transición + `.selected` con detach animado + dimming de hermanas + hover preview) y no necesitó cambios. Panorama sí tenía un gap real: el marcador de fósil (`<g class="panorama-fossil">`) heredaba `pointer-events: none` de su propia regla, así que un click de mouse nunca disparaba `onFossilClick()` — caía al hit-rect del día debajo; sólo Enter (foco+teclado) andaba. Corregido a `pointer-events: auto` + hover/focus-visible con scale-pop en la concha/núcleo del fósil, transición de fill en el hit-rect del día, animación `band-select-pop` al aparecer la banda de selección de día, y hover feedback en los chips `.notebook-fossil` (no tenían ninguno). El resto del grab-bag (densidad, jerarquía general) sigue abierto — sin caso concreto que lo pida todavía.
 - **Target**: §19.16f.
 
-### Vista secundaria de constelaciones ("mapa de patrones de trabajo")
-
-- **Qué**: vista alternativa tipo cielo estrellado que revele patrones de trabajo emergentes (ritmo, picos, gaps) en vez de commits individuales navegables. Se descartó como vista principal del rediseño de `/history` v2 porque encontrar un commit específico en un layout 2D estrellado es peor que en la cordillera/estratos/cordel, pero quedó anotada como posible vista secundaria.
-- **Por qué se difirió**: opcional, muy posterior — sólo si el rediseño principal (cordillera/estratos/cordel) deja "hambre" de ese eje analítico distinto (patrones en vez de hechos puntuales).
-- **Target**: sin asignar.
-
 ### Índice de búsqueda persistido por familia (`idx-<family>-main`)
 
 - **Qué**: §12 13b-ii describe un índice MiniSearch por familia cacheado en IndexedDB, así el switch sólo paga rebuild la primera vez.
