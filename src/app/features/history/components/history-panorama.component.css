@@ -408,6 +408,22 @@ aside.timeline {
   stroke-dasharray: 2 3;
   vector-effect: non-scaling-stroke;
   pointer-events: none;
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: band-select-pop 200ms ease;
+}
+
+/* Mismo lenguaje que commit-select-pop en estratos: un breve "pop" al
+ * aparecer la banda de selección, no un salto seco. */
+@keyframes band-select-pop {
+  from {
+    transform: scaleX(0.85);
+    opacity: 0.4;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
 }
 
 /* HEAD marker: pin discreto en la cumbre del commit actual. El label
@@ -530,14 +546,40 @@ aside.timeline {
 .panorama-hit {
   fill: transparent;
   cursor: pointer;
+  transition: fill 140ms ease;
 }
 .panorama-hit:hover {
   fill: color-mix(in srgb, var(--mc-accent-primary) 14%, transparent);
 }
 
+/* why: quedaba en `pointer-events: none` heredado por los hijos, así que
+ *      un click de mouse sobre el fósil caía al hit-rect del día debajo
+ *      en vez de disparar onFossilClick() — sólo Enter (foco+teclado)
+ *      llegaba a andar. Restaurado a `auto` para que el mouse también
+ *      dispare el salto de foco, con feedback de hover/focus a juego. */
 .panorama-fossil {
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: pointer;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+}
+.panorama-fossil-shell,
+.panorama-fossil-core {
+  transition: transform 140ms ease;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+.panorama-fossil:hover .panorama-fossil-shell,
+.panorama-fossil:hover .panorama-fossil-core,
+.panorama-fossil:focus-visible .panorama-fossil-shell,
+.panorama-fossil:focus-visible .panorama-fossil-core {
+  transform: scale(1.18);
+}
+.panorama-fossil:focus-visible {
+  outline: none;
+}
+.panorama-fossil:focus-visible .panorama-fossil-shell {
+  stroke: var(--mc-accent-primary);
+  stroke-width: 1.6;
 }
 /* Concha externa: caparazón de amonita con tono ámbar-piedra. */
 .panorama-fossil-shell {
@@ -720,6 +762,11 @@ aside.timeline {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+.panorama-notebook .notebook-fossil:hover {
+  background: rgba(255, 240, 210, 0.85);
+  border-color: rgba(107, 68, 35, 0.65);
 }
 .panorama-notebook .notebook-fossil-flag {
   color: #8b4513;
