@@ -189,4 +189,65 @@ describe('SearchIndexService', () => {
       expect(svc.query({ text: '' })).toEqual([]);
     });
   });
+
+  describe('family snapshot cache', () => {
+    it('loading an unknown family returns false and leaves the index untouched', async () => {
+      await svc.rebuild([doc('a', 'Nota', 'cuerpo')]);
+      const hit = await svc.tryLoadFamilySnapshot('never-seen');
+      expect(hit).toBe(false);
+      expect(svc.has('a')).toBe(true);
+    });
+
+    it('round-trips a persisted family snapshot', async () => {
+      await svc.rebuild([doc('a', 'Nota de familia', 'contenido')]);
+      await svc.persistFamilySnapshot('fam-1');
+
+      await svc.rebuild([]); // simulate switching away: index goes empty
+      expect(svc.size()).toBe(0);
+
+      const hit = await svc.tryLoadFamilySnapshot('fam-1');
+      expect(hit).toBe(true);
+      expect(svc.query({ text: 'nota' })[0]?.id).toBe('a');
+    });
+
+    it('rebuildKind is a no-op when the primed signature matches the incoming docs', async () => {
+      await svc.rebuild([doc('a', 'original', 'cuerpo original')]);
+      await svc.persistFamilySnapshot('fam-1');
+      await svc.tryLoadFamilySnapshot('fam-1');
+
+      // Same doc (same id) re-offered by a fresh disk walk — rebuildKind
+      // should recognize it as unchanged and skip re-indexing, so a
+      // stale-looking doc with the SAME id but different body would not
+      // overwrite what's already loaded (proving it really short-circuited
+      // rather than coincidentally producing the same result).
+      await svc.rebuildKind('note', [doc('a', 'original', 'CUERPO QUE NO DEBERIA ENTRAR')]);
+      expect(svc.query({ text: 'original' })[0]?.id).toBe('a');
+      expect(svc.query({ text: 'deberia' })).toEqual([]);
+    });
+
+    it('rebuildKind still indexes for real when the doc set changed since the snapshot', async () => {
+      await svc.rebuild([doc('a', 'vieja', 'cuerpo')]);
+      await svc.persistFamilySnapshot('fam-1');
+      await svc.tryLoadFamilySnapshot('fam-1');
+
+      await svc.rebuildKind('note', [
+        doc('a', 'vieja', 'cuerpo'),
+        doc('b', 'nueva', 'otro cuerpo'),
+      ]);
+      const ids = svc.query({ text: '' }).map((h) => h.id);
+      expect(ids.sort()).toEqual(['a', 'b']);
+    });
+
+    it('persistFamilySnapshot clears the primed gate so later calls behave normally', async () => {
+      await svc.rebuild([doc('a', 'uno', '')]);
+      await svc.persistFamilySnapshot('fam-1');
+      await svc.tryLoadFamilySnapshot('fam-1');
+      await svc.persistFamilySnapshot('fam-1');
+
+      // Post-persist, an identical-looking rebuildKind call must go
+      // through the real path (no stale primed signature left over).
+      await svc.rebuildKind('note', [doc('a', 'uno', 'cuerpo nuevo')]);
+      expect(svc.query({ text: 'nuevo' })[0]?.id).toBe('a');
+    });
+  });
 });

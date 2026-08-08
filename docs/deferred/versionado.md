@@ -23,12 +23,6 @@ Formato por entrada:
 - **Resuelto parcialmente 2026-08-08**: cordel ya estaba completo (transición + `.selected` con detach animado + dimming de hermanas + hover preview) y no necesitó cambios. Panorama sí tenía un gap real: el marcador de fósil (`<g class="panorama-fossil">`) heredaba `pointer-events: none` de su propia regla, así que un click de mouse nunca disparaba `onFossilClick()` — caía al hit-rect del día debajo; sólo Enter (foco+teclado) andaba. Corregido a `pointer-events: auto` + hover/focus-visible con scale-pop en la concha/núcleo del fósil, transición de fill en el hit-rect del día, animación `band-select-pop` al aparecer la banda de selección de día, y hover feedback en los chips `.notebook-fossil` (no tenían ninguno). El resto del grab-bag (densidad, jerarquía general) sigue abierto — sin caso concreto que lo pida todavía.
 - **Target**: §19.16f.
 
-### Índice de búsqueda persistido por familia (`idx-<family>-main`)
-
-- **Qué**: §12 13b-ii describe un índice MiniSearch por familia cacheado en IndexedDB, así el switch sólo paga rebuild la primera vez.
-- **Por qué se difirió**: confirmado 2026-08-04 al implementar comments/draft (ver abajo) que esto **no aporta nada real** con la arquitectura actual — `WorkspaceRefreshService.refreshAll()` ya recorre disco en cada switch de variante para repoblar el estado propio de cada feature (listas, walls, no sólo el índice), así que cachear aparte el índice `main` no ahorra ese walk, sólo agrega complejidad sin beneficio medible. Dejaría de aplicar si `refreshAll()` alguna vez deja de walkear disco en cada switch por otra razón.
-- **Target**: sin asignar (no vale la pena reabrir sin un cambio de arquitectura en `refreshAll()` primero).
-
 ### `.git/` en OPFS para acelerar operaciones git
 
 - **Qué**: mover `.git/` (loose objects + refs + index) al Origin Private File System del browser, dejando sólo el workdir visible en la carpeta del usuario via FS Access. isomorphic-git acepta nativamente `dir` (workdir) y `gitdir` separados. La ganancia esperada es 10-100×: cada syscall sobre OPFS cuesta ~5-10 ms vs ~100-200 ms sobre FS Access. Eso bajaría el commit base de ~3 s a ~200 ms.

@@ -27,6 +27,27 @@ interface PersistedIndex {
   readonly meta: Readonly<Record<string, DocMeta>>;
 }
 
+// why: docs/deferred/versionado.md — a per-family snapshot (`idx-<family>-
+//      main`) doesn't skip WorkspaceRefreshService.refreshAll()'s disk walk
+//      (that's unavoidable, each feature's own list/wall state needs it
+//      too), but it does let rebuildKind() skip re-tokenizing a kind whose
+//      doc set is byte-identical to what's already cached from the last
+//      time this family was active this session — real CPU saved, just not
+//      the I/O the original spec assumed it would save.
+interface PersistedFamilyIndex extends PersistedIndex {
+  readonly kindSignatures: Readonly<Record<string, string>>;
+}
+
+const familyIndexKey = (familyId: string): string => `idx-${familyId}-main`;
+
+// Cheap order-independent signature of a doc-id set — not a real hash,
+// just bounded-size and collision-unlikely enough to gate a perf
+// shortcut (a false "unchanged" verdict only costs a stale search result
+// until the next real edit re-primes that kind, never data loss).
+function signatureOf(ids: readonly string[]): string {
+  return `${ids.length}:${[...ids].sort().join(',')}`;
+}
+
 const OPTIONS: MiniSearchOptions = {
   fields: ['title', 'body'],
   storeFields: ['id'],
@@ -87,6 +108,13 @@ export class SearchIndexService {
   private loaded = false;
   readonly ready = signal(false);
 
+  // Set by tryLoadFamilySnapshot() while a family switch is in flight;
+  // rebuildKind() consults it to skip re-tokenizing a kind whose doc set
+  // didn't change since this family was last active. Cleared once the
+  // switch's fresh state is persisted back (persistFamilySnapshot) —
+  // never left stale across an unrelated later rebuildKind/upsert.
+  private primedKindSignatures: ReadonlyMap<string, string> | null = null;
+
   async load(): Promise<void> {
     if (this.loaded) return;
     const raw = await this.idb.get<PersistedIndex>('search-index', SEARCH_INDEX_KEY);
@@ -97,6 +125,57 @@ export class SearchIndexService {
     }
     this.loaded = true;
     this.ready.set(true);
+  }
+
+  // Called by SwitchVariantService right before WorkspaceRefreshService.
+  // refreshAll() for the target family. If a snapshot from a previous
+  // visit to this family this-session-or-earlier exists, swap it in
+  // wholesale (cheap JSON parse, no tokenization) and record its
+  // per-kind signatures so the refresh's rebuildKind() calls can no-op
+  // on kinds that didn't change. Returns whether a snapshot was found —
+  // callers don't need the value, refreshAll() always runs regardless
+  // (it also repopulates each feature's own list/wall state, not just
+  // the index).
+  async tryLoadFamilySnapshot(familyId: string): Promise<boolean> {
+    const raw = await this.idb.get<PersistedFamilyIndex>('search-index', familyIndexKey(familyId));
+    if (!raw || raw.version !== SEARCH_INDEX_VERSION) {
+      this.primedKindSignatures = null;
+      return false;
+    }
+    this.mini = MiniSearch.loadJSON(raw.snapshot, OPTIONS);
+    this.metaById.clear();
+    for (const [id, meta] of Object.entries(raw.meta)) this.metaById.set(id, meta);
+    this.primedKindSignatures = new Map(Object.entries(raw.kindSignatures));
+    this.loaded = true;
+    this.ready.set(true);
+    return true;
+  }
+
+  // Called by SwitchVariantService after refreshAll() + SearchFamily-
+  // PrimingService have both settled for the target family — snapshots
+  // whatever the index looks like now (a mix of reused-from-cache and
+  // freshly-rebuilt kinds) so the *next* visit to this family can reuse
+  // it. Also clears the primed-signatures gate so it never leaks into an
+  // unrelated later rebuildKind/upsert outside a family switch.
+  async persistFamilySnapshot(familyId: string): Promise<void> {
+    const meta: Record<string, DocMeta> = {};
+    const idsByKind = new Map<string, string[]>();
+    for (const [id, m] of this.metaById) {
+      meta[id] = m;
+      const bucket = idsByKind.get(m.kind);
+      if (bucket) bucket.push(id);
+      else idsByKind.set(m.kind, [id]);
+    }
+    const kindSignatures: Record<string, string> = {};
+    for (const [kind, ids] of idsByKind) kindSignatures[kind] = signatureOf(ids);
+    const payload: PersistedFamilyIndex = {
+      version: SEARCH_INDEX_VERSION,
+      snapshot: JSON.stringify(this.mini.toJSON()),
+      meta,
+      kindSignatures,
+    };
+    await this.idb.set('search-index', familyIndexKey(familyId), payload);
+    this.primedKindSignatures = null;
   }
 
   async rebuild(docs: readonly SearchDoc[]): Promise<void> {
@@ -117,6 +196,12 @@ export class SearchIndexService {
   //      leaving the other 5 kinds' entries — the concurrent calls become
   //      commutative instead of last-write-wins.
   async rebuildKind(kind: EntityKind, docs: readonly SearchDoc[]): Promise<void> {
+    if (this.primedKindSignatures?.get(kind) === signatureOf(docs.map((d) => d.id))) {
+      // Cache hit: the family snapshot already has this kind's docs
+      // indexed and tokenized, byte-identical to what the fresh walk just
+      // read. Skip the clear+re-add+tokenize+persist entirely.
+      return;
+    }
     for (const [id, meta] of this.metaById) {
       if (meta.kind !== kind) continue;
       if (this.mini.has(id)) this.mini.discard(id);

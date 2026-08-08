@@ -29,6 +29,7 @@ import { FsService } from '@core/fs/fs.service';
 import { WorkspaceRefreshService } from '@core/fs/workspace-refresh.service';
 import { WorkspaceService } from '@core/fs/workspace.service';
 import { SearchFamilyPrimingService } from '@core/search/search-family-priming.service';
+import { SearchIndexService } from '@core/search/search-index.service';
 
 import { GitFsAdapter } from './git-fs.adapter';
 import { VARIANTS_CHANNEL_NAME, type VariantsBroadcast } from './variants-channel';
@@ -50,6 +51,7 @@ export class SwitchVariantService {
   private readonly versioning = inject(VersioningService);
   private readonly workspaceRefresh = inject(WorkspaceRefreshService);
   private readonly searchPriming = inject(SearchFamilyPrimingService);
+  private readonly searchIndex = inject(SearchIndexService);
   private readonly workspace = inject(WorkspaceService);
   private readonly fsLock = inject(FsLockService);
   private readonly errors = inject(ErrorService);
@@ -185,8 +187,17 @@ export class SwitchVariantService {
     await this.variants.setActiveId(to.id);
 
     try {
+      // why: a family visited earlier this session (or a prior one — the
+      //      snapshot is IDB-persisted) already has a tokenized index
+      //      cached; loading it before refreshAll() lets rebuildKind()
+      //      skip re-tokenizing kinds whose doc set hasn't changed since
+      //      (docs/deferred/versionado.md). refreshAll() still has to run
+      //      unconditionally — it's also how every feature's own list/
+      //      wall state gets repopulated, not just the search index.
+      await this.searchIndex.tryLoadFamilySnapshot(to.id);
       await this.workspaceRefresh.refreshAll();
       await this.searchPriming.primeActiveFamily();
+      await this.searchIndex.persistFamilySnapshot(to.id);
     } catch (cause) {
       this.errors.report(
         new AppError(ERROR_CODES.VER_009, {
