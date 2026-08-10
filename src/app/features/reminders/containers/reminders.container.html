@@ -3,6 +3,9 @@
   (confirmed)="confirm.accept()"
   (cancelled)="confirm.cancel()"
 />
+@if (hoveredNote(); as hn) {
+  <mc-paloma-note-preview [text]="hn.text" [top]="hn.top" [left]="hn.left" />
+}
 <section class="page">
   <header class="toolbar">
     <h2>{{ t('reminders.title') }}</h2>
@@ -106,6 +109,8 @@
             [attr.data-bucket]="p.bucket"
             [attr.data-door]="p.door"
             (click)="onSelectPaloma(p)"
+            (mouseenter)="onPalomaHoverStart(p, $event)"
+            (mouseleave)="onPalomaHoverEnd(p.summary.id)"
             [attr.aria-label]="p.summary.title || t('reminders.untitled')"
             [title]="(p.summary.title || t('reminders.untitled')) + ' · ' + bucketLabel(p.bucket)"
           >
@@ -170,6 +175,8 @@
             [class.is-focused]="cursor.focusedId() === p.summary.id"
             [class.is-snoozing]="snoozingId() === p.summary.id"
             (click)="onSelectPaloma(p)"
+            (mouseenter)="onPalomaHoverStart(p, $event)"
+            (mouseleave)="onPalomaHoverEnd(p.summary.id)"
             [attr.aria-label]="p.summary.title || t('reminders.untitled')"
             [title]="(p.summary.title || t('reminders.untitled')) + ' · ' + bucketLabel('overdue')"
           >
@@ -253,6 +260,15 @@
           @if (e.readOnlyTitle) {
             <p class="field-hint">{{ sourceBadgeLabel(e.sourceKind) }}</p>
           }
+          <label class="field" data-tutorial="reminder-note">
+            <span>{{ t('reminders.noteLabel') }}</span>
+            <textarea
+              rows="2"
+              [value]="e.note"
+              [placeholder]="t('reminders.notePlaceholder')"
+              (input)="onEditField('note', asTextarea($event).value)"
+            ></textarea>
+          </label>
           <label class="field">
             <span>{{ t('reminders.dueAtLabel') }}</span>
             <input

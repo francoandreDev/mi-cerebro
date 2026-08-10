@@ -32,6 +32,7 @@ import { McDatePipe } from '@shared/pipes/mc-date.pipe';
 import { TagPickerComponent } from '@shared/tags/tag-picker.component';
 import { createListCursor } from '@shared/utils/list-cursor';
 
+import { PalomaNotePreviewComponent } from '../components/paloma-note-preview/paloma-note-preview.component';
 import type {
   Recurrence,
   RecurrenceUnit,
@@ -76,6 +77,13 @@ const plumageTierFor = (cyclesCompleted: number | undefined): 0 | 1 | 2 => {
   return 0;
 };
 
+interface HoveredNote {
+  readonly id: string;
+  readonly text: string;
+  readonly top: number;
+  readonly left: number;
+}
+
 interface PendingUndo {
   readonly reminder: Reminder;
   readonly title: string;
@@ -109,6 +117,7 @@ const DOOR_BY_BUCKET: Record<BucketKey, 0 | 1 | 2 | 3> = {
     ConfirmDialogComponent,
     TagPickerComponent,
     NgTemplateOutlet,
+    PalomaNotePreviewComponent,
   ],
   templateUrl: './reminders.container.html',
   styleUrl: './reminders.container.css',
@@ -159,6 +168,11 @@ export class RemindersContainer {
   //      bien — es un guiño, no algo que deba completarse sí o sí.
   protected readonly snoozingId = signal<string | null>(null);
   private static readonly SNOOZE_ANIM_MS = 620;
+  // why: docs/deferred/reminders-goals.md "ronroneo" — dwell delay before
+  //      showing the note preview, so a passing mouse doesn't pop it.
+  private static readonly HOVER_DWELL_MS = 650;
+  private hoverTimer: ReturnType<typeof setTimeout> | null = null;
+  protected readonly hoveredNote = signal<HoveredNote | null>(null);
 
   private flashSnooze(id: string): void {
     this.snoozingId.set(id);
@@ -362,7 +376,36 @@ export class RemindersContainer {
       readOnlyTitle: p.fromSource,
       sourceKind: p.summary.sourceKind,
       tags: p.summary.tags,
+      note: p.summary.note,
     });
+  }
+
+  protected onPalomaHoverStart(p: Paloma, event: MouseEvent): void {
+    this.clearHoverTimer();
+    const target = event.currentTarget as HTMLElement;
+    this.hoverTimer = setTimeout(() => {
+      const rect = target.getBoundingClientRect();
+      this.hoveredNote.set({
+        id: p.summary.id,
+        // why: falls back to the title when there's no note — never
+        //      fabricates content the ronroneo doesn't actually have.
+        text: p.summary.note || p.summary.title || this.t('reminders.untitled'),
+        top: rect.top,
+        left: rect.left + rect.width / 2,
+      });
+    }, RemindersContainer.HOVER_DWELL_MS);
+  }
+
+  protected onPalomaHoverEnd(id: string): void {
+    this.clearHoverTimer();
+    if (this.hoveredNote()?.id === id) this.hoveredNote.set(null);
+  }
+
+  private clearHoverTimer(): void {
+    if (this.hoverTimer !== null) {
+      clearTimeout(this.hoverTimer);
+      this.hoverTimer = null;
+    }
   }
 
   protected async onAddTag(label: string): Promise<void> {
@@ -431,6 +474,7 @@ export class RemindersContainer {
         paused: draft.paused,
         recurrence,
         tags: draft.tags,
+        note: draft.note,
       });
       this.onCloseDetail();
     } catch (e) {
@@ -616,6 +660,10 @@ export class RemindersContainer {
     return event.target as HTMLInputElement;
   }
 
+  protected asTextarea(event: Event): HTMLTextAreaElement {
+    return event.target as HTMLTextAreaElement;
+  }
+
   protected focusQuickAdd(): void {
     queueMicrotask(() => this.quickAddInput?.nativeElement.focus());
   }
@@ -695,6 +743,7 @@ export class RemindersContainer {
     this.destroyRef.onDestroy(() => {
       unregs.forEach((unreg) => unreg());
       this.clearUndoTimer();
+      this.clearHoverTimer();
     });
   }
 
@@ -712,6 +761,7 @@ interface EditingState {
   readonly readOnlyTitle: boolean;
   readonly sourceKind: ReminderSummary['sourceKind'];
   readonly tags: readonly string[];
+  readonly note: string;
 }
 
 const toPaloma = (r: ReminderSummary): Paloma => {

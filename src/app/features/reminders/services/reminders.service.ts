@@ -23,6 +23,7 @@ import {
 } from '../models/reminder.types';
 import { bucketOf } from '../utils/buckets';
 import { reminderCadenceMigrationStep } from './reminder-cadence.migration';
+import { reminderNoteMigrationStep } from './reminder-note.migration';
 import { reminderRecurrenceMigrationStep } from './reminder-recurrence.migration';
 import { reminderSourceMigrationStep } from './reminder-source.migration';
 import { reminderTagsMigrationStep } from './reminder-tags.migration';
@@ -72,6 +73,7 @@ export class RemindersService {
         reminderCadenceMigrationStep(2),
         reminderRecurrenceMigrationStep(3),
         reminderTagsMigrationStep(4),
+        reminderNoteMigrationStep(5),
       ],
     });
   }
@@ -138,6 +140,7 @@ export class RemindersService {
       sourceKind: source?.kind ?? null,
       sourceId: source?.id ?? null,
       tags: [],
+      note: '',
       createdAt: now,
       updatedAt: now,
       schemaVersion: REMINDER_SCHEMA_VERSION,
@@ -280,6 +283,7 @@ export class RemindersService {
       sourceKind: r.sourceKind ?? null,
       sourceId: r.sourceId ?? null,
       tags: r.tags ?? [],
+      note: r.note ?? '',
       updatedAt: r.updatedAt,
     };
   }

@@ -1,4 +1,4 @@
-export const REMINDER_SCHEMA_VERSION = 5;
+export const REMINDER_SCHEMA_VERSION = 6;
 export const REMINDER_KIND = 'reminder';
 export const REMINDERS_DIR = 'reminders';
 export const REMINDER_FILE_SUFFIX = '.json';
@@ -51,6 +51,12 @@ export interface Reminder {
   //      entity uses. v4→v5 migration (`reminder-tags.migration.ts`)
   //      defaults legacy files to `[]`.
   readonly tags: readonly string[];
+  // why: docs/deferred/reminders-goals.md "ronroneo" — free-text note shown
+  //      as the hover-and-hold preview on the paloma. Falls back to title
+  //      when empty so the preview never fabricates content. v5→v6
+  //      migration (`reminder-note.migration.ts`) defaults legacy files
+  //      to `''`.
+  readonly note: string;
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly schemaVersion: number;
@@ -68,5 +74,6 @@ export interface ReminderSummary {
   readonly sourceKind: ReminderSourceKind | null;
   readonly sourceId: string | null;
   readonly tags: readonly string[];
+  readonly note: string;
   readonly updatedAt: string;
 }

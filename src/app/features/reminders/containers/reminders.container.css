@@ -625,12 +625,18 @@
   letter-spacing: 0.05em;
 }
 .field input,
-.field select {
+.field select,
+.field textarea {
   background: var(--mc-bg-surface);
   color: var(--mc-fg-primary);
   border: 1px solid var(--mc-border-default);
   border-radius: var(--mc-radius-sm);
   padding: var(--mc-space-1) var(--mc-space-2);
+}
+.field textarea {
+  resize: vertical;
+  font-family: inherit;
+  font-size: var(--mc-font-size-sm);
 }
 .field input:disabled { opacity: 0.7; }
 .field-hint {
