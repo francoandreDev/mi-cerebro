@@ -1,0 +1,44 @@
+/* Rediseño mobile dedicado (docs/deferred/responsive.md — cierra la
+ * sub-entrada de panorama). Reemplaza la red de seguridad anterior
+ * (colapso a 1 columna): la silueta de montañas ocupa todo el ancho y la
+ * "libreta de campo" pasa a bottom-sheet fijo, mismo patrón que
+ * reminders.container.css (aside de detalle → sheet deslizable). Split en
+ * archivo propio por responsabilidad (§4.4) — el desktop.css ya excede el
+ * límite duro de líneas, agregar acá no lo empeora. */
+@media (max-width: 480px) {
+  .split {
+    grid-template-columns: 1fr;
+  }
+
+  .detail {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: auto;
+    max-height: 60vh;
+    padding: 12px 16px;
+    background: var(--mc-bg-elevated, var(--mc-bg-base));
+    border-top: 1px solid var(--mc-border-default, rgba(0, 0, 0, 0.12));
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.2);
+    z-index: 20;
+  }
+
+  /* Sin selección: la libreta no tiene nada que mostrar todavía — se
+   * retira del flujo para que la montaña use toda la pantalla en vez de
+   * quedar un sheet vacío pinneado abajo (Chromium-only, §2 — :has() es
+   * seguro acá). */
+  .detail:has(.panorama-notebook-empty) {
+    position: static;
+    max-height: none;
+    border-top: 0;
+    box-shadow: none;
+    padding: 8px 16px;
+  }
+
+  .panorama-notebook-empty {
+    text-align: center;
+    font-size: 13px;
+  }
+}

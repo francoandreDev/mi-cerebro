@@ -1226,14 +1226,3 @@ aside.timeline {
 .ficha-cta:hover {
   background: rgba(107, 68, 35, 0.25);
 }
-
-/* Red de seguridad mobile (docs/deferred/responsive.md). */
-@media (max-width: 480px) {
-  .split {
-    grid-template-columns: 1fr;
-  }
-
-  .milestone-band-name {
-    max-width: 140px;
-  }
-}

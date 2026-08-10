@@ -153,3 +153,27 @@
 .zoom-legend-item.active strong {
   color: var(--mc-accent-primary);
 }
+
+/* Sin tratamiento responsive propio hasta ahora (docs/deferred/responsive.md
+ * "History — rediseño mobile"): `.head` ya wrappea, pero el label del zoom
+ * activo + el toggle de constelación empujaban el ancho en ~375px. */
+@media (max-width: 480px) {
+  .head {
+    padding: 12px;
+    gap: 8px;
+  }
+  .zoom-current-label {
+    display: none;
+  }
+  .zoom-level {
+    padding: 6px 8px;
+  }
+  .constellation-toggle {
+    flex-basis: 100%;
+    justify-content: center;
+  }
+  .zoom-legend {
+    padding: 6px 12px;
+    gap: 4px 10px;
+  }
+}

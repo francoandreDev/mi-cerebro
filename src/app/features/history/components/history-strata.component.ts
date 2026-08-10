@@ -36,7 +36,7 @@ import type { FlatFossil } from './history-panorama.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ConfirmDialogComponent, IconComponent, McDatePipe, RouterLink],
   templateUrl: './history-strata.component.html',
-  styleUrl: './history-strata.component.css',
+  styleUrls: ['./history-strata.component.css', './history-strata.component.mobile.css'],
 })
 export class HistoryStrataComponent implements OnInit, OnDestroy {
   protected readonly i18n = inject(I18nService);

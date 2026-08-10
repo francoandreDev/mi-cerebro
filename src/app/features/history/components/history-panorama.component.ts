@@ -32,7 +32,7 @@ export interface FlatFossil {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [IconComponent],
   templateUrl: './history-panorama.component.html',
-  styleUrl: './history-panorama.component.css',
+  styleUrls: ['./history-panorama.component.css', './history-panorama.component.mobile.css'],
 })
 export class HistoryPanoramaComponent {
   protected readonly i18n = inject(I18nService);

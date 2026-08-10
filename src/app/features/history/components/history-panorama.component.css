@@ -799,11 +799,3 @@ aside.timeline {
   font-style: italic;
   text-align: center;
 }
-
-/* Red de seguridad mobile (docs/deferred/responsive.md): evita overflow
- * duro en viewport angosto sin rediseñar la metáfora todavía. */
-@media (max-width: 480px) {
-  .split {
-    grid-template-columns: 1fr;
-  }
-}
