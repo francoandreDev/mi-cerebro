@@ -1,0 +1,26 @@
+<mc-chalk-board
+  [layers]="layers()"
+  [active]="active() && editable()"
+  [tool]="tool()"
+  [color]="color()"
+  [size]="size()"
+  (strokeFinished)="onStrokeFinished($event)"
+  (erasePoint)="onErase($event)"
+/>
+@if (layersOpen()) {
+  <div class="layers-float">
+    <mc-chalk-layers-panel
+      [layers]="layers()"
+      [activeId]="activeLayerId()"
+      (addLayer)="onAddLayer()"
+      (selectLayer)="onSelectLayer($event)"
+      (renameLayer)="onRenameLayer($event)"
+      (toggleVisible)="onToggleVisible($event)"
+      (toggleLocked)="onToggleLocked($event)"
+      (removeLayer)="onRemoveLayer($event)"
+      (moveLayer)="onMoveLayer($event)"
+      (reorderLayer)="onReorderLayer($event)"
+      (closeRequested)="toggleLayers()"
+    />
+  </div>
+}

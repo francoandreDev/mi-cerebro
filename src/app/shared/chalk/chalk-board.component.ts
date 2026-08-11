@@ -9,14 +9,8 @@ import {
   viewChild,
 } from '@angular/core';
 
-import type {
-  ChalkColorId,
-  ChalkLayer,
-  ChalkSize,
-  ChalkStroke,
-  ChalkTool,
-} from '../models/chalk.types';
-import { CHALK_COLORS, CHALK_SIZE_PX } from '../models/chalk.types';
+import type { ChalkColorId, ChalkLayer, ChalkSize, ChalkStroke, ChalkTool } from './chalk.types';
+import { CHALK_COLORS, CHALK_SIZE_PX } from './chalk.types';
 import { buildChalkExportSvg, pointsToPath, strokeOpacity } from './chalk.utils';
 
 export interface ChalkExportData {

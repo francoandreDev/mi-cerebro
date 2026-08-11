@@ -17,7 +17,7 @@ import { IconComponent } from '@shared/icon/icon.component';
 import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
 
 import { ListEditorPaneComponent, type SaveStatus } from '../components/list-editor-pane.component';
-import type { ChalkLayer } from '../models/chalk.types';
+import type { ChalkLayer } from '@shared/chalk/chalk.types';
 import { LIST_KIND, type List } from '../models/list.types';
 import { ListsService } from '../services/lists.service';
 import { registerListsChalkTutorial } from './lists-chalk.tutorial';

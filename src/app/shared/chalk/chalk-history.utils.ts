@@ -1,4 +1,4 @@
-import type { ChalkLayer } from '../models/chalk.types';
+import type { ChalkLayer } from './chalk.types';
 
 // why: local, session-scoped undo/redo for chalk strokes/layer actions.
 //      Deliberately NOT wired to Ctrl+Z (TipTap owns that inside the editor) —

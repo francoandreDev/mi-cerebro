@@ -7,8 +7,8 @@ import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.co
 import { IconComponent } from '@shared/icon/icon.component';
 import { MenuButtonComponent } from '@shared/menu-button/menu-button.component';
 
-import type { ChalkColorId, ChalkSize, ChalkTool } from '../models/chalk.types';
-import { CHALK_COLORS } from '../models/chalk.types';
+import type { ChalkColorId, ChalkSize, ChalkTool } from './chalk.types';
+import { CHALK_COLORS } from './chalk.types';
 
 const SIZES: readonly ChalkSize[] = ['s', 'm', 'l'];
 
@@ -27,6 +27,7 @@ export class ChalkToolbarComponent {
   readonly color = input<ChalkColorId>('white');
   readonly size = input<ChalkSize>('m');
   readonly layersOpen = input<boolean>(false);
+  readonly layerCount = input<number>(0);
   readonly canClear = input<boolean>(false);
   readonly canUndo = input<boolean>(false);
   readonly canRedo = input<boolean>(false);
@@ -58,11 +59,11 @@ export class ChalkToolbarComponent {
   }
 
   protected colorLabel(id: ChalkColorId): string {
-    return this.t(`lists.chalk.color.${id}` as TranslationKey);
+    return this.t(`chalk.color.${id}` as TranslationKey);
   }
 
   protected sizeLabel(s: ChalkSize): string {
-    return this.t(`lists.chalk.size.${s}` as TranslationKey);
+    return this.t(`chalk.size.${s}` as TranslationKey);
   }
 
   protected onExportChoice(key: string): void {
@@ -73,10 +74,10 @@ export class ChalkToolbarComponent {
     if (!this.canClear()) return;
     this.confirm.ask(
       {
-        title: this.t('lists.chalk.confirm.clear.title'),
-        message: this.t('lists.chalk.clearConfirm'),
-        confirmLabel: this.t('lists.chalk.confirm.clear.confirm'),
-        cancelLabel: this.t('lists.chalk.confirm.cancel'),
+        title: this.t('chalk.confirm.clear.title'),
+        message: this.t('chalk.clearConfirm'),
+        confirmLabel: this.t('chalk.confirm.clear.confirm'),
+        cancelLabel: this.t('chalk.confirm.cancel'),
         tone: 'danger',
       },
       () => this.clearActive.emit(),

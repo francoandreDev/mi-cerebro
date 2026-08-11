@@ -203,6 +203,20 @@
           <mc-icon name="target" />
         </button>
       }
+      @if (editable()) {
+        <button
+          type="button"
+          class="list-toggle"
+          data-tutorial="books-editor-draw"
+          [class.active]="drawMode()"
+          [attr.aria-pressed]="drawMode()"
+          [attr.aria-label]="t('books.editor.draw.toggleAria')"
+          [title]="t('books.editor.draw.toggle')"
+          (click)="onToggleDrawMode()"
+        >
+          <mc-icon name="pencil-simple" />
+        </button>
+      }
       <mc-tts-controls
         data-tutorial="books-editor-tts"
         [state]="ttsState()"
@@ -229,6 +243,58 @@
       [class.is-turning]="turning() !== null"
     >
       <div class="spine" aria-hidden="true"></div>
+      @if (drawMode()) {
+        <div class="draw-toolbar">
+          <mc-chalk-toolbar
+            [active]="true"
+            [tool]="drawTool()"
+            [color]="drawColor()"
+            [size]="drawSize()"
+            [layersOpen]="drawLayersOpen()"
+            [layerCount]="drawLayerCount()"
+            [canClear]="drawCanClear()"
+            [canUndo]="drawCanUndo()"
+            [canRedo]="drawCanRedo()"
+            (toggleActive)="onToggleDrawMode()"
+            (toolChange)="drawTool.set($event)"
+            (colorChange)="drawColor.set($event)"
+            (sizeChange)="drawSize.set($event)"
+            (clearActive)="drawClearActive()"
+            (toggleLayers)="drawToggleLayers()"
+            (exportBoard)="onExportDrawing($event)"
+            (undo)="drawUndo()"
+            (redo)="drawRedo()"
+          />
+        </div>
+      }
+      <div class="page-slot left">
+        <mc-chalk-surface
+          #leftSurface
+          [layers]="leftLayers()"
+          [editable]="editable()"
+          [active]="drawMode()"
+          [tool]="drawTool()"
+          [color]="drawColor()"
+          [size]="drawSize()"
+          [entityId]="chapter().id + ':' + leftPageIndex()"
+          (layersChange)="onLeftLayersChange($event)"
+          (focused)="onLeftFocused()"
+        />
+      </div>
+      <div class="page-slot right">
+        <mc-chalk-surface
+          #rightSurface
+          [layers]="rightLayers()"
+          [editable]="editable()"
+          [active]="drawMode()"
+          [tool]="drawTool()"
+          [color]="drawColor()"
+          [size]="drawSize()"
+          [entityId]="chapter().id + ':' + rightPageIndex()"
+          (layersChange)="onRightLayersChange($event)"
+          (focused)="onRightFocused()"
+        />
+      </div>
       <div #pagesEl class="pages book-editor">
         <div class="opener" [class.editable]="editable()">
           @if (roman(); as r) {

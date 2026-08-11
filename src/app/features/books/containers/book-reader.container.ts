@@ -27,6 +27,7 @@ import { TtsService } from '@core/tts/tts.service';
 import type { TtsAction, TtsPaneState } from '@core/tts/tts.types';
 import { emptyWritingStats } from '@core/writing-stats/writing-stats.types';
 import { WritingStatsService } from '@core/writing-stats/writing-stats.service';
+import type { ChalkLayer } from '@shared/chalk/chalk.types';
 import { LockBannerComponent } from '@shared/lock-banner/lock-banner.component';
 import { triggerDownload } from '@shared/utils/trigger-download';
 
@@ -247,6 +248,15 @@ export class BookReaderContainer {
     const current = this.chapter();
     if (!current || !this.lock.guardWrite()) return;
     const next = { ...current, body };
+    this.chapter.set(next);
+    this.scheduleChapterSave(next);
+  }
+  protected onChapterPageDrawingsChange(
+    pageDrawings: Readonly<Record<string, readonly ChalkLayer[]>>,
+  ): void {
+    const current = this.chapter();
+    if (!current || !this.lock.guardWrite()) return;
+    const next = { ...current, pageDrawings };
     this.chapter.set(next);
     this.scheduleChapterSave(next);
   }

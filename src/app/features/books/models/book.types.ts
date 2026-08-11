@@ -1,9 +1,10 @@
 import type { JSONContent } from '@tiptap/core';
 
 import type { WritingStats } from '@core/writing-stats/writing-stats.types';
+import type { ChalkLayer } from '@shared/chalk/chalk.types';
 
-export const BOOK_SCHEMA_VERSION = 5;
-export const CHAPTER_SCHEMA_VERSION = 5;
+export const BOOK_SCHEMA_VERSION = 6;
+export const CHAPTER_SCHEMA_VERSION = 6;
 export const BOOK_KIND = 'book';
 export const BOOKS_DIR = 'books';
 export const BOOK_META_FILE = '_book.json';
@@ -78,6 +79,11 @@ export interface Chapter {
   //      without re-summing anything (see WritingStatsService).
   readonly words?: number;
   readonly stats?: WritingStats;
+  // why: dibujo a mano alzada por página física del spread (§4.6.14 —
+  //      página como slot visual, no como fragmento del body TipTap). Clave
+  //      = índice de página 0-based (mismo cálculo que `pageLabel` en
+  //      ChapterEditorPaneComponent). Ver docs/proyecto/features.md.
+  readonly pageDrawings?: Readonly<Record<string, readonly ChalkLayer[]>>;
   readonly [key: string]: unknown;
 }
 

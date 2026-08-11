@@ -1,6 +1,6 @@
 import type { JSONContent } from '@tiptap/core';
 
-import type { ChalkLayer } from './chalk.types';
+import type { ChalkLayer } from '@shared/chalk/chalk.types';
 
 export const LIST_SCHEMA_VERSION = 4;
 export const LIST_KIND = 'list';

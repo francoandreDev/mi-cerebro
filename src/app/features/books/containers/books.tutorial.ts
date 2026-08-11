@@ -78,6 +78,18 @@ export const BOOKS_TUTORIAL: TutorialDefinition = {
       action: { event: 'click', icon: 'list-bullets' },
       skipIfMissing: true,
     },
+    // why: gesto avanzado, no básico — dibujar sobre la página convive con
+    //      el flujo normal de escritura pero no hace falta para un primer
+    //      uso real (§4.6.15b). Reusa el sistema de shared/chalk/, ver
+    //      docs/proyecto/features.md.
+    {
+      anchorSelector: '[data-tutorial="books-editor-draw"]',
+      titleKey: 'books.tutorial.readerDraw.title',
+      bodyKey: 'books.tutorial.readerDraw.body',
+      action: { event: 'click', icon: 'pencil-simple' },
+      tier: 'avanzado',
+      skipIfMissing: true,
+    },
   ],
 };
 

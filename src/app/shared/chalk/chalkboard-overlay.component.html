@@ -1,0 +1,36 @@
+<div class="root">
+  <mc-chalk-toolbar
+    [active]="active() && editable()"
+    [tool]="tool()"
+    [color]="color()"
+    [size]="size()"
+    [layersOpen]="layersOpen()"
+    [layerCount]="layers().length"
+    [canClear]="canClear()"
+    [canUndo]="canUndo()"
+    [canRedo]="canRedo()"
+    (toggleActive)="onToggleActive()"
+    (toolChange)="tool.set($event)"
+    (colorChange)="color.set($event)"
+    (sizeChange)="size.set($event)"
+    (clearActive)="onClearActive()"
+    (toggleLayers)="onToggleLayers()"
+    (exportBoard)="onExportBoard($event)"
+    (undo)="onUndo()"
+    (redo)="onRedo()"
+  />
+
+  <div class="surface">
+    <ng-content />
+    <mc-chalk-surface
+      [layers]="layers()"
+      [editable]="editable()"
+      [active]="active() && editable()"
+      [tool]="tool()"
+      [color]="color()"
+      [size]="size()"
+      [entityId]="entityId()"
+      (layersChange)="onLayersChange($event)"
+    />
+  </div>
+</div>

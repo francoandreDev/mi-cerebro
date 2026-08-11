@@ -106,6 +106,15 @@ Características:
 
 Contador simple, sin series temporales: por cada alcance (capítulo, libro, global — todos los libros) se guarda **récord** (mejor día histórico), **actual** (palabras netas escritas hoy) y **promedio** (ponderado, solo sobre días con actividad real). Todo se deriva del evento de guardado ya existente (autosave → `saveChapter`), no hay tracking en vivo mientras se tipea. El corte de día usa el timezone configurado en Ajustes. Persistencia: `stats` embebido en `_book.json`/capítulo para los alcances libro/capítulo; alcance global en `.mi-cerebro/writing-stats.json` (`core/writing-stats/`).
 
+### Dibujo a mano alzada (`shared/chalk/`)
+
+Sistema de dibujo vectorial (grosor variable, paleta de color, capas nombradas con mostrar/ocultar/bloquear/reordenar, goma, undo/redo, export PNG/SVG) compartido por dos consumidores:
+
+- **`/lists/:id`** — "modo tiza": una sola superficie de dibujo por lista, superpuesta al body (toggle on/off, ver §2 Alcance/Listas). `ChalkboardOverlayComponent` mantiene el estado de herramienta activa/color/grosor y el toolbar; delega capas/historial/panel a `ChalkSurfaceComponent`.
+- **`/books/:id/leer`** — "modo dibujo" sobre el editor de capítulos: un dibujo **por página física** del spread (dos `ChalkSurfaceComponent`, uno por mitad izquierda/derecha), con un único toggle + toolbar compartido arriba del spread (`ChapterEditorPaneComponent` orquesta ambas superficies). Ancla el trazo al **slot visual** de la página (mitad de `.spread`, elemento estable) — no al texto, que reflowa con ediciones/resize de ventana bajo un layout multi-columna CSS; mismo comportamiento no-atado-a-contenido que ya tenía "modo tiza" en listas. Persistido en `Chapter.pageDrawings` (clave = índice de página 0-based, `book.types.ts`).
+
+Piezas reusables en `shared/chalk/`: `chalk.types.ts`/`chalk.utils.ts`/`chalk-history.utils.ts` (puras), `chalk-shortcuts.ts` (b/e/[/]/1-5/Ctrl+Shift+T, scope `editable-safe`), `ChalkBoardComponent` (SVG, coordenadas normalizadas 0–1 contra su propio bounding box — funciona sin cambios dentro de cualquier contenedor), `ChalkToolbarComponent`, `ChalkLayersPanelComponent`, `ChalkSurfaceComponent` (capas+historial+panel de una superficie), `ChalkboardOverlayComponent` (wrapper de una sola superficie, usado por listas). Extraído de `features/lists/` el 2026-08-10 cuando libros se volvió el segundo consumidor real.
+
 ---
 
 ## 12. Versionado, variantes e historial

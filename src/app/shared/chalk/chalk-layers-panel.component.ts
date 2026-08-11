@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 
 import { I18nService } from '@core/i18n/i18n.service';
-import type { TranslationKey } from '@core/i18n/i18n.types';
+import type { TranslationKey, TranslationParams } from '@core/i18n/i18n.types';
 import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
 import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
 import { IconComponent } from '@shared/icon/icon.component';
 import { createDndController } from '@shared/utils/dnd-controller';
 
-import type { ChalkLayer } from '../models/chalk.types';
+import { CHALK_COLORS, type ChalkLayer } from './chalk.types';
 
 @Component({
   selector: 'mc-chalk-layers-panel',
@@ -35,8 +35,8 @@ export class ChalkLayersPanelComponent {
   protected readonly dnd = createDndController<string>();
   protected readonly confirm = new ConfirmController();
 
-  protected t(key: TranslationKey): string {
-    return this.i18n.t(key);
+  protected t(key: TranslationKey, params?: TranslationParams): string {
+    return this.i18n.t(key, params);
   }
 
   protected onRenameInput(id: string, event: Event): void {
@@ -47,10 +47,10 @@ export class ChalkLayersPanelComponent {
   protected onRemove(layer: ChalkLayer): void {
     this.confirm.ask(
       {
-        title: this.t('lists.chalk.confirm.remove.title'),
-        message: this.t('lists.chalk.removeConfirm').replace('{name}', layer.name),
-        confirmLabel: this.t('lists.chalk.confirm.remove.confirm'),
-        cancelLabel: this.t('lists.chalk.confirm.cancel'),
+        title: this.t('chalk.confirm.remove.title'),
+        message: this.t('chalk.removeConfirm').replace('{name}', layer.name),
+        confirmLabel: this.t('chalk.confirm.remove.confirm'),
+        cancelLabel: this.t('chalk.confirm.cancel'),
         tone: 'danger',
       },
       () => this.removeLayer.emit(layer.id),
@@ -62,5 +62,20 @@ export class ChalkLayersPanelComponent {
     if (result && result.id !== result.zone) {
       this.reorderLayer.emit({ from: result.id, to: result.zone });
     }
+  }
+
+  // why: le da a cada capa una identidad visual además del nombre — el
+  //      color del trazo más reciente, así se reconoce "cuál es cuál" de
+  //      un vistazo en vez de tener que leer todos los nombres.
+  protected swatchHex(layer: ChalkLayer): string | null {
+    const last = layer.strokes[layer.strokes.length - 1];
+    if (!last) return null;
+    return CHALK_COLORS.find((c) => c.id === last.color)?.hex ?? null;
+  }
+
+  protected strokeLabel(layer: ChalkLayer): string {
+    return layer.strokes.length === 0
+      ? this.t('chalk.layerEmpty')
+      : this.t('chalk.strokeCount', { n: layer.strokes.length });
   }
 }

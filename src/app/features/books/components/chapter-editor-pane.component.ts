@@ -17,15 +17,25 @@ import { I18nService } from '@core/i18n/i18n.service';
 import type { TranslationKey } from '@core/i18n/i18n.types';
 import type { TtsAction, TtsPaneState, TtsSegment } from '@core/tts/tts.types';
 import { emptyWritingStats, type WritingStats } from '@core/writing-stats/writing-stats.types';
+import { registerChalkShortcuts } from '@shared/chalk/chalk-shortcuts';
+import { ChalkSurfaceComponent } from '@shared/chalk/chalk-surface.component';
+import type { ChalkExportFormat } from '@shared/chalk/chalk-toolbar.component';
+import { ChalkToolbarComponent } from '@shared/chalk/chalk-toolbar.component';
+import type { ChalkColorId, ChalkLayer, ChalkSize, ChalkTool } from '@shared/chalk/chalk.types';
+import { chalkExportFilename } from '@shared/chalk/chalk.utils';
 import { EditorComponent } from '@shared/editor/editor.component';
 import { TypewriterModeService } from '@shared/editor/typewriter-mode.service';
 import { IconComponent } from '@shared/icon/icon.component';
 import { TtsControlsComponent } from '@shared/tts-controls/tts-controls.component';
+import { triggerDownload } from '@shared/utils/trigger-download';
 import { toRoman } from '@shared/utils/roman';
+import { svgToPngBlob } from '@shared/utils/svg-to-png';
 import { WritingStatsPopoverComponent } from '@shared/writing-stats-popover/writing-stats-popover.component';
 
 import { BOOK_KIND, type Chapter } from '../models/book.types';
 import type { BookSaveStatus } from './book-meta-bar.component';
+
+type PageSlot = 'left' | 'right';
 
 const DEFAULT_TTS_STATE: TtsPaneState = {
   supported: false,
@@ -44,7 +54,14 @@ export interface ChapterWritingStats {
 @Component({
   selector: 'mc-chapter-editor-pane',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [EditorComponent, IconComponent, TtsControlsComponent, WritingStatsPopoverComponent],
+  imports: [
+    ChalkSurfaceComponent,
+    ChalkToolbarComponent,
+    EditorComponent,
+    IconComponent,
+    TtsControlsComponent,
+    WritingStatsPopoverComponent,
+  ],
   templateUrl: './chapter-editor-pane.component.html',
   styleUrl: './chapter-editor-pane.component.css',
   host: {
@@ -76,10 +93,17 @@ export class ChapterEditorPaneComponent {
   //      para que el índice pueda mostrar el rango "X–Y" sin abrir cada
   //      capítulo. Se emite cada vez que el cálculo cambia.
   readonly pageCountChange = output<number>();
+  // why: dibujo a mano alzada por página — emitido con el mapa completo
+  //      cada vez que cualquiera de las dos páginas visibles cambia (ver
+  //      onLeftLayersChange/onRightLayersChange). El padre lo guarda con
+  //      el mismo autosave debounced que body/title (scheduleChapterSave).
+  readonly pageDrawingsChange = output<Readonly<Record<string, readonly ChalkLayer[]>>>();
 
   private readonly pagesRef = viewChild<ElementRef<HTMLElement>>('pagesEl');
   private readonly spreadRef = viewChild<ElementRef<HTMLElement>>('spreadEl');
   private readonly titleRef = viewChild<ElementRef<HTMLInputElement>>('titleEl');
+  private readonly leftSurfaceRef = viewChild<ChalkSurfaceComponent>('leftSurface');
+  private readonly rightSurfaceRef = viewChild<ChalkSurfaceComponent>('rightSurface');
   // why: the book pagination CSS hides mc-editor's own toolbar entirely
   //      (see _book-editor.scss) — list toggling is triggered from the
   //      pane's ui-bar instead, by calling straight into the editor
@@ -116,6 +140,34 @@ export class ChapterEditorPaneComponent {
     const s = this.currentSpread();
     return { left: s * 2 + 1, right: s * 2 + 2, total: this.totalSpreads() * 2 };
   });
+  // why: índice 0-based de cada página física visible — clave de
+  //      `Chapter.pageDrawings` (ver book.types.ts). El trazo queda pegado
+  //      al slot de la página, no al texto que reflowe debajo (mismo
+  //      comportamiento que "modo tiza" en listas: el dibujo no está atado
+  //      a un párrafo específico).
+  protected readonly leftPageIndex = computed(() => this.currentSpread() * 2);
+  protected readonly rightPageIndex = computed(() => this.currentSpread() * 2 + 1);
+  protected readonly leftLayers = computed(
+    () => this.chapter().pageDrawings?.[String(this.leftPageIndex())] ?? [],
+  );
+  protected readonly rightLayers = computed(
+    () => this.chapter().pageDrawings?.[String(this.rightPageIndex())] ?? [],
+  );
+
+  // why: un solo toggle + toolbar arriba del spread controla las dos
+  //      superficies de dibujo (decisión de producto — ver
+  //      docs/proyecto/features.md). `focusedSlot` decide a cuál de las
+  //      dos rutea undo/redo/borrar capa/panel de capas/export; se
+  //      actualiza con el evento `focused` que ChalkSurfaceComponent emite
+  //      en pointerdown.
+  protected readonly drawMode = signal(false);
+  protected readonly drawTool = signal<ChalkTool>('chalk');
+  protected readonly drawColor = signal<ChalkColorId>('white');
+  protected readonly drawSize = signal<ChalkSize>('m');
+  protected readonly focusedSlot = signal<PageSlot>('left');
+  private readonly focusedSurface = computed(() =>
+    this.focusedSlot() === 'left' ? this.leftSurfaceRef() : this.rightSurfaceRef(),
+  );
 
   protected readonly roman = computed(() => {
     const i = this.chapterIndex();
@@ -156,6 +208,15 @@ export class ChapterEditorPaneComponent {
     const onSel = (): void => this.maybeAdvanceForCursor();
     document.addEventListener('selectionchange', onSel);
     this.destroyRef.onDestroy(() => document.removeEventListener('selectionchange', onSel));
+
+    registerChalkShortcuts({
+      toggleMode: () => this.onToggleDrawMode(),
+      pickChalk: () => this.drawMode() && this.drawTool.set('chalk'),
+      pickEraser: () => this.drawMode() && this.drawTool.set('eraser'),
+      pickColor: (c) => this.drawMode() && this.drawColor.set(c),
+      undo: () => this.drawMode() && this.focusedSurface()?.undo(),
+      redo: () => this.drawMode() && this.focusedSurface()?.redo(),
+    });
   }
 
   protected onBodyChange(body: JSONContent): void {
@@ -369,6 +430,67 @@ export class ChapterEditorPaneComponent {
   }
   protected hasCommentableSelection(): boolean {
     return this.editorRef()?.hasCommentableSelection() ?? false;
+  }
+
+  protected onToggleDrawMode(): void {
+    if (!this.editable()) return;
+    this.drawMode.update((v) => !v);
+  }
+  protected onLeftFocused(): void {
+    this.focusedSlot.set('left');
+  }
+  protected onRightFocused(): void {
+    this.focusedSlot.set('right');
+  }
+  protected onLeftLayersChange(layers: readonly ChalkLayer[]): void {
+    this.emitPageDrawings(this.leftPageIndex(), layers);
+  }
+  protected onRightLayersChange(layers: readonly ChalkLayer[]): void {
+    this.emitPageDrawings(this.rightPageIndex(), layers);
+  }
+  private emitPageDrawings(pageIndex: number, layers: readonly ChalkLayer[]): void {
+    const current = this.chapter().pageDrawings ?? {};
+    this.pageDrawingsChange.emit({ ...current, [String(pageIndex)]: layers });
+  }
+  protected drawUndo(): void {
+    this.focusedSurface()?.undo();
+  }
+  protected drawRedo(): void {
+    this.focusedSurface()?.redo();
+  }
+  protected drawClearActive(): void {
+    this.focusedSurface()?.clearActive();
+  }
+  protected drawToggleLayers(): void {
+    this.focusedSurface()?.toggleLayers();
+  }
+  protected drawLayersOpen(): boolean {
+    return this.focusedSurface()?.layersOpen() ?? false;
+  }
+  protected drawLayerCount(): number {
+    return this.focusedSlot() === 'left' ? this.leftLayers().length : this.rightLayers().length;
+  }
+  protected drawCanUndo(): boolean {
+    return this.focusedSurface()?.canUndo() ?? false;
+  }
+  protected drawCanRedo(): boolean {
+    return this.focusedSurface()?.canRedo() ?? false;
+  }
+  protected drawCanClear(): boolean {
+    return this.focusedSurface()?.canClear() ?? false;
+  }
+  protected async onExportDrawing(format: ChalkExportFormat): Promise<void> {
+    const data = this.focusedSurface()?.exportData();
+    if (!data) return;
+    const slotLabel =
+      this.focusedSlot() === 'left' ? this.visiblePages().left : this.visiblePages().right;
+    const filename = chalkExportFilename(`${this.chapter().title}-p${slotLabel}`, format);
+    if (format === 'svg') {
+      triggerDownload(new Blob([data.svg], { type: 'image/svg+xml' }), filename);
+      return;
+    }
+    const png = await svgToPngBlob(data.svg, data.width, data.height);
+    triggerDownload(png, filename);
   }
 }
 

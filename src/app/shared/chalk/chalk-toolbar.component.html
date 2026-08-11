@@ -9,16 +9,16 @@
     class="mode"
     [class.on]="active()"
     [attr.aria-pressed]="active()"
-    [attr.aria-label]="t('lists.chalk.toggleAria')"
-    [title]="t('lists.chalk.toggle')"
+    [attr.aria-label]="t('chalk.toggleAria')"
+    [title]="t('chalk.toggle')"
     (click)="toggleActive.emit()"
   >
     <mc-icon name="note-pencil" />
-    <span>{{ active() ? t('lists.chalk.on') : t('lists.chalk.off') }}</span>
+    <span>{{ active() ? t('chalk.on') : t('chalk.off') }}</span>
   </button>
 
   @if (active()) {
-    <div class="group" role="radiogroup" [attr.aria-label]="t('lists.chalk.toolAria')">
+    <div class="group" role="radiogroup" [attr.aria-label]="t('chalk.toolAria')">
       <button
         type="button"
         class="tool"
@@ -26,7 +26,7 @@
         data-tutorial="lists-chalk-tool-chalk"
         [attr.aria-checked]="tool() === 'chalk'"
         [class.sel]="tool() === 'chalk'"
-        [title]="t('lists.chalk.tool.chalk')"
+        [title]="t('chalk.tool.chalk')"
         (click)="toolChange.emit('chalk')"
       >
         <mc-icon name="paint-brush" />
@@ -38,7 +38,7 @@
         data-tutorial="lists-chalk-tool-eraser"
         [attr.aria-checked]="tool() === 'eraser'"
         [class.sel]="tool() === 'eraser'"
-        [title]="t('lists.chalk.tool.eraser')"
+        [title]="t('chalk.tool.eraser')"
         (click)="toolChange.emit('eraser')"
       >
         <mc-icon name="x" />
@@ -49,7 +49,7 @@
       class="group palette"
       data-tutorial="lists-chalk-palette"
       role="radiogroup"
-      [attr.aria-label]="t('lists.chalk.colorAria')"
+      [attr.aria-label]="t('chalk.colorAria')"
     >
       @for (c of palette; track c.id) {
         <button
@@ -69,7 +69,7 @@
       class="group sizes"
       data-tutorial="lists-chalk-sizes"
       role="radiogroup"
-      [attr.aria-label]="t('lists.chalk.sizeAria')"
+      [attr.aria-label]="t('chalk.sizeAria')"
     >
       @for (s of sizes; track s) {
         <button
@@ -93,8 +93,8 @@
         class="tool"
         data-tutorial="lists-chalk-undo"
         [disabled]="!canUndo()"
-        [attr.aria-label]="t('lists.chalk.undoAria')"
-        [title]="t('lists.chalk.undo')"
+        [attr.aria-label]="t('chalk.undoAria')"
+        [title]="t('chalk.undo')"
         (click)="undo.emit()"
       >
         <mc-icon name="arrow-counter-clockwise" />
@@ -104,8 +104,8 @@
         class="tool mirror"
         data-tutorial="lists-chalk-redo"
         [disabled]="!canRedo()"
-        [attr.aria-label]="t('lists.chalk.redoAria')"
-        [title]="t('lists.chalk.redo')"
+        [attr.aria-label]="t('chalk.redoAria')"
+        [title]="t('chalk.redo')"
         (click)="redo.emit()"
       >
         <mc-icon name="arrow-counter-clockwise" />
@@ -117,11 +117,11 @@
       class="ghost"
       data-tutorial="lists-chalk-clear"
       [disabled]="!canClear()"
-      [title]="t('lists.chalk.clear')"
+      [title]="t('chalk.clear')"
       (click)="onClear()"
     >
       <mc-icon name="trash" />
-      <span>{{ t('lists.chalk.clear') }}</span>
+      <span>{{ t('chalk.clear') }}</span>
     </button>
 
     <button
@@ -130,17 +130,20 @@
       data-tutorial="lists-chalk-layers-toggle"
       [class.on]="layersOpen()"
       [attr.aria-pressed]="layersOpen()"
-      [title]="t('lists.chalk.layers')"
+      [title]="t('chalk.layers')"
       (click)="toggleLayers.emit()"
     >
       <mc-icon name="list-bullets" />
-      <span>{{ t('lists.chalk.layers') }}</span>
+      <span>{{ t('chalk.layers') }}</span>
+      @if (layerCount() > 0) {
+        <span class="count-badge">{{ layerCount() }}</span>
+      }
     </button>
 
     <mc-menu-button
       variant="ghost"
       data-tutorial="lists-chalk-export"
-      [label]="t('lists.chalk.export')"
+      [label]="t('chalk.export')"
       [options]="exportOptions"
       (choose)="onExportChoice($event)"
     />

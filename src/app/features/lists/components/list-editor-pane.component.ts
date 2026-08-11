@@ -11,9 +11,10 @@ import { IconComponent } from '@shared/icon/icon.component';
 import type { IconName } from '@shared/icon/icons.data';
 import { TagPickerComponent } from '@shared/tags/tag-picker.component';
 
-import type { ChalkLayer } from '../models/chalk.types';
+import type { ChalkLayer } from '@shared/chalk/chalk.types';
+import { ChalkboardOverlayComponent } from '@shared/chalk/chalkboard-overlay.component';
+
 import { LIST_KIND, type List } from '../models/list.types';
-import { ChalkboardOverlayComponent } from './chalkboard-overlay.component';
 
 export type SaveStatus = 'saved' | 'saving' | 'unsaved';
 
@@ -81,7 +82,7 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
       [layers]="list().chalkLayers"
       [editable]="editable()"
       [entityTitle]="list().title"
-      [listId]="list().id"
+      [entityId]="list().id"
       (layersChange)="chalkLayersChange.emit($event)"
     >
       <mc-editor

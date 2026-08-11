@@ -3,8 +3,8 @@ import { DestroyRef, inject } from '@angular/core';
 import { ShortcutsService } from '@core/shortcuts/shortcuts.service';
 import type { ShortcutBinding } from '@core/shortcuts/shortcuts.types';
 
-import type { ChalkColorId } from '../models/chalk.types';
-import { CHALK_COLORS } from '../models/chalk.types';
+import type { ChalkColorId } from './chalk.types';
+import { CHALK_COLORS } from './chalk.types';
 
 export interface ChalkShortcutHandlers {
   readonly toggleMode: () => void;
@@ -29,38 +29,38 @@ export const registerChalkShortcuts = (handlers: ChalkShortcutHandlers): void =>
       //      already treats Ctrl/Cmd/Meta as the same modifier, covering
       //      Windows/Linux/macOS with one binding (see reglas.md §4.6/15).
       combo: 'Ctrl+Shift+T',
-      labelKey: 'lists.chalk.shortcuts.toggle',
+      labelKey: 'chalk.shortcuts.toggle',
       scope: 'editable-safe',
       handler: handlers.toggleMode,
     },
     {
       combo: 'b',
-      labelKey: 'lists.chalk.shortcuts.chalk',
+      labelKey: 'chalk.shortcuts.chalk',
       scope: 'editable-safe',
       handler: handlers.pickChalk,
     },
     {
       combo: 'e',
-      labelKey: 'lists.chalk.shortcuts.eraser',
+      labelKey: 'chalk.shortcuts.eraser',
       scope: 'editable-safe',
       handler: handlers.pickEraser,
     },
     {
       combo: '[',
-      labelKey: 'lists.chalk.shortcuts.undo',
+      labelKey: 'chalk.shortcuts.undo',
       scope: 'editable-safe',
       handler: handlers.undo,
     },
     {
       combo: ']',
-      labelKey: 'lists.chalk.shortcuts.redo',
+      labelKey: 'chalk.shortcuts.redo',
       scope: 'editable-safe',
       handler: handlers.redo,
     },
     ...CHALK_COLORS.map(
       (c, i): ShortcutBinding => ({
         combo: String(i + 1),
-        labelKey: `lists.chalk.shortcuts.color.${c.id}` as ShortcutBinding['labelKey'],
+        labelKey: `chalk.shortcuts.color.${c.id}` as ShortcutBinding['labelKey'],
         scope: 'editable-safe',
         handler: () => handlers.pickColor(c.id),
       }),

@@ -125,6 +125,14 @@ export class BooksService {
             return withStats;
           },
         },
+        // why: v5→v6 agrega `pageDrawings` (dibujo a mano alzada por página,
+        //      ver Chapter en book.types.ts) — solo en capítulos, no en Book.
+        {
+          from: 5,
+          to: 6,
+          run: (d) =>
+            'body' in d ? { ...d, schemaVersion: 6, pageDrawings: {} } : { ...d, schemaVersion: 6 },
+        },
       ],
     });
   }

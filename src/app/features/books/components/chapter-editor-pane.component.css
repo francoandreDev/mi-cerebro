@@ -224,6 +224,31 @@
   width: 64px;
 }
 
+/* Slots de dibujo: mitad izq/der del spread, partidos por el lomo (36px).
+   Anclados al spread (tamaño estable), no a .pages (que reflowa) — ver
+   docs/proyecto/features.md, "dibujo a mano alzada en libros". */
+.page-slot {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 2;
+}
+.page-slot.left {
+  left: 0;
+  right: calc(50% + 18px);
+}
+.page-slot.right {
+  left: calc(50% + 18px);
+  right: 0;
+}
+.draw-toolbar {
+  position: absolute;
+  top: var(--mc-space-2);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+}
+
 /* Columnas. column-fill: auto rellena columna 1 antes de la 2 y
    crea más columnas a la derecha cuando hay contenido. Nosotros
    trasladamos .pages para mostrar 2 columnas (1 spread) a la vez. */

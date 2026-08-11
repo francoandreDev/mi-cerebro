@@ -1,0 +1,11 @@
+:host {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+.layers-float {
+  position: absolute;
+  top: var(--mc-space-2);
+  right: var(--mc-space-2);
+  z-index: 5;
+}

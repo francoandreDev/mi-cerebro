@@ -1,12 +1,7 @@
 import { toSlug } from '@shared/utils/slug';
 
-import type { ChalkLayer, ChalkStroke } from '../models/chalk.types';
-import {
-  CHALK_COLORS,
-  CHALK_SIZE_PX,
-  ERASER_RADIUS_PX,
-  newChalkLayer,
-} from '../models/chalk.types';
+import type { ChalkLayer, ChalkStroke } from './chalk.types';
+import { CHALK_COLORS, CHALK_SIZE_PX, ERASER_RADIUS_PX, newChalkLayer } from './chalk.types';
 
 export const ensureActiveLayer = (
   layers: readonly ChalkLayer[],
