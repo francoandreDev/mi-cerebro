@@ -81,9 +81,6 @@ export const HOME_WORKFLOWS_TODAY: readonly HomeWorkflow[] = [
     description: 'home.flow.tagview.description',
     steps: ['home.flow.tagview.step.1', 'home.flow.tagview.step.2', 'home.flow.tagview.step.3'],
   },
-];
-
-export const HOME_WORKFLOWS_FUTURE: readonly HomeWorkflow[] = [
   {
     key: 'study',
     icon: 'books',
@@ -97,6 +94,12 @@ export const HOME_WORKFLOWS_FUTURE: readonly HomeWorkflow[] = [
     ],
   },
 ];
+
+// why: no queda ningún flujo prometido sin cablear — quick-capture global
+//      (Alt+Shift+N) cerró la única pieza que faltaba para "study". Se
+//      mantiene el array (en vez de borrarlo) para que la próxima promesa
+//      sin cablear tenga dónde caer sin reinventar el patrón.
+export const HOME_WORKFLOWS_FUTURE: readonly HomeWorkflow[] = [];
 
 const ENTITY_STEPS = (key: string, count: number): readonly TranslationKey[] =>
   Array.from({ length: count }, (_, i) => `home.entity.${key}.step.${i + 1}` as TranslationKey);

@@ -108,6 +108,49 @@ export const TAGVIEW_FLOW_TUTORIAL: TutorialDefinition = {
   ],
 };
 
+// why: "Estudiar profundizando un tema" promovido de HOME_WORKFLOWS_FUTURE a
+//      HOME_WORKFLOWS_TODAY — la única pieza que faltaba (quick-capture
+//      global, Alt+Shift+N) ya está cableada en core/intents/quick-capture.service.ts,
+//      con scope 'global' (dispara aun con foco en el editor del reader) y
+//      resuelve el tag de contexto vía parseDetailUrl, que sí mapea
+//      `/books/:id` → kind 'book' (kind-routes.ts). Los steps 2 y 3 no
+//      llevan `route` porque el reader vive en `/books/:id/leer` (id
+//      dinámico, sin anchor genérico posible) — se quedan en la ruta donde
+//      el usuario ya esté y usan `skipIfMissing` como el resto de los
+//      steps de reader en books.tutorial.ts.
+export const STUDY_FLOW_TUTORIAL: TutorialDefinition = {
+  id: 'flow-study',
+  pageId: 'flow-study',
+  steps: [
+    {
+      route: '/books',
+      anchorSelector: '[data-tutorial="books-shelf"]',
+      titleKey: 'home.flow.study.title',
+      bodyKey: 'home.flow.study.step.1',
+      action: { event: 'click', selector: '[data-tutorial="books-new"]', icon: 'plus' },
+    },
+    {
+      anchorSelector: '[data-tutorial="books-reader-pane"]',
+      titleKey: 'home.flow.study.title',
+      bodyKey: 'home.flow.study.step.2',
+      action: { event: 'keydown', key: 'n', altKey: true, shiftKey: true, icon: 'sparkle' },
+      skipIfMissing: true,
+    },
+    {
+      anchorSelector: '[data-tutorial="books-reader-pane"]',
+      titleKey: 'home.flow.study.title',
+      bodyKey: 'home.flow.study.step.3',
+      skipIfMissing: true,
+    },
+    {
+      route: '/tags',
+      anchorSelector: '[data-tutorial="tags-header"]',
+      titleKey: 'home.flow.study.title',
+      bodyKey: 'home.flow.study.step.4',
+    },
+  ],
+};
+
 // why: registrado una sola vez, siempre vivo (AppShellContainer nunca se
 //      destruye) — a diferencia de los tutoriales de página, un flujo no
 //      depende de qué ruta esté activa. autoStartIfUnseen: false porque un
@@ -118,4 +161,5 @@ export function registerHomeFlowTutorials(): void {
   tutorials.register(PROJECT_FLOW_TUTORIAL, { autoStartIfUnseen: false });
   tutorials.register(DAILY_FLOW_TUTORIAL, { autoStartIfUnseen: false });
   tutorials.register(TAGVIEW_FLOW_TUTORIAL, { autoStartIfUnseen: false });
+  tutorials.register(STUDY_FLOW_TUTORIAL, { autoStartIfUnseen: false });
 }

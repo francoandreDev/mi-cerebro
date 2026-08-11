@@ -51,33 +51,35 @@
   </div>
 </section>
 
-<section class="workflows future">
-  <header class="section-head">
-    <h2 class="section-title">{{ t('home.workflows.future.title') }}</h2>
-    <p class="section-subtitle">{{ t('home.workflows.future.subtitle') }}</p>
-  </header>
-  <div class="workflows-list">
-    @for (flow of workflowsFuture; track flow.key) {
-      <article class="workflow is-future">
-        <header class="workflow-head">
-          <span class="workflow-icon"><mc-icon [name]="flow.icon" aria-hidden="true" /></span>
-          <div class="workflow-text">
-            <h3 class="workflow-title">
-              {{ t(flow.title) }}
-              <span class="badge-future">{{ t('home.workflows.future.badge') }}</span>
-            </h3>
-            <p class="workflow-desc">{{ t(flow.description) }}</p>
-          </div>
-        </header>
-        <ol class="workflow-steps">
-          @for (step of flow.steps; track $index) {
-            <li>{{ t(step) }}</li>
-          }
-        </ol>
-      </article>
-    }
-  </div>
-</section>
+@if (workflowsFuture.length > 0) {
+  <section class="workflows future">
+    <header class="section-head">
+      <h2 class="section-title">{{ t('home.workflows.future.title') }}</h2>
+      <p class="section-subtitle">{{ t('home.workflows.future.subtitle') }}</p>
+    </header>
+    <div class="workflows-list">
+      @for (flow of workflowsFuture; track flow.key) {
+        <article class="workflow is-future">
+          <header class="workflow-head">
+            <span class="workflow-icon"><mc-icon [name]="flow.icon" aria-hidden="true" /></span>
+            <div class="workflow-text">
+              <h3 class="workflow-title">
+                {{ t(flow.title) }}
+                <span class="badge-future">{{ t('home.workflows.future.badge') }}</span>
+              </h3>
+              <p class="workflow-desc">{{ t(flow.description) }}</p>
+            </div>
+          </header>
+          <ol class="workflow-steps">
+            @for (step of flow.steps; track $index) {
+              <li>{{ t(step) }}</li>
+            }
+          </ol>
+        </article>
+      }
+    </div>
+  </section>
+}
 
 @for (group of groups; track group.key) {
   <section class="group">

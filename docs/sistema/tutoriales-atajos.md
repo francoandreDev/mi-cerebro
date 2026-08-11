@@ -68,8 +68,10 @@ Dos definiciones adicionales no viven bajo ningún `pageId` de sección porque s
 
 - **`PROJECT_FLOW_TUTORIAL`** (`/goals → /writings → /tasks → /calendar`).
 - **`DAILY_FLOW_TUTORIAL`** (`/calendar → /goals → /tasks → /reminders`).
+- **`TAGVIEW_FLOW_TUTORIAL`** (command palette `tag:` → `/tags/:id`).
+- **`STUDY_FLOW_TUTORIAL`** (`/books` → quick-capture global Alt+Shift+N desde el reader → `/tags`).
 
-Ambos reusan los anchors ya existentes de cada página (cero anchors nuevos) y navegan con `TutorialStep.route` antes de medir el siguiente anchor. Dos flujos "de hoy" no se construyen como flujo cross-página aparte porque ocurren enteros dentro de una sola página: _Capturar una idea suelta_ (`/notes`) y _Escribir algo largo_ (`/writings`) — sus botones "Recorrer" llaman directo a `tutorials.start('notes'|'writings')`, navegando primero si hace falta. Dos flujos "próximamente" (`study`, `tagview`) no están construidos porque las funciones que describirían (quick-capture global desde el reader, vista cross-tag unificada) todavía no existen.
+Todos reusan los anchors ya existentes de cada página (cero anchors nuevos) y navegan con `TutorialStep.route` antes de medir el siguiente anchor — salvo los steps de reader de `STUDY_FLOW_TUTORIAL`, que se quedan en la ruta activa y usan `skipIfMissing` porque el reader vive en `/books/:id/leer` (id dinámico, sin anchor genérico posible de rutear). Dos flujos "de hoy" no se construyen como flujo cross-página aparte porque ocurren enteros dentro de una sola página: _Capturar una idea suelta_ (`/notes`) y _Escribir algo largo_ (`/writings`) — sus botones "Recorrer" llaman directo a `tutorials.start('notes'|'writings')`, navegando primero si hace falta. `HOME_WORKFLOWS_FUTURE` (`home-content.ts`) quedó vacío: `study` y `tagview` eran los dos únicos flujos "próximamente" y ambos se promovieron a `HOME_WORKFLOWS_TODAY` una vez cableadas las funciones que describían (quick-capture global desde el reader, vista cross-tag unificada).
 
 ## Diálogo de atajos ("Atajos de la página")
 

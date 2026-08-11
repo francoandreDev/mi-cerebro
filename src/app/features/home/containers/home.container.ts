@@ -76,6 +76,7 @@ export class HomeContainer {
     project: 'flow-project',
     daily: 'flow-daily',
     tagview: 'flow-tagview',
+    study: 'flow-study',
   };
   private static readonly WORKFLOW_ROUTE: Readonly<Record<string, string>> = {
     capture: '/notes',

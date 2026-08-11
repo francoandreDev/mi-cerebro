@@ -3130,13 +3130,13 @@ export const es = {
 
   'home.flow.study.title': 'Estudiar profundizando un tema',
   'home.flow.study.description':
-    'Mezcla de lectura, notas e imágenes, todo pegado por un tag transversal. Falta una sola pieza: quick-capture global (Ctrl+Shift+N) desde dentro del reader, para anotar o adjuntar sin cortar la lectura.',
+    'Mezcla de lectura, notas e imágenes, todo pegado por un tag transversal, sin cortar la lectura para anotar.',
   'home.flow.study.step.1':
     'Subís el libro a /books, estante nombrado con el tema, y le ponés el tag del tema. El lomo queda visible en la estantería.',
   'home.flow.study.step.2':
-    'Mientras leés en el reader, un atajo global (futuro) abre una nota rápida sin interrumpir la lectura — el sticky aparece en /notes con el tag del tema preseleccionado.',
+    'Mientras leés en el reader, Alt+Shift+N abre una nota rápida sin interrumpir la lectura — el sticky aparece en /notes con el tag del tema preseleccionado.',
   'home.flow.study.step.3':
-    'Mismo atajo permite adjuntar screenshots/diagramas directamente a una sala de /images del tema, también con el tag pre-asignado.',
+    'Mismo atajo, pegando una imagen en vez de texto, adjunta screenshots/diagramas directamente a una sala de /images del tema, también con el tag pre-asignado.',
   'home.flow.study.step.4':
     'Al final, Ctrl+K → tag:<tema> → "Ver todo lo de #tag" te muestra libro, stickies y cuadros del museo juntos, cada uno con su preview real — esa parte ya existe hoy (ver el flujo "Ver todo lo de un tema").',
 
