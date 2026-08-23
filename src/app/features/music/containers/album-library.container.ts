@@ -23,6 +23,7 @@ import { ConfirmController } from '@shared/confirm-dialog/confirm-controller';
 import { ConfirmDialogComponent } from '@shared/confirm-dialog/confirm-dialog.component';
 import { IconComponent } from '@shared/icon/icon.component';
 
+import { YoutubeCommandModalComponent } from '../components/youtube-command-modal.component';
 import type { PlaylistSummary, Track } from '../models/music.types';
 import { MusicLibraryService } from '../services/music-library.service';
 import { PlaylistsService } from '../services/playlists.service';
@@ -34,7 +35,7 @@ import { TRACK_DRAG_MIME, hasFiles } from './music.dnd';
 @Component({
   selector: 'mc-album-library',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ConfirmDialogComponent, IconComponent],
+  imports: [ConfirmDialogComponent, IconComponent, YoutubeCommandModalComponent],
   templateUrl: './album-library.container.html',
   styleUrl: './album-library.container.css',
 })
@@ -64,6 +65,7 @@ export class AlbumLibraryContainer {
   protected readonly youtubeAvailable = this.youtube.isAvailable();
   protected readonly youtubeUrl = signal('');
   protected readonly youtubeDownloading = signal(false);
+  protected readonly youtubeCommandModalOpen = signal(false);
 
   private readonly libSearch = viewChild<ElementRef<HTMLInputElement>>('libSearch');
 
@@ -313,6 +315,14 @@ export class AlbumLibraryContainer {
 
   protected onYoutubeUrlInput(value: string): void {
     this.youtubeUrl.set(value);
+  }
+
+  protected onOpenYoutubeCommandModal(): void {
+    this.youtubeCommandModalOpen.set(true);
+  }
+
+  protected onCloseYoutubeCommandModal(): void {
+    this.youtubeCommandModalOpen.set(false);
   }
 
   protected async onYoutubeDownload(): Promise<void> {

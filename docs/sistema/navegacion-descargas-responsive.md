@@ -26,11 +26,21 @@ Cada `*Service` mantiene un mapa en memoria (`idToLoc`/`idToPath`, UUID → carp
 
 ## Descarga de MP3 desde YouTube
 
-Disponible en `/music` (`AlbumLibraryContainer`): un input + botón "Descargar" junto al botón "Subir MP3" existente. El usuario pega un link de YouTube y el track entra a la biblioteca auto-organizado (título del video → `originalName`), sin pasar por el picker de archivos.
+Disponible en `/music` (`AlbumLibraryContainer`): un input + botón junto al botón "Subir MP3" existente. El usuario pega un link de YouTube; en Tauri/Capacitor el botón dice "Descargar" y el track entra a la biblioteca auto-organizado (título del video → `originalName`), sin pasar por el picker de archivos. En navegador (donde no se puede spawnear procesos, §4.14) el mismo botón dice "Generar comando" y abre `YoutubeCommandModalComponent` en vez de descargar.
 
 `features/music/services/youtube-download.service.ts` expone:
 
-- `isAvailable()` — gate por `PlatformService.current` (`'tauri'` o `'capacitor'`), doble-chequeado también dentro de `download()` como defensa en profundidad. En navegador queda deshabilitado con tooltip (`music.youtube.unavailableTooltip`), sin ruta posible hacia `download()`.
+- `isAvailable()` — gate por `PlatformService.current` (`'tauri'` o `'capacitor'`), doble-chequeado también dentro de `download()` como defensa en profundidad. En navegador nunca se llama a `download()`; `AlbumLibraryContainer` bifurca en el template según `youtubeAvailable`.
+
+### Generador de comando (navegador)
+
+`features/music/components/youtube-command-modal.component.ts` (+ `.html`/`.css`) es un modal que arma, en el cliente, un script listo para copiar y pegar en la terminal del usuario — la única vía real de descargar en navegador, dado que la Web Platform no permite ejecutar binarios. La lógica de armado del script vive separada en `features/music/utils/youtube-command.ts` (funciones puras, sin Angular):
+
+- **Opciones del modal:** formato (audio MP3 / video MP4), carpeta de destino, nombre de archivo (opcional — sin valor usa `%(title)s` de yt-dlp), y terminal (PowerShell / bash), cada combinación regenerando el script vía `computed()`.
+- **Script generado:** invoca `yt-dlp` (mismo binario/flags conceptuales que el sidecar de Tauri — `-x --audio-format mp3` para audio, `-f "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]" --merge-output-format mp4` para video) contra la carpeta y nombre elegidos, siempre con `--extractor-args "youtube:player_client=android"` (mismo flag que el sidecar de Tauri — sin él, YouTube devuelve `HTTP Error 403: Forbidden` por el desafío de cifrado de firma del cliente `web`; verificado con un video real que el flag lo evita). Antes de la descarga, chequea con `Get-Command`/`command -v` si `yt-dlp` y `ffmpeg` están instalados; si falta alguno, imprime instrucciones de instalación por gestor de paquetes (`winget`/`scoop`/`pip` en Windows, `apt`/`brew`/`pip` en Linux/macOS) y corta con `exit 1` en vez de fallar a mitad de la descarga. Un comentario al inicio del script documenta el método alternativo (binario estático de la página de releases de yt-dlp) para cuando ninguno de los gestores de paquetes está disponible.
+- **Carpeta de destino:** input de texto libre (acepta ruta completa) más un botón "Elegir carpeta" cuando `window.showDirectoryPicker` existe (mismo gate de soporte que usa `BrowserNativeFs`, ver `core/fs/adapters/browser-native-fs.ts`). La File System Access API nunca expone la ruta absoluta del handle por seguridad — solo `.name` (nombre de la carpeta elegida) — así que el picker completa el campo con ese nombre y muestra un hint aclarando la limitación: o el usuario completa la ruta completa a mano, o abre la terminal ya parado dentro de esa carpeta antes de pegar el script.
+- **Copiar:** `navigator.clipboard.writeText()`; si falla (permisos del navegador), el `<pre>` sigue seleccionable a mano — sin fallback adicional.
+- No hay llamada a red ni ejecución de nada del lado de la app — el script es texto, coherente con §4.14 (cero red no iniciada por el usuario).
 - `isValidUrl()` — regex sobre `youtube.com/watch?v=` / `youtu.be/`.
 - `download(url)` — orquesta la extracción y devuelve el archivo a `MusicLibraryService.addTracks`, que reusa el pipeline existente (ID3, cover, write atómico) sin código adicional.
 

@@ -1,0 +1,91 @@
+<button
+  type="button"
+  class="backdrop"
+  [attr.aria-label]="t('music.youtube.cmd.close')"
+  (click)="closed.emit()"
+></button>
+<div class="dialog" role="dialog" aria-modal="true" (keydown.escape)="closed.emit()">
+  <header>
+    <h3>{{ t('music.youtube.cmd.title') }}</h3>
+    <button
+      type="button"
+      class="icon-btn"
+      (click)="closed.emit()"
+      [attr.aria-label]="t('music.youtube.cmd.close')"
+    >
+      <mc-icon name="x" />
+    </button>
+  </header>
+  <p class="hint">{{ t('music.youtube.cmd.hint') }}</p>
+
+  <div class="field">
+    <span class="label">{{ t('music.youtube.cmd.format') }}</span>
+    <div class="seg">
+      <button type="button" [class.active]="format() === 'audio'" (click)="setFormat('audio')">
+        {{ t('music.youtube.cmd.formatAudio') }}
+      </button>
+      <button type="button" [class.active]="format() === 'video'" (click)="setFormat('video')">
+        {{ t('music.youtube.cmd.formatVideo') }}
+      </button>
+    </div>
+  </div>
+
+  <div class="field">
+    <span class="label">{{ t('music.youtube.cmd.destFolder') }}</span>
+    <div class="folder-row">
+      <input
+        type="text"
+        [value]="destFolder()"
+        (input)="destFolder.set(asInput($event.target).value); folderPicked.set(false)"
+        [placeholder]="t('music.youtube.cmd.destFolderPlaceholder')"
+      />
+      @if (folderPickerSupported) {
+        <button type="button" class="ghost" (click)="onPickFolder()">
+          <mc-icon name="folder" />
+          <span>{{ t('music.youtube.cmd.pickFolder') }}</span>
+        </button>
+      }
+    </div>
+    @if (folderPicked()) {
+      <p class="folder-hint">{{ t('music.youtube.cmd.folderPickedHint') }}</p>
+    }
+  </div>
+
+  <label class="field">
+    <span class="label">{{ t('music.youtube.cmd.filename') }}</span>
+    <input
+      type="text"
+      [value]="filename()"
+      (input)="filename.set(asInput($event.target).value)"
+      [placeholder]="t('music.youtube.cmd.filenamePlaceholder')"
+    />
+  </label>
+
+  <div class="field">
+    <span class="label">{{ t('music.youtube.cmd.shell') }}</span>
+    <div class="seg">
+      <button
+        type="button"
+        [class.active]="shell() === 'powershell'"
+        (click)="setShell('powershell')"
+      >
+        {{ t('music.youtube.cmd.shellWindows') }}
+      </button>
+      <button type="button" [class.active]="shell() === 'bash'" (click)="setShell('bash')">
+        {{ t('music.youtube.cmd.shellUnix') }}
+      </button>
+    </div>
+  </div>
+
+  <pre class="script">{{ script() }}</pre>
+
+  <div class="actions">
+    <button type="button" class="ghost" (click)="closed.emit()">
+      {{ t('music.youtube.cmd.dismiss') }}
+    </button>
+    <button type="button" class="primary" (click)="onCopy()">
+      <mc-icon [name]="copied() ? 'check' : 'copy'" />
+      <span>{{ copied() ? t('music.youtube.cmd.copied') : t('music.youtube.cmd.copy') }}</span>
+    </button>
+  </div>
+</div>

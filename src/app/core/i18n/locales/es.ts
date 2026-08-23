@@ -2769,10 +2769,10 @@ export const es = {
   'music.tutorial.flow.youtube': 'Traer música de YouTube',
   'music.tutorial.youtubeUrl.title': 'Pegá la URL de un video de YouTube',
   'music.tutorial.youtubeUrl.body':
-    'Función disponible solo en la app de escritorio/Android — en el navegador este campo queda deshabilitado.',
-  'music.tutorial.youtubeDownload.title': 'Descargalo como MP3',
+    'En la app de escritorio/Android se descarga directo. En el navegador, el mismo link sirve para generar un script listo para tu terminal.',
+  'music.tutorial.youtubeDownload.title': 'Descargalo',
   'music.tutorial.youtubeDownload.body':
-    'Extrae el audio, lo convierte a MP3 y lo agrega directo a tu biblioteca — el botón muestra "Descargando…" mientras dura.',
+    'En escritorio/Android: extrae el audio, lo convierte a MP3 y lo agrega directo a tu biblioteca. En el navegador este botón abre el generador de comandos en su lugar.',
   'music.shortcuts.playPause': 'Reproducir / pausar',
   'music.shortcuts.newPlaylist': 'Nueva playlist',
   'music.shortcuts.focusSearch': 'Buscar en la biblioteca',
@@ -2793,7 +2793,29 @@ export const es = {
   'music.youtube.download': 'Descargar',
   'music.youtube.downloading': 'Descargando…',
   'music.youtube.unavailableTooltip':
-    'Sólo disponible en la versión de escritorio de la app (Windows/Mac/Linux).',
+    'La descarga automática solo funciona en la app de escritorio/móvil. Acá podés generar un script para descargarlo desde tu terminal.',
+  'music.youtube.cmd.open': 'Generar comando',
+  'music.youtube.cmd.title': 'Descargar de YouTube con un script',
+  'music.youtube.cmd.hint':
+    'La versión web no puede correr programas en tu computadora, así que no puede descargar directo. Elegí las opciones y copiá el script: pegalo en tu terminal (PowerShell en Windows, o la terminal de Linux/macOS) y listo.',
+  'music.youtube.cmd.format': 'Qué querés descargar',
+  'music.youtube.cmd.formatAudio': 'Audio (MP3)',
+  'music.youtube.cmd.formatVideo': 'Video (MP4)',
+  'music.youtube.cmd.destFolder': 'Carpeta de destino',
+  'music.youtube.cmd.destFolderPlaceholder':
+    'Ej: C:\\Users\\vos\\Música (dejalo vacío para la carpeta actual)',
+  'music.youtube.cmd.pickFolder': 'Elegir carpeta',
+  'music.youtube.cmd.folderPickedHint':
+    'Por seguridad, el navegador solo puede darnos el nombre de la carpeta, no la ruta completa. Completá la ruta a mano arriba, o abrí la terminal ya parado dentro de esa carpeta antes de pegar el script.',
+  'music.youtube.cmd.filename': 'Nombre del archivo (opcional)',
+  'music.youtube.cmd.filenamePlaceholder': 'Dejalo vacío para usar el título del video',
+  'music.youtube.cmd.shell': 'Terminal',
+  'music.youtube.cmd.shellWindows': 'Windows (PowerShell)',
+  'music.youtube.cmd.shellUnix': 'Linux / macOS (bash)',
+  'music.youtube.cmd.copy': 'Copiar script',
+  'music.youtube.cmd.copied': 'Copiado',
+  'music.youtube.cmd.dismiss': 'Cerrar',
+  'music.youtube.cmd.close': 'Cerrar',
   'tree.type.music': 'Música',
 
   'comments.title': 'Comentarios',
