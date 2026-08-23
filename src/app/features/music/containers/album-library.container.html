@@ -9,34 +9,46 @@
     {{ t('music.library') }} ({{ tracks().length }})
   </h3>
   <div class="zone-head-actions">
-    <div
-      class="youtube-download"
-      data-tutorial="music-youtube"
-      [class.disabled]="!youtubeAvailable"
-      [title]="youtubeAvailable ? '' : t('music.youtube.unavailableTooltip')"
-    >
+    <div class="youtube-download" data-tutorial="music-youtube">
       <input
         type="url"
         class="search-input"
         data-tutorial="music-youtube-input"
         [value]="youtubeUrl()"
-        [disabled]="!youtubeAvailable || youtubeDownloading()"
+        [disabled]="youtubeAvailable && youtubeDownloading()"
         (input)="onYoutubeUrlInput(asInput($event.target).value)"
         [placeholder]="t('music.youtube.placeholder')"
       />
-      <button
-        type="button"
-        class="mc-hover-grow"
-        data-tutorial="music-youtube-download"
-        [disabled]="!youtubeAvailable || youtubeDownloading() || youtubeUrl().trim() === ''"
-        (click)="onYoutubeDownload()"
-      >
-        <mc-icon name="download-simple" />
-        <span>{{
-          youtubeDownloading() ? t('music.youtube.downloading') : t('music.youtube.download')
-        }}</span>
-      </button>
+      @if (youtubeAvailable) {
+        <button
+          type="button"
+          class="mc-hover-grow"
+          data-tutorial="music-youtube-download"
+          [disabled]="youtubeDownloading() || youtubeUrl().trim() === ''"
+          (click)="onYoutubeDownload()"
+        >
+          <mc-icon name="download-simple" />
+          <span>{{
+            youtubeDownloading() ? t('music.youtube.downloading') : t('music.youtube.download')
+          }}</span>
+        </button>
+      } @else {
+        <button
+          type="button"
+          class="mc-hover-grow"
+          data-tutorial="music-youtube-download"
+          [title]="t('music.youtube.unavailableTooltip')"
+          [disabled]="youtubeUrl().trim() === ''"
+          (click)="onOpenYoutubeCommandModal()"
+        >
+          <mc-icon name="file" />
+          <span>{{ t('music.youtube.cmd.open') }}</span>
+        </button>
+      }
     </div>
+    @if (youtubeCommandModalOpen()) {
+      <mc-youtube-command-modal [url]="youtubeUrl()" (closed)="onCloseYoutubeCommandModal()" />
+    }
     <label class="primary mc-hover-grow" data-tutorial="music-upload">
       <mc-icon name="upload-simple" />
       <span>{{ t('music.upload') }}</span>

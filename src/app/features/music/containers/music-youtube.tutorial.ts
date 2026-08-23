@@ -8,9 +8,11 @@ import type { TutorialDefinition } from '@core/tutorials/tutorial.types';
 //      organizar el existente): input de URL + estado de descarga
 //      (`album-library.container.html`, `.youtube-download`). Manual, no
 //      `autoStartIfUnseen`. Sin `skipIfMissing`: el bloque siempre está en
-//      el DOM (deshabilitado con tooltip fuera de Tauri/Capacitor, ver
-//      `YoutubeDownloadService.isAvailable`), nunca condicionalmente
-//      montado — a diferencia de otros anchors de esta página.
+//      el DOM y habilitado — en Tauri/Capacitor descarga directo (ver
+//      `YoutubeDownloadService.isAvailable`), en navegador el mismo botón
+//      abre el generador de comandos (`YoutubeCommandModalComponent`) —
+//      nunca condicionalmente montado, a diferencia de otros anchors de
+//      esta página.
 export const MUSIC_YOUTUBE_TUTORIAL: TutorialDefinition = {
   id: 'music-youtube',
   pageId: 'music',
