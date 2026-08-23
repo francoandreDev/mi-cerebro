@@ -21,10 +21,18 @@ export interface YoutubeCommandOptions {
 //      (youtube-download.service.ts), verificado ahí contra un video real.
 const EXTRACTOR_ARGS = '--extractor-args "youtube:player_client=android"';
 
+// why: el "SABR-only streaming experiment" de YouTube (github.com/yt-dlp/
+//      yt-dlp/issues/12482) hace que el cliente android a veces no traiga
+//      streams de solo-audio con URL usable, y yt-dlp cae de fallback al
+//      formato muxeado 18 (video+audio en baja calidad, pero igual pesa
+//      cientos de MB) — la extraccion de audio termina re-codificando un
+//      video entero por nada. Forzar "-f bestaudio/best" evita ese
+//      fallback: le pide a yt-dlp elegir explicitamente un stream de solo
+//      audio, sin arrastrar video.
 function ytDlpArgs(format: YoutubeMediaFormat): string {
   const formatArgs =
     format === 'audio'
-      ? '-x --audio-format mp3 --audio-quality 0'
+      ? '-f bestaudio/best -x --audio-format mp3 --audio-quality 0'
       : '-f "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]" --merge-output-format mp4';
   return `${EXTRACTOR_ARGS} ${formatArgs}`;
 }

@@ -91,6 +91,14 @@ export class YoutubeDownloadService {
 
     const args = [
       ...YOUTUBE_EXTRACTOR_ARGS,
+      // why: sin forzar el stream, el "SABR-only streaming experiment" de
+      //      YouTube (github.com/yt-dlp/yt-dlp/issues/12482) puede dejar
+      //      al cliente android sin streams de solo-audio con URL usable,
+      //      y yt-dlp cae al formato muxeado 18 (video+audio, cientos de
+      //      MB) — la extraccion de audio termina re-codificando un video
+      //      entero. "bestaudio/best" evita ese fallback.
+      '-f',
+      'bestaudio/best',
       '-x',
       '--audio-format',
       'mp3',

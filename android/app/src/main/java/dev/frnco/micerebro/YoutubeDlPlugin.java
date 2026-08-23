@@ -90,6 +90,12 @@ public class YoutubeDlPlugin extends Plugin {
     try {
       YoutubeDLRequest request = new YoutubeDLRequest(url);
       request.addOption("--extractor-args", EXTRACTOR_ARGS);
+      // why: sin forzar el stream, el "SABR-only streaming experiment" de
+      //      YouTube (github.com/yt-dlp/yt-dlp/issues/12482) puede dejar
+      //      sin streams de solo-audio con URL usable, y yt-dlp cae al
+      //      formato muxeado 18 (video+audio, cientos de MB) — la
+      //      extraccion de audio termina re-codificando un video entero.
+      request.addOption("-f", "bestaudio/best");
       request.addOption("-x");
       request.addOption("--audio-format", "mp3");
       request.addOption("--audio-quality", "0");
