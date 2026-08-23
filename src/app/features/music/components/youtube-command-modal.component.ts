@@ -34,6 +34,10 @@ export class YoutubeCommandModalComponent {
   protected readonly destFolder = signal('');
   protected readonly filename = signal('');
   protected readonly copied = signal(false);
+  protected readonly folderPicked = signal(false);
+
+  protected readonly folderPickerSupported =
+    typeof window !== 'undefined' && typeof window.showDirectoryPicker === 'function';
 
   protected readonly script = computed(() =>
     buildYoutubeScript(this.shell(), {
@@ -58,6 +62,17 @@ export class YoutubeCommandModalComponent {
 
   protected setShell(shell: ScriptShell): void {
     this.shell.set(shell);
+  }
+
+  protected async onPickFolder(): Promise<void> {
+    if (!window.showDirectoryPicker) return;
+    try {
+      const handle = await window.showDirectoryPicker({ mode: 'read' });
+      this.destFolder.set(handle.name);
+      this.folderPicked.set(true);
+    } catch {
+      // why: el usuario cancelo el picker (AbortError) — no hay nada que hacer.
+    }
   }
 
   protected async onCopy(): Promise<void> {

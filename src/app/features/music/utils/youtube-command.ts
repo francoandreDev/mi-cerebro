@@ -13,10 +13,20 @@ export interface YoutubeCommandOptions {
   readonly filename: string;
 }
 
+// why: el cliente "web" por defecto de YouTube exige resolver un desafio de
+//      cifrado de firma (necesita un runtime JS que yt-dlp no trae acá);
+//      forzar el cliente "android" evita el desafio y devuelve URLs sin
+//      firmar. Sin este flag, yt-dlp tira "HTTP Error 403: Forbidden" al
+//      intentar bajar el video — mismo flag que usa el sidecar de Tauri
+//      (youtube-download.service.ts), verificado ahí contra un video real.
+const EXTRACTOR_ARGS = '--extractor-args "youtube:player_client=android"';
+
 function ytDlpArgs(format: YoutubeMediaFormat): string {
-  return format === 'audio'
-    ? '-x --audio-format mp3 --audio-quality 0'
-    : '-f "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]" --merge-output-format mp4';
+  const formatArgs =
+    format === 'audio'
+      ? '-x --audio-format mp3 --audio-quality 0'
+      : '-f "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]" --merge-output-format mp4';
+  return `${EXTRACTOR_ARGS} ${formatArgs}`;
 }
 
 function outputTemplate(filename: string): string {

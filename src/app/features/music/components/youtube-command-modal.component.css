@@ -70,6 +70,24 @@ input[type='text'] {
   color: var(--mc-fg-primary);
   font-size: var(--mc-font-size-sm);
 }
+.folder-row {
+  display: flex;
+  gap: var(--mc-space-1);
+}
+.folder-row input[type='text'] {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.folder-row .ghost {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+.folder-hint {
+  margin: 0;
+  color: var(--mc-fg-muted);
+  font-size: var(--mc-font-size-xs, 0.8rem);
+  line-height: 1.4;
+}
 .seg {
   display: flex;
   gap: var(--mc-space-1);

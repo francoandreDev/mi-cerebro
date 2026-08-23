@@ -30,15 +30,26 @@
     </div>
   </div>
 
-  <label class="field">
+  <div class="field">
     <span class="label">{{ t('music.youtube.cmd.destFolder') }}</span>
-    <input
-      type="text"
-      [value]="destFolder()"
-      (input)="destFolder.set(asInput($event.target).value)"
-      [placeholder]="t('music.youtube.cmd.destFolderPlaceholder')"
-    />
-  </label>
+    <div class="folder-row">
+      <input
+        type="text"
+        [value]="destFolder()"
+        (input)="destFolder.set(asInput($event.target).value); folderPicked.set(false)"
+        [placeholder]="t('music.youtube.cmd.destFolderPlaceholder')"
+      />
+      @if (folderPickerSupported) {
+        <button type="button" class="ghost" (click)="onPickFolder()">
+          <mc-icon name="folder" />
+          <span>{{ t('music.youtube.cmd.pickFolder') }}</span>
+        </button>
+      }
+    </div>
+    @if (folderPicked()) {
+      <p class="folder-hint">{{ t('music.youtube.cmd.folderPickedHint') }}</p>
+    }
+  </div>
 
   <label class="field">
     <span class="label">{{ t('music.youtube.cmd.filename') }}</span>

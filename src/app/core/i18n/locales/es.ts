@@ -2804,6 +2804,9 @@ export const es = {
   'music.youtube.cmd.destFolder': 'Carpeta de destino',
   'music.youtube.cmd.destFolderPlaceholder':
     'Ej: C:\\Users\\vos\\Música (dejalo vacío para la carpeta actual)',
+  'music.youtube.cmd.pickFolder': 'Elegir carpeta',
+  'music.youtube.cmd.folderPickedHint':
+    'Por seguridad, el navegador solo puede darnos el nombre de la carpeta, no la ruta completa. Completá la ruta a mano arriba, o abrí la terminal ya parado dentro de esa carpeta antes de pegar el script.',
   'music.youtube.cmd.filename': 'Nombre del archivo (opcional)',
   'music.youtube.cmd.filenamePlaceholder': 'Dejalo vacío para usar el título del video',
   'music.youtube.cmd.shell': 'Terminal',
